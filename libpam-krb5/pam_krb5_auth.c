@@ -5,7 +5,7 @@
  *
  */
 
-static const char rcsid[] = "$Id: pam_krb5_auth.c,v 1.5 2000/12/19 07:22:49 hartmans Exp $";
+static const char rcsid[] = "$Id: pam_krb5_auth.c,v 1.6 2000/12/19 22:53:11 hartmans Exp $";
 
 #include <errno.h>
 #include <limits.h>	/* PATH_MAX */
@@ -216,7 +216,7 @@ get_pass:
     }
 
     /* Verify it */
-    if (verify_krb_v5_tgt(pam_context, ccache, debug) == -1) {
+    if (verify_krb_v5_tgt(pam_context, ccache, service, debug) == -1) {
 	(void) krb5_cc_destroy(pam_context, ccache);
 	pamret = PAM_AUTH_ERR;
 	goto cleanup;

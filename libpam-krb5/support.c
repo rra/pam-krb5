@@ -4,7 +4,7 @@
  * Support functions for pam_krb5
  */
 
-static const char rcsid[] = "$Id: support.c,v 1.2 2000/11/30 20:40:37 hartmans Exp $";
+static const char rcsid[] = "$Id: support.c,v 1.3 2000/12/19 22:53:11 hartmans Exp $";
 
 #include <errno.h>
 #include <stdio.h>	/* BUFSIZ */
@@ -58,20 +58,26 @@ get_user_info(pam_handle_t *pamh, char *prompt, int type, char **response)
 
 /*
  * This routine with some modification is from the MIT V5B6 appl/bsd/login.c
+ * Modified by Sam Hartman <hartmans@mit.edu> to support PAM services
+ * for Debian.
  *
  * Verify the Kerberos ticket-granting ticket just retrieved for the
  * user.  If the Kerberos server doesn't respond, assume the user is
  * trying to fake us out (since we DID just get a TGT from what is
  * supposedly our KDC).  If the host/<host> service is unknown (i.e.,
- * the local keytab doesn't have it), let her in.
+ * the local keytab doesn't have it), and we cannot find another
+ * service we do have, let her in.
  *
  * Returns 1 for confirmation, -1 for failure, 0 for uncertainty.
  */
 int
-verify_krb_v5_tgt(krb5_context context, krb5_ccache ccache, int debug)
+verify_krb_v5_tgt(krb5_context context, krb5_ccache ccache,
+		  char * pam_service, int debug)
 {
     char		phost[BUFSIZ];
-    krb5_error_code	retval;
+    char *services [3];
+    char **service;
+    krb5_error_code	retval = -1;
     krb5_principal	princ;
     krb5_keyblock *	keyblock = 0;
     krb5_data		packet;
@@ -80,28 +86,41 @@ verify_krb_v5_tgt(krb5_context context, krb5_ccache ccache, int debug)
     packet.data = 0;
 
     /*
-     * Get the server principal for the local host.
-     * (Use defaults of "host" and canonicalized local name.)
-     */
-    if ((retval = krb5_sname_to_principal(context, NULL, NULL, KRB5_NT_SRV_HST,
-      &princ)) != 0) {
+    * If possible we want to try and verify the ticket we have
+    * received against a keytab.  We will try multiple service
+    * principals, including at least the host principal and the PAM
+    * service principal.  The host principal is preferred because access
+    * to that key is generally sufficient to compromise root, while the
+    *     service key for this PAM service may be less carefully guarded.
+    * It is important to check the keytab first before the KDC so we do
+    * not get spoofed by a fake  KDC.*/
+    services [0] = "host";
+    services [1] = pam_service;
+    services [2] = NULL;
+    for ( service = &services[0]; *service != NULL; service++ ) {
+      if ((retval = krb5_sname_to_principal(context, NULL, *service, KRB5_NT_SRV_HST,
+					    &princ)) != 0) {
 	if (debug)
-	    syslog(LOG_DEBUG, "pam_krb5: verify_krb_v5_tgt(): %s: %s",
-		   "krb5_sname_to_principal()", error_message(retval));
+	  syslog(LOG_DEBUG, "pam_krb5: verify_krb_v5_tgt(): %s: %s",
+		 "krb5_sname_to_principal()", error_message(retval));
 	return -1;
+      }
+
+      /* Extract the name directly. */
+      strncpy(phost, compat_princ_component(context, princ, 1), BUFSIZ);
+      phost[BUFSIZ - 1] = '\0';
+
+      /*
+       * Do we have service/<host> keys?
+       * (use default/configured keytab, kvno IGNORE_VNO to get the
+       * first match, and ignore enctype.)
+       */
+      if ((retval = krb5_kt_read_service_key(context, NULL, princ, 0,
+					     0, &keyblock)) != 0)
+	continue;
+      break;
     }
-
-    /* Extract the name directly. */
-    strncpy(phost, compat_princ_component(context, princ, 1), BUFSIZ);
-    phost[BUFSIZ - 1] = '\0';
-
-    /*
-     * Do we have host/<host> keys?
-     * (use default/configured keytab, kvno IGNORE_VNO to get the
-     * first match, and enctype is currently ignored anyhow.)
-     */
-    if ((retval = krb5_kt_read_service_key(context, NULL, princ, 0,
-      ENCTYPE_DES_CBC_MD5, &keyblock)) != 0) {
+    if (retval != 0 ) {		/* failed to find key */
 	/* Keytab or service key does not exist */
 	if (debug)
 	    syslog(LOG_DEBUG, "pam_krb5: verify_krb_v5_tgt(): %s: %s",
@@ -113,7 +132,7 @@ verify_krb_v5_tgt(krb5_context context, krb5_ccache ccache, int debug)
 	krb5_free_keyblock(context, keyblock);
 
     /* Talk to the kdc and construct the ticket. */
-    retval = krb5_mk_req(context, &auth_context, 0, "host", phost,
+    retval = krb5_mk_req(context, &auth_context, 0, *service, phost,
 			 NULL, ccache, &packet);
     if (auth_context) {
 	krb5_auth_con_free(context, auth_context);

@@ -1,11 +1,11 @@
 /*
  * pam_krb5.h
  *
- * $Id: pam_krb5.h,v 1.2 2000/11/30 20:40:37 hartmans Exp $
+ * $Id: pam_krb5.h,v 1.3 2000/12/19 22:53:11 hartmans Exp $
  */
 
 int get_user_info(pam_handle_t *, char *, int, char **);
-int verify_krb_v5_tgt(krb5_context, krb5_ccache, int);
+int verify_krb_v5_tgt(krb5_context, krb5_ccache, char *, int);
 void cleanup_cache(pam_handle_t *, void *, int);
 
 krb5_prompter_fct pam_prompter;
