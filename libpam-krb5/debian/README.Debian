@@ -1,6 +1,10 @@
 pam-krb5 for Debian
 ----------------------
 
+This package is roughly the same sources as libpam-heimdal.  It was
+recompiled againt MIT krb5 by Sam Hartman.
+
+
 The original module has been written by Frank Cusack (see README file).
 
 This particular version of the module is heavily based on the FreeBSD
@@ -36,3 +40,4 @@ the password changing service so as to change the user's password and
 then get a TGT for the user.
 
  -- Brian May <bam@debian.org>, Thu,  9 Nov 2000 11:39:41 +1100
+

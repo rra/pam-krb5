@@ -2,7 +2,7 @@
 # Makefile for pam_krb5
 #
 KRB5BASE = /usr
-KRB5_IMPL = heimdal
+KRB5_IMPL = mit
 PAMPREFIX = $(DESTDIR)/lib/security
 MANPREFIX = $(DESTDIR)/usr/share/man
 BINOWN = root
@@ -27,9 +27,7 @@ LIBS_heimdal = -lkrb5 -lasn1 -lcom_err -lroken -lgssapi -ldes
 
 
 # MIT
-LIBS_mit = ${KRB5BASE}/lib/libkrb5.a ${KRB5BASE}/lib/libcom_err.a \
-	${KRB5BASE}/lib/libk5crypto.a
-
+LIBS_mit = -lkrb5 -lk5crypto -lcom_err
 LIBS = $(OSLIBS) ${LIBS_${KRB5_IMPL}}
 COMPAT = compat_${KRB5_IMPL}.c
 

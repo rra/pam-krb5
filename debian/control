@@ -1,14 +1,14 @@
-Source: libpam-heimdal
+Source: libpam-krb5
 Section: non-US/main
 Priority: optional
-Maintainer: Brian May <bam@debian.org>
+Maintainer: Sam hartman <hartmans@mit.edu>
 Standards-Version: 3.0.1
-Build-Depends: heimdal-dev
+Build-Depends: libkrb5-dev
 
-Package: libpam-heimdal
+Package: libpam-krb5
 Architecture: any
 Depends: ${shlibs:Depends}
-Description: PAM module for Heimdal
- A Kerberos v5 pam module for use with Heimdal kerberos. This
+Description: PAM module for MIT Kerberos
+ A Kerberos v5 pam module for use with MIT kerberos. This
  module should only be used for local logins unless you really know
  what you are doing.

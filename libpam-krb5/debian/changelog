@@ -1,3 +1,9 @@
+libpam-krb5 (1.0-2) unstable; urgency=low
+
+  * Release MIT Kerberos5 version of PAM module.
+
+ -- Sam Hartman <hartmans@mit.edu>  Thu, 30 Nov 2000 17:49:41 -0500
+
 libpam-heimdal (1.0-1) unstable; urgency=low
 
   * Initial Release.
