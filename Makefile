@@ -16,7 +16,7 @@ CFLAGS = -O2 -fPIC -Wall
 LDFLAGS = -shared -Xlinker -x
 
 
-OSLIBS = -lpam -lresolv -ldb
+OSLIBS = -lpam -lresolv 
 
 # HEIMDAL
 #LIBS_heimdal = ${KRB5BASE}/lib/libkrb5.a ${KRB5BASE}/lib/libasn1.a   \
