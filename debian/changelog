@@ -1,3 +1,9 @@
+libpam-krb5 (1.0-7) unstable; urgency=low
+
+  * Move fron non-us to main--second to last package of mine
+
+ -- Sam Hartman <hartmans@debian.org>  Sat,  6 Apr 2002 20:55:14 -0500
+
 libpam-krb5 (1.0-6) unstable; urgency=low
 
   * New version that supports sessions management.  You may want to use

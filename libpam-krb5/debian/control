@@ -1,5 +1,5 @@
 Source: libpam-krb5
-Section: non-US/main
+Section: net
 Priority: optional
 Maintainer: Sam hartman <hartmans@debian.org>
 Standards-Version: 3.0.1
