@@ -1,9 +1,9 @@
 Source: libpam-krb5
 Section: non-US/main
 Priority: optional
-Maintainer: Sam hartman <hartmans@mit.edu>
+Maintainer: Sam hartman <hartmans@debian.org>
 Standards-Version: 3.0.1
-Build-Depends: libkrb5-dev
+Build-Depends: libkrb5-dev, libdb2-dev, debhelper (>= 2.0.0)
 
 Package: libpam-krb5
 Architecture: any
