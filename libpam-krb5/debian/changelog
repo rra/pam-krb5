@@ -1,3 +1,11 @@
+libpam-krb5 (1.0-6) unstable; urgency=low
+
+  * New version that supports sessions management.  You may want to use
+    this to write out credentials at session managemment time, for example
+    so they can be used  by openafs.
+
+ -- Sam Hartman <hartmans@debian.org>  Sat, 12 May 2001 18:41:49 -0400
+
 libpam-krb5 (1.0-5) unstable; urgency=low
 
   * Fix build-depends, closes: #80555

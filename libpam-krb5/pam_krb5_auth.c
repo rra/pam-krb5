@@ -5,7 +5,7 @@
  *
  */
 
-static const char rcsid[] = "$Id: pam_krb5_auth.c,v 1.6 2000/12/19 22:53:11 hartmans Exp $";
+static const char rcsid[] = "$Id: pam_krb5_auth.c,v 1.7 2001/05/12 22:42:14 hartmans Exp $";
 
 #include <errno.h>
 #include <limits.h>	/* PATH_MAX */
@@ -314,7 +314,10 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
 	DLOG("krb5_init_context()", error_message(krbret));
 	return PAM_SERVICE_ERR;
     }
-
+    if (pam_get_data (pamh, "ccache_perm", (const void **) &ccache_perm) == 0 ) {
+      DLOG ("pam_get_data", "ALready set up credentials");
+	return PAM_SUCCESS;
+    }
     euid = geteuid(); /* Usually 0 */
     egid = getegid();
 

@@ -1,0 +1,77 @@
+Index: pam_krb5.5
+===================================================================
+RCS file: /cvs/cvsfiles/prototype-packages/libpam-krb5/pam_krb5.5,v
+retrieving revision 1.3
+diff -u -r1.3 pam_krb5.5
+--- pam_krb5.5	2000/12/08 18:36:39	1.3
++++ pam_krb5.5	2001/05/12 22:39:27
+@@ -5,7 +5,7 @@
+ pam_krb5 \- Kerberos 5 PAM module
+ .SH SYNOPSIS
+ .LP
+-.B /usr/lib/security/pam_krb5.so.1
++.Blib/security/pam_krb5.so.1
+ .LP
+ .SH DESCRIPTION
+ .IX "pam_krb5" "" "\fLpam_krb5\fP \(em Kerberos 5 PAM module"
+@@ -16,7 +16,11 @@
+ authentication,
+ account management,
+ and password management.
+-It also provides null functions for session management.
++It also provides functions for session management to write out credentials.  Normally,
++these functions should not be needed as the authentication functions do this, but
++if credentials are needed in the session phase,
++then these functions can be used.
++
+ The
+ .B pam_krb5.so.1
+ module is a shared object
+Index: pam_krb5_auth.c
+===================================================================
+RCS file: /cvs/cvsfiles/prototype-packages/libpam-krb5/pam_krb5_auth.c,v
+retrieving revision 1.6
+diff -u -r1.6 pam_krb5_auth.c
+--- pam_krb5_auth.c	2000/12/19 22:53:11	1.6
++++ pam_krb5_auth.c	2001/05/12 22:08:32
+@@ -314,7 +314,10 @@
+ 	DLOG("krb5_init_context()", error_message(krbret));
+ 	return PAM_SERVICE_ERR;
+     }
+-
++    if (pam_get_data (pamh, "ccache_perm", (const void **) &ccache_perm) == 0 ) {
++      DLOG ("pam_get_data", "ALready set up credentials");
++	return PAM_SUCCESS;
++    }
+     euid = geteuid(); /* Usually 0 */
+     egid = getegid();
+ 
+Index: pam_krb5_sess.c
+===================================================================
+RCS file: /cvs/cvsfiles/prototype-packages/libpam-krb5/pam_krb5_sess.c,v
+retrieving revision 1.1.1.1
+diff -u -r1.1.1.1 pam_krb5_sess.c
+--- pam_krb5_sess.c	2000/11/30 20:09:43	1.1.1.1
++++ pam_krb5_sess.c	2001/05/12 22:32:53
+@@ -10,13 +10,14 @@
+ 
+ #include <security/pam_appl.h>
+ #include <security/pam_modules.h>
++int pam_sm_setcred (pam_handle_t * pamh, int flags, int argc, const char **argv);
+ 
+ /* Initiate session management */
+ int
+ pam_sm_open_session(pam_handle_t *pamh, int flags, int argc, const char **argv)
+ {
+-    return PAM_SUCCESS;
+-}
++  return pam_sm_setcred (pamh, PAM_ESTABLISH_CRED, argc, argv);
++    }
+ 
+ 
+ /* Terminate session management */
+@@ -25,3 +26,4 @@
+ {
+     return PAM_SUCCESS;
+ }
++

@@ -1,11 +1,11 @@
 .\"
-.\" $Id: pam_krb5.5,v 1.3 2000/12/08 18:36:39 hartmans Exp $
+.\" $Id: pam_krb5.5,v 1.4 2001/05/12 22:42:14 hartmans Exp $
 .TH pam_krb5 5 "15 Jan 1999"
 .SH NAME
 pam_krb5 \- Kerberos 5 PAM module
 .SH SYNOPSIS
 .LP
-.B /usr/lib/security/pam_krb5.so.1
+.Blib/security/pam_krb5.so.1
 .LP
 .SH DESCRIPTION
 .IX "pam_krb5" "" "\fLpam_krb5\fP \(em Kerberos 5 PAM module"
@@ -16,7 +16,11 @@ provides functionality for three PAM categories:
 authentication,
 account management,
 and password management.
-It also provides null functions for session management.
+It also provides functions for session management to write out credentials.  Normally,
+these functions should not be needed as the authentication functions do this, but
+if credentials are needed in the session phase,
+then these functions can be used.
+
 The
 .B pam_krb5.so.1
 module is a shared object
