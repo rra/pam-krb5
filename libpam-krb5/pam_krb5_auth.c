@@ -5,7 +5,7 @@
  *
  */
 
-static const char rcsid[] = "$Id: pam_krb5_auth.c,v 1.4 2000/12/08 19:16:56 hartmans Exp $";
+static const char rcsid[] = "$Id: pam_krb5_auth.c,v 1.5 2000/12/19 07:22:49 hartmans Exp $";
 
 #include <errno.h>
 #include <limits.h>	/* PATH_MAX */
@@ -348,13 +348,21 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
 
     /* Get the cache name */
     if (!cache_name) {
-	cache_name = malloc(64); /* plenty big */
+      int ccache_fd;
+      cache_name = strdup ("/tmp/krb5cc_XXXXXX");
 	if (!cache_name) {
 	    DLOG("malloc()", "failure");
 	    pamret = PAM_BUF_ERR;
 	    goto cleanup3;
 	}
-	sprintf(cache_name, "FILE:/tmp/krb5cc_%d", pw->pw_uid);
+	ccache_fd = mkstemp (cache_name);
+	if( ccache_fd == -1 ) {
+	  DLOG ("mkstemp()", "failure");
+	    pamret = PAM_BUF_ERR;
+	    goto cleanup3;
+	}
+	close (ccache_fd);
+
     } else {
 	/* cache_name was supplied */
 	char *p = calloc(PATH_MAX + 10, 1); /* should be plenty */
