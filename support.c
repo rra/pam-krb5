@@ -149,6 +149,10 @@ verify_krb_v5_tgt(krb5_context context, krb5_ccache ccache,
     /* Try to use the ticket. */
     retval = krb5_rd_req(context, &auth_context, &packet, princ,
 			 NULL, NULL, NULL);
+    if (auth_context) {
+	krb5_auth_con_free(context, auth_context);
+	auth_context = NULL; /* setup for rd_req */
+    }
     if (retval) {
 	if (debug)
 	    syslog(LOG_DEBUG, "pam_krb5: verify_krb_v5_tgt(): %s: %s",

@@ -23,6 +23,33 @@ if (debug) \
     syslog(LOG_DEBUG, "pam_krb5: pam_sm_chauthtok(%s %s): %s: %s", \
 	   service, name, error_func, error_msg)
 
+/* Utter a message to the user */
+static void
+krb_pass_utter(pam_handle_t *pamh, int quiet, const char *text)
+{
+    struct pam_message msg[1], *pmsg[1];
+    struct pam_response *resp;
+    struct pam_conv *conv;
+    int retval;
+
+    if (quiet)
+        return;
+    pmsg[0] = &msg[0];
+    msg[0].msg = text;
+    msg[0].msg_style = PAM_ERROR_MSG;
+    retval = pam_get_item(pamh, PAM_CONV, (const void **) &conv);
+    if (retval == PAM_SUCCESS) {
+        resp = NULL;
+        retval = conv->conv(1, (const struct pam_message **) pmsg, &resp,
+                            conv->appdata_ptr);
+        if (resp) {
+            if (resp->resp)
+                free(resp->resp);
+            free(resp);
+        }
+    }
+}
+
 /* Change a user's password */
 int
 pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
@@ -37,11 +64,11 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
     krb5_data	result_code_string, result_string;
 
     int		pamret, i;
-    char	*name, *service = NULL, *pass = NULL, *pass2;
+    char	*name, *service = NULL, *pass = NULL, *pass2, *message;
     char	*princ_name = NULL;
     char	*prompt = NULL;
 
-    int debug = 0;
+    int debug = 0, quiet = 0;
     int try_first_pass = 0, use_first_pass = 0;
 
     
@@ -49,6 +76,8 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
         return PAM_SUCCESS;
     if (!(flags & PAM_UPDATE_AUTHTOK))
 	return PAM_AUTHTOK_ERR;
+    if (flags & PAM_SILENT)
+        quiet++;
 
     for (i = 0; i < argc; i++) {
 	if (strcmp(argv[i], "debug") == 0)
@@ -107,7 +136,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
     (void) sprintf(prompt, "Password for %s: ", princ_name);
 
     if (try_first_pass || use_first_pass)
-	(void) pam_get_item(pamh, PAM_AUTHTOK, (const void **) &pass);
+	(void) pam_get_item(pamh, PAM_OLDAUTHTOK, (const void **) &pass);
 
 get_pass:
     if (!pass) {
@@ -142,41 +171,61 @@ get_pass:
     }
 
     /* Now get the new password */
-    free(prompt);
-    prompt = "Enter new password: ";
-    if ((pamret = get_user_info(pamh, prompt, PAM_PROMPT_ECHO_OFF, &pass)) 
-      != 0) {
-	DLOG("get_user_info()", pam_strerror(pamh, pamret));
-	prompt = NULL;
-	pamret = PAM_SERVICE_ERR;
-	goto cleanup;
-    }
-    prompt = "Enter it again: ";
-    if ((pamret = get_user_info(pamh, prompt, PAM_PROMPT_ECHO_OFF, &pass2)) 
-      != 0) {
-	DLOG("get_user_info()", pam_strerror(pamh, pamret));
-	prompt = NULL;
-	pamret = PAM_SERVICE_ERR;
-	goto cleanup;
-    }
-    prompt = NULL;
+    pass = NULL;
+    if (try_first_pass || use_first_pass)
+        (void) pam_get_item(pamh, PAM_AUTHTOK, (const void **) &pass);
+    if (!pass) {
+        free(prompt);
+        prompt = "Enter new password: ";
+        if ((pamret = get_user_info(pamh, prompt, PAM_PROMPT_ECHO_OFF, &pass)) 
+          != 0) {
+            DLOG("get_user_info()", pam_strerror(pamh, pamret));
+            prompt = NULL;
+            pamret = PAM_SERVICE_ERR;
+            goto cleanup;
+        }
+        prompt = "Enter it again: ";
+        if ((pamret = get_user_info(pamh, prompt, PAM_PROMPT_ECHO_OFF,
+          &pass2)) != 0) {
+            DLOG("get_user_info()", pam_strerror(pamh, pamret));
+            prompt = NULL;
+            pamret = PAM_SERVICE_ERR;
+            goto cleanup;
+        }
+        prompt = NULL;
 
-    if (strcmp(pass, pass2) != 0) {
-	DLOG("strcmp()", "passwords not equal");
-        pamret = PAM_AUTHTOK_ERR;
-	goto cleanup;
+        if (strcmp(pass, pass2) != 0) {
+            DLOG("strcmp()", "passwords not equal");
+            krb_pass_utter(pamh, quiet, "Passwords don't match");
+            pamret = PAM_AUTHTOK_ERR;
+            goto cleanup;
+        }
     }
 
     /* Change it */
+    pamret = PAM_SUCCESS;
     if ((krbret = krb5_change_password(pam_context, &creds, pass,
       &result_code, &result_code_string, &result_string)) != 0) {
 	DLOG("krb5_change_password()", error_message(krbret));
+        krb_pass_utter(pamh, quiet, error_message(krbret));
 	pamret = PAM_AUTHTOK_ERR;
 	goto cleanup;
     }
     if (result_code) {
-	DLOG("krb5_change_password() (result_code)", "");
+	DLOG("krb5_change_password() result_code_string=%s",
+             result_code_string.data);
 	pamret = PAM_AUTHTOK_ERR;
+        message = malloc(result_string.length + result_code_string.length + 3);
+        if (!message) {
+            DLOG("malloc()", "failure");
+        } else {
+            sprintf(message, "%.*s%s%.*s",
+                    result_code_string.length, result_code_string.data,
+                    result_string.length == 0 ? "" : ": ",
+                    result_string.length, result_string.data);
+            krb_pass_utter(pamh, quiet, message);
+            free(message);
+        }
 	goto cleanup;
     }
 
@@ -199,4 +248,3 @@ cleanup3:
     DLOG("exit", pamret ? "failure" : "success");
     return pamret;
 }
-

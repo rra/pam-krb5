@@ -1,3 +1,17 @@
+libpam-krb5 (1.0-10) unstable; urgency=low
+
+
+  * Free authentication context used to prevent KDC spoofing, fixing a
+    file descriptor leak.  Thanks, Martin Kggggggler.  (Closes: #194542)
+  * Fix use_first_pass and try_first_pass for password changes and report
+    password change errors via the PAM conversation.  Thanks, Martin Mares.
+    (Closes: #133461)
+  * Return PAM_USER_UNKNOWN and PAM_AUTHINFO_UNAVAIL where appropriate
+    when authenticating.  Thanks, Roland Bauerschmidt.  (Closes: #239399)
+
+
+ --
+
 libpam-krb5 (1.0-9) unstable; urgency=high
 
   * Upload with no code changes in order to pick up symbol versions,

@@ -182,7 +182,12 @@ get_pass:
 	    pass = NULL;
 	    goto get_pass;
 	}
-	pamret = PAM_AUTH_ERR;
+        if (krbret == KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN)
+            pamret = PAM_USER_UNKNOWN;
+        else if (krbret == KRB5_KDC_UNREACH)
+            pamret = PAM_AUTHINFO_UNAVAIL;
+        else
+            pamret = PAM_AUTH_ERR;
 	goto cleanup2;
     }
 
