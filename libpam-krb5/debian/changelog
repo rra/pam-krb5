@@ -1,3 +1,9 @@
+libpam-krb5 (1.0-5) unstable; urgency=low
+
+  * Fix build-depends, closes: #80555
+
+ -- Sam Hartman <hartmans@debian.org>  Wed, 27 Dec 2000 17:02:18 -0500
+
 libpam-krb5 (1.0-4) unstable; urgency=medium
 
   * Wildcard enctype matching so that you don't have to have a des-cbc-md5
