@@ -5,12 +5,16 @@
  *
  */
 
-static const char rcsid[] = "$Id: pam_krb5_pass.c,v 1.1 2000/11/30 20:09:43 hartmans Exp $";
+static const char rcsid[] = "$Id: pam_krb5_pass.c,v 1.2 2000/11/30 20:40:37 hartmans Exp $";
 
+#include <errno.h>
+#include <stdio.h>	/* sprintf */
+#include <stdlib.h>	/* malloc */
 #include <syslog.h>	/* syslog */
 #include <security/pam_appl.h>
 #include <security/pam_modules.h>
 #include <krb5.h>
+#include <com_err.h>
 #include "pam_krb5.h"
 
 /* A useful logging macro */
@@ -27,7 +31,6 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
     krb5_context	pam_context;
     krb5_creds		creds;
     krb5_principal	princ;
-    krb5_ccache		ccache;
     krb5_get_init_creds_opt opts;
 
     int		result_code;
@@ -41,6 +44,9 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
     int debug = 0;
     int try_first_pass = 0, use_first_pass = 0;
 
+    
+    if (flags & PAM_PRELIM_CHECK) /* not sure if this a right way to do it */
+        return PAM_SUCCESS;
     if (!(flags & PAM_UPDATE_AUTHTOK))
 	return PAM_AUTHTOK_ERR;
 
@@ -54,23 +60,23 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
     }
 
     /* Get username */
-    if (pam_get_item(pamh, PAM_USER, (void **) &name)) {
+    if ((pam_get_item(pamh, PAM_USER, (const void **) &name)) != 0) {
 	return PAM_SERVICE_ERR;
     }
 
     /* Get service name */
-    (void) pam_get_item(pamh, PAM_SERVICE, (void **) &service);
+    (void) pam_get_item(pamh, PAM_SERVICE, (const void **) &service);
     if (!service)
 	service = "unknown";
 
     DLOG("entry", "");
 
-    if (krb5_init_context(&pam_context)) {
+    if ((krbret = krb5_init_context(&pam_context)) != 0) {
 	DLOG("krb5_init_context()", error_message(krbret));
 	return PAM_SERVICE_ERR;
     }
 
-    if (krb5_init_context(&pam_context)) {
+    if ((krbret = krb5_init_context(&pam_context)) != 0) {
 	DLOG("krb5_init_context()", error_message(krbret));
 	return PAM_SERVICE_ERR;
     }
@@ -78,14 +84,14 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
     memset(&creds, 0, sizeof(krb5_creds));
 
     /* Get principal name */
-    if (krbret = krb5_parse_name(pam_context, name, &princ)) {
+    if ((krbret = krb5_parse_name(pam_context, name, &princ)) != 0) {
 	DLOG("krb5_parse_name()", error_message(krbret));
 	pamret = PAM_USER_UNKNOWN;
 	goto cleanup3;
     }
 
     /* Now convert the principal name into something human readable */
-    if (krbret = krb5_unparse_name(pam_context, princ, &princ_name)) {
+    if ((krbret = krb5_unparse_name(pam_context, princ, &princ_name)) != 0) {
 	DLOG("krb5_unparse_name()", error_message(krbret));
 	pamret = PAM_SERVICE_ERR;
 	goto cleanup2;
@@ -101,18 +107,19 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
     (void) sprintf(prompt, "Password for %s: ", princ_name);
 
     if (try_first_pass || use_first_pass)
-	(void) pam_get_item(pamh, PAM_AUTHTOK, (void **) &pass);
+	(void) pam_get_item(pamh, PAM_AUTHTOK, (const void **) &pass);
 
 get_pass:
     if (!pass) {
 	try_first_pass = 0;
-	if (pamret = get_user_info(pamh, prompt, PAM_PROMPT_ECHO_OFF, &pass)) {
+	if ((pamret = get_user_info(pamh, prompt, PAM_PROMPT_ECHO_OFF, 
+	  &pass)) != 0) {
 	    DLOG("get_user_info()", pam_strerror(pamh, pamret));
 	    pamret = PAM_SERVICE_ERR;
 	    goto cleanup2;
 	}
 	/* We have to free pass. */
-	if (pamret = pam_set_item(pamh, PAM_AUTHTOK, pass)) {
+	if ((pamret = pam_set_item(pamh, PAM_AUTHTOK, pass)) != 0) {
 	    DLOG("pam_set_item()", pam_strerror(pamh, pamret));
 	    free(pass);
 	    pamret = PAM_SERVICE_ERR;
@@ -120,12 +127,11 @@ get_pass:
 	}
 	free(pass);
 	/* Now we get it back from the library. */
-	(void) pam_get_item(pamh, PAM_AUTHTOK, (void **) &pass);
+	(void) pam_get_item(pamh, PAM_AUTHTOK, (const void **) &pass);
     }
 
-    if (krbret = krb5_get_init_creds_password(pam_context, &creds, princ,
-					      pass, pam_prompter, pamh,
-					      0, "kadmin/changepw", &opts)) {
+    if ((krbret = krb5_get_init_creds_password(pam_context, &creds, princ, 
+      pass, pam_prompter, pamh, 0, "kadmin/changepw", &opts)) != 0) {
 	DLOG("krb5_get_init_creds_password()", error_message(krbret));
 	if (try_first_pass && krbret == KRB5KRB_AP_ERR_BAD_INTEGRITY) {
 	    pass = NULL;
@@ -138,14 +144,16 @@ get_pass:
     /* Now get the new password */
     free(prompt);
     prompt = "Enter new password: ";
-    if (pamret = get_user_info(pamh, prompt, PAM_PROMPT_ECHO_OFF, &pass)) {
+    if ((pamret = get_user_info(pamh, prompt, PAM_PROMPT_ECHO_OFF, &pass)) 
+      != 0) {
 	DLOG("get_user_info()", pam_strerror(pamh, pamret));
 	prompt = NULL;
 	pamret = PAM_SERVICE_ERR;
 	goto cleanup;
     }
     prompt = "Enter it again: ";
-    if (pamret = get_user_info(pamh, prompt, PAM_PROMPT_ECHO_OFF, &pass2)) {
+    if ((pamret = get_user_info(pamh, prompt, PAM_PROMPT_ECHO_OFF, &pass2)) 
+      != 0) {
 	DLOG("get_user_info()", pam_strerror(pamh, pamret));
 	prompt = NULL;
 	pamret = PAM_SERVICE_ERR;
@@ -160,9 +168,8 @@ get_pass:
     }
 
     /* Change it */
-    if (krbret = krb5_change_password(pam_context, &creds, pass,
-				      &result_code, &result_code_string,
-				      &result_string)) {
+    if ((krbret = krb5_change_password(pam_context, &creds, pass,
+      &result_code, &result_code_string, &result_string)) != 0) {
 	DLOG("krb5_change_password()", error_message(krbret));
 	pamret = PAM_AUTHTOK_ERR;
 	goto cleanup;

@@ -5,12 +5,14 @@
  *
  */
 
-static const char rcsid[] = "$Id: pam_krb5_auth.c,v 1.1 2000/11/30 20:09:41 hartmans Exp $";
+static const char rcsid[] = "$Id: pam_krb5_auth.c,v 1.2 2000/11/30 20:40:37 hartmans Exp $";
 
+#include <errno.h>
 #include <limits.h>	/* PATH_MAX */
 #include <pwd.h>	/* getpwnam */
 #include <stdio.h>	/* tmpnam */
-#include <strings.h>	/* strchr */
+#include <stdlib.h>	/* malloc  */
+#include <string.h>	/* strchr */
 #include <syslog.h>	/* syslog */
 #include <unistd.h>	/* chown */
 #include <sys/types.h>	/* chown */
@@ -19,8 +21,10 @@ static const char rcsid[] = "$Id: pam_krb5_auth.c,v 1.1 2000/11/30 20:09:41 hart
 #include <security/pam_modules.h>
 
 #include <krb5.h>
+#include <com_err.h>
 #include "pam_krb5.h"
 
+void Jokostat(char *);
 extern krb5_cc_ops krb5_mcc_ops;
 
 /* A useful logging macro */
@@ -42,7 +46,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     krb5_get_init_creds_opt opts;
 
     int			pamret, i;
-    char		*name, *name2;
+    const char		*name;
     char		*princ_name = NULL;
     char		*pass = NULL, *service = NULL;
     char		*prompt = NULL;
@@ -74,13 +78,13 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     }
 
     /* Get service name */
-    (void) pam_get_item(pamh, PAM_SERVICE, (void **) &service);
+    (void) pam_get_item(pamh, PAM_SERVICE, (const void **) &service);
     if (!service)
 	service = "unknown";
 
     DLOG("entry", "");
 
-    if (krb5_init_context(&pam_context)) {
+    if ((krbret = krb5_init_context(&pam_context)) != 0) {
 	DLOG("krb5_init_context()", error_message(krbret));
 	return PAM_SERVICE_ERR;
     }
@@ -93,7 +97,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 	krb5_get_init_creds_opt_set_forwardable(&opts, 1);
 
     /* For CNS */
-    if (krbret = krb5_cc_register(pam_context, &krb5_mcc_ops, FALSE)) {
+    if ((krbret = krb5_cc_register(pam_context, &krb5_mcc_ops, FALSE)) != 0) {
 	/* Solaris dtlogin doesn't call pam_end() on failure */
 	if (krbret != KRB5_CC_TYPE_EXISTS) {
 	    DLOG("krb5_cc_register()", error_message(krbret));
@@ -103,14 +107,14 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     }
 
     /* Get principal name */
-    if (krbret = krb5_parse_name(pam_context, name, &princ)) {
+    if ((krbret = krb5_parse_name(pam_context, name, &princ)) != 0) {
 	DLOG("krb5_parse_name()", error_message(krbret));
 	pamret = PAM_SERVICE_ERR;
 	goto cleanup3;
     }
 
     /* Now convert the principal name into something human readable */
-    if (krbret = krb5_unparse_name(pam_context, princ, &princ_name)) {
+    if ((krbret = krb5_unparse_name(pam_context, princ, &princ_name)) != 0) {
 	DLOG("krb5_unparse_name()", error_message(krbret));
 	pamret = PAM_SERVICE_ERR;
 	goto cleanup2;
@@ -126,18 +130,19 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     (void) sprintf(prompt, "Password for %s: ", princ_name);
 
     if (try_first_pass || use_first_pass)
-	(void) pam_get_item(pamh, PAM_AUTHTOK, (void **) &pass);
+	(void) pam_get_item(pamh, PAM_AUTHTOK, (const void **) &pass);
 
 get_pass:
     if (!pass) {
 	try_first_pass = 0;
-	if (pamret = get_user_info(pamh, prompt, PAM_PROMPT_ECHO_OFF, &pass)) {
+	if ((pamret = get_user_info(pamh, prompt, PAM_PROMPT_ECHO_OFF,
+	  &pass)) != 0) {
 	    DLOG("get_user_info()", pam_strerror(pamh, pamret));
 	    pamret = PAM_SERVICE_ERR;
 	    goto cleanup2;
 	}
 	/* We have to free pass. */
-	if (pamret = pam_set_item(pamh, PAM_AUTHTOK, pass)) {
+	if ((pamret = pam_set_item(pamh, PAM_AUTHTOK, pass)) != 0) {
 	    DLOG("pam_set_item()", pam_strerror(pamh, pamret));
 	    free(pass);
 	    pamret = PAM_SERVICE_ERR;
@@ -145,25 +150,26 @@ get_pass:
 	}
 	free(pass);
 	/* Now we get it back from the library. */
-	(void) pam_get_item(pamh, PAM_AUTHTOK, (void **) &pass);
+	(void) pam_get_item(pamh, PAM_AUTHTOK, (const void **) &pass);
     }
 
     /* Verify the local user exists (AFTER getting the password) */
     if (strchr(name, '@')) {
 	/* get a local account name for this principal */
-	if (krbret = krb5_aname_to_localname(pam_context, princ,
-					     sizeof(lname), lname)) {
+	if ((krbret = krb5_aname_to_localname(pam_context, princ, 
+	  sizeof(lname), lname)) != 0) {
 	    DLOG("krb5_aname_to_localname()", error_message(krbret));
 	    pamret = PAM_USER_UNKNOWN;
 	    goto cleanup2;
 	}
 	DLOG("changing PAM_USER to", lname);
-	if (pamret = pam_set_item(pamh, PAM_USER, lname)) {
+	if ((pamret = pam_set_item(pamh, PAM_USER, lname)) != 0) {
 	    DLOG("pam_set_item()", pam_strerror(pamh, pamret));
 	    pamret = PAM_SERVICE_ERR;
 	    goto cleanup2;
 	}
-	if (pamret = pam_get_item(pamh, PAM_USER, (void **) &name)) {
+	if ((pamret = pam_get_item(pamh, PAM_USER, (const void **) &name)
+	  != 0)) {
 	    DLOG("pam_get_item()", pam_strerror(pamh, pamret));
 	    pamret = PAM_SERVICE_ERR;
 	    goto cleanup2;
@@ -177,9 +183,8 @@ get_pass:
     }
 
     /* Get a TGT */
-    if (krbret = krb5_get_init_creds_password(pam_context, &creds, princ,
-					      pass, pam_prompter, pamh,
-					      0, NULL, &opts)) {
+    if ((krbret = krb5_get_init_creds_password(pam_context, &creds, princ,
+      pass, pam_prompter, pamh, 0, NULL, &opts)) != 0) {
 	DLOG("krb5_get_init_creds_password()", error_message(krbret));
 	if (try_first_pass && krbret == KRB5KRB_AP_ERR_BAD_INTEGRITY) {
 	    pass = NULL;
@@ -193,17 +198,17 @@ get_pass:
     strcpy(cache_name, "MEMORY:");
     (void) tmpnam(&cache_name[7]);
 
-    if (krbret = krb5_cc_resolve(pam_context, cache_name, &ccache)) {
+    if ((krbret = krb5_cc_resolve(pam_context, cache_name, &ccache)) != 0) {
 	DLOG("krb5_cc_resolve()", error_message(krbret));
 	pamret = PAM_SERVICE_ERR;
 	goto cleanup;
     }
-    if (krbret = krb5_cc_initialize(pam_context, ccache, princ)) {
+    if ((krbret = krb5_cc_initialize(pam_context, ccache, princ)) != 0) {
 	DLOG("krb5_cc_initialize()", error_message(krbret));
 	pamret = PAM_SERVICE_ERR;
  	goto cleanup;
     }
-    if (krbret = krb5_cc_store_cred(pam_context, ccache, &creds)) {
+    if ((krbret = krb5_cc_store_cred(pam_context, ccache, &creds)) != 0) {
 	DLOG("krb5_cc_store_cred()", error_message(krbret));
 	(void) krb5_cc_destroy(pam_context, ccache);
 	pamret = PAM_SERVICE_ERR;
@@ -224,12 +229,13 @@ get_pass:
 	pamret = PAM_AUTH_ERR;
 	goto cleanup;
     }
-    if (pamret = pam_set_data(pamh, "ccache", ccache, cleanup_cache)) {
+    if ((pamret = pam_set_data(pamh, "ccache", ccache, cleanup_cache)) != 0) {
 	DLOG("pam_set_data()", pam_strerror(pamh, pamret));
 	(void) krb5_cc_destroy(pam_context, ccache);
 	pamret = PAM_SERVICE_ERR;
 	goto cleanup;
     }
+
 
 cleanup:
     krb5_free_cred_contents(pam_context, &creds);
@@ -275,6 +281,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
 
     int		debug = 0;
     uid_t	euid;
+    gid_t	egid;
 
     if (flags == PAM_REINITIALIZE_CRED)
 	return PAM_SUCCESS; /* XXX Incorrect behavior */
@@ -288,30 +295,32 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
 	else if (strcmp(argv[i], "no_ccache") == 0)
 	    return PAM_SUCCESS;
 	else if (strstr(argv[i], "ccache=") == argv[i])
-	    cache_name = &argv[i][7]; /* save for later */
+	    cache_name = (char *) &argv[i][7]; /* save for later */
     }
 
     /* Get username */
-    if (pam_get_item(pamh, PAM_USER, (void **) &name)) {
+    if (pam_get_item(pamh, PAM_USER, (const void **) &name)) {
 	return PAM_SERVICE_ERR;
     }
 
     /* Get service name */
-    (void) pam_get_item(pamh, PAM_SERVICE, (void **) &service);
+    (void) pam_get_item(pamh, PAM_SERVICE, (const void **) &service);
     if (!service)
 	service = "unknown";
 
     DLOG("entry", "");
 
-    if (krb5_init_context(&pam_context)) {
+    if ((krbret = krb5_init_context(&pam_context)) != 0) {
 	DLOG("krb5_init_context()", error_message(krbret));
 	return PAM_SERVICE_ERR;
     }
 
     euid = geteuid(); /* Usually 0 */
+    egid = getegid();
 
     /* Retrieve the cache name */
-    if (pamret = pam_get_data(pamh, "ccache", (const void **) &ccache_temp)) {
+    if ((pamret = pam_get_data(pamh, "ccache", (const void **) &ccache_temp)) 
+      != 0) {
 	DLOG("pam_get_data()", pam_strerror(pamh, pamret));
 	pamret = PAM_CRED_UNAVAIL;
 	goto cleanup3;
@@ -326,6 +335,11 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
     }
 
     /* Avoid following a symlink as root */
+    if (setegid(pw->pw_gid)) {
+	DLOG("setegid()", name);
+	pamret = PAM_SERVICE_ERR;
+	goto cleanup3;
+    }
     if (seteuid(pw->pw_uid)) {
 	DLOG("seteuid()", name);
 	pamret = PAM_SERVICE_ERR;
@@ -340,7 +354,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
 	    pamret = PAM_BUF_ERR;
 	    goto cleanup3;
 	}
-	sprintf(cache_name, "FILE:/tmp/krb5cc_%ld", pw->pw_uid);
+	sprintf(cache_name, "FILE:/tmp/krb5cc_%d", pw->pw_uid);
     } else {
 	/* cache_name was supplied */
 	char *p = calloc(PATH_MAX + 10, 1); /* should be plenty */
@@ -357,10 +371,10 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
 	    if (*q == '%') {
 		q++;
 		if (*q == 'u') {
-		    sprintf(p, "%ld", pw->pw_uid);
+		    sprintf(p, "%d", pw->pw_uid);
 		    p += strlen(p);
 		} else if (*q == 'p') {
-		    sprintf(p, "%ld", getpid());
+		    sprintf(p, "%d", getpid());
 		    p += strlen(p);
 		} else {
 		    /* Not a special token */
@@ -375,24 +389,27 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
     }
 
     /* Initialize the new ccache */
-    if (krbret = krb5_cc_get_principal(pam_context, ccache_temp, &princ)) {
+    if ((krbret = krb5_cc_get_principal(pam_context, ccache_temp, &princ)) 
+      != 0) {
 	DLOG("krb5_cc_get_principal()", error_message(krbret));
 	pamret = PAM_SERVICE_ERR;
 	goto cleanup3;
     }
-    if (krbret = krb5_cc_resolve(pam_context, cache_name, &ccache_perm)) {
+    if ((krbret = krb5_cc_resolve(pam_context, cache_name, &ccache_perm)) 
+      != 0) {
 	DLOG("krb5_cc_resolve()", error_message(krbret));
 	pamret = PAM_SERVICE_ERR;
 	goto cleanup2;
     }
-    if (krbret = krb5_cc_initialize(pam_context, ccache_perm, princ)) {
+    if ((krbret = krb5_cc_initialize(pam_context, ccache_perm, princ)) != 0) {
 	DLOG("krb5_cc_initialize()", error_message(krbret));
 	pamret = PAM_SERVICE_ERR;
  	goto cleanup2;
     }
 
     /* Prepare for iteration over creds */
-    if (krbret = krb5_cc_start_seq_get(pam_context, ccache_temp, &cursor)) {
+    if ((krbret = krb5_cc_start_seq_get(pam_context, ccache_temp, &cursor)) 
+      != 0) {
 	DLOG("krb5_cc_start_seq_get()", error_message(krbret));
 	(void) krb5_cc_destroy(pam_context, ccache_perm);
 	pamret = PAM_SERVICE_ERR;
@@ -400,9 +417,10 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
     }
 
     /* Copy the creds (should be two of them) */
-    while ((krbret = krb5_cc_next_cred(pam_context, ccache_temp,
-				       &cursor, &creds) == 0)) {
-	if (krbret = krb5_cc_store_cred(pam_context, ccache_perm, &creds)) {
+    while ((krbret = compat_cc_next_cred(pam_context, ccache_temp,
+	&cursor, &creds) == 0)) {
+	    if ((krbret = krb5_cc_store_cred(pam_context, ccache_perm, 
+		&creds)) != 0) {
 	    DLOG("krb5_cc_store_cred()", error_message(krbret));
 	    (void) krb5_cc_destroy(pam_context, ccache_perm);
 	    krb5_free_cred_contents(pam_context, &creds);
@@ -412,7 +430,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
 	krb5_free_cred_contents(pam_context, &creds);
     }
     (void) krb5_cc_end_seq_get(pam_context, ccache_temp, &cursor);
-
+    
     if (strstr(cache_name, "FILE:") == cache_name) {
 	if (chown(&cache_name[5], pw->pw_uid, pw->pw_gid) == -1) {
 	    DLOG("chown()", strerror(errno));
@@ -421,6 +439,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
 	    goto cleanup2;
 	}
     }
+
     (void) krb5_cc_close(pam_context, ccache_perm);
 
     cache_env_name = malloc(strlen(cache_name) + 12);
@@ -432,7 +451,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
     }
 
     sprintf(cache_env_name, "KRB5CCNAME=%s", cache_name);
-    if (pamret = pam_putenv(pamh, cache_env_name)) {
+    if ((pamret = pam_putenv(pamh, cache_env_name)) != 0) {
 	DLOG("pam_putenv()", pam_strerror(pamh, pamret));
 	(void) krb5_cc_destroy(pam_context, ccache_perm);
 	pamret = PAM_SERVICE_ERR;
@@ -445,6 +464,30 @@ cleanup3:
     krb5_free_context(pam_context);
     DLOG("exit", pamret ? "failure" : "success");
     (void) seteuid(euid);
+    (void) setegid(egid);
     return pamret;
+}
+
+#include <sys/stat.h>
+void Jokostat(char *n)
+{
+	struct stat	b;
+	int		ret;
+
+	if (strstr(n, "FILE:") != n) {
+		syslog(LOG_DEBUG, "Jokostat: no fcache: %s", n);
+		return;
+	}
+
+	ret=stat(&n[5],&b);
+	if(ret!=0)
+	{
+		syslog(LOG_DEBUG, "Jokostat prout");
+		return;
+	}
+
+	syslog(LOG_DEBUG, "Jokostat: %d %d:%d %o", geteuid(), b.st_uid, b.st_gid, b.st_mode);
+
+	return;
 }
 

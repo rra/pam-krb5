@@ -1,5 +1,5 @@
 .\"
-.\" $Id: pam_krb5.5,v 1.1 2000/11/30 20:09:37 hartmans Exp $
+.\" $Id: pam_krb5.5,v 1.2 2000/11/30 20:40:36 hartmans Exp $
 .TH pam_krb5 5 "15 Jan 1999"
 .SH NAME
 pam_krb5 \- Kerberos 5 PAM module
@@ -177,10 +177,9 @@ file containing Kerberos principals that are allowed access.
 .SH SEE ALSO
 .BR kdestroy (1),
 .BR passwd (1),
-.BR pam (3),
+.BR pam (8),
 .BR syslog (3),
-.BR libpam (4),
-.BR pam.conf (4).
+.BR pam.conf (8).
 .SH NOTES
 Applications should not call
 .B pam_authenticate()
@@ -189,7 +188,3 @@ more than once between calls to
 and
 .B pam_end()
 when using the Kerberos 5 PAM module.
-.LP
-dtlogin will not successfully authenticate a user who enters a realm
-name as part of their username (even if the authentication
-module returns success).

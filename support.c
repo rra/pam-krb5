@@ -4,13 +4,17 @@
  * Support functions for pam_krb5
  */
 
-static const char rcsid[] = "$Id: support.c,v 1.1 2000/11/30 20:09:45 hartmans Exp $";
+static const char rcsid[] = "$Id: support.c,v 1.2 2000/11/30 20:40:37 hartmans Exp $";
 
+#include <errno.h>
 #include <stdio.h>	/* BUFSIZ */
+#include <stdlib.h>	/* malloc */
+#include <string.h>	/* strncpy */
 #include <syslog.h>	/* syslog */
 #include <security/pam_appl.h>
 #include <security/pam_modules.h>
 #include <krb5.h>
+#include <com_err.h>
 #include "pam_krb5.h"
 
 /*
@@ -22,11 +26,12 @@ int
 get_user_info(pam_handle_t *pamh, char *prompt, int type, char **response)
 {
     int pamret;
-    struct pam_message	msg, *pmsg;
+    struct pam_message	msg;
+    const struct pam_message *pmsg;
     struct pam_response	*resp = NULL;
     struct pam_conv	*conv;
 
-    if (pamret = pam_get_item(pamh, PAM_CONV, (void **) &conv))
+    if ((pamret = pam_get_item(pamh, PAM_CONV, (const void **) &conv)) != 0)
 	return pamret;
 
     /* set up conversation call */
@@ -34,7 +39,7 @@ get_user_info(pam_handle_t *pamh, char *prompt, int type, char **response)
     msg.msg_style = type;
     msg.msg = prompt;
 
-    if (pamret = conv->conv(1, &pmsg, &resp, conv->appdata_ptr))
+    if ((pamret = conv->conv(1, &pmsg, &resp, conv->appdata_ptr)) != 0)
 	return pamret;
 
     /* Caller should ignore errors for non-response conversations */
@@ -50,124 +55,6 @@ get_user_info(pam_handle_t *pamh, char *prompt, int type, char **response)
     free(resp);
     return pamret;
 }
-
-
-krb5_error_code
-pam_prompter(krb5_context context, void *data, const char *name,
-	     const char *banner, int num_prompts, krb5_prompt prompts[])
-{
-    int		pam_prompts = num_prompts;
-    int		pamret, i;
-
-    struct pam_message	*msg;
-    struct pam_response	*resp = NULL;
-    struct pam_conv	*conv;
-    pam_handle_t	*pamh = (pam_handle_t *) data;
-
-    if (pamret = pam_get_item(pamh, PAM_CONV, (void **) &conv))
-	return KRB5KRB_ERR_GENERIC;
-
-    if (name)
-	pam_prompts++;
-
-    if (banner)
-	pam_prompts++;
-
-    msg = calloc(sizeof(struct pam_message) * pam_prompts, 1);
-    if (!msg)
-	return ENOMEM;
-
-    /* Now use pam_prompts as an index */
-    pam_prompts = 0;
-
-    /* Sigh. malloc all the prompts. */
-    if (name) {
-	msg[pam_prompts].msg = malloc(strlen(name) + 1);
-	if (!msg[pam_prompts].msg)
-	    goto cleanup;
-	strcpy(msg[pam_prompts].msg, name);
-	msg[pam_prompts].msg_style = PAM_TEXT_INFO;
-	pam_prompts++;
-    }
-
-    if (banner) {
-	msg[pam_prompts].msg = malloc(strlen(banner) + 1);
-	if (!msg[pam_prompts].msg)
-	    goto cleanup;
-	strcpy(msg[pam_prompts].msg, banner);
-	msg[pam_prompts].msg_style = PAM_TEXT_INFO;
-	pam_prompts++;
-    }
-
-    for (i = 0; i < num_prompts; i++) {
-	msg[pam_prompts].msg = malloc(strlen(prompts[i].prompt) + 3);
-	if (!msg[pam_prompts].msg)
-	    goto cleanup;
-	sprintf(msg[pam_prompts].msg, "%s: ", prompts[i].prompt);
-	msg[pam_prompts].msg_style = prompts[i].hidden ? PAM_PROMPT_ECHO_OFF
-						       : PAM_PROMPT_ECHO_ON;
-	pam_prompts++;
-    }
-
-    if (pamret = conv->conv(pam_prompts, &msg, &resp, conv->appdata_ptr))
-	goto cleanup;
-
-    if (!resp)
-	goto cleanup;
-
-    /* Reuse pam_prompts as a starting index */
-    pam_prompts = 0;
-    if (name)
-	pam_prompts++;
-    if (banner)
-	pam_prompts++;
-
-    for (i = 0; i < num_prompts; i++, pam_prompts++) {
-	register int len;
-	if (!resp[pam_prompts].resp) {
-	    pamret = PAM_AUTH_ERR;
-	    goto cleanup;
-	}
-	len = strlen(resp[pam_prompts].resp); /* Help out the compiler */
-	if (len > prompts[i].reply->length) {
-	    pamret = PAM_AUTH_ERR;
-	    goto cleanup;
-	}
-	memcpy(prompts[i].reply->data, resp[pam_prompts].resp, len);
-	prompts[i].reply->length = len;
-    }
-
-cleanup:
-    /* pam_prompts is correct at this point */
-
-    for (i = 0; i < pam_prompts; i++) {
-	if (msg[i].msg)
-	    free(msg[i].msg);
-    }
-    free(msg);
-
-    if (resp) {
-	for (i = 0; i < pam_prompts; i++) {
-	    /*
-	     * Note that PAM is underspecified wrt free()'ing resp[i].resp.
-	     * It's not clear if I should free it, or if the application
-	     * has to. Therefore most (all?) apps won't free() it, and I
-	     * can't either, as I am not sure it was malloc()'d. All PAM
-	     * implementations I've seen leak memory here. Not so bad, IFF
-	     * you fork/exec for each PAM authentication (as is typical).
-	     */
-#if 0
-	    if (resp[i].resp)
-		free(resp[i].resp);
-#endif /* 0 */
-	}
-	/* This does not lose resp[i].resp if the application saved a copy. */
-	free(resp);
-    }
-
-    return (pamret ? KRB5KRB_ERR_GENERIC : 0);
-}
-
 
 /*
  * This routine with some modification is from the MIT V5B6 appl/bsd/login.c
@@ -189,8 +76,6 @@ verify_krb_v5_tgt(krb5_context context, krb5_ccache ccache, int debug)
     krb5_keyblock *	keyblock = 0;
     krb5_data		packet;
     krb5_auth_context	auth_context = NULL;
-    krb5_keytab		keytab = NULL;
-    char *		kt_name = NULL;
 
     packet.data = 0;
 
@@ -198,8 +83,8 @@ verify_krb_v5_tgt(krb5_context context, krb5_ccache ccache, int debug)
      * Get the server principal for the local host.
      * (Use defaults of "host" and canonicalized local name.)
      */
-    if (retval = krb5_sname_to_principal(context, NULL, NULL,
-					 KRB5_NT_SRV_HST, &princ)) {
+    if ((retval = krb5_sname_to_principal(context, NULL, NULL, KRB5_NT_SRV_HST,
+      &princ)) != 0) {
 	if (debug)
 	    syslog(LOG_DEBUG, "pam_krb5: verify_krb_v5_tgt(): %s: %s",
 		   "krb5_sname_to_principal()", error_message(retval));
@@ -207,7 +92,7 @@ verify_krb_v5_tgt(krb5_context context, krb5_ccache ccache, int debug)
     }
 
     /* Extract the name directly. */
-    strncpy(phost, krb5_princ_component(c, princ, 1)->data, BUFSIZ);
+    strncpy(phost, compat_princ_component(context, princ, 1), BUFSIZ);
     phost[BUFSIZ - 1] = '\0';
 
     /*
@@ -215,8 +100,8 @@ verify_krb_v5_tgt(krb5_context context, krb5_ccache ccache, int debug)
      * (use default/configured keytab, kvno IGNORE_VNO to get the
      * first match, and enctype is currently ignored anyhow.)
      */
-    if (retval = krb5_kt_read_service_key(context, NULL, princ, 0,
-					  ENCTYPE_DES_CBC_MD5, &keyblock)) {
+    if ((retval = krb5_kt_read_service_key(context, NULL, princ, 0,
+      ENCTYPE_DES_CBC_MD5, &keyblock)) != 0) {
 	/* Keytab or service key does not exist */
 	if (debug)
 	    syslog(LOG_DEBUG, "pam_krb5: verify_krb_v5_tgt(): %s: %s",
@@ -256,7 +141,7 @@ verify_krb_v5_tgt(krb5_context context, krb5_ccache ccache, int debug)
 
 cleanup:
     if (packet.data)
-	krb5_free_data_contents(context, &packet);
+	compat_free_data_contents(context, &packet);
     krb5_free_principal(context, princ);
     return retval;
 

@@ -1,11 +1,22 @@
 /*
  * pam_krb5.h
  *
- * $Id: pam_krb5.h,v 1.1 2000/11/30 20:09:37 hartmans Exp $
+ * $Id: pam_krb5.h,v 1.2 2000/11/30 20:40:37 hartmans Exp $
  */
 
 int get_user_info(pam_handle_t *, char *, int, char **);
-krb5_error_code pam_prompter(krb5_context, void *, const char *,
-			     const char *, int, krb5_prompt[]);
 int verify_krb_v5_tgt(krb5_context, krb5_ccache, int);
 void cleanup_cache(pam_handle_t *, void *, int);
+
+krb5_prompter_fct pam_prompter;
+
+const char	*compat_princ_component(krb5_context, krb5_principal, int);
+void		 compat_free_data_contents(krb5_context, krb5_data *);
+krb5_error_code	 compat_cc_next_cred(krb5_context, const krb5_ccache, 
+				     krb5_cc_cursor *, krb5_creds *);
+
+#ifndef ENCTYPE_DES_CBC_MD5
+#define ENCTYPE_DES_CBC_MD5	ETYPE_DES_CBC_MD5
+#endif
+
+
