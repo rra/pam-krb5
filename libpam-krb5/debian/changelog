@@ -1,3 +1,12 @@
+libpam-krb5 (1.0-9) unstable; urgency=high
+
+  * Upload with no code changes in order to pick up symbol versions,
+    Closes: #260372 
+  * High urgency because we want this to make it into sarge.
+  * Don't build-depend on libdb2-dev, Closes: #248517
+
+ -- Sam Hartman <hartmans@mit.edu>  Wed, 18 Aug 2004 13:47:38 -0400
+
 libpam-krb5 (1.0-8) unstable; urgency=low
 
   * Don't require user to exist in NSS, Closes: #141288

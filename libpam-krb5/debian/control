@@ -3,7 +3,7 @@ Section: net
 Priority: optional
 Maintainer: Sam hartman <hartmans@debian.org>
 Standards-Version: 3.0.1
-Build-Depends: libkrb5-dev, libdb2-dev, debhelper (>= 2.0.0), comerr-dev, libpam0g-dev
+Build-Depends: libkrb5-dev,  debhelper (>= 2.0.0), comerr-dev, libpam0g-dev
 
 Package: libpam-krb5
 Architecture: any
