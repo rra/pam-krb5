@@ -1,3 +1,15 @@
+libpam-krb5 (1.0-4) unstable; urgency=medium
+
+  * Wildcard enctype matching so that you don't have to have a des-cbc-md5
+    key.  Previously, if you did not have a des-cbc-md5 key, it looks like
+    the code might not verify the ticket against the key, treating it as
+    if you had no local key and blindly trusted the KDC.  In practice this
+    is not an issue with most Kerberos setups.
+  * Test against pam service keys like imap rather than just the host
+    service key.  We still prefer host to service keys.
+
+ -- Sam Hartman <hartmans@debian.org>  Tue, 19 Dec 2000 17:49:12 -0500
+
 libpam-krb5 (1.0-3) unstable; urgency=low
 
   * Add code to destroy ccache  on logout.
