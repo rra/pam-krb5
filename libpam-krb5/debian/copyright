@@ -1,5 +1,6 @@
 This package was debianized by Brian May <bam@debian.org> on
 Thu,  9 Nov 2000 11:39:41 +1100.
+The package was then recompiled against MIT Kerberos by Sam Hartman <hartmans@debian.org>
 
 It was downloaded from http://www.fcusack.com/
 The patch for Heimdal came from http://ns1.logidee.com/~joko/heimdal/src/
