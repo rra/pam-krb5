@@ -5,7 +5,7 @@
  *
  */
 
-static const char rcsid[] = "$Id: pam_krb5_auth.c,v 1.3 2000/12/08 18:36:39 hartmans Exp $";
+static const char rcsid[] = "$Id: pam_krb5_auth.c,v 1.4 2000/12/08 19:16:56 hartmans Exp $";
 
 #include <errno.h>
 #include <limits.h>	/* PATH_MAX */
@@ -440,7 +440,6 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
 	}
     }
 
-    (void) krb5_cc_close(pam_context, ccache_perm);
 
     cache_env_name = malloc(strlen(cache_name) + 12);
     if (!cache_env_name) {
