@@ -8,6 +8,7 @@
 static const char rcsid[] = "$Id: pam_krb5_acct.c,v 1.2 2000/11/30 20:40:37 hartmans Exp $";
 
 #include <syslog.h>	/* syslog */
+#include <string.h>	/* strcmp */
 #include <security/pam_appl.h>
 #include <security/pam_modules.h>
 #include <krb5.h>

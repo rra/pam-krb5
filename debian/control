@@ -1,15 +1,18 @@
 Source: libpam-krb5
 Section: net
 Priority: optional
-Maintainer: Sam hartman <hartmans@debian.org>
-Standards-Version: 3.0.1
-Build-Depends: libkrb5-dev,  debhelper (>= 2.0.0), comerr-dev, libpam0g-dev
+Maintainer: Sam Hartman <hartmans@debian.org>
+Standards-Version: 3.6.1
+Build-Depends: debhelper (>= 4.0.0), libkrb5-dev, comerr-dev, libpam0g-dev
 
 Package: libpam-krb5
 Architecture: any
 Depends: ${shlibs:Depends}
 Conflicts: libpam-heimdal
 Description: PAM module for MIT Kerberos
- A Kerberos v5 pam module for use with MIT kerberos. This
- module should only be used for local logins unless you really know
- what you are doing.
+ A Kerberos v5 PAM module for use with MIT Kerberos.  It supports
+ authenticating against a Kerberos v5 KDC, obtaining tickets and
+ populating an initial ticket cache, authorizing users via a ~/.k5login
+ file, and changing Kerberos v5 passwords.  This module should only be
+ used for local logins unless you really know what you are doing.
+

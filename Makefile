@@ -31,7 +31,7 @@ LIBS_mit = -lkrb5 -lk5crypto -lcom_err
 LIBS = $(OSLIBS) ${LIBS_${KRB5_IMPL}}
 COMPAT = compat_${KRB5_IMPL}.c
 
-INC = -I${KRB5BASE}/include
+#INC = -I${KRB5BASE}/include
 
 
 ####################################################################

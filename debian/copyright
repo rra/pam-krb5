@@ -1,12 +1,13 @@
-This package was debianized by Brian May <bam@debian.org> on
-Thu,  9 Nov 2000 11:39:41 +1100.
-The package was then recompiled against MIT Kerberos by Sam Hartman <hartmans@debian.org>
+The original package was debianized by Brian May <bam@debian.org> on Thu,
+9 Nov 2000 11:39:41 +1100.  The package was then recompiled against MIT
+Kerberos by Sam Hartman <hartmans@debian.org>.
 
-It was downloaded from http://www.fcusack.com/
-The patch for Heimdal came from http://ns1.logidee.com/~joko/heimdal/src/
-The unused FreeBSD patches came from http://www.freebsd.org/cgi/cvsweb.cgi/ports/security/pam_krb5/files/
+It was downloaded from <http://www.fcusack.com/>
+The patch for Heimdal came from <http://ns1.logidee.com/~joko/heimdal/src/>
+The unused FreeBSD patches came from
+<http://www.freebsd.org/cgi/cvsweb.cgi/ports/security/pam_krb5/files/>
 
-Upstream Author(s): Frank Cusack.
+Upstream Author: Frank Cusack
 
 Copyright:
 
@@ -27,11 +28,12 @@ are met:
    products derived from this software without specific prior
    written permission.
 
-ALTERNATIVELY, this product may be distributed under the terms of
-the GNU Public License, in which case the provisions of the GPL are
-required INSTEAD OF the above restrictions.  (This clause is
-necessary due to a potential bad interaction between the GPL and
-the restrictions contained in a BSD-style copyright.)
+ALTERNATIVELY, this product may be distributed under the terms of the GNU
+Public License, in which case the provisions of the GPL are required
+INSTEAD OF the above restrictions.  (This clause is necessary due to a
+potential bad interaction between the GPL and the restrictions contained
+in a BSD-style copyright.)  The full text of the GPL is available in
+Debian systems in /usr/share/common-licenses/GPL.
 
 THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
 WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -100,11 +102,12 @@ are met:
    products derived from this software without specific prior
    written permission.
 
-ALTERNATIVELY, this product may be distributed under the terms of
-the GNU Public License, in which case the provisions of the GPL are
-required INSTEAD OF the above restrictions.  (This clause is
-necessary due to a potential bad interaction between the GPL and
-the restrictions contained in a BSD-style copyright.)
+ALTERNATIVELY, this product may be distributed under the terms of the GNU
+Public License, in which case the provisions of the GPL are required
+INSTEAD OF the above restrictions.  (This clause is necessary due to a
+potential bad interaction between the GPL and the restrictions contained
+in a BSD-style copyright.)  The full text of the GPL is available in
+Debian systems in /usr/share/common-licenses/GPL.
 
 THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
 WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
