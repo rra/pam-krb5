@@ -5,7 +5,7 @@
  *
  */
 
-static const char rcsid[] = "$Id: pam_krb5_auth.c,v 1.2 2000/11/30 20:40:37 hartmans Exp $";
+static const char rcsid[] = "$Id: pam_krb5_auth.c,v 1.3 2000/12/08 18:36:39 hartmans Exp $";
 
 #include <errno.h>
 #include <limits.h>	/* PATH_MAX */
@@ -271,7 +271,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
     krb5_context	pam_context;
     krb5_principal	princ;
     krb5_creds		creds;
-    krb5_ccache		ccache_temp, ccache_perm;
+    krb5_ccache		ccache_temp, ccache_perm, ccache_check;
     krb5_cc_cursor	cursor;
 
     int			i, pamret;
@@ -390,7 +390,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
 
     /* Initialize the new ccache */
     if ((krbret = krb5_cc_get_principal(pam_context, ccache_temp, &princ)) 
-      != 0) {
+	!= 0) {
 	DLOG("krb5_cc_get_principal()", error_message(krbret));
 	pamret = PAM_SERVICE_ERR;
 	goto cleanup3;
@@ -453,6 +453,18 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
     sprintf(cache_env_name, "KRB5CCNAME=%s", cache_name);
     if ((pamret = pam_putenv(pamh, cache_env_name)) != 0) {
 	DLOG("pam_putenv()", pam_strerror(pamh, pamret));
+	(void) krb5_cc_destroy(pam_context, ccache_perm);
+	pamret = PAM_SERVICE_ERR;
+	goto cleanup2;
+    }
+        if (!pam_get_data(pamh, "ccache_perm", (const void **) &ccache_check)) {
+	DLOG("pam_get_data()", "permanent ccache data already present");
+	(void) krb5_cc_destroy(pam_context, ccache_perm);
+	pamret = PAM_SERVICE_ERR;
+	goto cleanup2;
+    }
+    if ((pamret = pam_set_data(pamh, "ccache_perm", ccache_perm, cleanup_cache)) != 0) {
+	DLOG("pam_set_data()", pam_strerror(pamh, pamret));
 	(void) krb5_cc_destroy(pam_context, ccache_perm);
 	pamret = PAM_SERVICE_ERR;
 	goto cleanup2;

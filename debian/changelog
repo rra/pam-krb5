@@ -1,3 +1,10 @@
+libpam-krb5 (1.0-3) unstable; urgency=low
+
+  * Add code to destroy ccache  on logout.
+  * Upload to Debian (Closes: BUG#79001)
+
+ --
+
 libpam-krb5 (1.0-2) unstable; urgency=low
 
   * Release MIT Kerberos5 version of PAM module.

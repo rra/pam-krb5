@@ -1,5 +1,5 @@
 .\"
-.\" $Id: pam_krb5.5,v 1.2 2000/11/30 20:40:36 hartmans Exp $
+.\" $Id: pam_krb5.5,v 1.3 2000/12/08 18:36:39 hartmans Exp $
 .TH pam_krb5 5 "15 Jan 1999"
 .SH NAME
 pam_krb5 \- Kerberos 5 PAM module
@@ -53,8 +53,7 @@ function stores the newly acquired credentials in a credentials cache,
 and sets the environment variable
 .B KRB5CCNAME
 appropriately.
-The credentials cache should be destroyed by the user at logout with
-.BR kdestroy (1) .
+This module destroys the credentials cache when the PAM data is cleaned up.  Thus, you should set  close_sessions to yes in /etc/login.defs.
 .LP
 The following options may be passed to the authentication module:
 .TP 15
