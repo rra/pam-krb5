@@ -1,3 +1,11 @@
+libpam-krb5 (1.0-8) unstable; urgency=low
+
+  * Don't require user to exist in NSS, Closes: #141288
+  * Conflict with libpam-heimdal, Closes: #146279
+  * Fix pam_silent handling thanks to nocturne@permabit.com, Closes: #114475
+
+ -- Sam Hartman <hartmans@debian.org>  Sun,  4 Aug 2002 17:57:28 -0400
+
 libpam-krb5 (1.0-7) unstable; urgency=low
 
   * Move fron non-us to main--second to last package of mine

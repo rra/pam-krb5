@@ -5,7 +5,7 @@
  *
  */
 
-static const char rcsid[] = "$Id: pam_krb5_auth.c,v 1.7 2001/05/12 22:42:14 hartmans Exp $";
+static const char rcsid[] = "$Id: pam_krb5_auth.c,v 1.8 2002/08/04 21:58:49 hartmans Exp $";
 
 #include <errno.h>
 #include <limits.h>	/* PATH_MAX */
@@ -52,7 +52,6 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     char		*prompt = NULL;
     char		cache_name[L_tmpnam + 8];
     char		lname[64]; /* local acct name */
-    struct passwd	*pw;
 
     int debug = 0, try_first_pass = 0, use_first_pass = 0;
     int forwardable = 0, reuse_ccache = 0, no_ccache = 0;
@@ -175,13 +174,6 @@ get_pass:
 	    goto cleanup2;
 	}
     }
-    pw = getpwnam(name);
-    if (!pw) {
-	DLOG("getpwnam()", lname);
-	pamret = PAM_USER_UNKNOWN;
-	goto cleanup2;
-    }
-
     /* Get a TGT */
     if ((krbret = krb5_get_init_creds_password(pam_context, &creds, princ,
       pass, pam_prompter, pamh, 0, NULL, &opts)) != 0) {
@@ -283,10 +275,10 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
     uid_t	euid;
     gid_t	egid;
 
-    if (flags == PAM_REINITIALIZE_CRED)
+    if ((flags | PAM_SILENT) == (PAM_REINITIALIZE_CRED | PAM_SILENT))
 	return PAM_SUCCESS; /* XXX Incorrect behavior */
 
-    if (flags != PAM_ESTABLISH_CRED)
+    if ((flags | PAM_SILENT) != (PAM_ESTABLISH_CRED | PAM_SILENT) )
 	return PAM_SERVICE_ERR;
 
     for (i = 0; i < argc; i++) {
