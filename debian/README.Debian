@@ -1,0 +1,38 @@
+pam-krb5 for Debian
+----------------------
+
+The original module has been written by Frank Cusack (see README file).
+
+This particular version of the module is heavily based on the FreeBSD
+ports version.
+
+It has also been modified by Joel Kociolek <joko@logidee.com> to be usable
+with Debian GNU/Linux.
+
+WARNING: for security reasons, you should not use this module for purposes
+other than local login (xdm, login, etc.). Don't use it over a network
+unless you _really_ know what you are doing.
+
+--------------------------------------------------------------------------
+
+Another PAM module exists at:
+
+ftp://ftp.it.su.se/pub/kerberos/contrib/source/pam_krb5-1.2.tar.gz
+
+According to Nicolas Williams <Nicolas.Williams@ubsw.com>:
+
+It looks pretty good, except for one serious, easily fixable problem:
+the krb5 password validation function is called without a valid prompter
+function, so the krb5 library is allowed to believe that the user can be
+prompted via the tty.
+
+The solution to this problem is simple: add a krb5 prompter function
+whose prompter_data is a PAM handle and have this prompter convert krb5
+prompts to PAM prompts and so on.
+
+That said, this is the ONLY PAM_KRB5 module I have seen so far that gets
+password-aging right, namely by attempting to get an initial ticket to
+the password changing service so as to change the user's password and
+then get a TGT for the user.
+
+ -- Brian May <bam@debian.org>, Thu,  9 Nov 2000 11:39:41 +1100

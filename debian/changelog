@@ -1,0 +1,9 @@
+libpam-heimdal (1.0-1) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Brian May <bam@debian.org>  Fri, 17 Nov 2000 10:32:40 +1100
+
+Local variables:
+mode: debian-changelog
+End:

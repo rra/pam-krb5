@@ -1,0 +1,22 @@
+Document: pam_krb5
+Title: Debian pam_krb5 Manual
+Author: <insert document author here>
+Abstract: This manual describes what pam_krb5 is
+ and how it can be used to
+ manage online manuals on Debian systems.
+Section: unknown
+
+Format: debiandoc-sgml
+Files: /usr/doc/pam_krb5/pam_krb5.sgml.gz
+
+Format: postscript
+Files: /usr/doc/pam_krb5/pam_krb5.ps.gz
+
+Format: text
+Files: /usr/doc/pam_krb5/pam_krb5.text.gz
+
+Format: HTML
+Index: /usr/doc/pam_krb5/html/index.html
+Files: /usr/doc/pam_krb5/html/*.html
+
+  
