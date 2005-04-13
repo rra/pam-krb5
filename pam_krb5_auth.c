@@ -280,8 +280,12 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
     uid_t	euid;
     gid_t	egid;
 
+    /* XXX The meaning of PAM_REINITIALIZE_CRED is unclear, but ssh calls
+       this function without it and then with it as part of a normal login.
+       The right thing may be to fall through and do what we would normally
+       do with PAM_ESTABLISH_CRED, but the below works in practice. */
     if ((flags | PAM_SILENT) == (PAM_REINITIALIZE_CRED | PAM_SILENT))
-	return PAM_CRED_UNAVAIL;
+	return PAM_SUCCESS;
 
     if ((flags | PAM_SILENT) != (PAM_ESTABLISH_CRED | PAM_SILENT) )
 	return PAM_SERVICE_ERR;

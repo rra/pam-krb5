@@ -1,7 +1,5 @@
 libpam-krb5 (1.0-11) unstable; urgency=low
 
-  * Return PAM_CRED_UNAVAIL to PAM_REINITIALIZE_CREDS as the apparently
-    most appropriate error message.  (Closes: #191001)
   * Remove reference to non-existant man page pam.conf(8) and change
     pam(8) to pam(7).  Thanks, Nik A. Melchior.  (Closes: #271066)
   * Include the user UID in the default ticket cache name so that rpc.gssd
