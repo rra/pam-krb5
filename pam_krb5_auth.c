@@ -348,20 +348,24 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
 
     /* Get the cache name */
     if (!cache_name) {
-      int ccache_fd;
-      cache_name = strdup ("/tmp/krb5cc_XXXXXX");
+        int ccache_fd;
+        size_t ccache_size = strlen("/tmp/krb5cc_4294967295_XXXXXX") + 1;
+
+        cache_name = malloc(ccache_size);
 	if (!cache_name) {
 	    DLOG("malloc()", "failure");
 	    pamret = PAM_BUF_ERR;
 	    goto cleanup3;
 	}
-	ccache_fd = mkstemp (cache_name);
-	if( ccache_fd == -1 ) {
-	  DLOG ("mkstemp()", "failure");
+        snprintf(cache_name, ccache_size, "/tmp/krb5cc_%d_XXXXXX",
+                 pw->pw_uid);
+	ccache_fd = mkstemp(cache_name);
+	if (ccache_fd == -1) {
+            DLOG ("mkstemp()", "failure");
 	    pamret = PAM_BUF_ERR;
 	    goto cleanup3;
 	}
-	close (ccache_fd);
+	close(ccache_fd);
 
     } else {
 	/* cache_name was supplied */

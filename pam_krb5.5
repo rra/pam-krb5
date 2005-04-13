@@ -171,9 +171,10 @@ only because of the naming conventions for PAM modules.
 .SM KRB5CCNAME
 Location of the credentials cache.
 .SH FILES
-.TP "\w'/tmp/krb5cc_[uid]\ \ 'u"
-/tmp/krb5cc_[uid]
-default credentials cache ([uid] is the decimal UID of the user).
+.TP
+/tmp/krb5cc_[uid]_[rand]
+default credentials cache ([uid] is the decimal UID of the user and [rand]
+is a random string).
 .TP
 ~/\&.k5login
 file containing Kerberos principals that are allowed access.
