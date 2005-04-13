@@ -1,5 +1,15 @@
+libpam-krb5 (1.0-12) unstable; urgency=low
+
+  * Revert the PAM_REINITIALIZE_CREDS change as it breaks sshd with
+    UsePAM.  Add a source comment explaining the confusion about the
+    meaning of this flag.
+
+ -- Russ Allbery <rra@stanford.edu>  Wed, 13 Apr 2005 16:01:45 -0700
+
 libpam-krb5 (1.0-11) unstable; urgency=low
 
+  * Return PAM_CRED_UNAVAIL to PAM_REINITIALIZE_CREDS as the apparently
+    most appropriate error message.  (Closes: #191001)
   * Remove reference to non-existant man page pam.conf(8) and change
     pam(8) to pam(7).  Thanks, Nik A. Melchior.  (Closes: #271066)
   * Include the user UID in the default ticket cache name so that rpc.gssd
