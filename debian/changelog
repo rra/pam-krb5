@@ -1,7 +1,17 @@
+libpam-krb5 (1.0-11) unstable; urgency=low
+
+  * Return PAM_CRED_UNAVAIL to PAM_REINITIALIZE_CREDS as the apparently
+    most appropriate error message.  (Closes: #191001)
+  * Remove reference to non-existant man page pam.conf(8) and change
+    pam(8) to pam(7).  Thanks, Nik A. Melchior.  (Closes: #271066)
+  * Really remove stray ex.doc-base.package file.
+
+ -- Russ Allbery <rra@stanford.edu>  Wed, 13 Apr 2005 13:54:47 -0700
+
 libpam-krb5 (1.0-10) unstable; urgency=low
 
   * Free authentication context used to prevent KDC spoofing, fixing a
-    file descriptor leak.  Thanks, Martin Kggggggler.  (Closes: #194542)
+    file descriptor leak.  Thanks, Martin Kögler.  (Closes: #194542)
   * Fix use_first_pass and try_first_pass for password changes and report
     password change errors via the PAM conversation.  Thanks, Martin Mares.
     (Closes: #133461)
@@ -22,8 +32,7 @@ libpam-krb5 (1.0-10) unstable; urgency=low
   * Refer to /usr/share/common-licenses in debian/copyright for the GPL
     and remove dh_make boilerplate language.
 
-
- -- Russ Allbery <eagle@windlord.stanford.edu>  Mon,  6 Sep 2004 16:39:13 -0400
+ -- Russ Allbery <rra@stanford.edu>  Mon,  6 Sep 2004 16:39:13 -0400
 
 libpam-krb5 (1.0-9) unstable; urgency=high
 
@@ -93,6 +102,4 @@ libpam-heimdal (1.0-1) unstable; urgency=low
 
  -- Brian May <bam@debian.org>  Fri, 17 Nov 2000 10:32:40 +1100
 
-Local variables:
-mode: debian-changelog
-End:
+

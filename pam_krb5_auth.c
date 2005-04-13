@@ -281,7 +281,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
     gid_t	egid;
 
     if ((flags | PAM_SILENT) == (PAM_REINITIALIZE_CRED | PAM_SILENT))
-	return PAM_SUCCESS; /* XXX Incorrect behavior */
+	return PAM_CRED_UNAVAIL;
 
     if ((flags | PAM_SILENT) != (PAM_ESTABLISH_CRED | PAM_SILENT) )
 	return PAM_SERVICE_ERR;
