@@ -39,7 +39,7 @@ mit_pam_prompter(krb5_context context, void *data, const char *name,
     struct pam_conv	*conv;
     pam_handle_t	*pamh = (pam_handle_t *) data;
 
-    if ((pamret = pam_get_item(pamh, PAM_CONV, (const void **) &conv)) != 0)
+    if ((pamret = pam_get_item(pamh, PAM_CONV, (void *) &conv)) != 0)
 	return KRB5KRB_ERR_GENERIC;
 
     if (name)

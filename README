@@ -1,16 +1,19 @@
 This is the README for pam_krb5, a PAM module which support Kerberos 5
 authentication.
 
+This software is Copyright (c) 2005 Andres Salomon.
 This software is Copyright (c) 1999-2000 Frank Cusack.
 All Rights Reserved.
 
 See the COPYRIGHT file, included with this distribution, for copyright
 and redistribution information.
 
-Author:
+Authors:
 Frank Cusack
 <fcusack@fcusack.com>
 
+Andres Salomon
+<dilinger@debian.org>
 
 I. Kerberos notes
 

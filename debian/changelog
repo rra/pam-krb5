@@ -1,3 +1,13 @@
+libpam-krb5 (1.2.0-1) unstable; urgency=low
+
+  * New upstream maintainer and version.
+    - Now supports reinitialization of credentials properly, allowing
+      programs such as xlock to refresh credentials.  (Closes: #309345)
+    - Do not include the principal name in the prompt.  This breaks some
+      SSH clients and isn't necessary.  (Closes: #321319)
+
+ --
+
 libpam-krb5 (1.0-12) unstable; urgency=low
 
   * Revert the PAM_REINITIALIZE_CREDS change as it breaks sshd with

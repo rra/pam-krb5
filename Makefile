@@ -38,10 +38,10 @@ COMPAT = compat_${KRB5_IMPL}.c
 # No changes below this line
 
 SRCS = pam_krb5_auth.c pam_krb5_pass.c pam_krb5_acct.c pam_krb5_sess.c \
-	support.c ${COMPAT}
+	support.c credlist.c context.c ${COMPAT}
 
 OBJS = pam_krb5_auth.o pam_krb5_pass.o pam_krb5_acct.o pam_krb5_sess.o \
-	support.o ${COMPAT:.c=.o}
+	support.o credlist.o context.o ${COMPAT:.c=.o}
 
 all: pam_krb5.so
 
@@ -70,6 +70,12 @@ pam_krb5_sess.o: pam_krb5_sess.c pam_krb5.h
 	$(CC) -c $(CFLAGS) $(INC) $<
 
 support.o: support.c pam_krb5.h
+	$(CC) -c $(CFLAGS) $(INC) $<
+
+credlist.o: credlist.c credlist.h
+	$(CC) -c $(CFLAGS) $(INC) $<
+
+context.o: context.c context.h
 	$(CC) -c $(CFLAGS) $(INC) $<
 
 compat_heimdal.o: compat_heimdal.c

@@ -4,18 +4,198 @@
  * Support functions for pam_krb5
  */
 
-static const char rcsid[] = "$Id: support.c,v 1.3 2000/12/19 22:53:11 hartmans Exp $";
-
 #include <errno.h>
-#include <stdio.h>	/* BUFSIZ */
-#include <stdlib.h>	/* malloc */
-#include <string.h>	/* strncpy */
-#include <syslog.h>	/* syslog */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <syslog.h>
 #include <security/pam_appl.h>
 #include <security/pam_modules.h>
 #include <krb5.h>
 #include <com_err.h>
 #include "pam_krb5.h"
+#include "credlist.h"
+
+struct pam_args pam_args;
+
+void
+parse_args(int flags, int argc, const char **argv)
+{
+	int i;
+
+	memset(&pam_args, 0, sizeof(pam_args));
+	for (i = 0; i < argc; i++) {
+		if (strcmp(argv[i], "debug") == 0)
+			pam_args.debug = 1;
+		else if (strcmp(argv[i], "try_first_pass") == 0)
+			pam_args.try_first_pass = 1;
+		else if (strcmp(argv[i], "use_first_pass") == 0)
+			pam_args.use_first_pass = 1;
+		else if (strcmp(argv[i], "forwardable") == 0)
+			pam_args.forwardable = 1;
+		else if (strcmp(argv[i], "reuse_ccache") == 0)
+			pam_args.reuse_ccache = 1;
+		else if (strcmp(argv[i], "no_ccache") == 0)
+			pam_args.no_ccache = 1;
+		else if (strcmp(argv[i], "ignore_root") == 0)
+			pam_args.ignore_root = 1;
+		else if (strcmp(argv[i], "ccache_dir=") == 0)
+			pam_args.ccache_dir = (char *) &argv[i][7];
+	}
+	
+	if (flags & PAM_SILENT)
+		pam_args.quiet++;
+	if (!pam_args.ccache_dir)
+		pam_args.ccache_dir = "/tmp";
+}
+
+/*
+ * Prompt the user for a password; authenticate the password with the KDC.
+ * If correct, fill in creds with TGT magic. */
+int
+password_auth(struct context *ctx, char *in_tkt_service,
+		struct credlist **credlist)
+{
+	krb5_get_init_creds_opt opts;
+	krb5_creds creds;
+	int retval;
+	char *pass = NULL;
+	int retry;
+
+	new_credlist(ctx, credlist);
+	memset(&creds, 0, sizeof(krb5_creds));
+	krb5_get_init_creds_opt_init(&opts);
+	if (pam_args.forwardable)
+		krb5_get_init_creds_opt_set_forwardable(&opts, 1);
+
+	if (pam_args.ignore_root && strcmp("root", ctx->name) == 0) {
+		dlog(ctx, "ignoring root user login");
+		retval = PAM_SERVICE_ERR;
+		goto done;
+	}
+
+	retry = pam_args.try_first_pass ? 1 : 0;
+	if (pam_args.try_first_pass || pam_args.use_first_pass)
+		pam_get_item(ctx->pamh, PAM_AUTHTOK, (void *) &pass);
+
+	/* If try_first_pass or use_first_pass is set, grab the old password
+	 * (if set) instead of prompting.  If try_first_pass is set, and
+	 * the old password doesn't work, prompt for the password (loop). */
+	do {
+		if (!pass) {
+			retry = 0;
+			if ((retval = get_user_info(ctx->pamh, "Password: ", PAM_PROMPT_ECHO_OFF, &pass)) != PAM_SUCCESS) {
+				dlog(ctx, "get_user_info(): %s", pam_strerror(ctx->pamh, retval));
+				retval = PAM_SERVICE_ERR;
+				goto done;
+			}
+
+			/* set this for the next pam module's try_first_pass */
+			retval = pam_set_item(ctx->pamh, PAM_AUTHTOK, pass);
+			free(pass);
+			if (retval != PAM_SUCCESS) {
+				dlog(ctx, "pam_set_item(): %s", pam_strerror(ctx->pamh, retval));
+				retval = PAM_SERVICE_ERR;
+				goto done;
+			}
+			pam_get_item(ctx->pamh, PAM_AUTHTOK, (void *) &pass);
+		}
+
+		/* Get a TGT */
+		retval = krb5_get_init_creds_password(ctx->context, &creds, ctx->princ, pass, pam_prompter, ctx->pamh, 0, in_tkt_service, &opts);
+		if (retval == 0 || (!retry && retval != KRB5KRB_AP_ERR_BAD_INTEGRITY)) {
+			if ((retval = append_to_credlist(ctx, credlist, creds)) != PAM_SUCCESS)
+				goto done;
+
+			break;
+		}
+		pass = NULL;
+	} while (retry);
+
+	if (retval == 0 && pass) {
+		/* success; set this in case we're changing the passwd */
+		if ((retval = pam_set_item(ctx->pamh, PAM_OLDAUTHTOK, pass)) != PAM_SUCCESS) {
+			dlog(ctx, "pam_set_item(): %s", pam_strerror(ctx->pamh, retval));
+			retval = PAM_SERVICE_ERR;
+			goto done;
+		}
+	}
+	else {
+		dlog(ctx, "krb5_get_init_creds_password(): %s", error_message(retval));
+		if (retval == KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN)
+			retval = PAM_USER_UNKNOWN;
+		else if (retval == KRB5_KDC_UNREACH)
+			retval = PAM_AUTHINFO_UNAVAIL;
+		else
+			retval = PAM_AUTH_ERR;
+		goto done;
+	}
+
+#if 0
+	/* Verify the local user exists (AFTER getting the password) */
+	if (strchr(ctx->name, '@')) {
+		if ((pamret = to_local_user(ctx)) != PAM_SUCCESS)
+			goto cleanup;
+	}
+
+	/* Someone convince me the above is actually needed for something.
+	 * -dil */
+#endif
+
+
+	retval = PAM_SUCCESS;
+done:
+	return retval;
+}
+
+int
+init_ccache(struct context *ctx, const char *ccname,
+		struct credlist *clist, krb5_ccache *cache)
+{
+	struct credlist *c = clist;
+	int retval;
+#if 0
+	/* For CNS */
+	if ((retval = krb5_cc_register(ctx->context, &krb5_mcc_ops,
+				       	FALSE)) != 0) {
+		/* Solaris dtlogin doesn't call pam_end() on failure */
+		if (retval != KRB5_CC_TYPE_EXISTS) {
+			dlog(ctx, "krb5_cc_register(): %s", error_message(krbret));
+			goto done;
+		}
+	}
+#endif
+
+	if ((retval = krb5_cc_resolve(ctx->context, ccname, cache)) != 0) {
+		dlog(ctx, "krb5_cc_resolve(): %s", error_message(retval));
+		retval = PAM_SERVICE_ERR;
+		goto done;
+	}
+	if ((retval = krb5_cc_initialize(ctx->context, *cache,
+					ctx->princ)) != 0) {
+		dlog(ctx, "krb5_cc_initialize(): %s", error_message(retval));
+		retval = PAM_SERVICE_ERR;
+		goto done;
+	}
+	while (c) {
+		if ((retval = krb5_cc_store_cred(ctx->context, *cache, &c->creds)) != 0) {
+			dlog(ctx, "krb5_cc_store_cred(): %s", error_message(retval));
+			retval = PAM_SERVICE_ERR;
+			goto done;
+		}
+		c = c->next;
+	}
+
+	if (verify_krb_v5_tgt(ctx->context, *cache, ctx->service) == -1) {
+		retval = PAM_AUTH_ERR;
+		goto done;
+	}
+
+done:
+	if (retval != PAM_SUCCESS && *cache)
+		krb5_cc_destroy(ctx->context, *cache);
+	return retval;
+}
 
 /*
  * Get info from the user. Disallow null responses (regardless of flags).
@@ -23,7 +203,7 @@ static const char rcsid[] = "$Id: support.c,v 1.3 2000/12/19 22:53:11 hartmans E
  * is responsible for freeing it.
  */
 int
-get_user_info(pam_handle_t *pamh, char *prompt, int type, char **response)
+get_user_info(pam_handle_t *pamh, const char *prompt, int type, char **response)
 {
     int pamret;
     struct pam_message	msg;
@@ -31,7 +211,7 @@ get_user_info(pam_handle_t *pamh, char *prompt, int type, char **response)
     struct pam_response	*resp = NULL;
     struct pam_conv	*conv;
 
-    if ((pamret = pam_get_item(pamh, PAM_CONV, (const void **) &conv)) != 0)
+    if ((pamret = pam_get_item(pamh, PAM_CONV, (void *) &conv)) != 0)
 	return pamret;
 
     /* set up conversation call */
@@ -72,7 +252,7 @@ get_user_info(pam_handle_t *pamh, char *prompt, int type, char **response)
  */
 int
 verify_krb_v5_tgt(krb5_context context, krb5_ccache ccache,
-		  char * pam_service, int debug)
+		  const char *pam_service)
 {
     char		phost[BUFSIZ];
     char *services [3];
@@ -95,12 +275,12 @@ verify_krb_v5_tgt(krb5_context context, krb5_ccache ccache,
     * It is important to check the keytab first before the KDC so we do
     * not get spoofed by a fake  KDC.*/
     services [0] = "host";
-    services [1] = pam_service;
+    services [1] = (char *) pam_service;
     services [2] = NULL;
     for ( service = &services[0]; *service != NULL; service++ ) {
       if ((retval = krb5_sname_to_principal(context, NULL, *service, KRB5_NT_SRV_HST,
 					    &princ)) != 0) {
-	if (debug)
+	if (pam_args.debug)
 	  syslog(LOG_DEBUG, "pam_krb5: verify_krb_v5_tgt(): %s: %s",
 		 "krb5_sname_to_principal()", error_message(retval));
 	return -1;
@@ -122,7 +302,7 @@ verify_krb_v5_tgt(krb5_context context, krb5_ccache ccache,
     }
     if (retval != 0 ) {		/* failed to find key */
 	/* Keytab or service key does not exist */
-	if (debug)
+	if (pam_args.debug)
 	    syslog(LOG_DEBUG, "pam_krb5: verify_krb_v5_tgt(): %s: %s",
 		   "krb5_kt_read_service_key()", error_message(retval));
 	retval = 0;
@@ -139,7 +319,7 @@ verify_krb_v5_tgt(krb5_context context, krb5_ccache ccache,
 	auth_context = NULL; /* setup for rd_req */
     }
     if (retval) {
-	if (debug)
+	if (pam_args.debug)
 	    syslog(LOG_DEBUG, "pam_krb5: verify_krb_v5_tgt(): %s: %s",
 		   "krb5_mk_req()", error_message(retval));
 	retval = -1;
@@ -154,7 +334,7 @@ verify_krb_v5_tgt(krb5_context context, krb5_ccache ccache,
 	auth_context = NULL; /* setup for rd_req */
     }
     if (retval) {
-	if (debug)
+	if (pam_args.debug)
 	    syslog(LOG_DEBUG, "pam_krb5: verify_krb_v5_tgt(): %s: %s",
 		   "krb5_rd_req()", error_message(retval));
 	retval = -1;
@@ -168,20 +348,4 @@ cleanup:
     krb5_free_principal(context, princ);
     return retval;
 
-}
-
-
-/* Free the memory for cache_name. Called by pam_end() */
-void
-cleanup_cache(pam_handle_t *pamh, void *data, int pam_end_status)
-{
-    krb5_context	pam_context;
-    krb5_ccache		ccache;
-
-    if (krb5_init_context(&pam_context))
-	return;
-
-    ccache = (krb5_ccache) data;
-    (void) krb5_cc_destroy(pam_context, ccache);
-    krb5_free_context(pam_context);
 }

@@ -5,79 +5,41 @@
  *
  */
 
-static const char rcsid[] = "$Id: pam_krb5_acct.c,v 1.2 2000/11/30 20:40:37 hartmans Exp $";
+#define PAM_SM_ACCOUNT
 
-#include <syslog.h>	/* syslog */
-#include <string.h>	/* strcmp */
+#include <syslog.h>
+#include <string.h>
 #include <security/pam_appl.h>
 #include <security/pam_modules.h>
 #include <krb5.h>
 #include <com_err.h>
 #include "pam_krb5.h"
-
-/* A useful logging macro */
-#define DLOG(error_func, error_msg) \
-if (debug) \
-    syslog(LOG_DEBUG, "pam_krb5: pam_sm_acct_mgmt(%s %s): %s: %s", \
-	   service, name, error_func, error_msg)
+#include "context.h"
 
 /* Check authorization of user */
 int
 pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
-    krb5_error_code	krbret;
-    krb5_context	pam_context;
-    krb5_ccache		ccache;
-    krb5_principal	princ;
+    struct context *ctx = NULL;
+    int	pamret = PAM_AUTH_ERR;
 
-    char		*service, *name;
-    int			debug = 0;
-    int			i, pamret;
+    parse_args(flags, argc, argv);
+    dlog(ctx, "%s: entry", __FUNCTION__);
 
-    for (i = 0; i < argc; i++) {
-	if (strcmp(argv[i], "debug") == 0)
-	    debug = 1;
-    }
-
-    /* Get username */
-    if (pam_get_item(pamh, PAM_USER, (const void **) &name)) {
-	return PAM_PERM_DENIED;;
-    }
-
-    /* Get service name */
-    (void) pam_get_item(pamh, PAM_SERVICE, (const void **) &service);
-    if (!service)
-	service = "unknown";
-
-    DLOG("entry", "");
-
-    if (pam_get_data(pamh, "ccache", (const void **) &ccache)) {
+    if (fetch_context(pamh, &ctx) != PAM_SUCCESS) {
 	/* User did not use krb5 to login */
-	DLOG("ccache", "not found");
-	return PAM_SUCCESS;
+	/* pamret = PAM_SUCCESS;	// I don't think we want to do this.
+	 * 				// This policy should be in pam.conf,
+	 *				// not here.  Fail, instead.  Admin can
+	 *				// override w/ 'sufficient' */
+	goto done;
     }
 
-    if ((krbret = krb5_init_context(&pam_context)) != 0) {
-	DLOG("krb5_init_context()", error_message(krbret));
-	return PAM_PERM_DENIED;;
-    }
+    /* XXX: we could be a bit more thorough here; see what krb5_kuserok
+     * *doesn't* check for, and check that here. */
 
-    if ((krbret = krb5_cc_get_principal(pam_context, ccache, &princ)) != 0) {
-	DLOG("krb5_cc_get_principal()", error_message(krbret));
-	pamret = PAM_PERM_DENIED;;
-	goto cleanup;
-    }
-
-    if (krb5_kuserok(pam_context, princ, name))
-	pamret = PAM_SUCCESS;
-    else
-	pamret = PAM_PERM_DENIED;
-    krb5_free_principal(pam_context, princ);
-
-cleanup:
-    krb5_free_context(pam_context);
-    DLOG("exit", pamret ? "failure" : "success");
+done:
+    dlog(ctx, "%s: exit (%s)", __FUNCTION__, pamret ? "failure" : "success");
     return pamret;
-
 }
 
