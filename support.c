@@ -40,7 +40,7 @@ parse_args(int flags, int argc, const char **argv)
 		else if (strcmp(argv[i], "ignore_root") == 0)
 			pam_args.ignore_root = 1;
 		else if (strcmp(argv[i], "ccache_dir=") == 0)
-			pam_args.ccache_dir = (char *) &argv[i][7];
+			pam_args.ccache_dir = (char *) &argv[i][11];
 	}
 	
 	if (flags & PAM_SILENT)
