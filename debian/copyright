@@ -48,6 +48,7 @@ Copyright:
     USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
     DAMAGE.
 
+The GPL is available on Debian systems in /usr/share/common-licenses/GPL.
 This software may contain code from Naomaru Itoi:
 
     PAM-kerberos5 module Copyright notice.
