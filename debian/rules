@@ -5,24 +5,12 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
-
-# These are used for cross-compiling and for saving the configure script
-# from having to guess our platform (since we know it already)
-DEB_HOST_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
-DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
-
-
 CFLAGS = -Wall -g -fPIC
-
 ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
     CFLAGS += -O0
 else
     CFLAGS += -O2
 endif
-ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
-    INSTALL_PROGRAM += -s
-endif
-
 
 build: build-stamp
 build-stamp:
@@ -42,38 +30,24 @@ install: build
 	dh_testroot
 	dh_clean
 	dh_installdirs
-	cp pam_krb5.so $(CURDIR)/debian/libpam-krb5/lib/security
-
-# Build architecture-independent files here.
-binary-indep: build install
-# We have nothing to do by default.
+	install -m 644 pam_krb5.so $(CURDIR)/debian/libpam-krb5/lib/security
 
 # Build architecture-dependent files here.
 binary-arch: build install
 	dh_testdir
 	dh_testroot
-#	dh_installdebconf	
-	dh_installdocs
-#	dh_installexamples
-#	dh_installmenu
-#	dh_installemacsen
-#	dh_installpam
-#	dh_installinit
-#	dh_installcron
-	dh_installman pam_krb5.5
-#	dh_installinfo
 	dh_installchangelogs 
+	dh_installdocs
+	dh_installman pam_krb5.5
 	dh_link
 	dh_strip
 	dh_compress
 	dh_fixperms
-#	dh_makeshlibs
 	dh_installdeb
-#	dh_perl
 	dh_shlibdeps
 	dh_gencontrol
 	dh_md5sums
 	dh_builddeb
 
-binary: binary-indep binary-arch
-.PHONY: build clean binary-indep binary-arch binary install
+binary: binary-arch
+.PHONY: build clean binary-arch binary install

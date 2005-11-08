@@ -8,6 +8,7 @@ libpam-krb5 (1.2.0-1) unstable; urgency=low
   * Add a watch file.
   * Update standards version to 3.6.2 (no changes required).
   * Remove maintainer from uploaders; dak can handle this properly.
+  * Remove unnecessary code from debian/rules.
 
  --
 
