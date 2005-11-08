@@ -1,0 +1,185 @@
+diff -u -r pam_krb5.orig/Makefile pam_krb5.patched/Makefile
+--- pam_krb5.orig/Makefile	Wed Jan  5 02:08:51 2000
++++ pam_krb5.patched/Makefile	Mon Aug 14 22:04:48 2000
+@@ -4,14 +4,15 @@
+ 
+ CC = gcc
+ CFLAGS = -O2 -fPIC
+-#LDFLAGS = -shared
+-LDFLAGS = -G
++LDFLAGS = -shared -Xlinker -x
++#LDFLAGS = -G
+ 
+ DESTDIR = /usr/lib/security
+ MANDIR = /opt/local/man/man5
+ 
+-OSLIBS = -lpam -lnsl -lsocket
+-KRB5LIBS = -L/opt/local/lib -lkrb5 -lk5crypto -lcom_err
++OSLIBS = -lpam # -lnsl -lsocket
++#KRB5LIBS = -L/opt/local/lib -lkrb5 -lk5crypto -lcom_err
++KRB5LIBS = -L/opt/local/lib -lkrb5 -lcom_err -lasn1 -lgssapi -ldes -lroken -ldb
+ 
+ LIBS = $(OSLIBS) $(KRB5LIBS)
+ 
+@@ -27,20 +28,20 @@
+ OBJS = pam_krb5_auth.o pam_krb5_pass.o pam_krb5_acct.o pam_krb5_sess.o \
+ 	support.o
+ 
+-all: pam_krb5.so.1
++all: pam_krb5.so
+ 
+-pam_krb5.so.1: $(OBJS)
++pam_krb5.so: $(OBJS)
+ 	$(CC) -o $@ $(LDFLAGS) $(OBJS) $(LIBS)
+ 
+ install:
+-	cp pam_krb5.so.1 $(DESTDIR)
+-	chown root:sys $(DESTDIR)/pam_krb5.so.1
++	cp pam_krb5.so $(DESTDIR)
++	chown root:sys $(DESTDIR)/pam_krb5.so
+ 	ln -s ./pam_krb5.so.1 $(DESTDIR)/pam_krb5.so
+ 	cp pam_krb5.5 $(MANDIR)
+ 	chown root:sys $(MANDIR)/pam_krb5.5
+ 
+ clean:
+-	rm -f *.so.1 *.o
++	rm -f *.so.1 *.o *.so
+ 
+ pam_krb5_auth.o: pam_krb5_auth.c pam_krb5.h
+ 	$(CC) -c $(CFLAGS) $(INC) $<
+diff -u -r pam_krb5.orig/pam_krb5.h pam_krb5.patched/pam_krb5.h
+--- pam_krb5.orig/pam_krb5.h	Wed Jan  5 02:08:51 2000
++++ pam_krb5.patched/pam_krb5.h	Thu Aug  3 12:50:20 2000
+@@ -4,6 +4,10 @@
+  * $Id: pam_krb5.linux.patch,v 1.1 2000/11/30 20:16:40 hartmans Exp $
+  */
+ 
++#ifndef ENCTYPE_DES_CBC_MD5
++#define ENCTYPE_DES_CBC_MD5 ETYPE_DES_CBC_MD5
++#endif
++
+ int get_user_info(pam_handle_t *, char *, int, char **);
+ krb5_error_code pam_prompter(krb5_context, void *, const char *,
+ 			     const char *, int, krb5_prompt[]);
+Only in pam_krb5.patched: pam_krb5.linux.patch
+diff -u -r pam_krb5.orig/pam_krb5_auth.c pam_krb5.patched/pam_krb5_auth.c
+--- pam_krb5.orig/pam_krb5_auth.c	Wed Jan  5 02:08:51 2000
++++ pam_krb5.patched/pam_krb5_auth.c	Tue Aug  8 21:25:08 2000
+@@ -14,6 +14,7 @@
+ #include <syslog.h>	/* syslog */
+ #include <unistd.h>	/* chown */
+ #include <sys/types.h>	/* chown */
++#include <errno.h>
+ 
+ #include <security/pam_appl.h>
+ #include <security/pam_modules.h>
+@@ -401,7 +402,7 @@
+ 
+     /* Copy the creds (should be two of them) */
+     while ((krbret = krb5_cc_next_cred(pam_context, ccache_temp,
+-				       &cursor, &creds) == 0)) {
++				       &creds, &cursor) == 0)) {
+ 	if (krbret = krb5_cc_store_cred(pam_context, ccache_perm, &creds)) {
+ 	    DLOG("krb5_cc_store_cred()", error_message(krbret));
+ 	    (void) krb5_cc_destroy(pam_context, ccache_perm);
+@@ -414,12 +415,22 @@
+     (void) krb5_cc_end_seq_get(pam_context, ccache_temp, &cursor);
+ 
+     if (strstr(cache_name, "FILE:") == cache_name) {
++        if (seteuid(euid)) {
++            DLOG("seteuid()", "root(?)");
++            pamret = PAM_SERVICE_ERR;
++            goto cleanup2;
++        }
+ 	if (chown(&cache_name[5], pw->pw_uid, pw->pw_gid) == -1) {
+ 	    DLOG("chown()", strerror(errno));
+ 	    (void) krb5_cc_destroy(pam_context, ccache_perm);
+ 	    pamret = PAM_SERVICE_ERR;	
+ 	    goto cleanup2;
+ 	}
++        if (seteuid(pw->pw_uid)) {
++            DLOG("seteuid()", name);
++            pamret = PAM_SERVICE_ERR;
++            goto cleanup2;
++        }
+     }
+     (void) krb5_cc_close(pam_context, ccache_perm);
+ 
+diff -u -r pam_krb5.orig/pam_krb5_pass.c pam_krb5.patched/pam_krb5_pass.c
+--- pam_krb5.orig/pam_krb5_pass.c	Wed Jan  5 02:08:51 2000
++++ pam_krb5.patched/pam_krb5_pass.c	Mon Aug 14 22:09:01 2000
+@@ -41,6 +41,8 @@
+     int debug = 0;
+     int try_first_pass = 0, use_first_pass = 0;
+ 
++    if (flags & PAM_PRELIM_CHECK)
++        return PAM_SUCCESS;
+     if (!(flags & PAM_UPDATE_AUTHTOK))
+ 	return PAM_AUTHTOK_ERR;
+ 
+diff -u -r pam_krb5.orig/support.c pam_krb5.patched/support.c
+--- pam_krb5.orig/support.c	Wed Jan  5 02:08:51 2000
++++ pam_krb5.patched/support.c	Tue Aug  8 22:04:26 2000
+@@ -8,6 +8,7 @@
+ 
+ #include <stdio.h>	/* BUFSIZ */
+ #include <syslog.h>	/* syslog */
++#include <errno.h>
+ #include <security/pam_appl.h>
+ #include <security/pam_modules.h>
+ #include <krb5.h>
+@@ -191,6 +192,10 @@
+     krb5_auth_context	auth_context = NULL;
+     krb5_keytab		keytab = NULL;
+     char *		kt_name = NULL;
++    char *		princname;
++    char *		pn_host;
++    size_t *		pn_host_sz;
++
+ 
+     packet.data = 0;
+ 
+@@ -206,10 +211,31 @@
+ 	return -1;
+     }
+ 
+-    /* Extract the name directly. */
+-    strncpy(phost, krb5_princ_component(c, princ, 1)->data, BUFSIZ);
+-    phost[BUFSIZ - 1] = '\0';
++    /* Extract the name. */
++#if 0
++    strncpy(phost, krb5_princ_component(context, princ, 1)->data, BUFSIZ);
++#endif
++    
++    if (retval = krb5_unparse_name(context,princ,&princname)) {
++        if (debug)
++            syslog(LOG_DEBUG, "pam_krb5: verify_krb5_v5_tgt(): %s: %s",
++                   "krb5_unparse_name()", error_message(retval));
++        return -1;
++    }
++
++    pn_host = strrchr(princname,'/');
++    if (pn_host == NULL ) {
++        if (debug)
++            syslog(LOG_DEBUG, "pam_krb5: verify_krb5_v5_tgt(): %s: %s",
++                   "host name not found", *princname);
++        return -1;
++    }
++
++    pn_host_sz = strcspn(pn_host+1,"@");
+ 
++    strncpy(phost,pn_host+1,(pn_host_sz < BUFSIZ ? pn_host_sz : BUFSIZ));
++    phost[BUFSIZ - 1] = '\0';
++    
+     /*
+      * Do we have host/<host> keys?
+      * (use default/configured keytab, kvno IGNORE_VNO to get the
+@@ -256,7 +282,7 @@
+ 
+ cleanup:
+     if (packet.data)
+-	krb5_free_data_contents(context, &packet);
++	free(packet.data); 
+     krb5_free_principal(context, princ);
+     return retval;
+ 
