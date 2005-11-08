@@ -26,12 +26,13 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
     parse_args(flags, argc, argv);
     dlog(ctx, "%s: entry", __FUNCTION__);
 
+    /* Succeed if the user did not use krb5 to login.  Yes, ideally we should
+       probably fail and require that the user set up policy properly in their
+       PAM configuration, but it's not common for the user to do so and that's
+       not how other krb5 PAM modules work.  If we don't do this, root logins
+       with the system root password fail, which is a bad failure mode. */
     if (fetch_context(pamh, &ctx) != PAM_SUCCESS) {
-	/* User did not use krb5 to login */
-	/* pamret = PAM_SUCCESS;	// I don't think we want to do this.
-	 * 				// This policy should be in pam.conf,
-	 *				// not here.  Fail, instead.  Admin can
-	 *				// override w/ 'sufficient' */
+	pamret = PAM_SUCCESS;
 	goto done;
     }
 
