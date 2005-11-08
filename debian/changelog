@@ -5,6 +5,9 @@ libpam-krb5 (1.2.0-1) unstable; urgency=low
       programs such as xlock to refresh credentials.  (Closes: #309345)
     - Do not include the principal name in the prompt.  This breaks some
       SSH clients and isn't necessary.  (Closes: #321319)
+    - New ignore_root option to skip this module for root authentication,
+      ameliorating pam_krb5 problems when the network is down.  Partially
+      addresses #315622.
   * Bug fixes to upstream version (all sent back to the maintainer):
     - Succeed silently in account management if Kerberos wasn't used.
     - Parse ccache_dir correctly.
