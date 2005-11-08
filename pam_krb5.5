@@ -1,28 +1,28 @@
-.\"
-.\" $Id: pam_krb5.5,v 1.4 2001/05/12 22:42:14 hartmans Exp $
-.TH pam_krb5 5 "15 Jan 1999"
+.TH pam_krb5 5 "2005-11-07" "1.2.0"
 .SH NAME
 pam_krb5 \- Kerberos 5 PAM module
 .SH SYNOPSIS
 .LP
-.Blib/security/pam_krb5.so.1
+.nf
+auth            sufficient      pam_krb5.so ignore_root
+account         required        pam_krb5.so ignore_root
+password        optional        pam_krb5.so ignore_root
+session         optional        pam_krb5.so ignore_root
+.fi
 .LP
 .SH DESCRIPTION
 .IX "pam_krb5" "" "\fLpam_krb5\fP \(em Kerberos 5 PAM module"
 .PP
 The Kerberos 5 service module for PAM, typically
-.BR /usr/lib/security/pam_krb5.so.1 ,
+.BR /lib/security/pam_krb5.so ,
 provides functionality for three PAM categories:
 authentication,
 account management,
+session management,
 and password management.
-It also provides functions for session management to write out credentials.  Normally,
-these functions should not be needed as the authentication functions do this, but
-if credentials are needed in the session phase,
-then these functions can be used.
-
+.LP
 The
-.B pam_krb5.so.1
+.B pam_krb5.so
 module is a shared object
 that can be dynamically loaded to provide
 the necessary functionality upon demand.
@@ -39,25 +39,19 @@ and to set user specific credentials
 converts the supplied username into a Kerberos principal,
 by appending the default local realm name.
 It also supports usernames with explicit realm names.
-If a realm name is supplied, then upon a sucessful return, it
-changes the username by mapping the principal name into a local username
-(calling \f3krb5_aname_to_localname()\f1). This typically just means
-the realm name is stripped.
 .LP
 It prompts the user for a password and obtains a new Kerberos TGT for
 the principal. The TGT is verified by obtaining a service
 ticket for the local host.
-.LP
-When prompting for the current password, the authentication
-module will use the prompt "Password for <principal>: ".
 .LP
 The
 .B pam_sm_setcred(\|)
 function stores the newly acquired credentials in a credentials cache,
 and sets the environment variable
 .B KRB5CCNAME
-appropriately.
-This module destroys the credentials cache when the PAM data is cleaned up.  Thus, you should set  close_sessions to yes in /etc/login.defs.
+appropriately.  This module destroys the credentials cache when the PAM
+data is cleaned up.  Thus, you should set close_sessions to yes in
+/etc/login.defs.
 .LP
 The following options may be passed to the authentication module:
 .TP 15
@@ -68,13 +62,12 @@ debugging information at
 level.
 .TP
 .B use_first_pass
-If the authentication module is not the first in the stack,
-and a previous module obtained the user's password, that password is
-used to authenticate the user. If this fails, the authentication
-module returns failure without prompting the user for a password.
-This option has no effect if the authentication module is
-the first in the stack, or if no previous modules obtained the
-user's password.
+If the authentication module is not the first in the stack, and a previous
+module obtained the user's password, that password is used to authenticate
+the user.  If this fails, the authentication module returns failure
+without prompting the user for a password.  This option has no effect if
+the authentication module is the first in the stack, or if no previous
+modules obtained the user's password.
 .TP
 .B try_first_pass
 This option is similar to the
@@ -91,15 +84,13 @@ useful option if the authentication module is used for services such
 as ftp or pop, where the user would not be able to destroy them. [This
 is not a recommendation to use the module for those services.]
 .TP
-.B ccache=<name>
-Use <name> as the credentials cache. <name> must be in the form
-.IR type:residual .
-The special tokens
-.BR %u ,
-to designate the decimal uid of the user;
-and
-.BR %p ,
-to designate the current process id; can be used in <name>.
+.B ignore_root
+Never attempt to authenticate the user "root".  Always fail immediately if
+that user is being authenticated; presumably the PAM stack will fall back
+to some other mechanism.
+.TP
+.B ccache_dir=<dir>
+Put the ticket cache in <dir> instead of the default of /tmp.
 .SH Kerberos 5 Account Management Module
 The Kerberos 5 account management component
 provides a function to perform account management,
@@ -108,25 +99,32 @@ The function verifies that the authenticated principal is allowed
 to login to the local user account by calling
 .B krb5_kuserok()
 (which checks the user's \&.k5login file).
+.LP
+If the user didn't log on using krb5, this function silently succeeds.
+.LP
+The following options may be passed to the account module:
+.TP 15
+.B ignore_root
+Skip any attempt to validate the root account and just succeed quietly.
+Presumably whatever validation is necessary will be handled by another
+module in the PAM stack.
 .SH Kerberos 5 Password Management Module
 The Kerberos 5 password management component
 provides a function to change passwords
 (\f3pam_sm_chauthtok(\|)\f1). The username supplied (the
 user running the
 .BR passwd (1)
-command, or the username given as an argument) is mapped into
-a Kerberos principal name, using the same technique as in
-the authentication module. Note that if a realm name was
-explicitly supplied during authentication, but not during
-a password change, the mapping
-done by the password management module may not result in the
-same principal as was used for authentication.
+command, or the username given as an argument) is mapped into a Kerberos
+principal name, using the same technique as in the authentication module.
+Note that if a realm name was explicitly supplied during authentication,
+but not during a password change, the mapping done by the password
+management module may not result in the same principal as was used for
+authentication.
 .LP
-Unlike when
-changing a unix password, the password management module will
-allow any user to change any principal's password (if the user knows
-the principal's old password, of course). Also unlike unix, root
-is always prompted for the principal's old password.
+Unlike when changing a unix password, the password management module will
+allow any user to change any principal's password (if the user knows the
+principal's old password, of course).  Also unlike unix, root is always
+prompted for the principal's old password.
 .LP
 The password management module uses the same heuristics as
 .BR kpasswd (1)
@@ -142,30 +140,32 @@ debugging information at
 level.
 .TP
 .B use_first_pass
-If the password management module is not the first in the stack,
-and a previous module obtained the user's old password, that password is
-used to authenticate the user. If this fails, the password
-management
-module returns failure without prompting the user for the old password.
-If successful, the new password entered to the previous module is also
-used as the new Kerberos password. If the new password fails,
-the password management module returns failure without
-prompting the user for a new password.
+If the password management module is not the first in the stack, and a
+previous module obtained the user's old password, that password is used to
+authenticate the user.  If this fails, the password management module
+returns failure without prompting the user for the old password.  If
+successful, the new password entered to the previous module is also used
+as the new Kerberos password.  If the new password fails, the password
+management module returns failure without prompting the user for a new
+password.
 .TP
 .B try_first_pass
 This option is similar to the
 .B use_first_pass
 option, except that if the previously obtained old or new passwords fail,
 the user is prompted for them.
+.TP
+.B ignore_root
+Do not try to change passwords for the root user, just fail immediately.
 .SH Kerberos 5 Session Management Module
 The Kerberos 5 session management component
 provides functions to initiate
 (\f3pam_sm_open_session(\|)\f1)
 and terminate
 (\f3pam_sm_close_session(\|)\f1)
-sessions. Since session management is not defined under Kerberos 5,
-both of these functions simply return success. They are provided
-only because of the naming conventions for PAM modules.
+sessions.  This module takes all of the same options as the authentication
+module and will authenticate the user if authentication has not already
+been established.
 .SH ENVIRONMENT
 .TP "\w'.SM KRB5CCNAME\ \ 'u"
 .SM KRB5CCNAME
@@ -174,7 +174,10 @@ Location of the credentials cache.
 .TP
 /tmp/krb5cc_[uid]_[rand]
 default credentials cache ([uid] is the decimal UID of the user and [rand]
-is a random string).
+is a random string).  The directory in which it is stored may be changed
+with the
+.B ccache_dir
+option.
 .TP
 ~/\&.k5login
 file containing Kerberos principals that are allowed access.
