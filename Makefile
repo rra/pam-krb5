@@ -13,7 +13,7 @@ INSTALL = install
 
 CC = gcc
 CFLAGS = -O2 -fPIC -Wall
-LDFLAGS = -shared -Xlinker -x
+LDFLAGS = -shared -Wl,-x -Wl,-z,defs
 
 
 OSLIBS = -lpam -lresolv 
