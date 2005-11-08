@@ -5,6 +5,7 @@ libpam-krb5 (1.2.0-1) unstable; urgency=low
       programs such as xlock to refresh credentials.  (Closes: #309345)
     - Do not include the principal name in the prompt.  This breaks some
       SSH clients and isn't necessary.  (Closes: #321319)
+  * Add a watch file.
   * Update standards version to 3.6.2 (no changes required).
   * Remove maintainer from uploaders; dak can handle this properly.
 

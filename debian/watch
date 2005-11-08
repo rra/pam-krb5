@@ -1,0 +1,4 @@
+# watch -- Rules for uscan to find new upstream versions.
+
+version=3
+http://www.squishy.cc/software/pam-krb5/pam-krb5-(.*)\.tar\.gz
