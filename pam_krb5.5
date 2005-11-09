@@ -91,6 +91,20 @@ to some other mechanism.
 .TP
 .B ccache_dir=<dir>
 Put the ticket cache in <dir> instead of the default of /tmp.
+.TP
+.B search_k5login
+Normally, the authentication module attempts to authenticate as a Kerberos
+principal derived from the username by appending the default realm.
+Verification of the presence of that Kerberos principal in the user's
+\&.k5login file can then be done via the account management module.  When
+this option is given and a \&.k5login file is present, the provided
+password is instead used to attempt to authenticate as each Kerberos
+principal listed in the \&.k5login file in turn.  If there is no
+\&.k5login file, the behavior is the same as normal.  This may be useful
+when there is no simple mapping from local username to Kerberos principal
+name, but requires the \&.k5login file be readable at the time of
+authentication (and therefore may not work with schemes such as sshd's
+privilege separation).
 .SH Kerberos 5 Account Management Module
 The Kerberos 5 account management component
 provides a function to perform account management,

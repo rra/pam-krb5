@@ -77,8 +77,11 @@ valid_context(struct context *c)
 	if (pam_args.ignore_root && strcmp("root", c->name) == 0)
 		goto done;
 
-	if (!c->princ) {
-		/* fetch the principal */
+        /* Fetch the principal unless we're going to be searching through the
+           .k5login file.  If we are going to be searching, don't set a
+           principal here, since otherwise we'll fail krb5_kuserok before we
+           get a chance to try. */
+	if (!c->princ && !pam_args.search_k5login) {
 		if ((retval = krb5_parse_name(c->context, c->name,
 					       &c->princ)) != 0) {
 			dlog(c, "krb5_parse_name(): %s", error_message(retval));
@@ -87,7 +90,7 @@ valid_context(struct context *c)
 		}
 	}
 
-	if (!krb5_kuserok(c->context, c->princ, c->name)) {
+	if (c->princ && !krb5_kuserok(c->context, c->princ, c->name)) {
 		retval = PAM_SERVICE_ERR;
 		goto done;
 	}
