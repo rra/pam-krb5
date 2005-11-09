@@ -31,10 +31,14 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
        PAM configuration, but it's not common for the user to do so and that's
        not how other krb5 PAM modules work.  If we don't do this, root logins
        with the system root password fail, which is a bad failure mode. */
-    if (fetch_context(pamh, &ctx) != PAM_SUCCESS) {
-	pamret = PAM_SUCCESS;
-	goto done;
+    pamret = pam_get_data(pamh, "ctx", (void *) &ctx);
+    if (pamret != PAM_SUCCESS || ctx == NULL) {
+        pamret = PAM_SUCCESS;
+        ctx = NULL;
+        dlog(ctx, "%s: skipping non-Kerberos login", __FUNCTION__);
+        goto done;
     }
+    pamret = fetch_context(pamh, &ctx);
 
     /* XXX: we could be a bit more thorough here; see what krb5_kuserok
      * *doesn't* check for, and check that here. */

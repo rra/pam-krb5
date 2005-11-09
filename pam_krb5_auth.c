@@ -104,6 +104,11 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 done:
     free_credlist(ctx, clist);
     dlog(ctx, "%s: exit (%s)", __FUNCTION__, pamret ? "failure" : "success");
+
+    /* Clear the context on failure so that the account management module
+       knows that we didn't authenticate with Kerberos. */
+    if (pamret != PAM_SUCCESS)
+        pam_set_data(pamh, "ctx", NULL, NULL);
     return pamret;
 }
 
