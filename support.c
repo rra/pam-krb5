@@ -98,7 +98,7 @@ k5login_password_auth(struct context *ctx, krb5_creds *creds,
     if (access(filename, R_OK) != 0) {
         k5_errno = krb5_parse_name(ctx->context, ctx->name, &ctx->princ);
         if (k5_errno != 0) {
-            dlog(c, "krb5_parse_name(): %s", error_message(retval));
+            dlog(ctx, "krb5_parse_name(): %s", error_message(k5_errno));
             return PAM_SERVICE_ERR;
         }
         *retval = krb5_get_init_creds_password(ctx->context, creds,
