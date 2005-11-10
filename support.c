@@ -99,7 +99,7 @@ k5login_password_auth(struct context *ctx, krb5_creds *creds,
         *retval = krb5_get_init_creds_password(ctx->context, creds,
                      ctx->princ, pass, pam_prompter, ctx->pamh, 0,
                      in_tkt_service, opts);
-        return (retval == 0) ? PAM_SUCCESS : PAM_AUTH_ERR;
+        return (*retval == 0) ? PAM_SUCCESS : PAM_AUTH_ERR;
     }
 
     /* Make sure the ownership on .k5login is okay.  The user must own their
