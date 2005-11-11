@@ -18,12 +18,13 @@ libpam-krb5 (1.2.0-1) unstable; urgency=low
   * Add search_k5login option to allow authentication based on the
     principals listed in ~/.k5login when the local account name doesn't
     easily map to the Kerberos principal.
+  * Install upstream changelog now that there is one.
   * Add a watch file.
   * Update standards version to 3.6.2 (no changes required).
   * Remove maintainer from uploaders; dak can handle this properly.
   * Remove unnecessary code from debian/rules.
 
- -- Russ Allbery <rra@stanford.edu>  Wed,  9 Nov 2005 14:01:39 -0800
+ -- Russ Allbery <rra@stanford.edu>  Fri, 11 Nov 2005 14:38:29 -0800
 
 libpam-krb5 (1.0-12) unstable; urgency=low
 
