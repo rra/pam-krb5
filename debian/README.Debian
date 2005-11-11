@@ -1,43 +1,57 @@
-pam-krb5 for Debian
+libpam-krb5 for Debian
 ----------------------
 
-This package is roughly the same sources as libpam-heimdal.  It was
-recompiled againt MIT krb5 by Sam Hartman.
+After installing this package, you must modify your PAM configuration
+before you will be able to use Kerberos to authenticate.  For a system
+where user account authentication should be handled primarily through
+Kerberos and password changes should be made against Kerberos, with
+fallback to local authentication, the following basic configuration should
+work.  In /etc/pam.d/common-auth, put:
 
+    auth  sufficient  pam_krb5.so ignore_root
+    auth  required    pam_unix.so try_first_pass nullok_secure
 
-The original module has been written by Frank Cusack (see README file).
+In /etc/pam.d/common-session:
 
-This particular version of the module is heavily based on the FreeBSD
-ports version.
+    session  optional  pam_krb5.so ignore_root
+    session  required  pam_unix.so
 
-It has also been modified by Joel Kociolek <joko@logidee.com> to be usable
-with Debian GNU/Linux.
+In /etc/pam.d/common-account:
 
-WARNING: for security reasons, you should not use this module for purposes
-other than local login (xdm, login, etc.). Don't use it over a network
-unless you _really_ know what you are doing.
+    account  required  pam_krb5.so ignore_root
+    account  required  pam_unix.so
 
---------------------------------------------------------------------------
+(Note that the account function of pam_krb5.so will always succeed if the
+user didn't log in via Kerberos, so this is will still allow access via a
+local password.  It will ensure that, if the user did log in via Kerberos,
+their Kerberos authentication is checked against ~/.k5login if present.)
 
-Another PAM module exists at:
+Finally, in /etc/pam.d/common-password:
 
-ftp://ftp.it.su.se/pub/kerberos/contrib/source/pam_krb5-1.2.tar.gz
+    password  sufficient  pam_krb5.so ignore_root
+    password  required    pam_unix.so nullok obscure min=4 max=8 md5
 
-According to Nicolas Williams <Nicolas.Williams@ubsw.com>:
+Note the ignore_root on all of these lines.  This is optional, but
+normally sites do not create a single root@example.com Kerberos principal
+and use it for authentication to root accounts.  In addition, trying to do
+Kerberos authentication when the network is down may cause delays or
+timeouts, and this way such authentication is never attempted for a root
+login.
 
-It looks pretty good, except for one serious, easily fixable problem:
-the krb5 password validation function is called without a valid prompter
-function, so the krb5 library is allowed to believe that the user can be
-prompted via the tty.
+If you regularly use ticket forwarding (such as with Kerberos rlogin or
+ssh with GSSAPI support), you may wish to add the "forwardable" option to
+the pam_krb5.so line in /etc/pam.d/common-auth.
 
-The solution to this problem is simple: add a krb5 prompter function
-whose prompter_data is a PAM handle and have this prompter convert krb5
-prompts to PAM prompts and so on.
+This configuration assumes that one can generate a person's Kerberos
+credential by appending the default realm to the local username.  If this
+is not the case for your system, make sure that every account for which
+this is not the case has a .k5login file in their home directory listing
+the Kerberos principals that should have access (or which is empty if none
+should).  Otherwise, someone will be able to access that account if they
+know the password of the Kerberos principal in the default realm with the
+same name.  In this situation, you will probably also want to add the
+"search_k5login" option to the pam_krb5.so line in /etc/pam.d/common-auth;
+see the pam_krb5(5) man page for more information.
 
-That said, this is the ONLY PAM_KRB5 module I have seen so far that gets
-password-aging right, namely by attempting to get an initial ticket to
-the password changing service so as to change the user's password and
-then get a TGT for the user.
-
- -- Brian May <bam@debian.org>, Thu,  9 Nov 2000 11:39:41 +1100
+ -- Russ Allbery <rra@stanford.edu>, Fri Nov 11 14:53:22 2005
 
