@@ -25,6 +25,7 @@ struct pam_args
 	int no_ccache;
 	int ignore_root;
 	char *ccache_dir;
+	char *ccache;
 	int search_k5login;
 	int quiet; /* not really an arg, but it may as well be */
 };

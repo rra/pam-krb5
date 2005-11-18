@@ -42,6 +42,8 @@ parse_args(int flags, int argc, const char **argv)
 			pam_args.no_ccache = 1;
 		else if (strcmp(argv[i], "ignore_root") == 0)
 			pam_args.ignore_root = 1;
+		else if (strncmp(argv[i], "ccache=", 7) == 0)
+			pam_args.ccache = (char *) &argv[i][7];
 		else if (strncmp(argv[i], "ccache_dir=", 11) == 0)
 			pam_args.ccache_dir = (char *) &argv[i][11];
 		else if (strcmp(argv[i], "search_k5login") == 0)

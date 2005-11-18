@@ -8,6 +8,7 @@
 #define PAM_SM_AUTH
 
 #include <errno.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -152,6 +153,67 @@ done:
 	return pamret;
 }
 
+/* Determine the name of the ticket cache.  Handles ccache and ccache_dir PAM
+   options and returns newly allocated memory. */
+static char *
+build_ccache_name(struct context *ctx, uid_t uid)
+{
+    char *cache_name;
+
+    if (pam_args.ccache == NULL) {
+        size_t ccache_size = 1 + strlen(pam_args.ccache_dir) +
+            strlen("/krb5cc_4294967295_XXXXXX");
+
+        cache_name = malloc(ccache_size);
+	if (!cache_name) {
+	    dlog(ctx, "malloc() failure");
+            return NULL;
+	}
+        snprintf(cache_name, ccache_size, "%s/krb5cc_%d_XXXXXX",
+			pam_args.ccache_dir, uid);
+    } else {
+        size_t len = 0, delta;
+        char *p, *q;
+
+        for (p = pam_args.ccache; *p != '\0'; p++) {
+            if (p[0] == '%' && p[1] == 'u') {
+                len += snprintf(NULL, 0, "%d", uid);
+                p++;
+            } else if (p[0] == '%' && p[1] == 'p') {
+                len += snprintf(NULL, 0, "%d", getpid());
+                p++;
+            } else {
+                len++;
+            }
+        }
+        len++;
+        cache_name = malloc(len);
+        if (cache_name == NULL) {
+            dlog(ctx, "malloc() failure");
+            return NULL;
+        }
+        for (p = pam_args.ccache, q = cache_name; *p != '\0'; p++) {
+            if (p[0] == '%' && p[1] == 'u') {
+                delta = snprintf(q, len, "%d", uid);
+                q += delta;
+                len -= delta;
+                p++;
+            } else if (p[0] == '%' && p[1] == 'p') {
+                delta = snprintf(q, len, "%d", getpid());
+                q += delta;
+                len -= delta;
+                p++;
+            } else {
+                *q = *p;
+                q++;
+                len--;
+            }
+        }
+        *q = '\0';
+    }
+    return cache_name;
+}
+
 /* Called after a successful authentication. Set user credentials. */
 int
 pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
@@ -231,26 +293,25 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
 	ctx->dont_destroy_cache = 1;
     }
     else {
-        int ccache_fd;
-        size_t ccache_size = 1 + strlen(pam_args.ccache_dir) +
-		strlen("/krb5cc_4294967295_XXXXXX");
+	int ccache_fd;
+	size_t len;
 
-        cache_name = malloc(ccache_size);
-	if (!cache_name) {
-	    dlog(ctx, "malloc() failure");
+	cache_name = build_ccache_name(ctx, pw->pw_uid);
+	if (cache_name == NULL) {
 	    pamret = PAM_BUF_ERR;
 	    goto done;
 	}
-        snprintf(cache_name, ccache_size, "%s/krb5cc_%d_XXXXXX",
-			pam_args.ccache_dir, pw->pw_uid);
-	ccache_fd = mkstemp(cache_name);
+	len = strlen(cache_name);
+	if (len > 6 && strncmp("XXXXXX", cache_name + len - 6, 6) == 0)
+	    ccache_fd = mkstemp(cache_name);
+	else
+	    ccache_fd = open(cache_name, O_RDWR | O_CREAT | O_EXCL, 0600);
 	if (ccache_fd == -1) {
-            dlog(ctx, "mkstemp() failure");
+	    dlog(ctx, "open() or mkstemp() failure");
 	    pamret = PAM_BUF_ERR;
 	    goto done;
 	}
 	close(ccache_fd);
-
     }
 
     /* Initialize the new ccache */

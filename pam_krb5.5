@@ -89,8 +89,25 @@ Never attempt to authenticate the user "root".  Always fail immediately if
 that user is being authenticated; presumably the PAM stack will fall back
 to some other mechanism.
 .TP
+.B ccache=<name>
+Use <name> as the credentials cache.  <name> must be in the form
+.I type:residual
+(where
+.I type
+is optional if a file cache is used).  The special tokens
+.BR %u ,
+to designate the decimal uid of the user, and
+.BR %p ,
+to designate the current process id, can be used in <name>.  If <name>
+ends with the literal string XXXXXX (six X's), that string will be
+replaced by randomly generated characters and the ticket cache opened via
+mkstemp.  This is strongly recommended if <name> points to a
+world-writable directory.
+.TP
 .B ccache_dir=<dir>
-Put the ticket cache in <dir> instead of the default of /tmp.
+Put the ticket cache in <dir> instead of the default of /tmp.  Ignored if
+.B ccache
+is also set.
 .TP
 .B search_k5login
 Normally, the authentication module attempts to authenticate as a Kerberos

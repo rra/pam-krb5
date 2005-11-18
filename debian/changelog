@@ -15,6 +15,8 @@ libpam-krb5 (1.2.0-1) unstable; urgency=low
     - Parse ccache_dir correctly.
     - Bring the man page up to date.
     - Link with -z defs to ensure all symbols were found.
+  * Readd the ccache option with a better implementation and allow for
+    randomization of the filename using mkstemp even if ccache is used.
   * Add search_k5login option to allow authentication based on the
     principals listed in ~/.k5login when the local account name doesn't
     easily map to the Kerberos principal.
@@ -26,7 +28,7 @@ libpam-krb5 (1.2.0-1) unstable; urgency=low
   * Update uploader address.
   * Remove unnecessary code from debian/rules.
 
- -- Russ Allbery <rra@debian.org>  Fri, 18 Nov 2005 13:19:18 -0800
+ -- Russ Allbery <rra@debian.org>  Fri, 18 Nov 2005 14:48:57 -0800
 
 libpam-krb5 (1.0-12) unstable; urgency=low
 
