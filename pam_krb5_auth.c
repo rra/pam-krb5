@@ -161,55 +161,55 @@ build_ccache_name(struct context *ctx, uid_t uid)
     char *cache_name;
 
     if (pam_args.ccache == NULL) {
-        size_t ccache_size = 1 + strlen(pam_args.ccache_dir) +
-            strlen("/krb5cc_4294967295_XXXXXX");
+	size_t ccache_size = 1 + strlen(pam_args.ccache_dir) +
+	    strlen("/krb5cc_4294967295_XXXXXX");
 
-        cache_name = malloc(ccache_size);
+	cache_name = malloc(ccache_size);
 	if (!cache_name) {
 	    dlog(ctx, "malloc() failure");
-            return NULL;
+	    return NULL;
 	}
-        snprintf(cache_name, ccache_size, "%s/krb5cc_%d_XXXXXX",
+	snprintf(cache_name, ccache_size, "%s/krb5cc_%d_XXXXXX",
 			pam_args.ccache_dir, uid);
     } else {
-        size_t len = 0, delta;
-        char *p, *q;
+	size_t len = 0, delta;
+	char *p, *q;
 
-        for (p = pam_args.ccache; *p != '\0'; p++) {
-            if (p[0] == '%' && p[1] == 'u') {
-                len += snprintf(NULL, 0, "%d", uid);
-                p++;
-            } else if (p[0] == '%' && p[1] == 'p') {
-                len += snprintf(NULL, 0, "%d", getpid());
-                p++;
-            } else {
-                len++;
-            }
-        }
-        len++;
-        cache_name = malloc(len);
-        if (cache_name == NULL) {
-            dlog(ctx, "malloc() failure");
-            return NULL;
-        }
-        for (p = pam_args.ccache, q = cache_name; *p != '\0'; p++) {
-            if (p[0] == '%' && p[1] == 'u') {
-                delta = snprintf(q, len, "%d", uid);
-                q += delta;
-                len -= delta;
-                p++;
-            } else if (p[0] == '%' && p[1] == 'p') {
-                delta = snprintf(q, len, "%d", getpid());
-                q += delta;
-                len -= delta;
-                p++;
-            } else {
-                *q = *p;
-                q++;
-                len--;
-            }
-        }
-        *q = '\0';
+	for (p = pam_args.ccache; *p != '\0'; p++) {
+	    if (p[0] == '%' && p[1] == 'u') {
+		len += snprintf(NULL, 0, "%d", uid);
+		p++;
+	    } else if (p[0] == '%' && p[1] == 'p') {
+		len += snprintf(NULL, 0, "%d", getpid());
+		p++;
+	    } else {
+		len++;
+	    }
+	}
+	len++;
+	cache_name = malloc(len);
+	if (cache_name == NULL) {
+	    dlog(ctx, "malloc() failure");
+	    return NULL;
+	}
+	for (p = pam_args.ccache, q = cache_name; *p != '\0'; p++) {
+	    if (p[0] == '%' && p[1] == 'u') {
+		delta = snprintf(q, len, "%d", uid);
+		q += delta;
+		len -= delta;
+		p++;
+	    } else if (p[0] == '%' && p[1] == 'p') {
+		delta = snprintf(q, len, "%d", getpid());
+		q += delta;
+		len -= delta;
+		p++;
+	    } else {
+		*q = *p;
+		q++;
+		len--;
+	    }
+	}
+	*q = '\0';
     }
     return cache_name;
 }
@@ -302,16 +302,15 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
 	    goto done;
 	}
 	len = strlen(cache_name);
-	if (len > 6 && strncmp("XXXXXX", cache_name + len - 6, 6) == 0)
+	if (len > 6 && strncmp("XXXXXX", cache_name + len - 6, 6) == 0) {
 	    ccache_fd = mkstemp(cache_name);
-	else
-	    ccache_fd = open(cache_name, O_RDWR | O_CREAT | O_EXCL, 0600);
-	if (ccache_fd == -1) {
-	    dlog(ctx, "open() or mkstemp() failure");
-	    pamret = PAM_BUF_ERR;
-	    goto done;
+	    if (ccache_fd == -1) {
+		dlog(ctx, "mkstemp() failure");
+		pamret = PAM_BUF_ERR;
+		goto done;
+	    }
+	    close(ccache_fd);
 	}
-	close(ccache_fd);
     }
 
     /* Initialize the new ccache */
