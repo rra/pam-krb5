@@ -1,3 +1,14 @@
+libpam-krb5 (1.2.0-2) unstable; urgency=low
+
+  * Always use a disk cache for temporary storage of credentials and cope
+    with not having module-specific data during pam_sm_setcred by passing
+    the cache path in an environment variable.  This is required to cope
+    with OpenSSH's technique (when using ChallengeResponseAuthentication)
+    of doing PAM authentication in a child process and then opening the
+    session in the parent.  (Closes: #339734)
+
+ -- Russ Allbery <rra@debian.org>  Wed, 30 Nov 2005 19:50:20 -0800
+
 libpam-krb5 (1.2.0-1) unstable; urgency=low
 
   * New upstream maintainer and version.

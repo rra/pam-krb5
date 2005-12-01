@@ -69,7 +69,56 @@ destroy_context(pam_handle_t *pamh, void *data, int pam_end_status)
 		free_context(ctx);
 }
 
-/* Authenticate a user via krb5 */
+static const char *
+get_krb5ccname(struct context *ctx, const char *key)
+{
+	const char *name;
+
+	/* TODO: figure out why pam_getenv() returns NULL */
+	name = pam_getenv(ctx->pamh, key);
+	if (!name)
+		name = getenv(key);
+	if (!name && ctx && ctx->context && ctx->cache)
+		name = krb5_cc_get_name(ctx->context, ctx->cache);
+
+	return name;
+}
+
+static int
+set_krb5ccname(struct context *ctx, const char *name, const char *key)
+{
+	char *env_name = NULL;
+	int pamret;
+       
+	env_name = malloc(strlen(key) + 1 + strlen(name) + 1);
+	if (!env_name) {
+		dlog(ctx, "malloc() failure");
+		pamret = PAM_BUF_ERR;
+		goto done;
+	}
+
+	sprintf(env_name, "%s=%s", key, name);
+	if ((pamret = pam_putenv(ctx->pamh, env_name)) != PAM_SUCCESS) {
+		dlog(ctx, "pam_putenv(): %s", pam_strerror(ctx->pamh, pamret));
+		pamret = PAM_SERVICE_ERR;
+		goto done;
+	}
+
+	pamret = PAM_SUCCESS;
+done:
+	if (env_name)
+		free(env_name);
+	return pamret;
+}
+
+/* Authenticate a user via krb5.
+
+   It would be nice to be able to save the ticket cache temporarily as a
+   memory cache and then only write it out to disk during the session
+   initialization.  Unfortunately, OpenSSH 4.2 does PAM authentication in a
+   subprocess and therefore has no saved module-specific data available once
+   it opens a session, so we have to save the ticket cache to disk and store
+   in the environment where it is. */
 int
 pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 		    const char **argv)
@@ -77,7 +126,8 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     struct context *ctx = NULL;
     struct credlist *clist = NULL;
     int pamret = PAM_SERVICE_ERR;
-    char cache_name[L_tmpnam + 8];
+    char cache_name[] = "/tmp/krb5cc_pam_XXXXXX";
+    int ccfd;
 
     parse_args(flags, argc, argv);
     dlog(ctx, "%s: entry", __FUNCTION__);
@@ -93,13 +143,18 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 	goto done;
     }
 
-    /* Generate a unique cache_name */
-    strcpy(cache_name, "MEMORY:");
-    tmpnam(&cache_name[7]);
-
+    ccfd = mkstemp(cache_name);
+    if (ccfd < 0) {
+	dlog(ctx, "mkstemp(\"%s\") failed: %s", cache_name, strerror(errno));
+	pamret = PAM_SERVICE_ERR;
+	goto done;
+    }
+    close(ccfd);
     if ((pamret = password_auth(ctx, NULL, &clist)) != PAM_SUCCESS)
 	goto done;
     if ((pamret = init_ccache(ctx, cache_name, clist, &ctx->cache)) != PAM_SUCCESS)
+	goto done;
+    if ((pamret = set_krb5ccname(ctx, cache_name, "PAM_KRB5CCNAME")) != PAM_SUCCESS)
 	goto done;
 
 done:
@@ -109,48 +164,8 @@ done:
     /* Clear the context on failure so that the account management module
        knows that we didn't authenticate with Kerberos. */
     if (pamret != PAM_SUCCESS)
-        pam_set_data(pamh, "ctx", NULL, NULL);
+	pam_set_data(pamh, "ctx", NULL, NULL);
     return pamret;
-}
-
-static const char *
-get_krb5ccname(struct context *ctx)
-{
-	const char *name;
-
-	/* TODO: figure out why pam_getenv() returns NULL */
-	name = getenv("KRB5CCNAME");
-	if (!name && ctx && ctx->context && ctx->cache)
-		name = krb5_cc_get_name(ctx->context, ctx->cache);
-
-	return name;
-}
-
-static int
-set_krb5ccname(struct context *ctx, const char *name)
-{
-	char *env_name = NULL;
-	int pamret;
-       
-	env_name = malloc(sizeof("KRB5CCNAME=") + strlen(name));
-	if (!env_name) {
-		dlog(ctx, "malloc() failure");
-		pamret = PAM_BUF_ERR;
-		goto done;
-	}
-
-	sprintf(env_name, "KRB5CCNAME=%s", name);
-	if ((pamret = pam_putenv(ctx->pamh, env_name)) != PAM_SUCCESS) {
-		dlog(ctx, "pam_putenv(): %s", pam_strerror(ctx->pamh, pamret));
-		pamret = PAM_SERVICE_ERR;
-		goto done;
-	}
-
-	pamret = PAM_SUCCESS;
-done:
-	if (env_name)
-		free(env_name);
-	return pamret;
 }
 
 /* Determine the name of the ticket cache.  Handles ccache and ccache_dir PAM
@@ -214,6 +229,45 @@ build_ccache_name(struct context *ctx, uid_t uid)
     return cache_name;
 }
 
+/* Create a new context for a session if we've lost the context created during
+   authentication (such as when running under OpenSSH. */
+static struct context *
+create_session_context(pam_handle_t *pamh)
+{
+    struct context *ctx = NULL;
+    const char *tmpname;
+    int pamret;
+
+    pamret = new_context(pamh, &ctx);
+    if (pamret != PAM_SUCCESS) {
+	dlog(ctx, "creating session context failed");
+	goto fail;
+    }
+    tmpname = get_krb5ccname(ctx, "PAM_KRB5CCNAME");
+    if (tmpname == NULL) {
+	dlog(ctx, "unable to get PAM_KRB5CCNAME");
+	goto fail;
+    }
+    if (krb5_cc_resolve(ctx->context, tmpname, &ctx->cache) != 0) {
+	dlog(ctx, "cannot resolve cache %s", tmpname);
+	goto fail;
+    }
+    if (krb5_cc_get_principal(ctx->context, ctx->cache, &ctx->princ) != 0) {
+	dlog(ctx, "cannot retrieve principal");
+	goto fail;
+    }
+    if ((pamret = pam_set_data(pamh, "ctx", ctx,
+			       destroy_context)) != PAM_SUCCESS) {
+	dlog(ctx, "cannot set context data");
+	goto fail;
+    }
+    return ctx;
+
+fail:
+    free_context(ctx);
+    return NULL;
+}
+
 /* Called after a successful authentication. Set user credentials. */
 int
 pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
@@ -225,16 +279,15 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
     char *cache_name = NULL;
     int reinit = 0;
     int pamret;
-
     struct passwd *pw = NULL;
-    uid_t euid = geteuid(); /* Usually 0 */
-    gid_t egid = getegid();
+    uid_t uid;
+    gid_t gid;
 
     parse_args(flags, argc, argv);
     dlog(ctx, "%s: entry (0x%x)", __FUNCTION__, flags); 
 
     if (flags & PAM_DELETE_CRED)
-    	return pam_set_data(pamh, "ctx", NULL, destroy_context);
+	return pam_set_data(pamh, "ctx", NULL, destroy_context);
 
     if (flags & (PAM_REINITIALIZE_CRED | PAM_REFRESH_CRED))
 	reinit = 1;
@@ -245,8 +298,14 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
 	return PAM_SERVICE_ERR;
 
     pamret = fetch_context(pamh, &ctx);
-    if (pamret != PAM_SUCCESS)
-	goto done;
+    if (pamret != PAM_SUCCESS) {
+	dlog(ctx, "%s: no context found, creating one", __FUNCTION__);
+	ctx = create_session_context(pamh);
+	if (ctx == NULL) {
+	    pamret = PAM_SERVICE_ERR;
+	    goto done;
+	}
+    }
 
     if (pam_args.no_ccache)
 	goto done;
@@ -258,26 +317,29 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
 	pamret = PAM_USER_UNKNOWN;
 	goto done;
     }
-
-    /* Avoid following a symlink as root */
-    if (setegid(pw->pw_gid)) {
-	dlog(ctx, "setegid(): %s", ctx->name);
-	pamret = PAM_SERVICE_ERR;
-	goto done;
-    }
-    if (seteuid(pw->pw_uid)) {
-	dlog(ctx, "seteuid(): %s", ctx->name);
-	pamret = PAM_SERVICE_ERR;
-	goto done;
-    }
+    uid = pw->pw_uid;
+    gid = pw->pw_gid;
 
     /* Get the cache name */
     if (reinit) {
-	const char *name = get_krb5ccname(ctx);
+	const char *name, *k5name;
+
+	name = get_krb5ccname(ctx, "KRB5CCNAME");
 	if (!name) {
-	    dlog(ctx, "Unable to get KRBCCNAME!");
+	    dlog(ctx, "Unable to get KRB5CCNAME!");
 	    pamret = PAM_SERVICE_ERR;
 	    goto done;
+	}
+
+	/* If the cache we have in the context and the cache we're
+	 * reinitializing are the same cache, don't do anything; otherwise,
+	 * we'll end up destroying the cache. */
+	if (ctx->cache != NULL) {
+	    k5name = krb5_cc_get_name(ctx->context, ctx->cache);
+	    if (k5name != NULL && strcmp(name, k5name) == 0) {
+		pamret = PAM_SUCCESS;
+		goto done;
+	    }
 	}
 
 	cache_name = strdup(name);
@@ -287,6 +349,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
 	    goto done;
 	}
 	dlog(ctx, "%s: attempting to refresh cred cache %s", __FUNCTION__, cache_name);
+
 	/* If we're refreshing the cache, we didn't really create it;
 	 * some other application (probably login?) is still using it.
 	 * Thus, don't remove it! */
@@ -296,7 +359,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
 	int ccache_fd;
 	size_t len;
 
-	cache_name = build_ccache_name(ctx, pw->pw_uid);
+	cache_name = build_ccache_name(ctx, uid);
 	if (cache_name == NULL) {
 	    pamret = PAM_BUF_ERR;
 	    goto done;
@@ -306,7 +369,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
 	    ccache_fd = mkstemp(cache_name);
 	    if (ccache_fd == -1) {
 		dlog(ctx, "mkstemp() failure");
-		pamret = PAM_BUF_ERR;
+		pamret = PAM_SERVICE_ERR;
 		goto done;
 	    }
 	    close(ccache_fd);
@@ -320,16 +383,18 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
     if ((pamret = init_ccache(ctx, cache_name, clist, &cache)) != PAM_SUCCESS)
 	goto done;
 
-    if (chown(cache_name, pw->pw_uid, pw->pw_gid) == -1) {
+    if (chown(cache_name, uid, gid) == -1) {
 	dlog(ctx, "chown(): %s", strerror(errno));
 	pamret = PAM_SERVICE_ERR;	
 	goto done;
     }
-    if ((pamret = set_krb5ccname(ctx, cache_name)) != PAM_SUCCESS)
+    if ((pamret = set_krb5ccname(ctx, cache_name, "KRB5CCNAME")) != PAM_SUCCESS)
 	goto done;
+    if (pam_getenv(pamh, "PAM_KRB5CCNAME") != NULL)
+	if ((pamret = pam_putenv(pamh, "PAM_KRB5CCNAME")) != PAM_SUCCESS)
+	    goto done;
 
-    if (!reinit)
-    	krb5_cc_destroy(ctx->context, ctx->cache);
+    krb5_cc_destroy(ctx->context, ctx->cache);
     ctx->cache = cache;
     cache = NULL;
 
@@ -339,8 +404,6 @@ done:
     if (cache_name)
 	free(cache_name);
     free_credlist(ctx, clist);
-    seteuid(euid);
-    setegid(egid);
     dlog(ctx, "%s: exit (%s)", __FUNCTION__, pamret ? "failure" : "success");
     return pamret;
 }
