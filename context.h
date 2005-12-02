@@ -20,6 +20,7 @@ struct context
 	krb5_ccache cache;
 	krb5_principal princ;
 	int dont_destroy_cache;
+	int initialized;
 };
 
 int new_context(pam_handle_t *pamh, struct context **ctx);

@@ -102,6 +102,8 @@ done:
 void
 free_context(struct context *ctx)
 {
+	if (ctx == NULL)
+		return;
 	if (ctx->context) {
 		if (ctx->princ)
 			krb5_free_principal(ctx->context, ctx->princ);

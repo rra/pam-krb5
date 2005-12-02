@@ -6,8 +6,12 @@ libpam-krb5 (1.2.0-2) unstable; urgency=low
     with OpenSSH's technique (when using ChallengeResponseAuthentication)
     of doing PAM authentication in a child process and then opening the
     session in the parent.  (Closes: #339734)
+  * Only initialize the ticket cache once no matter how many times setcred
+    is called.  Saves duplicate work and works around a bug in xdm, which
+    calls setcred repeatedly and discards the environment set by the final
+    call.
 
- -- Russ Allbery <rra@debian.org>  Wed, 30 Nov 2005 19:50:20 -0800
+ -- Russ Allbery <rra@debian.org>  Fri,  2 Dec 2005 12:09:02 -0800
 
 libpam-krb5 (1.2.0-1) unstable; urgency=low
 

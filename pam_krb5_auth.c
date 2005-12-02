@@ -231,8 +231,8 @@ build_ccache_name(struct context *ctx, uid_t uid)
 
 /* Create a new context for a session if we've lost the context created during
    authentication (such as when running under OpenSSH. */
-static struct context *
-create_session_context(pam_handle_t *pamh)
+static int
+create_session_context(pam_handle_t *pamh, struct context **newctx)
 {
     struct context *ctx = NULL;
     const char *tmpname;
@@ -240,20 +240,29 @@ create_session_context(pam_handle_t *pamh)
 
     pamret = new_context(pamh, &ctx);
     if (pamret != PAM_SUCCESS) {
-	dlog(ctx, "creating session context failed");
+	if (pam_args.ignore_root && strcmp("root", c->name) == 0) {
+	    dlog(ctx, "ignoring root login");
+	    pamret = PAM_SUCCESS;
+	} else {
+	    dlog(ctx, "creating session context failed");
+	}
 	goto fail;
     }
     tmpname = get_krb5ccname(ctx, "PAM_KRB5CCNAME");
     if (tmpname == NULL) {
-	dlog(ctx, "unable to get PAM_KRB5CCNAME");
+	dlog(ctx, "unable to get PAM_KRB5CCNAME, assuming non-Kerberos login");
+	pamret = PAM_SUCCESS;
 	goto fail;
     }
+    dlog(ctx, "found initial ticket cache at %s", tmpname);
     if (krb5_cc_resolve(ctx->context, tmpname, &ctx->cache) != 0) {
 	dlog(ctx, "cannot resolve cache %s", tmpname);
+	pamret = PAM_SERVICE_ERR;
 	goto fail;
     }
     if (krb5_cc_get_principal(ctx->context, ctx->cache, &ctx->princ) != 0) {
 	dlog(ctx, "cannot retrieve principal");
+	pamret = PAM_SERVICE_ERR;
 	goto fail;
     }
     if ((pamret = pam_set_data(pamh, "ctx", ctx,
@@ -261,11 +270,13 @@ create_session_context(pam_handle_t *pamh)
 	dlog(ctx, "cannot set context data");
 	goto fail;
     }
-    return ctx;
+    *newctx = ctx;
+    return PAM_SUCCESS;
 
 fail:
-    free_context(ctx);
-    return NULL;
+    if (ctx != NULL)
+	free_context(ctx);
+    return pamret;
 }
 
 /* Called after a successful authentication. Set user credentials. */
@@ -300,12 +311,15 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
     pamret = fetch_context(pamh, &ctx);
     if (pamret != PAM_SUCCESS) {
 	dlog(ctx, "%s: no context found, creating one", __FUNCTION__);
-	ctx = create_session_context(pamh);
-	if (ctx == NULL) {
-	    pamret = PAM_SERVICE_ERR;
+	pamret = create_session_context(pamh, &ctx);
+	if (ctx == NULL)
 	    goto done;
-	}
     }
+
+    /* Some programs (xdm, for instance) appear to call setcred over and
+     * over again, so avoid doing useless work. */
+    if (ctx->initialized)
+	return PAM_SUCCESS;
 
     if (pam_args.no_ccache)
 	goto done;
@@ -393,6 +407,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
     if (pam_getenv(pamh, "PAM_KRB5CCNAME") != NULL)
 	if ((pamret = pam_putenv(pamh, "PAM_KRB5CCNAME")) != PAM_SUCCESS)
 	    goto done;
+    ctx->initialized = 1;
 
     krb5_cc_destroy(ctx->context, ctx->cache);
     ctx->cache = cache;
