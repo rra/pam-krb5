@@ -1,0 +1,10 @@
+libpam-krb5 (1.2.0-2)
+
+  The user's credential cache is now created by the session stage of the
+  PAM module rather than the authentication stage.  This means that if you
+  were setting the ccache option in the PAM configuration, be sure to set
+  that option in the configuration line for the session stage as well for
+  it to take effect.
+
+ -- Russ Allbery <rra@debian.org>  Wed,  7 Dec 2005 17:48:50 -0800
+
