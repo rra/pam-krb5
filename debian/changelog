@@ -10,8 +10,9 @@ libpam-krb5 (1.2.0-2) unstable; urgency=low
     is called.  Saves duplicate work and works around a bug in xdm, which
     calls setcred repeatedly and discards the environment set by the final
     call.
+  * Depend on krb5-config.  (Closes: #342271)
 
- -- Russ Allbery <rra@debian.org>  Fri,  2 Dec 2005 12:09:02 -0800
+ --
 
 libpam-krb5 (1.2.0-1) unstable; urgency=low
 

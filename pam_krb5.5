@@ -89,6 +89,30 @@ Never attempt to authenticate the user "root".  Always fail immediately if
 that user is being authenticated; presumably the PAM stack will fall back
 to some other mechanism.
 .TP
+.B search_k5login
+Normally, the authentication module attempts to authenticate as a Kerberos
+principal derived from the username by appending the default realm.
+Verification of the presence of that Kerberos principal in the user's
+\&.k5login file can then be done via the account management module.  When
+this option is given and a \&.k5login file is present, the provided
+password is instead used to attempt to authenticate as each Kerberos
+principal listed in the \&.k5login file in turn.  If there is no
+\&.k5login file, the behavior is the same as normal.  This may be useful
+when there is no simple mapping from local username to Kerberos principal
+name, but requires the \&.k5login file be readable at the time of
+authentication (and therefore may not work with schemes such as sshd's
+privilege separation).
+.SH Kerberos 5 Session Management Module
+The Kerberos 5 session management component
+provides functions to initiate
+(\f3pam_sm_open_session(\|)\f1)
+and terminate
+(\f3pam_sm_close_session(\|)\f1)
+sessions.  This module takes all of the same options as the authentication
+module and will authenticate the user if authentication has not already
+been established.  In addition, it takes the following options specific to
+this module:
+.TP
 .B ccache=<name>
 Use <name> as the credentials cache.  <name> must be in the form
 .I type:residual
@@ -108,20 +132,6 @@ world-writable directory.
 Put the ticket cache in <dir> instead of the default of /tmp.  Ignored if
 .B ccache
 is also set.
-.TP
-.B search_k5login
-Normally, the authentication module attempts to authenticate as a Kerberos
-principal derived from the username by appending the default realm.
-Verification of the presence of that Kerberos principal in the user's
-\&.k5login file can then be done via the account management module.  When
-this option is given and a \&.k5login file is present, the provided
-password is instead used to attempt to authenticate as each Kerberos
-principal listed in the \&.k5login file in turn.  If there is no
-\&.k5login file, the behavior is the same as normal.  This may be useful
-when there is no simple mapping from local username to Kerberos principal
-name, but requires the \&.k5login file be readable at the time of
-authentication (and therefore may not work with schemes such as sshd's
-privilege separation).
 .SH Kerberos 5 Account Management Module
 The Kerberos 5 account management component
 provides a function to perform account management,
@@ -188,15 +198,6 @@ the user is prompted for them.
 .TP
 .B ignore_root
 Do not try to change passwords for the root user, just fail immediately.
-.SH Kerberos 5 Session Management Module
-The Kerberos 5 session management component
-provides functions to initiate
-(\f3pam_sm_open_session(\|)\f1)
-and terminate
-(\f3pam_sm_close_session(\|)\f1)
-sessions.  This module takes all of the same options as the authentication
-module and will authenticate the user if authentication has not already
-been established.
 .SH ENVIRONMENT
 .TP "\w'.SM KRB5CCNAME\ \ 'u"
 .SM KRB5CCNAME
