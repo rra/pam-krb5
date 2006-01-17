@@ -61,14 +61,6 @@ done:
 }
 #endif
 
-static void
-destroy_context(pam_handle_t *pamh, void *data, int pam_end_status)
-{
-	struct context *ctx = (struct context *) data;
-	if (ctx)
-		free_context(ctx);
-}
-
 static const char *
 get_krb5ccname(struct context *ctx, const char *key)
 {
@@ -240,7 +232,7 @@ create_session_context(pam_handle_t *pamh, struct context **newctx)
 
     pamret = new_context(pamh, &ctx);
     if (pamret != PAM_SUCCESS) {
-	if (pam_args.ignore_root && strcmp("root", c->name) == 0) {
+	if (pam_args.ignore_root && strcmp("root", ctx->name) == 0) {
 	    dlog(ctx, "ignoring root login");
 	    pamret = PAM_SUCCESS;
 	} else {

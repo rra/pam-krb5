@@ -18,6 +18,7 @@
 #include <com_err.h>
 #include "pam_krb5.h"
 #include "credlist.h"
+#include "context.h"
 
 /* Utter a message to the user */
 static void
@@ -147,8 +148,23 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	return PAM_AUTHTOK_ERR;
 
     pamret = fetch_context(pamh, &ctx);
-    if (pamret != PAM_SUCCESS)
-        goto done;
+    if (pamret != PAM_SUCCESS) {
+        pamret = new_context(pamh, &ctx);
+        if (pamret != PAM_SUCCESS) {
+            if (pam_args.ignore_root && strcmp("root", ctx->name) == 0) {
+                dlog(ctx, "ignoring root password change");
+                pamret = PAM_SUCCESS;
+            }
+	} else {
+	    dlog(ctx, "creating context failed");
+            goto done;
+	}
+        pamret = pam_set_data(pamh, "ctx", ctx, destroy_context);
+        if (pamret != PAM_SUCCESS) {
+            dlog(ctx, "cannot set context data");
+            goto done;
+        }
+    }
 
     /* Auth using old password */
     if ((pamret = password_auth(ctx, "kadmin/changepw", &clist)) != PAM_SUCCESS)

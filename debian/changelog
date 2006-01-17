@@ -10,6 +10,8 @@ libpam-krb5 (1.2.0-2) unstable; urgency=low
     is called.  Saves duplicate work and works around a bug in xdm, which
     calls setcred repeatedly and discards the environment set by the final
     call.
+  * Don't assume we already have a context when changing passwords; passwd
+    doesn't work that way.  (Closes: #344003)
   * If search_k5login is specified but no .k5login is found, still check
     the user with krb5_kuserok in case there are custom principal mappings
     defined.
@@ -19,7 +21,7 @@ libpam-krb5 (1.2.0-2) unstable; urgency=low
   * Providing binary-indep in debian/rules is required by Policy even if
     there are no arch-independent packages.  Whoops.
 
- --
+ -- Russ Allbery <rra@debian.org>  Mon, 16 Jan 2006 16:53:30 -0800
 
 libpam-krb5 (1.2.0-1) unstable; urgency=low
 
