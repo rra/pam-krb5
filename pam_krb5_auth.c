@@ -230,14 +230,17 @@ create_session_context(pam_handle_t *pamh, struct context **newctx)
     const char *tmpname;
     int pamret;
 
+    if (pam_args.ignore_root) {
+        pamret = pam_get_user(pamh, &tmpname, NULL);
+        if (pamret == PAM_SUCCESS && strcmp("root", tmpname) == 0) {
+            dlog(ctx, "ignoring root login");
+            pamret = PAM_SUCCESS;
+            goto fail;
+        }
+    }
     pamret = new_context(pamh, &ctx);
     if (pamret != PAM_SUCCESS) {
-	if (pam_args.ignore_root && strcmp("root", ctx->name) == 0) {
-	    dlog(ctx, "ignoring root login");
-	    pamret = PAM_SUCCESS;
-	} else {
-	    dlog(ctx, "creating session context failed");
-	}
+	dlog(ctx, "creating session context failed");
 	goto fail;
     }
     tmpname = get_krb5ccname(ctx, "PAM_KRB5CCNAME");

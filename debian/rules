@@ -15,14 +15,14 @@ endif
 build: build-stamp
 build-stamp:
 	dh_testdir
-	$(MAKE)
+	$(MAKE) CFLAGS="$(CFLAGS)"
 	touch build-stamp
 
 clean:
 	dh_testdir
 	dh_testroot
 	rm -f build-stamp
-	-$(MAKE) clean
+	$(MAKE) clean
 	dh_clean
 
 install: build

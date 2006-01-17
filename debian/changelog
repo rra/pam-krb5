@@ -12,18 +12,25 @@ libpam-krb5 (1.2.0-2) unstable; urgency=low
     call.
   * Don't assume we already have a context when changing passwords; passwd
     doesn't work that way.  (Closes: #344003)
+  * Fix the test for the new password.  I don't think this would have
+    worked at all before.
+  * Improve debugging output for password changes.
   * If search_k5login is specified but no .k5login is found, still check
     the user with krb5_kuserok in case there are custom principal mappings
     defined.
+  * Handle ignore_root in a cleaner fashion and add support for
+    ignore_root on password changes.
   * Depend on krb5-config.  (Closes: #342271)
   * Document that ccache and ccache_dir must be specified as options to
     the session module.  (Closes: #341926)
   * Document that pam_sm_authenticate and pam_sm_setcred also call
     krb5_kuserok.
+  * Properly override the upstream CFLAGS so that debugging builds work.
+  * Don't ignore errors from make clean.
   * Providing binary-indep in debian/rules is required by Policy even if
     there are no arch-independent packages.  Whoops.
 
- -- Russ Allbery <rra@debian.org>  Mon, 16 Jan 2006 16:58:23 -0800
+ -- Russ Allbery <rra@debian.org>  Mon, 16 Jan 2006 18:11:57 -0800
 
 libpam-krb5 (1.2.0-1) unstable; urgency=low
 
