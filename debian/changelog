@@ -18,10 +18,12 @@ libpam-krb5 (1.2.0-2) unstable; urgency=low
   * Depend on krb5-config.  (Closes: #342271)
   * Document that ccache and ccache_dir must be specified as options to
     the session module.  (Closes: #341926)
+  * Document that pam_sm_authenticate and pam_sm_setcred also call
+    krb5_kuserok.
   * Providing binary-indep in debian/rules is required by Policy even if
     there are no arch-independent packages.  Whoops.
 
- -- Russ Allbery <rra@debian.org>  Mon, 16 Jan 2006 16:53:30 -0800
+ -- Russ Allbery <rra@debian.org>  Mon, 16 Jan 2006 16:58:23 -0800
 
 libpam-krb5 (1.2.0-1) unstable; urgency=low
 

@@ -138,8 +138,9 @@ provides a function to perform account management,
 .BR pam_sm_acct_mgmt(\|) .
 The function verifies that the authenticated principal is allowed
 to login to the local user account by calling
-.B krb5_kuserok()
-(which checks the user's \&.k5login file).
+.B krb5_kuserok(\|)
+(which checks the user's \&.k5login file).  Note that this is also done by
+pam_sm_authenticate(\|) and pam_sm_setcred(\|).
 .LP
 If the user didn't log on using krb5, this function silently succeeds.
 .LP
