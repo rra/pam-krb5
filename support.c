@@ -77,7 +77,7 @@ k5login_password_auth(struct context *ctx, krb5_creds *creds,
     FILE *k5login;
     struct passwd *pwd;
     struct stat st;
-    int k5_errno;
+    int k5_errno, pamret;
     krb5_principal princ;
 
     /* Assume no Kerberos error. */
@@ -96,13 +96,18 @@ k5login_password_auth(struct context *ctx, krb5_creds *creds,
     filename[len] = '\0';
     strncat(filename, "/.k5login", len - strlen(pwd->pw_dir));
 
-    /* If there is no file, do this the easy way. */
+    /* If there is no file, do this the easy way.  We have to revalidate the
+       context here to redo the kuserok call now that we have a principal
+       (there may be custom mapping rules in the local krb5.conf). */
     if (access(filename, R_OK) != 0) {
         k5_errno = krb5_parse_name(ctx->context, ctx->name, &ctx->princ);
         if (k5_errno != 0) {
             dlog(ctx, "krb5_parse_name(): %s", error_message(k5_errno));
             return PAM_SERVICE_ERR;
         }
+        pamret = valid_context(ctx);
+        if (pamret != PAM_SUCCESS)
+            return PAM_AUTH_ERR;
         *retval = krb5_get_init_creds_password(ctx->context, creds,
                      ctx->princ, pass, pam_prompter, ctx->pamh, 0,
                      in_tkt_service, opts);
