@@ -1,4 +1,4 @@
-libpam-krb5 (1.2.0-2)
+libpam-krb5 (1.2.0-2) unstable; urgency=low
 
   The user's credential cache is now created by the session stage of the
   PAM module rather than the authentication stage.  This means that if you
