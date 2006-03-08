@@ -39,7 +39,7 @@ int password_auth(struct context *, char *in_tkt_service,
 		struct credlist **);
 
 int get_user_info(pam_handle_t *, const char *, int, char **);
-int verify_krb_v5_tgt(krb5_context, krb5_ccache, const char *);
+int validate_auth(struct context *);
 
 krb5_prompter_fct pam_prompter;
 

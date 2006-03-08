@@ -39,6 +39,8 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
         goto done;
     }
     pamret = fetch_context(pamh, &ctx);
+    if (pamret == PAM_SUCCESS)
+        pamret = validate_auth(ctx);
 
     /* XXX: we could be a bit more thorough here; see what krb5_kuserok
      * *doesn't* check for, and check that here. */

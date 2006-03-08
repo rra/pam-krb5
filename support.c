@@ -56,6 +56,8 @@ parse_args(int flags, int argc, const char **argv)
 		pam_args.ccache_dir = "/tmp";
 }
 
+
+
 /*
  * Used to support trying each principal in the .k5login file.  Read through
  * each line that parses correctly as a principal and use the provided
@@ -77,7 +79,7 @@ k5login_password_auth(struct context *ctx, krb5_creds *creds,
     FILE *k5login;
     struct passwd *pwd;
     struct stat st;
-    int k5_errno, pamret;
+    int k5_errno;
     krb5_principal princ;
 
     /* Assume no Kerberos error. */
@@ -96,18 +98,13 @@ k5login_password_auth(struct context *ctx, krb5_creds *creds,
     filename[len] = '\0';
     strncat(filename, "/.k5login", len - strlen(pwd->pw_dir));
 
-    /* If there is no file, do this the easy way.  We have to revalidate the
-       context here to redo the kuserok call now that we have a principal
-       (there may be custom mapping rules in the local krb5.conf). */
+    /* If there is no file, do this the easy way. */
     if (access(filename, R_OK) != 0) {
         k5_errno = krb5_parse_name(ctx->context, ctx->name, &ctx->princ);
         if (k5_errno != 0) {
             dlog(ctx, "krb5_parse_name(): %s", error_message(k5_errno));
             return PAM_SERVICE_ERR;
         }
-        pamret = valid_context(ctx);
-        if (pamret != PAM_SUCCESS)
-            return PAM_AUTH_ERR;
         *retval = krb5_get_init_creds_password(ctx->context, creds,
                      ctx->princ, pass, pam_prompter, ctx->pamh, 0,
                      in_tkt_service, opts);
@@ -310,11 +307,6 @@ init_ccache(struct context *ctx, const char *ccname,
 		c = c->next;
 	}
 
-	if (verify_krb_v5_tgt(ctx->context, *cache, ctx->service) == -1) {
-		retval = PAM_AUTH_ERR;
-		goto done;
-	}
-
 done:
 	if (retval != PAM_SUCCESS && *cache)
 		krb5_cc_destroy(ctx->context, *cache);
@@ -374,7 +366,7 @@ get_user_info(pam_handle_t *pamh, const char *prompt, int type, char **response)
  *
  * Returns 1 for confirmation, -1 for failure, 0 for uncertainty.
  */
-int
+static int
 verify_krb_v5_tgt(krb5_context context, krb5_ccache ccache,
 		  const char *pam_service)
 {
@@ -472,4 +464,38 @@ cleanup:
     krb5_free_principal(context, princ);
     return retval;
 
+}
+
+
+/* Verify the user authentication.  First, obtain and verify a service ticket
+   using their TGT, and then call krb5_kuserok if this is a local account.  We
+   don't need to check krb5_aname_to_localname since we derived the principal
+   name for the authentication from PAM_USER and it therefore either started
+   as an unqualified name or already has the domain that we want. */
+int
+validate_auth(struct context *ctx)
+{
+    struct passwd *pwd;
+
+    /* Sanity checks. */
+    if (ctx == NULL)
+        return PAM_SERVICE_ERR;
+    if (ctx->name == NULL)
+        return PAM_SERVICE_ERR;
+
+    /* Try to obtain and check a service ticket. */
+    if (verify_krb_v5_tgt(ctx->context, ctx->cache, ctx->service) == -1)
+        return PAM_AUTH_ERR;
+
+    /* If the account is a local account, call krb5_kuserok.  It's the
+       responsibility of the calling application to deal with authorization
+       issues for non-local accounts. */
+    if (strchr(ctx->name, '@') == NULL) {
+        pwd = getpwnam(ctx->name);
+        if (pwd != NULL && !krb5_kuserok(ctx->context, ctx->princ, ctx->name))
+            return PAM_AUTH_ERR;
+    }
+
+    /* Everything looks fine. */
+    return PAM_SUCCESS;
 }

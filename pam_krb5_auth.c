@@ -146,6 +146,8 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 	goto done;
     if ((pamret = init_ccache(ctx, cache_name, clist, &ctx->cache)) != PAM_SUCCESS)
 	goto done;
+    if ((pamret = validate_auth(ctx)) != PAM_SUCCESS)
+        goto done;
     if ((pamret = set_krb5ccname(ctx, cache_name, "PAM_KRB5CCNAME")) != PAM_SUCCESS)
 	goto done;
 
@@ -310,6 +312,11 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
 	if (ctx == NULL)
 	    goto done;
     }
+
+    /* Revalidate the user. */
+    pamret = validate_auth(ctx);
+    if (pamret != PAM_SUCCESS)
+        goto done;
 
     /* Some programs (xdm, for instance) appear to call setcred over and
      * over again, so avoid doing useless work. */
