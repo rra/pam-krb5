@@ -53,6 +53,29 @@ appropriately.  This module destroys the credentials cache when the PAM
 data is cleaned up.  Thus, you should set close_sessions to yes in
 /etc/login.defs.
 .LP
+If the authentication is done as root and a local keytab is available,
+.B pam_krb5.so
+will do a proper Kerberos authentication by using the Kerberos TGT
+acquired to obtain a service ticket and then validate the service ticket
+against a local keytab.  If there is no local keytab or if the keytab file
+.RI ( /etc/krb5.keytab )
+is not readable, this step will be skipped.  Without performing this step,
+authentication is vulnerable to KDC spoofing.  If a keytab is available,
+the module first looks for a principal named
+.RI host/ machine
+where
+.I machine
+is the fully qualified local hostname.  If that principal isn't available,
+it looks for
+.IR service / machine
+where
+.I service
+is the PAM service used (the first argument to
+.BR pam_start(\|) )
+and
+.I machine
+is the same as above.
+.LP
 The following options may be passed to the authentication module:
 .TP 15
 .B debug

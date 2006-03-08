@@ -1,3 +1,10 @@
+libpam-krb5 (1.2.0-3) unstable; urgency=low
+
+  * Document what principals libpam_krb5.so looks for in the system keytab
+    to do ticket validation.  (Closes: #350556)
+
+ --
+
 libpam-krb5 (1.2.0-2) unstable; urgency=low
 
   * Always use a disk cache for temporary storage of credentials and cope
