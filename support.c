@@ -188,10 +188,11 @@ password_auth(struct context *ctx, char *in_tkt_service,
 	}
 
         /* Fill in the principal to authenticate as. */
-        k5_errno = krb5_parse_name(ctx->context, ctx->name, &ctx->princ);
-        if (k5_errno != 0) {
-            dlog(ctx, "krb5_parse_name(): %s", error_message(k5_errno));
-            return PAM_SERVICE_ERR;
+        retval = krb5_parse_name(ctx->context, ctx->name, &ctx->princ);
+        if (retval != 0) {
+            dlog(ctx, "krb5_parse_name(): %s", error_message(retval));
+            retval = PAM_SERVICE_ERR;
+            goto done;
         }
 
 	retry = pam_args.try_first_pass ? 1 : 0;
