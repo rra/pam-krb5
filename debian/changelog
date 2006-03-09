@@ -6,10 +6,12 @@ libpam-krb5 (1.2.0-3) UNRELEASED; urgency=low
   * Restructure the code to do user validation after obtaining their
     initial tickets.  This eliminates a lot of confusing special cases and
     deferred checking and makes it easier to audit the code.
+  * Don't create the ticket cache until after successful authentication.
+    Otherwise, we leave files behind in /tmp.
   * Document what principals libpam_krb5.so looks for in the system keytab
     to do ticket validation.  (Closes: #350556)
 
- -- Russ Allbery <rra@debian.org>  Wed,  8 Mar 2006 15:51:28 -0800
+ -- Russ Allbery <rra@debian.org>  Wed,  8 Mar 2006 16:23:32 -0800
 
 libpam-krb5 (1.2.0-2) unstable; urgency=low
 

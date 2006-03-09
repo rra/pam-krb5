@@ -135,6 +135,8 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 	goto done;
     }
 
+    if ((pamret = password_auth(ctx, NULL, &clist)) != PAM_SUCCESS)
+	goto done;
     ccfd = mkstemp(cache_name);
     if (ccfd < 0) {
 	dlog(ctx, "mkstemp(\"%s\") failed: %s", cache_name, strerror(errno));
@@ -142,8 +144,6 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 	goto done;
     }
     close(ccfd);
-    if ((pamret = password_auth(ctx, NULL, &clist)) != PAM_SUCCESS)
-	goto done;
     if ((pamret = init_ccache(ctx, cache_name, clist, &ctx->cache)) != PAM_SUCCESS)
 	goto done;
     if ((pamret = validate_auth(ctx)) != PAM_SUCCESS)
