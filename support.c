@@ -187,6 +187,13 @@ password_auth(struct context *ctx, char *in_tkt_service,
 		goto done;
 	}
 
+        /* Fill in the principal to authenticate as. */
+        k5_errno = krb5_parse_name(ctx->context, ctx->name, &ctx->princ);
+        if (k5_errno != 0) {
+            dlog(ctx, "krb5_parse_name(): %s", error_message(k5_errno));
+            return PAM_SERVICE_ERR;
+        }
+
 	retry = pam_args.try_first_pass ? 1 : 0;
 	if (pam_args.try_first_pass || pam_args.use_first_pass)
 		pam_get_item(ctx->pamh, PAM_AUTHTOK, (void *) &pass);
