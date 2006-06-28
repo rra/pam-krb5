@@ -49,33 +49,33 @@ krb_pass_utter(pam_handle_t *pamh, int quiet, const char *text)
 
 /* Get a new password */
 static int
-get_new_password(struct context *ctx, char **pass)
+get_new_password(struct context *ctx, struct pam_args *args, char **pass)
 {
 	int pamret = PAM_SUCCESS;
 	char *pass2;
 
 	*pass = NULL;
-	if (pam_args.try_first_pass || pam_args.use_first_pass)
+	if (args->try_first_pass || args->use_first_pass)
 		pam_get_item(ctx->pamh, PAM_AUTHTOK, (const void **) pass);
 
 	if (!*pass) {
 		if ((pamret = get_user_info(ctx->pamh, "Enter new password: ", PAM_PROMPT_ECHO_OFF, pass) != PAM_SUCCESS)) { 
-			dlog(ctx, "get_user_info(): %s", pam_strerror(ctx->pamh, pamret));
-			pamret = PAM_SERVICE_ERR;
-			goto done;
+                    dlog(ctx, args, "get_user_info(): %s", pam_strerror(ctx->pamh, pamret));
+                    pamret = PAM_SERVICE_ERR;
+                    goto done;
 		}
 		if ((pamret = get_user_info(ctx->pamh, "Enter it again: ", PAM_PROMPT_ECHO_OFF, &pass2)) != PAM_SUCCESS) {
-			dlog(ctx, "get_user_info(): %s", pam_strerror(ctx->pamh, pamret));
-			pamret = PAM_SERVICE_ERR;
-			goto done;
+                    dlog(ctx, args, "get_user_info(): %s", pam_strerror(ctx->pamh, pamret));
+                    pamret = PAM_SERVICE_ERR;
+                    goto done;
 		}
 
 		if (strcmp(*pass, pass2) != 0) {
-			dlog(ctx, "strcmp(): passwords not equal!");
-			krb_pass_utter(ctx->pamh, pam_args.quiet, "Passwords don't match");
-			*pass = NULL;
-			pamret = PAM_AUTHTOK_ERR;
-			goto done;
+                    dlog(ctx, args, "strcmp(): passwords not equal!");
+                    krb_pass_utter(ctx->pamh, args->quiet, "Passwords don't match");
+                    *pass = NULL;
+                    pamret = PAM_AUTHTOK_ERR;
+                    goto done;
 		}
 	}
 done:
@@ -83,8 +83,8 @@ done:
 }
 
 static int
-password_change(struct context *ctx, struct credlist *clist,
-		const char *pass)
+password_change(struct context *ctx, struct pam_args *args,
+                struct credlist *clist, const char *pass)
 {
 	int retval = PAM_SUCCESS;
 	int result_code;
@@ -97,27 +97,27 @@ password_change(struct context *ctx, struct credlist *clist,
 	if ((retval = krb5_change_password(ctx->context, &clist->creds,
 				       	(char *) pass, &result_code,
 				       	&result_code_string, &result_string)) != 0) {
-		dlog(ctx, "krb5_change_password(): %s", error_message(retval));
-		krb_pass_utter(ctx->pamh, pam_args.quiet, error_message(retval));
-		retval = PAM_AUTHTOK_ERR;
-		goto done;
+            dlog(ctx, args, "krb5_change_password(): %s", error_message(retval));
+            krb_pass_utter(ctx->pamh, args->quiet, error_message(retval));
+            retval = PAM_AUTHTOK_ERR;
+            goto done;
 	}
 	if (result_code) {
 		char *message;
 
-		dlog(ctx, "krb5_change_password() result_code_string=%s",
+		dlog(ctx, args, "krb5_change_password() result_code_string=%s",
 				result_code_string.data);
 		retval = PAM_AUTHTOK_ERR;
 		message = malloc(result_string.length + result_code_string.length + 3);
 		if (!message)
-			dlog(ctx, "malloc() failure");
+                    error(ctx, "malloc failure: %s", strerror(errno));
 		else {
-			sprintf(message, "%.*s%s%.*s",
-					result_code_string.length, result_code_string.data,
-					result_string.length == 0 ? "" : ": ",
-					result_string.length, result_string.data);
-			krb_pass_utter(ctx->pamh, pam_args.quiet, message);
-			free(message);
+                    sprintf(message, "%.*s%s%.*s",
+                            result_code_string.length, result_code_string.data,
+                            result_string.length == 0 ? "" : ": ",
+                            result_string.length, result_string.data);
+                    krb_pass_utter(ctx->pamh, args->quiet, message);
+                    free(message);
 		}
 	}
 
@@ -133,7 +133,8 @@ done:
 int
 pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
-    struct context *ctx = NULL;
+    struct context *ctx;
+    struct pam_args *args;
     struct credlist *clist = NULL;
 
     int		pamret = PAM_SUCCESS;
@@ -141,8 +142,8 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
     char	*pass = NULL;
 
     pamret = fetch_context(pamh, &ctx);
-    parse_args(ctx, flags, argc, argv);
-    dlog(ctx, "%s: entry (flags %d)", __FUNCTION__, flags);
+    args = parse_args(ctx, flags, argc, argv);
+    dlog(ctx, args, "%s: entry (flags %d)", __FUNCTION__, flags);
 
     /* We don't do anything useful for the preliminary check. */
     if (flags & PAM_PRELIM_CHECK)
@@ -153,10 +154,10 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	goto done;
     }
 
-    if (pam_args.ignore_root) {
+    if (args->ignore_root) {
 	pamret = pam_get_user(pamh, &tmpname, NULL);
 	if (pamret == PAM_SUCCESS && strcmp("root", tmpname) == 0) {
-	    dlog(ctx, "ignoring root password change");
+	    dlog(ctx, args, "ignoring root password change");
 	    pamret = PAM_SUCCESS;
 	    goto done;
 	}
@@ -171,36 +172,38 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
     if (pamret != PAM_SUCCESS) {
 	pamret = new_context(pamh, &ctx);
 	if (pamret != PAM_SUCCESS) {
-	    dlog(ctx, "creating context failed (%d)", pamret);
+	    dlog(ctx, args, "creating context failed (%d)", pamret);
 	    pamret = PAM_AUTHTOK_ERR;
 	    goto done;
 	}
 	pamret = pam_set_data(pamh, "ctx", ctx, destroy_context);
 	if (pamret != PAM_SUCCESS) {
-	    dlog(ctx, "cannot set context data");
+	    dlog(ctx, args, "cannot set context data");
 	    pamret = PAM_AUTHTOK_ERR;
 	    goto done;
 	}
     }
 
     /* Auth using old password */
-    pamret = password_auth(ctx, "kadmin/changepw", &clist);
+    pamret = password_auth(ctx, args, "kadmin/changepw", &clist);
     if (pamret != PAM_SUCCESS) {
 	pamret = PAM_AUTHTOK_ERR;
 	goto done;
     }
 
     /* Now get the new password */
-    if ((pamret = get_new_password(ctx, &pass)) != PAM_SUCCESS)
+    if ((pamret = get_new_password(ctx, args, &pass)) != PAM_SUCCESS)
 	goto cleanup;
 
     /* Change it */
-    pamret = password_change(ctx, clist, pass);
+    pamret = password_change(ctx, args, clist, pass);
 
 cleanup:
     free_credlist(ctx, clist);
+
 done:
-    dlog(ctx, "%s: exit (%s)", __FUNCTION__, pamret ? "failure" : "success");
+    dlog(ctx, args, "%s: exit (%s)", __FUNCTION__, pamret ? "failure" : "success");
     /* TODO: re-store ctx back into pam */
+    free_args(args);
     return pamret;
 }

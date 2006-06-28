@@ -20,12 +20,13 @@
 int
 pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
-    struct context *ctx = NULL;
+    struct pam_args *args;
+    struct context *ctx;
     int	pamret = PAM_AUTH_ERR;
 
     pamret = fetch_context(pamh, &ctx);
-    parse_args(ctx, flags, argc, argv);
-    dlog(ctx, "%s: entry", __FUNCTION__);
+    args = parse_args(ctx, flags, argc, argv);
+    dlog(ctx, args, "%s: entry", __FUNCTION__);
 
     /*
      * Succeed if the user did not use krb5 to login.  Yes, ideally we should
@@ -37,12 +38,13 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
     if (pamret != PAM_SUCCESS || ctx == NULL) {
         pamret = PAM_SUCCESS;
         ctx = NULL;
-        dlog(ctx, "%s: skipping non-Kerberos login", __FUNCTION__);
+        dlog(ctx, args, "%s: skipping non-Kerberos login", __FUNCTION__);
         goto done;
     }
-    pamret = validate_auth(ctx);
+    pamret = validate_auth(ctx, args);
 
 done:
-    dlog(ctx, "%s: exit (%s)", __FUNCTION__, pamret ? "failure" : "success");
+    dlog(ctx, args, "%s: exit (%s)", __FUNCTION__, pamret ? "failure" : "success");
+    free_args(args);
     return pamret;
 }

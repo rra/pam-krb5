@@ -62,18 +62,18 @@ k5login_password_auth(struct context *ctx, krb5_creds *creds,
     /* If there is no file, do this the easy way. */
     if (access(filename, R_OK) != 0) {
         k5_errno = krb5_parse_name(ctx->context, ctx->name, &ctx->princ);
-        if (k5_errno != 0) {
-            dlog(ctx, "krb5_parse_name(): %s", error_message(k5_errno));
+        if (k5_errno != 0)
             return PAM_SERVICE_ERR;
-        }
         *retval = krb5_get_init_creds_password(ctx->context, creds,
                      ctx->princ, pass, pam_prompter, ctx->pamh, 0,
                      in_tkt_service, opts);
         return (*retval == 0) ? PAM_SUCCESS : PAM_AUTH_ERR;
     }
 
-    /* Make sure the ownership on .k5login is okay.  The user must own their
-       own .k5login or it must be owned by root. */
+    /*
+     * Make sure the ownership on .k5login is okay.  The user must own their
+     * own .k5login or it must be owned by root.
+     */
     k5login = fopen(filename, "r");
     free(filename);
     if (k5login == NULL)
@@ -126,8 +126,8 @@ fail:
  * Prompt the user for a password; authenticate the password with the KDC.
  * If correct, fill in creds with TGT magic. */
 int
-password_auth(struct context *ctx, char *in_tkt_service,
-		struct credlist **credlist)
+password_auth(struct context *ctx, struct pam_args *args, char *in_tkt_service,
+              struct credlist **credlist)
 {
 	krb5_get_init_creds_opt opts;
 	krb5_creds creds;
@@ -139,38 +139,38 @@ password_auth(struct context *ctx, char *in_tkt_service,
 	new_credlist(ctx, credlist);
 	memset(&creds, 0, sizeof(krb5_creds));
 	krb5_get_init_creds_opt_init(&opts);
-	if (pam_args.forwardable)
+	if (args->forwardable)
 		krb5_get_init_creds_opt_set_forwardable(&opts, 1);
 
-        if (pam_args.renew_lifetime != NULL) {
+        if (args->renew_lifetime != NULL) {
             krb5_deltat rlife;
             int ret;
 
-            ret = krb5_string_to_deltat(pam_args.renew_lifetime, &rlife);
+            ret = krb5_string_to_deltat(args->renew_lifetime, &rlife);
             if (ret != 0 || rlife == 0) {
-                dlog(ctx, "bad renew_lifetime value: %s", error_message(ret));
+                error(ctx, "bad renew_lifetime value: %s", error_message(ret));
                 retval = PAM_SERVICE_ERR;
                 goto done;
             }
             krb5_get_init_creds_opt_set_renew_life(&opts, rlife);
         }
 
-	if (pam_args.ignore_root && strcmp("root", ctx->name) == 0) {
-		dlog(ctx, "ignoring root user login");
-		retval = PAM_SERVICE_ERR;
-		goto done;
+	if (args->ignore_root && strcmp("root", ctx->name) == 0) {
+            dlog(ctx, args, "ignoring root user login");
+            retval = PAM_SERVICE_ERR;
+            goto done;
 	}
 
         /* Fill in the principal to authenticate as. */
         retval = krb5_parse_name(ctx->context, ctx->name, &ctx->princ);
         if (retval != 0) {
-            dlog(ctx, "krb5_parse_name(): %s", error_message(retval));
+            dlog(ctx, args, "krb5_parse_name: %s", error_message(retval));
             retval = PAM_SERVICE_ERR;
             goto done;
         }
 
-	retry = pam_args.try_first_pass ? 1 : 0;
-	if (pam_args.try_first_pass || pam_args.use_first_pass)
+	retry = args->try_first_pass ? 1 : 0;
+	if (args->try_first_pass || args->use_first_pass)
 		pam_get_item(ctx->pamh, PAM_AUTHTOK, (void *) &pass);
 
 	/* If try_first_pass or use_first_pass is set, grab the old password
@@ -180,24 +180,24 @@ password_auth(struct context *ctx, char *in_tkt_service,
 		if (!pass) {
 			retry = 0;
 			if ((retval = get_user_info(ctx->pamh, "Password: ", PAM_PROMPT_ECHO_OFF, &pass)) != PAM_SUCCESS) {
-				dlog(ctx, "get_user_info(): %s", pam_strerror(ctx->pamh, retval));
-				retval = PAM_SERVICE_ERR;
-				goto done;
+                            dlog(ctx, args, "get_user_info: %s", pam_strerror(ctx->pamh, retval));
+                            retval = PAM_SERVICE_ERR;
+                            goto done;
 			}
 
 			/* set this for the next pam module's try_first_pass */
 			retval = pam_set_item(ctx->pamh, PAM_AUTHTOK, pass);
 			free(pass);
 			if (retval != PAM_SUCCESS) {
-				dlog(ctx, "pam_set_item(): %s", pam_strerror(ctx->pamh, retval));
-				retval = PAM_SERVICE_ERR;
-				goto done;
+                            dlog(ctx, args, "pam_set_item: %s", pam_strerror(ctx->pamh, retval));
+                            retval = PAM_SERVICE_ERR;
+                            goto done;
 			}
 			pam_get_item(ctx->pamh, PAM_AUTHTOK, (void *) &pass);
 		}
 
 		/* Get a TGT */
-		if (pam_args.search_k5login) {
+		if (args->search_k5login) {
 			success = k5login_password_auth(ctx, &creds, &opts,
 				      in_tkt_service, pass, &retval);
 		} else {
@@ -218,20 +218,20 @@ password_auth(struct context *ctx, char *in_tkt_service,
 	if (retval == 0 && pass) {
 		/* success; set this in case we're changing the passwd */
 		if ((retval = pam_set_item(ctx->pamh, PAM_OLDAUTHTOK, pass)) != PAM_SUCCESS) {
-			dlog(ctx, "pam_set_item(): %s", pam_strerror(ctx->pamh, retval));
-			retval = PAM_SERVICE_ERR;
-			goto done;
+                    dlog(ctx, args, "pam_set_item: %s", pam_strerror(ctx->pamh, retval));
+                    retval = PAM_SERVICE_ERR;
+                    goto done;
 		}
 	}
 	else {
-		dlog(ctx, "krb5_get_init_creds_password(): %s", error_message(retval));
-		if (retval == KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN)
-			retval = PAM_USER_UNKNOWN;
-		else if (retval == KRB5_KDC_UNREACH)
-			retval = PAM_AUTHINFO_UNAVAIL;
-		else
-			retval = PAM_AUTH_ERR;
-		goto done;
+            dlog(ctx, args, "krb5_get_init_creds_password: %s", error_message(retval));
+            if (retval == KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN)
+                retval = PAM_USER_UNKNOWN;
+            else if (retval == KRB5_KDC_UNREACH)
+                retval = PAM_AUTHINFO_UNAVAIL;
+            else
+                retval = PAM_AUTH_ERR;
+            goto done;
 	}
 
 #if 0
@@ -252,8 +252,8 @@ done:
 }
 
 int
-init_ccache(struct context *ctx, const char *ccname,
-		struct credlist *clist, krb5_ccache *cache)
+init_ccache(struct context *ctx, struct pam_args *args, const char *ccname,
+            struct credlist *clist, krb5_ccache *cache)
 {
 	struct credlist *c = clist;
 	int retval;
@@ -270,21 +270,21 @@ init_ccache(struct context *ctx, const char *ccname,
 #endif
 
 	if ((retval = krb5_cc_resolve(ctx->context, ccname, cache)) != 0) {
-		dlog(ctx, "krb5_cc_resolve(): %s", error_message(retval));
-		retval = PAM_SERVICE_ERR;
-		goto done;
+            dlog(ctx, args, "krb5_cc_resolve(): %s", error_message(retval));
+            retval = PAM_SERVICE_ERR;
+            goto done;
 	}
 	if ((retval = krb5_cc_initialize(ctx->context, *cache,
 					ctx->princ)) != 0) {
-		dlog(ctx, "krb5_cc_initialize(): %s", error_message(retval));
-		retval = PAM_SERVICE_ERR;
-		goto done;
+            dlog(ctx, args, "krb5_cc_initialize(): %s", error_message(retval));
+            retval = PAM_SERVICE_ERR;
+            goto done;
 	}
 	while (c) {
 		if ((retval = krb5_cc_store_cred(ctx->context, *cache, &c->creds)) != 0) {
-			dlog(ctx, "krb5_cc_store_cred(): %s", error_message(retval));
-			retval = PAM_SERVICE_ERR;
-			goto done;
+                    dlog(ctx, args, "krb5_cc_store_cred(): %s", error_message(retval));
+                    retval = PAM_SERVICE_ERR;
+                    goto done;
 		}
 		c = c->next;
 	}
@@ -349,8 +349,7 @@ get_user_info(pam_handle_t *pamh, const char *prompt, int type, char **response)
  * Returns 1 for confirmation, -1 for failure, 0 for uncertainty.
  */
 static int
-verify_krb_v5_tgt(krb5_context context, krb5_ccache ccache,
-		  const char *pam_service)
+verify_krb_v5_tgt(struct context *ctx, struct pam_args *args)
 {
     char		phost[BUFSIZ];
     char *services [3];
@@ -373,19 +372,19 @@ verify_krb_v5_tgt(krb5_context context, krb5_ccache ccache,
     * It is important to check the keytab first before the KDC so we do
     * not get spoofed by a fake  KDC.*/
     services [0] = "host";
-    services [1] = (char *) pam_service;
+    services [1] = (char *) ctx->service;
     services [2] = NULL;
     for ( service = &services[0]; *service != NULL; service++ ) {
-      if ((retval = krb5_sname_to_principal(context, NULL, *service, KRB5_NT_SRV_HST,
+      if ((retval = krb5_sname_to_principal(ctx->context, NULL, *service, KRB5_NT_SRV_HST,
 					    &princ)) != 0) {
-	if (pam_args.debug)
+	if (args->debug)
 	  syslog(LOG_DEBUG, "pam_krb5: verify_krb_v5_tgt(): %s: %s",
 		 "krb5_sname_to_principal()", error_message(retval));
 	return -1;
       }
 
       /* Extract the name directly. */
-      strncpy(phost, compat_princ_component(context, princ, 1), BUFSIZ);
+      strncpy(phost, compat_princ_component(ctx->context, princ, 1), BUFSIZ);
       phost[BUFSIZ - 1] = '\0';
 
       /*
@@ -393,31 +392,31 @@ verify_krb_v5_tgt(krb5_context context, krb5_ccache ccache,
        * (use default/configured keytab, kvno IGNORE_VNO to get the
        * first match, and ignore enctype.)
        */
-      if ((retval = krb5_kt_read_service_key(context, NULL, princ, 0,
+      if ((retval = krb5_kt_read_service_key(ctx->context, NULL, princ, 0,
 					     0, &keyblock)) != 0)
 	continue;
       break;
     }
     if (retval != 0 ) {		/* failed to find key */
 	/* Keytab or service key does not exist */
-	if (pam_args.debug)
+	if (args->debug)
 	    syslog(LOG_DEBUG, "pam_krb5: verify_krb_v5_tgt(): %s: %s",
 		   "krb5_kt_read_service_key()", error_message(retval));
 	retval = 0;
 	goto cleanup;
     }
     if (keyblock)
-	krb5_free_keyblock(context, keyblock);
+	krb5_free_keyblock(ctx->context, keyblock);
 
     /* Talk to the kdc and construct the ticket. */
-    retval = krb5_mk_req(context, &auth_context, 0, *service, phost,
-			 NULL, ccache, &packet);
+    retval = krb5_mk_req(ctx->context, &auth_context, 0, *service, phost,
+			 NULL, ctx->cache, &packet);
     if (auth_context) {
-	krb5_auth_con_free(context, auth_context);
+	krb5_auth_con_free(ctx->context, auth_context);
 	auth_context = NULL; /* setup for rd_req */
     }
     if (retval) {
-	if (pam_args.debug)
+	if (args->debug)
 	    syslog(LOG_DEBUG, "pam_krb5: verify_krb_v5_tgt(): %s: %s",
 		   "krb5_mk_req()", error_message(retval));
 	retval = -1;
@@ -425,14 +424,14 @@ verify_krb_v5_tgt(krb5_context context, krb5_ccache ccache,
     }
 
     /* Try to use the ticket. */
-    retval = krb5_rd_req(context, &auth_context, &packet, princ,
+    retval = krb5_rd_req(ctx->context, &auth_context, &packet, princ,
 			 NULL, NULL, NULL);
     if (auth_context) {
-	krb5_auth_con_free(context, auth_context);
+	krb5_auth_con_free(ctx->context, auth_context);
 	auth_context = NULL; /* setup for rd_req */
     }
     if (retval) {
-	if (pam_args.debug)
+	if (args->debug)
 	    syslog(LOG_DEBUG, "pam_krb5: verify_krb_v5_tgt(): %s: %s",
 		   "krb5_rd_req()", error_message(retval));
 	retval = -1;
@@ -442,8 +441,8 @@ verify_krb_v5_tgt(krb5_context context, krb5_ccache ccache,
 
 cleanup:
     if (packet.data)
-	compat_free_data_contents(context, &packet);
-    krb5_free_principal(context, princ);
+	compat_free_data_contents(ctx->context, &packet);
+    krb5_free_principal(ctx->context, princ);
     return retval;
 
 }
@@ -458,7 +457,7 @@ cleanup:
  * want.
  */
 int
-validate_auth(struct context *ctx)
+validate_auth(struct context *ctx, struct pam_args *args)
 {
     struct passwd *pwd;
     char kuser[65];             /* MAX_USERNAME == 65 (MIT Kerberos 1.4.1). */
@@ -470,7 +469,7 @@ validate_auth(struct context *ctx)
         return PAM_SERVICE_ERR;
 
     /* Try to obtain and check a service ticket. */
-    if (verify_krb_v5_tgt(ctx->context, ctx->cache, ctx->service) == -1)
+    if (verify_krb_v5_tgt(ctx, args) == -1)
         return PAM_AUTH_ERR;
 
     /*
@@ -480,7 +479,7 @@ validate_auth(struct context *ctx)
      */
     if (strchr(ctx->name, '@') != NULL)
         return PAM_SUCCESS;
-    if (pam_args.ignore_k5login) {
+    if (args->ignore_k5login) {
         krb5_context c = ctx->context;
 
         if (krb5_aname_to_localname(c, ctx->princ, sizeof(kuser), kuser) != 0)

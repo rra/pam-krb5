@@ -37,7 +37,7 @@ new_context(pam_handle_t *pamh, struct context **ctx)
 		c->service = "unknown";
 
 	if ((retval = krb5_init_context(&c->context)) != 0) {
-		dlog(c, "krb5_init_context(): %s", error_message(retval));
+		error(c, "krb5_init_context: %s", error_message(retval));
 		retval = PAM_SERVICE_ERR;
 		goto done;
 	}
@@ -73,8 +73,6 @@ free_context(struct context *ctx)
 		if (ctx->princ)
 			krb5_free_principal(ctx->context, ctx->princ);
 		if (ctx->cache && !ctx->dont_destroy_cache) {
-			dlog(ctx, "krb5_cc_destroy: ctx->cache: %s",
-					krb5_cc_get_name(ctx->context, ctx->cache));
 			krb5_cc_destroy(ctx->context, ctx->cache);
 		}
 		krb5_free_context(ctx->context);

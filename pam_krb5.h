@@ -39,19 +39,23 @@ struct pam_args {
      */
     int quiet;
 };
-extern struct pam_args pam_args;
 
 /* Parse the PAM flags, arguments, and krb5.conf and fill out pam_args. */
-void parse_args(struct context *, int flags, int argc, const char **argv);
+struct pam_args *parse_args(struct context *, int flags, int argc,
+                            const char **argv);
 
-int init_ccache(struct context *, const char *, struct credlist *,
-		krb5_ccache *);
+/* Free the pam_args struct when we're done. */
+void free_args(struct pam_args *);
 
-int password_auth(struct context *, char *in_tkt_service,
-		struct credlist **);
+
+int init_ccache(struct context *, struct pam_args *, const char *,
+                struct credlist *, krb5_ccache *);
+
+int password_auth(struct context *, struct pam_args *, char *in_tkt_service,
+                  struct credlist **);
 
 int get_user_info(pam_handle_t *, const char *, int, char **);
-int validate_auth(struct context *);
+int validate_auth(struct context *, struct pam_args *);
 
 krb5_prompter_fct pam_prompter;
 
@@ -94,9 +98,10 @@ static void _dlog_to_stderr(const char *name, const char *msg)
 }
 
 /* A useful logging macro */
-static inline void dlog(struct context *ctx, const char *fmt, ...)
+static inline void
+dlog(struct context *ctx, struct pam_args *args, const char *fmt, ...)
 {
-	if (pam_args.debug) {
+	if (args->debug) {
 		const char *name;
 		char msg[256];
 		va_list args;
@@ -110,6 +115,24 @@ static inline void dlog(struct context *ctx, const char *fmt, ...)
 		_dlog_to_stderr(name, msg);
 		_dlog_to_file(name, msg);
 	}
+}
+
+/* The same, but not optional based on the debug setting. */
+static inline void
+error(struct context *ctx, const char *fmt, ...)
+{
+    const char *name;
+    char msg[256];
+    va_list args;
+
+    va_start(args, fmt);
+    vsnprintf(msg, sizeof(msg), fmt, args);
+    va_end(args);
+
+    name = ctx && ctx->name ? ctx->name : "none";
+    _dlog_to_syslog(name, msg);
+    _dlog_to_stderr(name, msg);
+    _dlog_to_file(name, msg);
 }
 
 #endif /* PAM_KRB5_H_ */

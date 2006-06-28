@@ -35,7 +35,6 @@ append_to_credlist(struct context *ctx, struct credlist **clist,
 	struct credlist *c = calloc(1, sizeof(*c));
 
 	if (!c) {
-		dlog(ctx, "calloc() failure");
 		return PAM_BUF_ERR;
 	}
 	c->creds = creds;
@@ -54,7 +53,6 @@ copy_credlist(struct context *ctx, struct credlist **clist,
 	int retval;
 
 	if ((retval = krb5_cc_start_seq_get(ctx->context, cache, &c)) != 0) {
-		dlog(ctx, "krb5_cc_start_seq_get(): %s", error_message(retval));
 		return PAM_SERVICE_ERR;
 	}
 
