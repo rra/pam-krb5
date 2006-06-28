@@ -140,11 +140,14 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
     const char	*tmpname;
     char	*pass = NULL;
 
-    parse_args(flags, argc, argv);
+    pamret = fetch_context(pamh, &ctx);
+    parse_args(ctx, flags, argc, argv);
     dlog(ctx, "%s: entry (flags %d)", __FUNCTION__, flags);
 
+    /* We don't do anything useful for the preliminary check. */
     if (flags & PAM_PRELIM_CHECK)
 	goto done;
+
     if (!(flags & PAM_UPDATE_AUTHTOK)) {
 	pamret = PAM_AUTHTOK_ERR;
 	goto done;
@@ -159,7 +162,12 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	}
     }
 
-    pamret = fetch_context(pamh, &ctx);
+    /*
+     * pamret holds the result of fetch_context from above.  If set to
+     * PAM_SUCCESS, we were able to find an existing context that we could
+     * use; otherwise, we're going into this fresh and need to create a new
+     * context.
+     */
     if (pamret != PAM_SUCCESS) {
 	pamret = new_context(pamh, &ctx);
 	if (pamret != PAM_SUCCESS) {

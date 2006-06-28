@@ -19,45 +19,6 @@
 #include "pam_krb5.h"
 #include "credlist.h"
 
-struct pam_args pam_args;
-
-void
-parse_args(int flags, int argc, const char **argv)
-{
-	int i;
-
-	memset(&pam_args, 0, sizeof(pam_args));
-	for (i = 0; i < argc; i++) {
-		if (strcmp(argv[i], "debug") == 0)
-			pam_args.debug = 1;
-		else if (strcmp(argv[i], "try_first_pass") == 0)
-			pam_args.try_first_pass = 1;
-		else if (strcmp(argv[i], "use_first_pass") == 0)
-			pam_args.use_first_pass = 1;
-		else if (strcmp(argv[i], "forwardable") == 0)
-			pam_args.forwardable = 1;
-		else if (strcmp(argv[i], "reuse_ccache") == 0)
-			pam_args.reuse_ccache = 1;
-		else if (strcmp(argv[i], "no_ccache") == 0)
-			pam_args.no_ccache = 1;
-		else if (strcmp(argv[i], "ignore_root") == 0)
-			pam_args.ignore_root = 1;
-		else if (strncmp(argv[i], "ccache=", 7) == 0)
-			pam_args.ccache = (char *) &argv[i][7];
-		else if (strncmp(argv[i], "ccache_dir=", 11) == 0)
-			pam_args.ccache_dir = (char *) &argv[i][11];
-		else if (strcmp(argv[i], "search_k5login") == 0)
-			pam_args.search_k5login = 1;
-	}
-	
-	if (flags & PAM_SILENT)
-		pam_args.quiet++;
-	if (!pam_args.ccache_dir)
-		pam_args.ccache_dir = "/tmp";
-}
-
-
-
 /*
  * Used to support trying each principal in the .k5login file.  Read through
  * each line that parses correctly as a principal and use the provided
@@ -65,8 +26,8 @@ parse_args(int flags, int argc, const char **argv)
  * fill out creds, set princ to the successful principal in the context, and
  * return PAM_SUCCESS.  Otherwise, return PAM_AUTH_ERR for a general
  * authentication error or PAM_SERVICE_ERR for a system error.  If
- * PAM_AUTH_ERR is returned, retval will be filled in with the Kerberos
- * error if available, 0 otherwise.
+ * PAM_AUTH_ERR is returned, retval will be filled in with the Kerberos error
+ * if available, 0 otherwise.
  */
 static int
 k5login_password_auth(struct context *ctx, krb5_creds *creds,

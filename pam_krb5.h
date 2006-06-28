@@ -30,7 +30,7 @@ struct pam_args
 	int quiet; /* not really an arg, but it may as well be */
 };
 extern struct pam_args pam_args;
-void parse_args(int flags, int argc, const char **argv);
+void parse_args(struct context *, int flags, int argc, const char **argv);
 
 int init_ccache(struct context *, const char *, struct credlist *,
 		krb5_ccache *);

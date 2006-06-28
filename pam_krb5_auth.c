@@ -103,14 +103,16 @@ done:
 	return pamret;
 }
 
-/* Authenticate a user via krb5.
-
-   It would be nice to be able to save the ticket cache temporarily as a
-   memory cache and then only write it out to disk during the session
-   initialization.  Unfortunately, OpenSSH 4.2 does PAM authentication in a
-   subprocess and therefore has no saved module-specific data available once
-   it opens a session, so we have to save the ticket cache to disk and store
-   in the environment where it is. */
+/*
+ * Authenticate a user via krb5.
+ *
+ * It would be nice to be able to save the ticket cache temporarily as a
+ * memory cache and then only write it out to disk during the session
+ * initialization.  Unfortunately, OpenSSH 4.2 does PAM authentication in a
+ * subprocess and therefore has no saved module-specific data available once
+ * it opens a session, so we have to save the ticket cache to disk and store
+ * in the environment where it is.
+ */
 int
 pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 		    const char **argv)
@@ -121,7 +123,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     char cache_name[] = "/tmp/krb5cc_pam_XXXXXX";
     int ccfd;
 
-    parse_args(flags, argc, argv);
+    parse_args(ctx, flags, argc, argv);
     dlog(ctx, "%s: entry", __FUNCTION__);
 
     if ((pamret = new_context(pamh, &ctx)) != PAM_SUCCESS)
@@ -291,7 +293,8 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
     uid_t uid;
     gid_t gid;
 
-    parse_args(flags, argc, argv);
+    pamret = fetch_context(pamh, &ctx);
+    parse_args(ctx, flags, argc, argv);
     dlog(ctx, "%s: entry (0x%x)", __FUNCTION__, flags); 
 
     if (flags & PAM_DELETE_CRED)
@@ -305,7 +308,13 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
     if (!(flags & (PAM_REINITIALIZE_CRED | PAM_REFRESH_CRED | PAM_ESTABLISH_CRED)))
 	return PAM_SERVICE_ERR;
 
-    pamret = fetch_context(pamh, &ctx);
+    /*
+     * pamret holds the status of fetch_context from above, so indicates
+     * whether we were able to successfully find the context from the previous
+     * authentication.  If we weren't, we were probably run by OpenSSH with
+     * its broken PAM handling, so we're going to cobble up a new context for
+     * ourselves.
+     */
     if (pamret != PAM_SUCCESS) {
 	dlog(ctx, "%s: no context found, creating one", __FUNCTION__);
 	pamret = create_session_context(pamh, &ctx);
