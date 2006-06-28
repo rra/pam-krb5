@@ -288,76 +288,82 @@ done:
     return retval;
 }
 
+/*
+ * Given a cache name and a credential list, initialize the cache, store the
+ * credentials in that cache, and return a pointer to the new cache in the
+ * cache argument.  Returns a PAM success or error code.
+ */
 int
 init_ccache(struct context *ctx, struct pam_args *args, const char *ccname,
             struct credlist *clist, krb5_ccache *cache)
 {
-	struct credlist *c = clist;
-	int retval;
+    struct credlist *cred;
+    int retval;
 
-	if ((retval = krb5_cc_resolve(ctx->context, ccname, cache)) != 0) {
-            dlog(ctx, args, "krb5_cc_resolve(): %s", error_message(retval));
+    retval = krb5_cc_resolve(ctx->context, ccname, cache);
+    if (retval != 0) {
+        dlog(ctx, args, "krb5_cc_resolve: %s", error_message(retval));
+        retval = PAM_SERVICE_ERR;
+        goto done;
+    }
+    retval = krb5_cc_initialize(ctx->context, *cache, ctx->princ);
+    if (retval != 0) {
+        dlog(ctx, args, "krb5_cc_initialize: %s", error_message(retval));
+        retval = PAM_SERVICE_ERR;
+        goto done;
+    }
+    for (cred = clist; cred != NULL; cred = cred->next) {
+        retval = krb5_cc_store_cred(ctx->context, *cache, &c->creds);
+        if (retval != 0) {
+            dlog(ctx, args, "krb5_cc_store_cred: %s", error_message(retval));
             retval = PAM_SERVICE_ERR;
             goto done;
-	}
-	if ((retval = krb5_cc_initialize(ctx->context, *cache,
-					ctx->princ)) != 0) {
-            dlog(ctx, args, "krb5_cc_initialize(): %s", error_message(retval));
-            retval = PAM_SERVICE_ERR;
-            goto done;
-	}
-	while (c) {
-		if ((retval = krb5_cc_store_cred(ctx->context, *cache, &c->creds)) != 0) {
-                    dlog(ctx, args, "krb5_cc_store_cred(): %s", error_message(retval));
-                    retval = PAM_SERVICE_ERR;
-                    goto done;
-		}
-		c = c->next;
-	}
+        }
+    }
 
 done:
-	if (retval != PAM_SUCCESS && *cache)
-		krb5_cc_destroy(ctx->context, *cache);
-	return retval;
+    if (retval != PAM_SUCCESS && *cache != NULL)
+        krb5_cc_destroy(ctx->context, *cache);
+    return retval;
 }
 
 /*
- * Get info from the user. Disallow null responses (regardless of flags).
- * response gets allocated and filled in on successful return. Caller
- * is responsible for freeing it.
+ * Get info from the user.  Disallow null responses (regardless of flags).
+ * response is allocated and filled in on successful return.  Caller is
+ * responsible for freeing it.
  */
 int
-get_user_info(pam_handle_t *pamh, const char *prompt, int type, char **response)
+get_user_info(pam_handle_t *pamh, const char *prompt, int type,
+              char **response)
 {
     int pamret;
-    struct pam_message	msg;
+    struct pam_message msg;
     const struct pam_message *pmsg;
     struct pam_response	*resp = NULL;
-    struct pam_conv	*conv;
+    struct pam_conv *conv;
 
-    if ((pamret = pam_get_item(pamh, PAM_CONV, (void *) &conv)) != 0)
+    pamret = pam_get_item(pamh, PAM_CONV, (void *) &conv);
+    if (pamret != PAM_SUCCESS)
 	return pamret;
-
-    /* set up conversation call */
     pmsg = &msg;
     msg.msg_style = type;
     msg.msg = prompt;
-
-    if ((pamret = conv->conv(1, &pmsg, &resp, conv->appdata_ptr)) != 0)
+    pamret = conv->conv(1, &pmsg, &resp, conv->appdata_ptr);
+    if (pamret != PAM_SUCCESS)
 	return pamret;
 
-    /* Caller should ignore errors for non-response conversations */
-    if (!resp)
+    /* Caller should ignore errors for non-response conversations. */
+    if (resp == NULL)
 	return PAM_CONV_ERR;
 
-    if (!(resp->resp && resp->resp[0])) {
+    if (resp->resp == NULL || resp->resp[0] == '\0') {
 	free(resp);
 	return PAM_AUTH_ERR;
     }
 
     *response = resp->resp;
     free(resp);
-    return pamret;
+    return PAM_SUCCESS;
 }
 
 /*
