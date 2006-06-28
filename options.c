@@ -87,8 +87,6 @@ parse_args(struct context *ctx, int flags, int argc, const char **argv)
             pam_args.no_ccache = 1;
         else if (strcmp(argv[i], "renew_lifetime") == 0)
             pam_args.renew_lifetime = (char *) argv[i];
-        else if (strcmp(argv[i], "reuse_ccache") == 0)
-            pam_args.reuse_ccache = 1;
         else if (strcmp(argv[i], "search_k5login") == 0)
             pam_args.search_k5login = 1;
         else if (strcmp(argv[i], "try_first_pass") == 0)
