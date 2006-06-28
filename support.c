@@ -313,7 +313,7 @@ init_ccache(struct context *ctx, struct pam_args *args, const char *ccname,
         goto done;
     }
     for (cred = clist; cred != NULL; cred = cred->next) {
-        retval = krb5_cc_store_cred(ctx->context, *cache, &c->creds);
+        retval = krb5_cc_store_cred(ctx->context, *cache, &cred->creds);
         if (retval != 0) {
             dlog(ctx, args, "krb5_cc_store_cred: %s", error_message(retval));
             retval = PAM_SERVICE_ERR;
@@ -367,120 +367,6 @@ get_user_info(pam_handle_t *pamh, const char *prompt, int type,
 }
 
 /*
- * This routine with some modification is from the MIT V5B6 appl/bsd/login.c
- * Modified by Sam Hartman <hartmans@mit.edu> to support PAM services
- * for Debian.
- *
- * Verify the Kerberos ticket-granting ticket just retrieved for the
- * user.  If the Kerberos server doesn't respond, assume the user is
- * trying to fake us out (since we DID just get a TGT from what is
- * supposedly our KDC).  If the host/<host> service is unknown (i.e.,
- * the local keytab doesn't have it), and we cannot find another
- * service we do have, let her in.
- *
- * Returns 1 for confirmation, -1 for failure, 0 for uncertainty.
- */
-static int
-verify_krb_v5_tgt(struct context *ctx, struct pam_args *args)
-{
-    char		phost[BUFSIZ];
-    char *services [3];
-    char **service;
-    krb5_error_code	retval = -1;
-    krb5_principal	princ;
-    krb5_keyblock *	keyblock = 0;
-    krb5_data		packet;
-    krb5_auth_context	auth_context = NULL;
-
-    packet.data = 0;
-
-    /*
-    * If possible we want to try and verify the ticket we have
-    * received against a keytab.  We will try multiple service
-    * principals, including at least the host principal and the PAM
-    * service principal.  The host principal is preferred because access
-    * to that key is generally sufficient to compromise root, while the
-    *     service key for this PAM service may be less carefully guarded.
-    * It is important to check the keytab first before the KDC so we do
-    * not get spoofed by a fake  KDC.*/
-    services [0] = "host";
-    services [1] = (char *) ctx->service;
-    services [2] = NULL;
-    for ( service = &services[0]; *service != NULL; service++ ) {
-      if ((retval = krb5_sname_to_principal(ctx->context, NULL, *service, KRB5_NT_SRV_HST,
-					    &princ)) != 0) {
-	if (args->debug)
-	  syslog(LOG_DEBUG, "pam_krb5: verify_krb_v5_tgt(): %s: %s",
-		 "krb5_sname_to_principal()", error_message(retval));
-	return -1;
-      }
-
-      /* Extract the name directly. */
-      strncpy(phost, compat_princ_component(ctx->context, princ, 1), BUFSIZ);
-      phost[BUFSIZ - 1] = '\0';
-
-      /*
-       * Do we have service/<host> keys?
-       * (use default/configured keytab, kvno IGNORE_VNO to get the
-       * first match, and ignore enctype.)
-       */
-      if ((retval = krb5_kt_read_service_key(ctx->context, NULL, princ, 0,
-					     0, &keyblock)) != 0)
-	continue;
-      break;
-    }
-    if (retval != 0 ) {		/* failed to find key */
-	/* Keytab or service key does not exist */
-	if (args->debug)
-	    syslog(LOG_DEBUG, "pam_krb5: verify_krb_v5_tgt(): %s: %s",
-		   "krb5_kt_read_service_key()", error_message(retval));
-	retval = 0;
-	goto cleanup;
-    }
-    if (keyblock)
-	krb5_free_keyblock(ctx->context, keyblock);
-
-    /* Talk to the kdc and construct the ticket. */
-    retval = krb5_mk_req(ctx->context, &auth_context, 0, *service, phost,
-			 NULL, ctx->cache, &packet);
-    if (auth_context) {
-	krb5_auth_con_free(ctx->context, auth_context);
-	auth_context = NULL; /* setup for rd_req */
-    }
-    if (retval) {
-	if (args->debug)
-	    syslog(LOG_DEBUG, "pam_krb5: verify_krb_v5_tgt(): %s: %s",
-		   "krb5_mk_req()", error_message(retval));
-	retval = -1;
-	goto cleanup;
-    }
-
-    /* Try to use the ticket. */
-    retval = krb5_rd_req(ctx->context, &auth_context, &packet, princ,
-			 NULL, NULL, NULL);
-    if (auth_context) {
-	krb5_auth_con_free(ctx->context, auth_context);
-	auth_context = NULL; /* setup for rd_req */
-    }
-    if (retval) {
-	if (args->debug)
-	    syslog(LOG_DEBUG, "pam_krb5: verify_krb_v5_tgt(): %s: %s",
-		   "krb5_rd_req()", error_message(retval));
-	retval = -1;
-    } else {
-	retval = 1;
-    }
-
-cleanup:
-    if (packet.data)
-	compat_free_data_contents(ctx->context, &packet);
-    krb5_free_principal(ctx->context, princ);
-    return retval;
-
-}
-
-
-/*
  * Verify the user authentication.  First, obtain and verify a service ticket
  * using their TGT if possible, and then call krb5_kuserok if this is a local
  * account.  We don't need to check krb5_aname_to_localname since we derived
@@ -491,6 +377,10 @@ cleanup:
 int
 validate_auth(struct context *ctx, struct pam_args *args)
 {
+    int retval;
+    krb5_verify_init_creds_opt options;
+    krb5_cc_cursor cursor;
+    krb5_creds creds;
     struct passwd *pwd;
     char kuser[65];             /* MAX_USERNAME == 65 (MIT Kerberos 1.4.1). */
 
@@ -501,8 +391,24 @@ validate_auth(struct context *ctx, struct pam_args *args)
         return PAM_SERVICE_ERR;
 
     /* Try to obtain and check a service ticket. */
-    if (verify_krb_v5_tgt(ctx, args) == -1)
+    retval = krb5_cc_start_seq_get(ctx->context, ctx->cache, &cursor);
+    if (retval == 0) {
+        retval = krb5_cc_next_cred(ctx->context, ctx->cache, &cursor, &creds);
+        krb5_cc_end_seq_get(ctx->context, ctx->cache, &cursor);
+    }
+    if (retval != 0) {
+        dlog(ctx, args, "unable to retrieve credentials: %s",
+             error_message(retval));
         return PAM_AUTH_ERR;
+    }
+    krb5_verify_init_creds_opt_init(&options);
+    retval = krb5_verify_init_creds(ctx->context, &creds, NULL, NULL,
+                 &ctx->cache, &options);
+    if (retval != 0) {
+        error(ctx, "credential verification failed: %s",
+              error_message(retval));
+        return PAM_AUTH_ERR;
+    }
 
     /*
      * If the account is a local account and the user didn't request that we
