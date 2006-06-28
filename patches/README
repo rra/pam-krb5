@@ -1,0 +1,4 @@
+patch-* are the FreeBSD patches (not used)
+pam_krb5.linux.patch is an old patch (not used)
+heimdal_cache.patch is required to work around a bug
+pam-krb5.patch is the current patch
