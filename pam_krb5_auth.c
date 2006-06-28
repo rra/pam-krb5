@@ -26,7 +26,6 @@
 #include "pam_krb5.h"
 #include "credlist.h"
 
-void Jokostat(char *);
 extern krb5_cc_ops krb5_mcc_ops;
 
 #if 0
@@ -442,27 +441,3 @@ done:
     free_args(args);
     return pamret;
 }
-
-#include <sys/stat.h>
-void Jokostat(char *n)
-{
-	struct stat	b;
-	int		ret;
-
-	if (strstr(n, "FILE:") != n) {
-		syslog(LOG_DEBUG, "Jokostat: no fcache: %s", n);
-		return;
-	}
-
-	ret=stat(&n[5],&b);
-	if(ret!=0)
-	{
-		syslog(LOG_DEBUG, "Jokostat prout");
-		return;
-	}
-
-	syslog(LOG_DEBUG, "Jokostat: %d %d:%d %o", geteuid(), b.st_uid, b.st_gid, b.st_mode);
-
-	return;
-}
-
