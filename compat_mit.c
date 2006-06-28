@@ -27,6 +27,30 @@ compat_cc_next_cred(krb5_context context, const krb5_ccache id,
 	return krb5_cc_next_cred(context, id, cursor, creds);
 }
 
+/*
+ * There are a lot of structures and different layers of code at work here,
+ * making this code quite confusing.  This function is a prompter function to
+ * pass into the Kerberos library, in particular krb5_get_init_creds_password.
+ * It is used by the Kerberos library to prompt for a password if need be, and
+ * also to prompt for password changes if the password was expired.
+ *
+ * The purpose of this function is to serve as glue between the Kerberos
+ * library and the application (by way of the PAM glue).  PAM expects us to
+ * pass back to the conversation function an array of prompts and receive from
+ * the application an array of responses to those prompts.  We pass the
+ * application an array of struct pam_message pointers, and the application
+ * passes us an array of struct pam_response pointers.
+ *
+ * Kerberos, meanwhile, passes us in an array of krb5_prompt structs.  This
+ * struct contains the prompt, a flag saying whether to suppress echoing of
+ * what the user types for that prompt, and a buffer into which to store the
+ * response.
+ *
+ * Therefore, what we're doing here is copying the prompts from the
+ * krb5_prompt structs into pam_message structs, calling the conversation
+ * function, and then copying the responses back out of pam_response structs
+ * into the krb5_prompt structs to return to the Kerberos library.
+ */
 static krb5_error_code
 mit_pam_prompter(krb5_context context, void *data, const char *name,
 	     const char *banner, int num_prompts, krb5_prompt prompts[])
@@ -109,7 +133,14 @@ mit_pam_prompter(krb5_context context, void *data, const char *name,
 	    pamret = PAM_AUTH_ERR;
 	    goto cleanup;
 	}
-	memcpy(prompts[i].reply->data, resp[pam_prompts].resp, len);
+
+        /*
+         * The trailing nul is not included in length, but other applications
+         * expect it to be there.  Therefore, we copy one more byte than the
+         * actual length of the password, but set length to just the length of
+         * the password.
+         */
+	memcpy(prompts[i].reply->data, resp[pam_prompts].resp, len + 1);
 	prompts[i].reply->length = len;
     }
 
