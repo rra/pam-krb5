@@ -153,24 +153,16 @@ cleanup:
     }
     free(msg);
 
-    if (resp) {
-	for (i = 0; i < pam_prompts; i++) {
-	    /*
-	     * Note that PAM is underspecified wrt free()'ing resp[i].resp.
-	     * It's not clear if I should free it, or if the application
-	     * has to. Therefore most (all?) apps won't free() it, and I
-	     * can't either, as I am not sure it was malloc()'d. All PAM
-	     * implementations I've seen leak memory here. Not so bad, IFF
-	     * you fork/exec for each PAM authentication (as is typical).
-	     */
-#if 0
-	    if (resp[i].resp)
-		free(resp[i].resp);
-#endif /* 0 */
-	}
-	/* This does not lose resp[i].resp if the application saved a copy. */
+    /*
+     * Note that PAM is underspecified with respect to freeing resp[i].resp.
+     * It's not clear if I should free it, or if the application has to.
+     * Therefore most (all?) apps won't free it, and I can't either, as I am
+     * not sure it was malloced.  All PAM implementations I've seen leak
+     * memory here.  Not so bad, IFF you fork/exec for each PAM authentication
+     * (as is typical).
+     */
+    if (resp)
 	free(resp);
-    }
 
     return (pamret ? KRB5KRB_ERR_GENERIC : 0);
 }
