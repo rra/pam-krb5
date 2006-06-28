@@ -52,11 +52,18 @@ parse_args(struct context *ctx, int flags, int argc, const char **argv)
             local_context = 1;
     }
     if (c != NULL) {
+        krb5_appdefault_string(c, "pam", NULL, "ccache", NULL, &args->ccache);
+        krb5_appdefault_string(c, "pam", NULL, "ccache_dir", NULL,
+                               &args->ccache_dir);
         krb5_appdefault_boolean(c, "pam", NULL, "debug", 0, &args->debug);
         krb5_appdefault_boolean(c, "pam", NULL, "forwardable", 0,
                                 &args->forwardable);
+        krb5_appdefault_boolean(c, "pam", NULL, "ignore_k5login", 0,
+                                &args->ignore_k5login);
         krb5_appdefault_boolean(c, "pam", NULL, "ignore_root", 0,
                                 &args->ignore_root);
+        krb5_appdefault_string(c, "pam", NULL, "renew_lifetime", NULL,
+                               &args->renew_lifetime);
         krb5_appdefault_boolean(c, "pam", NULL, "search_k5login", 0,
                                 &args->search_k5login);
         if (local_context)
@@ -70,10 +77,16 @@ parse_args(struct context *ctx, int flags, int argc, const char **argv)
      * sense in krb5.conf.
      */
     for (i = 0; i < argc; i++) {
-        if (strncmp(argv[i], "ccache=", 7) == 0)
-            args->ccache = (char *) &argv[i][7];
-        else if (strncmp(argv[i], "ccache_dir=", 11) == 0)
-            args->ccache_dir = (char *) &argv[i][11];
+        if (strncmp(argv[i], "ccache=", 7) == 0) {
+            if (args->ccache != NULL)
+                free(args->ccache);
+            args->ccache = strdup(&argv[i][strlen("ccache=")]);
+        }
+        else if (strncmp(argv[i], "ccache_dir=", 11) == 0) {
+            if (args->ccache_dir != NULL)
+                free(args->ccache_dir);
+            args->ccache_dir = strdup(&argv[i][strlen("ccache_dir=")]);
+        }
         else if (strcmp(argv[i], "debug") == 0)
             args->debug = 1;
         else if (strcmp(argv[i], "forwardable") == 0)
@@ -84,8 +97,11 @@ parse_args(struct context *ctx, int flags, int argc, const char **argv)
             args->ignore_root = 1;
         else if (strcmp(argv[i], "no_ccache") == 0)
             args->no_ccache = 1;
-        else if (strcmp(argv[i], "renew_lifetime") == 0)
-            args->renew_lifetime = (char *) argv[i];
+        else if (strcmp(argv[i], "renew_lifetime=") == 0) {
+            if (args->renew_lifetime != NULL)
+                free(args->renew_lifetime);
+            args->renew_lifetime = strdup(&argv[i][strlen("renew_lifetime=")]);
+        }
         else if (strcmp(argv[i], "search_k5login") == 0)
             args->search_k5login = 1;
         else if (strcmp(argv[i], "try_first_pass") == 0)
@@ -108,6 +124,13 @@ parse_args(struct context *ctx, int flags, int argc, const char **argv)
 void
 free_args(struct pam_args *args)
 {
-    if (args != NULL)
+    if (args != NULL) {
+        if (args->ccache != NULL)
+            free(args->ccache);
+        if (args->ccache_dir != NULL)
+            free(args->ccache_dir);
+        if (args->renew_lifetime != NULL)
+            free(args->renew_lifetime);
         free(args);
+    }
 }
