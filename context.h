@@ -25,7 +25,6 @@ struct context
 
 int new_context(pam_handle_t *pamh, struct context **ctx);
 int fetch_context(pam_handle_t *pamh, struct context **ctx);
-int valid_context(struct context *ctx);
 void free_context(struct context *ctx);
 void destroy_context(pam_handle_t *pamh, void *data, int pam_end_status);
 
