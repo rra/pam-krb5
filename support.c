@@ -234,18 +234,6 @@ password_auth(struct context *ctx, struct pam_args *args, char *in_tkt_service,
             goto done;
 	}
 
-#if 0
-	/* Verify the local user exists (AFTER getting the password) */
-	if (strchr(ctx->name, '@')) {
-		if ((pamret = to_local_user(ctx)) != PAM_SUCCESS)
-			goto cleanup;
-	}
-
-	/* Someone convince me the above is actually needed for something.
-	 * -dil */
-#endif
-
-
 	retval = PAM_SUCCESS;
 done:
 	return retval;
@@ -257,17 +245,6 @@ init_ccache(struct context *ctx, struct pam_args *args, const char *ccname,
 {
 	struct credlist *c = clist;
 	int retval;
-#if 0
-	/* For CNS */
-	if ((retval = krb5_cc_register(ctx->context, &krb5_mcc_ops,
-				       	FALSE)) != 0) {
-		/* Solaris dtlogin doesn't call pam_end() on failure */
-		if (retval != KRB5_CC_TYPE_EXISTS) {
-			dlog(ctx, "krb5_cc_register(): %s", error_message(krbret));
-			goto done;
-		}
-	}
-#endif
 
 	if ((retval = krb5_cc_resolve(ctx->context, ccname, cache)) != 0) {
             dlog(ctx, args, "krb5_cc_resolve(): %s", error_message(retval));

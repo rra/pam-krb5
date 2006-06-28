@@ -26,40 +26,6 @@
 #include "pam_krb5.h"
 #include "credlist.h"
 
-extern krb5_cc_ops krb5_mcc_ops;
-
-#if 0
-static int
-to_local_user(struct context *ctx)
-{
-	char lname[64];
-	int retval;
-
-	memset(lname, 0, sizeof(lname));
-
-	/* get a local account name for this principal */
-	if ((retval = krb5_aname_to_localname(ctx->context, ctx->princ,
-					sizeof(lname), lname)) != 0) {
-		dlog(ctx, "krb5_aname_to_localname(): %s", error_message(retval));
-		retval = PAM_USER_UNKNOWN;
-		goto done;
-	}
-	
-	dlog(ctx, "changing PAM_USER to %s", lname);
-	if ((retval = pam_set_item(ctx->pamh, PAM_USER, lname)) != 0) {
-		dlog(ctx, "pam_set_item(): %s", pam_strerror(ctx->pamh, retval));
-		retval = PAM_SERVICE_ERR;
-		goto done;
-	}
-	if ((retval = pam_get_item(ctx->pamh, PAM_USER, (const void **) &ctx->name) != 0)) {
-		dlog(ctx, "pam_get_item(): %s", pam_strerror(ctx->pamh, retval));
-		retval = PAM_SERVICE_ERR;
-	}
-done:
-	return retval;
-}
-#endif
-
 static const char *
 get_krb5ccname(struct context *ctx, const char *key)
 {
