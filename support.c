@@ -169,6 +169,7 @@ password_auth(struct context *ctx, struct pam_args *args, char *in_tkt_service,
 {
     krb5_get_init_creds_opt opts;
     krb5_creds creds;
+    krb5_verify_init_creds_opt verify_opts;
     int retval;
     char *pass = NULL;
     int retry;
@@ -258,6 +259,26 @@ password_auth(struct context *ctx, struct pam_args *args, char *in_tkt_service,
         }
         pass = NULL;
     } while (retry && retval == KRB5KRB_AP_ERR_BAD_INTEGRITY);
+
+    /*
+     * Last step.  Verify the obtained TGT by obtaining and checking a service
+     * ticket.  This is required to verify that no one is spoofing the KDC,
+     * but requires read access to a keytab with an appropriate key.  By
+     * default, the Kerberos library will silently succeed if no verification
+     * keys are available, but the user can change this by setting
+     * verify_ap_req_nofail in [libdefaults] in /etc/krb5.conf.
+     */
+    if (retval == 0) {
+        krb5_verify_init_creds_opt_init(&verify_opts);
+        retval = krb5_verify_init_creds(ctx->context, &creds, NULL, NULL,
+                                        &ctx->cache, &verify_opts);
+        if (retval != 0) {
+            error(ctx, "credential verification failed: %s",
+                  error_message(retval));
+            retval = PAM_AUTH_ERR;
+            goto done;
+        }
+    }
 
     /*
      * If we succeeded, also set PAM_OLDAUTHTOK in case we're changing the
@@ -367,57 +388,27 @@ get_user_info(pam_handle_t *pamh, const char *prompt, int type,
 }
 
 /*
- * Verify the user authentication.  First, obtain and verify a service ticket
- * using their TGT if possible, and then call krb5_kuserok if this is a local
- * account.  We don't need to check krb5_aname_to_localname since we derived
- * the principal name for the authentication from PAM_USER and it therefore
- * either started as an unqualified name or already has the domain that we
- * want.
+ * Verify the user authentication.  Call krb5_kuserok if this is a local
+ * account, or do the krb5_aname_to_localname verification if ignore_k5login
+ * was requested.  It's the responsibility of the calling application to deal
+ * with authorization issues for non-local accounts (ones containing a realm
+ * component).
  */
 int
 validate_auth(struct context *ctx, struct pam_args *args)
 {
-    int retval;
-    krb5_verify_init_creds_opt options;
-    krb5_cc_cursor cursor;
-    krb5_creds creds;
     struct passwd *pwd;
     char kuser[65];             /* MAX_USERNAME == 65 (MIT Kerberos 1.4.1). */
 
-    /* Sanity checks. */
     if (ctx == NULL)
         return PAM_SERVICE_ERR;
     if (ctx->name == NULL)
         return PAM_SERVICE_ERR;
 
-    /* Try to obtain and check a service ticket. */
-    retval = krb5_cc_start_seq_get(ctx->context, ctx->cache, &cursor);
-    if (retval == 0) {
-        retval = krb5_cc_next_cred(ctx->context, ctx->cache, &cursor, &creds);
-        krb5_cc_end_seq_get(ctx->context, ctx->cache, &cursor);
-    }
-    if (retval != 0) {
-        dlog(ctx, args, "unable to retrieve credentials: %s",
-             error_message(retval));
-        return PAM_AUTH_ERR;
-    }
-    krb5_verify_init_creds_opt_init(&options);
-    retval = krb5_verify_init_creds(ctx->context, &creds, NULL, NULL,
-                 &ctx->cache, &options);
-    if (retval != 0) {
-        error(ctx, "credential verification failed: %s",
-              error_message(retval));
-        return PAM_AUTH_ERR;
-    }
-
-    /*
-     * If the account is a local account and the user didn't request that we
-     * skip this, call krb5_kuserok.  It's the responsibility of the calling
-     * application to deal with authorization issues for non-local accounts.
-     */
     if (strchr(ctx->name, '@') != NULL)
         return PAM_SUCCESS;
-    if (args->ignore_k5login) {
+    pwd = getpwnam(ctx->name);
+    if (args->ignore_k5login || pwd == NULL) {
         krb5_context c = ctx->context;
 
         if (krb5_aname_to_localname(c, ctx->princ, sizeof(kuser), kuser) != 0)
@@ -425,11 +416,9 @@ validate_auth(struct context *ctx, struct pam_args *args)
         if (strcmp(kuser, ctx->name) != 0)
             return PAM_AUTH_ERR;
     } else {
-        pwd = getpwnam(ctx->name);
-        if (pwd != NULL && !krb5_kuserok(ctx->context, ctx->princ, ctx->name))
+        if (!krb5_kuserok(ctx->context, ctx->princ, ctx->name))
             return PAM_AUTH_ERR;
     }
 
-    /* Everything looks fine. */
     return PAM_SUCCESS;
 }
