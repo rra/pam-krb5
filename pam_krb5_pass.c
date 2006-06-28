@@ -18,6 +18,7 @@
 #include <com_err.h>
 #include "pam_krb5.h"
 #include "credlist.h"
+#include "context.h"
 
 /* Utter a message to the user */
 static void
@@ -57,7 +58,7 @@ get_new_password(struct context *ctx, char **pass)
 	if (pam_args.try_first_pass || pam_args.use_first_pass)
 		pam_get_item(ctx->pamh, PAM_AUTHTOK, (const void **) pass);
 
-	if (!pass) {
+	if (!*pass) {
 		if ((pamret = get_user_info(ctx->pamh, "Enter new password: ", PAM_PROMPT_ECHO_OFF, pass) != PAM_SUCCESS)) { 
 			dlog(ctx, "get_user_info(): %s", pam_strerror(ctx->pamh, pamret));
 			pamret = PAM_SERVICE_ERR;
@@ -135,24 +136,51 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
     struct context *ctx = NULL;
     struct credlist *clist = NULL;
 
-    int		pamret;
+    int		pamret = PAM_SUCCESS;
+    const char	*tmpname;
     char	*pass = NULL;
 
     parse_args(flags, argc, argv);
-    dlog(ctx, "%s: entry", __FUNCTION__);
+    dlog(ctx, "%s: entry (flags %d)", __FUNCTION__, flags);
 
-    if (flags & PAM_PRELIM_CHECK) /* not sure if this a right way to do it */
-        return PAM_SUCCESS;
-    if (!(flags & PAM_UPDATE_AUTHTOK))
-	return PAM_AUTHTOK_ERR;
+    if (flags & PAM_PRELIM_CHECK)
+	goto done;
+    if (!(flags & PAM_UPDATE_AUTHTOK)) {
+	pamret = PAM_AUTHTOK_ERR;
+	goto done;
+    }
+
+    if (pam_args.ignore_root) {
+	pamret = pam_get_user(pamh, &tmpname, NULL);
+	if (pamret == PAM_SUCCESS && strcmp("root", tmpname) == 0) {
+	    dlog(ctx, "ignoring root password change");
+	    pamret = PAM_SUCCESS;
+	    goto done;
+	}
+    }
 
     pamret = fetch_context(pamh, &ctx);
-    if (pamret != PAM_SUCCESS)
-        goto done;
+    if (pamret != PAM_SUCCESS) {
+	pamret = new_context(pamh, &ctx);
+	if (pamret != PAM_SUCCESS) {
+	    dlog(ctx, "creating context failed (%d)", pamret);
+	    pamret = PAM_AUTHTOK_ERR;
+	    goto done;
+	}
+	pamret = pam_set_data(pamh, "ctx", ctx, destroy_context);
+	if (pamret != PAM_SUCCESS) {
+	    dlog(ctx, "cannot set context data");
+	    pamret = PAM_AUTHTOK_ERR;
+	    goto done;
+	}
+    }
 
     /* Auth using old password */
-    if ((pamret = password_auth(ctx, "kadmin/changepw", &clist)) != PAM_SUCCESS)
+    pamret = password_auth(ctx, "kadmin/changepw", &clist);
+    if (pamret != PAM_SUCCESS) {
+	pamret = PAM_AUTHTOK_ERR;
 	goto done;
+    }
 
     /* Now get the new password */
     if ((pamret = get_new_password(ctx, &pass)) != PAM_SUCCESS)
