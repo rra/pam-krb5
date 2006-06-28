@@ -60,10 +60,6 @@ void		 compat_free_data_contents(krb5_context, krb5_data *);
 krb5_error_code	 compat_cc_next_cred(krb5_context, const krb5_ccache, 
 				     krb5_cc_cursor *, krb5_creds *);
 
-#ifndef ENCTYPE_DES_CBC_MD5
-#define ENCTYPE_DES_CBC_MD5	ETYPE_DES_CBC_MD5
-#endif
-
 /*#define DEBUG_TO_FILE*/
 #define LOGFILE "/tmp/krb5.log"
 static void _dlog_to_file(const char *name, const char *msg)
