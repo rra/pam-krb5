@@ -83,6 +83,8 @@ parse_args(struct context *ctx, int flags, int argc, const char **argv)
             pam_args.ccache_dir = (char *) &argv[i][11];
         else if (strcmp(argv[i], "search_k5login") == 0)
             pam_args.search_k5login = 1;
+        else if (strcmp(argv[i], "ignore_k5login") == 0)
+            pam_args.ignore_k5login = 1;
     }
 	
     if (flags & PAM_SILENT)

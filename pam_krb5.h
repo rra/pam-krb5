@@ -15,21 +15,33 @@
 #include "credlist.h"
 #include "context.h"
 
-struct pam_args
-{
-	int debug;
-	int try_first_pass;
-	int use_first_pass;
-	int forwardable;
-	int reuse_ccache;
-	int no_ccache;
-	int ignore_root;
-	char *ccache_dir;
-	char *ccache;
-	int search_k5login;
-	int quiet; /* not really an arg, but it may as well be */
+/*
+ * The global structure holding our arguments, both from krb5.conf and from
+ * the PAM configuration.  Filled in by parse_args.
+ */
+struct pam_args {
+    char *ccache;               /* Path to write ticket cache to. */
+    char *ccache_dir;           /* Directory for ticket cache. */
+    int debug;                  /* Log debugging information. */
+    int forwardable;            /* Obtain forwardable tickets. */
+    int ignore_root;            /* Skip authentication for root. */
+    int ignore_k5login;         /* Don't check .k5login files. */
+    int no_ccache;              /* Don't create a ticket cache. */
+    int reuse_ccache;
+    int search_k5login;         /* Try password with each line of .k5login. */
+    int try_first_pass;         /* Try the previously entered password. */
+    int use_first_pass;         /* Always use the previous password. */
+
+    /*
+     * This isn't really an arg, but instead flags whether PAM_SILENT was
+     * included in the flags.  If set, don't report some messages back to the
+     * user (currently only error messages from password changing).
+     */
+    int quiet;
 };
 extern struct pam_args pam_args;
+
+/* Parse the PAM flags, arguments, and krb5.conf and fill out pam_args. */
 void parse_args(struct context *, int flags, int argc, const char **argv);
 
 int init_ccache(struct context *, const char *, struct credlist *,
