@@ -26,6 +26,7 @@ struct pam_args {
     int forwardable;            /* Obtain forwardable tickets. */
     int ignore_root;            /* Skip authentication for root. */
     int ignore_k5login;         /* Don't check .k5login files. */
+    int minimum_uid;            /* Ignore users below this UID. */
     int no_ccache;              /* Don't create a ticket cache. */
     char *renew_lifetime;       /* Renewable lifetime of credentials. */
     int search_k5login;         /* Try password with each line of .k5login. */
@@ -56,6 +57,9 @@ int password_auth(struct context *, struct pam_args *, char *in_tkt_service,
 
 int get_user_info(pam_handle_t *, const char *, int, char **);
 int validate_auth(struct context *, struct pam_args *);
+
+/* Returns true if we should ignore this user (root or low UID). */
+int should_ignore_user(struct context *, struct pam_args *, const char *);
 
 krb5_prompter_fct pam_prompter;
 

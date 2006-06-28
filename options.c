@@ -24,6 +24,7 @@ parse_args(struct context *ctx, int flags, int argc, const char **argv)
     int i, retval;
     krb5_context c;
     int local_context = 0;
+    char *tmp;
 
     /*
      * Set char * members to NULL explicitly, as all-0-bits may or may not be
@@ -62,6 +63,11 @@ parse_args(struct context *ctx, int flags, int argc, const char **argv)
                                 &args->ignore_k5login);
         krb5_appdefault_boolean(c, "pam", NULL, "ignore_root", 0,
                                 &args->ignore_root);
+        krb5_appdefault_string(c, "pam", NULL, "minimum_uid", NULL, &tmp);
+        if (tmp != NULL) {
+            args->minimum_uid = atoi(tmp);
+            free(tmp);
+        }
         krb5_appdefault_string(c, "pam", NULL, "renew_lifetime", NULL,
                                &args->renew_lifetime);
         krb5_appdefault_boolean(c, "pam", NULL, "search_k5login", 0,
@@ -95,6 +101,8 @@ parse_args(struct context *ctx, int flags, int argc, const char **argv)
             args->ignore_k5login = 1;
         else if (strcmp(argv[i], "ignore_root") == 0)
             args->ignore_root = 1;
+        else if (strcmp(argv[i], "minimum_uid=") == 0)
+            args->minimum_uid = atoi(&argv[i][strlen("minimum_uid=")]);
         else if (strcmp(argv[i], "no_ccache") == 0)
             args->no_ccache = 1;
         else if (strcmp(argv[i], "renew_lifetime=") == 0) {

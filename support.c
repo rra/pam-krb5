@@ -20,6 +20,33 @@
 #include "credlist.h"
 
 /*
+ * Given the context (if any), the PAM arguments and the user we're
+ * authenticating, see if we should ignore that user because they're root or
+ * have a low-numbered UID and we were configured to ignore such users.
+ * Returns true if we should ignore them, false otherwise.
+ */
+int
+should_ignore_user(struct context *ctx, struct pam_args *args,
+                   const char *username)
+{
+    struct passwd *pwd;
+
+    if (args->ignore_root && strcmp("root", username) == 0) {
+        dlog(ctx, args, "ignoring root user");
+        return 1;
+    }
+    if (args->minimum_uid > 0) {
+        pwd = getpwnam(ctx->name);
+        if (pwd != NULL && pwd->pw_uid < args->minimum_uid) {
+            dlog(ctx, args, "ignoring low-UID user (%d < %d)", pwd->pw_uid,
+                 args->minimum_uid);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/*
  * Used to support trying each principal in the .k5login file.  Read through
  * each line that parses correctly as a principal and use the provided
  * password to try to authenticate as that user.  If at any point we succeed,
@@ -46,8 +73,11 @@ k5login_password_auth(struct context *ctx, krb5_creds *creds,
     /* Assume no Kerberos error. */
     *retval = 0;
 
-    /* C sucks at string manipulation.  Generate the filename for the user's
-       .k5login file. */
+    /*
+     * C sucks at string manipulation.  Generate the filename for the user's
+     * .k5login file.  This function always fails if the user isn't a local
+     * user.
+     */
     pwd = getpwnam(ctx->name);
     if (pwd == NULL)
         return PAM_AUTH_ERR;
@@ -83,8 +113,11 @@ k5login_password_auth(struct context *ctx, krb5_creds *creds,
     if (st.st_uid != 0 && (st.st_uid != pwd->pw_uid))
         goto fail;
 
-    /* Parse the .k5login file.  Ignore any lines that are too long or that
-       don't parse into a Kerberos principal. */
+    /*
+     * Parse the .k5login file and attempt authentication for each principal.
+     * Ignore any lines that are too long or that don't parse into a Kerberos
+     * principal.
+     */
     while (fgets(line, BUFSIZ, k5login) != NULL) {
         len = strlen(line);
         if (line[len - 1] != '\n') {
@@ -105,8 +138,10 @@ k5login_password_auth(struct context *ctx, krb5_creds *creds,
                      princ, pass, pam_prompter, ctx->pamh, 0,
                      in_tkt_service, opts);
 
-        /* If that worked, update ctx->princ and return success.  Otherwise,
-           continue on to the next line. */
+        /*
+         * If that worked, update ctx->princ and return success.  Otherwise,
+         * continue on to the next line.
+         */
         if (*retval == 0) {
             if (ctx->princ)
                 krb5_free_principal(ctx->context, ctx->princ);
@@ -123,120 +158,134 @@ fail:
 }
 
 /*
- * Prompt the user for a password; authenticate the password with the KDC.
- * If correct, fill in creds with TGT magic. */
+ * Prompt the user for a password and authenticate the password with the KDC.
+ * If correct, fill in credlist with the obtained TGT or ticket.
+ * in_tkt_service, if non-NULL, specifies the service to get tickets for; the
+ * only interesting non-null case is kadmin/changepw for changing passwords.
+ */
 int
 password_auth(struct context *ctx, struct pam_args *args, char *in_tkt_service,
               struct credlist **credlist)
 {
-	krb5_get_init_creds_opt opts;
-	krb5_creds creds;
-	int retval;
-	char *pass = NULL;
-	int retry;
-	int success;
+    krb5_get_init_creds_opt opts;
+    krb5_creds creds;
+    int retval;
+    char *pass = NULL;
+    int retry;
+    int success;
 
-	new_credlist(ctx, credlist);
-	memset(&creds, 0, sizeof(krb5_creds));
-	krb5_get_init_creds_opt_init(&opts);
-	if (args->forwardable)
-		krb5_get_init_creds_opt_set_forwardable(&opts, 1);
+    /* Bail if we should be ignoring this user. */
+    if (should_ignore_user(ctx, args, ctx->name)) {
+        retval = PAM_SERVICE_ERR;
+        goto done;
+    }
 
-        if (args->renew_lifetime != NULL) {
-            krb5_deltat rlife;
-            int ret;
+    new_credlist(ctx, credlist);
+    memset(&creds, 0, sizeof(krb5_creds));
 
-            ret = krb5_string_to_deltat(args->renew_lifetime, &rlife);
-            if (ret != 0 || rlife == 0) {
-                error(ctx, "bad renew_lifetime value: %s", error_message(ret));
+    /* Set ticket options. */
+    krb5_get_init_creds_opt_init(&opts);
+    if (args->forwardable)
+        krb5_get_init_creds_opt_set_forwardable(&opts, 1);
+    if (args->renew_lifetime != NULL) {
+        krb5_deltat rlife;
+        int ret;
+
+        ret = krb5_string_to_deltat(args->renew_lifetime, &rlife);
+        if (ret != 0 || rlife == 0) {
+            error(ctx, "bad renew_lifetime value: %s", error_message(ret));
+            retval = PAM_SERVICE_ERR;
+            goto done;
+        }
+        krb5_get_init_creds_opt_set_renew_life(&opts, rlife);
+    }
+
+    /* Fill in the principal to authenticate as. */
+    retval = krb5_parse_name(ctx->context, ctx->name, &ctx->princ);
+    if (retval != 0) {
+        dlog(ctx, args, "krb5_parse_name: %s", error_message(retval));
+        retval = PAM_SERVICE_ERR;
+        goto done;
+    }
+
+    /*
+     * If try_first_pass or use_first_pass is set, grab the old password (if
+     * set) instead of prompting.  If try_first_pass is set, and the old
+     * password doesn't work, prompt for the password (loop).
+     */
+    retry = args->try_first_pass ? 1 : 0;
+    if (args->try_first_pass || args->use_first_pass)
+        pam_get_item(ctx->pamh, PAM_AUTHTOK, (void *) &pass);
+    do {
+        if (!pass) {
+            retry = 0;
+            retval = get_user_info(ctx->pamh, "Password: ",
+                                   PAM_PROMPT_ECHO_OFF, &pass);
+            if (retval != PAM_SUCCESS) {
+                dlog(ctx, args, "get_user_info: %s",
+                     pam_strerror(ctx->pamh, retval));
                 retval = PAM_SERVICE_ERR;
                 goto done;
             }
-            krb5_get_init_creds_opt_set_renew_life(&opts, rlife);
+
+            /* Set this for the next PAM module's try_first_pass. */
+            retval = pam_set_item(ctx->pamh, PAM_AUTHTOK, pass);
+            free(pass);
+            if (retval != PAM_SUCCESS) {
+                dlog(ctx, args, "pam_set_item: %s",
+                     pam_strerror(ctx->pamh, retval));
+                retval = PAM_SERVICE_ERR;
+                goto done;
+            }
+            pam_get_item(ctx->pamh, PAM_AUTHTOK, (void *) &pass);
         }
 
-	if (args->ignore_root && strcmp("root", ctx->name) == 0) {
-            dlog(ctx, args, "ignoring root user login");
-            retval = PAM_SERVICE_ERR;
-            goto done;
-	}
+        /* Get a TGT */
+        if (args->search_k5login) {
+            success = k5login_password_auth(ctx, &creds, &opts,
+                          in_tkt_service, pass, &retval);
+        } else {
+            retval = krb5_get_init_creds_password(ctx->context,
+                          &creds, ctx->princ, pass, pam_prompter,
+                          ctx->pamh, 0, in_tkt_service, &opts);
+            success = (retval == 0) ? PAM_SUCCESS : PAM_AUTH_ERR;
+        }
+        if (success == PAM_SUCCESS) {
+            retval = append_to_credlist(ctx, credlist, creds);
+            if (retval != PAM_SUCCESS)
+                goto done;
+            break;
+        }
+        pass = NULL;
+    } while (retry && retval == KRB5KRB_AP_ERR_BAD_INTEGRITY);
 
-        /* Fill in the principal to authenticate as. */
-        retval = krb5_parse_name(ctx->context, ctx->name, &ctx->princ);
-        if (retval != 0) {
-            dlog(ctx, args, "krb5_parse_name: %s", error_message(retval));
+    /*
+     * If we succeeded, also set PAM_OLDAUTHTOK in case we're changing the
+     * user's password.  Otherwise, return the appropriate PAM error code.
+     */
+    if (retval == 0 && pass) {
+        retval = pam_set_item(ctx->pamh, PAM_OLDAUTHTOK, pass);
+        if (retval != PAM_SUCCESS) {
+            dlog(ctx, args, "pam_set_item: %s",
+                 pam_strerror(ctx->pamh, retval));
             retval = PAM_SERVICE_ERR;
             goto done;
         }
+    } else {
+        dlog(ctx, args, "krb5_get_init_creds_password: %s",
+             error_message(retval));
+        if (retval == KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN)
+            retval = PAM_USER_UNKNOWN;
+        else if (retval == KRB5_KDC_UNREACH)
+            retval = PAM_AUTHINFO_UNAVAIL;
+        else
+            retval = PAM_AUTH_ERR;
+        goto done;
+    }
+    retval = PAM_SUCCESS;
 
-	retry = args->try_first_pass ? 1 : 0;
-	if (args->try_first_pass || args->use_first_pass)
-		pam_get_item(ctx->pamh, PAM_AUTHTOK, (void *) &pass);
-
-	/* If try_first_pass or use_first_pass is set, grab the old password
-	 * (if set) instead of prompting.  If try_first_pass is set, and
-	 * the old password doesn't work, prompt for the password (loop). */
-	do {
-		if (!pass) {
-			retry = 0;
-			if ((retval = get_user_info(ctx->pamh, "Password: ", PAM_PROMPT_ECHO_OFF, &pass)) != PAM_SUCCESS) {
-                            dlog(ctx, args, "get_user_info: %s", pam_strerror(ctx->pamh, retval));
-                            retval = PAM_SERVICE_ERR;
-                            goto done;
-			}
-
-			/* set this for the next pam module's try_first_pass */
-			retval = pam_set_item(ctx->pamh, PAM_AUTHTOK, pass);
-			free(pass);
-			if (retval != PAM_SUCCESS) {
-                            dlog(ctx, args, "pam_set_item: %s", pam_strerror(ctx->pamh, retval));
-                            retval = PAM_SERVICE_ERR;
-                            goto done;
-			}
-			pam_get_item(ctx->pamh, PAM_AUTHTOK, (void *) &pass);
-		}
-
-		/* Get a TGT */
-		if (args->search_k5login) {
-			success = k5login_password_auth(ctx, &creds, &opts,
-				      in_tkt_service, pass, &retval);
-		} else {
-			retval = krb5_get_init_creds_password(ctx->context,
-				     &creds, ctx->princ, pass, pam_prompter,
-				     ctx->pamh, 0, in_tkt_service, &opts);
-			success = (retval == 0) ? PAM_SUCCESS : PAM_AUTH_ERR;
-		}
-		if (success == PAM_SUCCESS) {
-			retval = append_to_credlist(ctx, credlist, creds);
-			if (retval != PAM_SUCCESS)
-				goto done;
-			break;
-		}
-		pass = NULL;
-	} while (retry && retval == KRB5KRB_AP_ERR_BAD_INTEGRITY);
-
-	if (retval == 0 && pass) {
-		/* success; set this in case we're changing the passwd */
-		if ((retval = pam_set_item(ctx->pamh, PAM_OLDAUTHTOK, pass)) != PAM_SUCCESS) {
-                    dlog(ctx, args, "pam_set_item: %s", pam_strerror(ctx->pamh, retval));
-                    retval = PAM_SERVICE_ERR;
-                    goto done;
-		}
-	}
-	else {
-            dlog(ctx, args, "krb5_get_init_creds_password: %s", error_message(retval));
-            if (retval == KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN)
-                retval = PAM_USER_UNKNOWN;
-            else if (retval == KRB5_KDC_UNREACH)
-                retval = PAM_AUTHINFO_UNAVAIL;
-            else
-                retval = PAM_AUTH_ERR;
-            goto done;
-	}
-
-	retval = PAM_SUCCESS;
 done:
-	return retval;
+    return retval;
 }
 
 int

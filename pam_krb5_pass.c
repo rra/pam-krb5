@@ -154,10 +154,9 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	goto done;
     }
 
-    if (args->ignore_root) {
+    if (args->ignore_root || args->minimum_uid > 0) {
 	pamret = pam_get_user(pamh, &tmpname, NULL);
-	if (pamret == PAM_SUCCESS && strcmp("root", tmpname) == 0) {
-	    dlog(ctx, args, "ignoring root password change");
+	if (pamret == PAM_SUCCESS && should_ignore_user(ctx, args, tmpname)) {
 	    pamret = PAM_SUCCESS;
 	    goto done;
 	}

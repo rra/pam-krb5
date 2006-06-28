@@ -202,10 +202,9 @@ create_session_context(struct pam_args *args, pam_handle_t *pamh,
     const char *tmpname;
     int pamret;
 
-    if (args->ignore_root) {
+    if (args->ignore_root || args->minimum_uid > 0) {
         pamret = pam_get_user(pamh, &tmpname, NULL);
-        if (pamret == PAM_SUCCESS && strcmp("root", tmpname) == 0) {
-            dlog(ctx, args, "ignoring root login");
+        if (pamret == PAM_SUCCESS && should_ignore_user(ctx, args, tmpname)) {
             pamret = PAM_SUCCESS;
             goto fail;
         }
