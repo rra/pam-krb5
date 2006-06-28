@@ -142,6 +142,19 @@ password_auth(struct context *ctx, char *in_tkt_service,
 	if (pam_args.forwardable)
 		krb5_get_init_creds_opt_set_forwardable(&opts, 1);
 
+        if (pam_args.renew_lifetime != NULL) {
+            krb5_deltat rlife;
+            int ret;
+
+            ret = krb5_string_to_deltat(pam_args.renew_lifetime, &rlife);
+            if (ret != 0 || rlife == 0) {
+                dlog(ctx, "bad renew_lifetime value: %s", error_message(ret));
+                retval = PAM_SERVICE_ERR;
+                goto done;
+            }
+            krb5_get_init_creds_opt_set_renew_life(&opts, rlife);
+        }
+
 	if (pam_args.ignore_root && strcmp("root", ctx->name) == 0) {
 		dlog(ctx, "ignoring root user login");
 		retval = PAM_SERVICE_ERR;

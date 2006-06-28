@@ -26,7 +26,15 @@ parse_args(struct context *ctx, int flags, int argc, const char **argv)
     krb5_context c;
     int local_context = 0;
 
+    /*
+     * Set char * members to NULL explicitly, as all-0-bits may or may not be
+     * a NULL pointer.  In practice it is everywhere, but may as well be
+     * pedantically correct.
+     */
     memset(&pam_args, 0, sizeof(pam_args));
+    pam_args.ccache = NULL;
+    pam_args.ccache_dir = NULL;
+    pam_args.renew_lifetime = NULL;
 
     /*
      * Obtain a context if we need to and then set defaults from krb5.conf.
@@ -63,28 +71,30 @@ parse_args(struct context *ctx, int flags, int argc, const char **argv)
      * sense in krb5.conf.
      */
     for (i = 0; i < argc; i++) {
-        if (strcmp(argv[i], "debug") == 0)
+        if (strncmp(argv[i], "ccache=", 7) == 0)
+            pam_args.ccache = (char *) &argv[i][7];
+        else if (strncmp(argv[i], "ccache_dir=", 11) == 0)
+            pam_args.ccache_dir = (char *) &argv[i][11];
+        else if (strcmp(argv[i], "debug") == 0)
             pam_args.debug = 1;
+        else if (strcmp(argv[i], "forwardable") == 0)
+            pam_args.forwardable = 1;
+        else if (strcmp(argv[i], "ignore_k5login") == 0)
+            pam_args.ignore_k5login = 1;
+        else if (strcmp(argv[i], "ignore_root") == 0)
+            pam_args.ignore_root = 1;
+        else if (strcmp(argv[i], "no_ccache") == 0)
+            pam_args.no_ccache = 1;
+        else if (strcmp(argv[i], "renew_lifetime") == 0)
+            pam_args.renew_lifetime = (char *) argv[i];
+        else if (strcmp(argv[i], "reuse_ccache") == 0)
+            pam_args.reuse_ccache = 1;
+        else if (strcmp(argv[i], "search_k5login") == 0)
+            pam_args.search_k5login = 1;
         else if (strcmp(argv[i], "try_first_pass") == 0)
             pam_args.try_first_pass = 1;
         else if (strcmp(argv[i], "use_first_pass") == 0)
             pam_args.use_first_pass = 1;
-        else if (strcmp(argv[i], "forwardable") == 0)
-            pam_args.forwardable = 1;
-        else if (strcmp(argv[i], "reuse_ccache") == 0)
-            pam_args.reuse_ccache = 1;
-        else if (strcmp(argv[i], "no_ccache") == 0)
-            pam_args.no_ccache = 1;
-        else if (strcmp(argv[i], "ignore_root") == 0)
-            pam_args.ignore_root = 1;
-        else if (strncmp(argv[i], "ccache=", 7) == 0)
-            pam_args.ccache = (char *) &argv[i][7];
-        else if (strncmp(argv[i], "ccache_dir=", 11) == 0)
-            pam_args.ccache_dir = (char *) &argv[i][11];
-        else if (strcmp(argv[i], "search_k5login") == 0)
-            pam_args.search_k5login = 1;
-        else if (strcmp(argv[i], "ignore_k5login") == 0)
-            pam_args.ignore_k5login = 1;
     }
 	
     if (flags & PAM_SILENT)

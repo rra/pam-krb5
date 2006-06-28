@@ -27,6 +27,7 @@ struct pam_args {
     int ignore_root;            /* Skip authentication for root. */
     int ignore_k5login;         /* Don't check .k5login files. */
     int no_ccache;              /* Don't create a ticket cache. */
+    char *renew_lifetime;       /* Renewable lifetime of credentials. */
     int reuse_ccache;
     int search_k5login;         /* Try password with each line of .k5login. */
     int try_first_pass;         /* Try the previously entered password. */
