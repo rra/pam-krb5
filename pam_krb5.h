@@ -68,75 +68,17 @@ void		 compat_free_data_contents(krb5_context, krb5_data *);
 krb5_error_code	 compat_cc_next_cred(krb5_context, const krb5_ccache, 
 				     krb5_cc_cursor *, krb5_creds *);
 
-/*#define DEBUG_TO_FILE*/
-#define LOGFILE "/tmp/krb5.log"
-static void _dlog_to_file(const char *name, const char *msg)
-{
-#ifdef DEBUG_TO_FILE
-	static FILE *fp = NULL;
-	if (!fp) {
-		if ((fp = fopen(LOGFILE, "a")) != NULL)
-			fprintf(fp, "  ---\n");
-	}
-	if (fp) {
-		fprintf(fp, "(pam_krb5): %s: %s\n", name, msg);
-		fflush(fp);
-	}
-#endif
-}
+/* Error reporting and debugging functions. */
+void error(struct context *, const char *, ...);
+void debug(struct context *, struct pam_args *, const char *, ...);
+void debug_pam(struct context *, struct pam_args *, const char *, int);
+void debug_krb5(struct context *, struct pam_args *, const char *, int);
 
-#define DEBUG_TO_SYSLOG
-static void _dlog_to_syslog(const char *name, const char *msg)
-{
-#ifdef DEBUG_TO_SYSLOG
-	syslog(LOG_DEBUG, "(pam_krb5): %s: %s", name, msg);
-#endif
-}
-
-/*#define DEBUG_TO_STDERR*/
-static void _dlog_to_stderr(const char *name, const char *msg)
-{
-#ifdef DEBUG_TO_STDERR
-	fprintf(stderr, "(pam_krb5): %s: %s\n", name, msg);
-#endif
-}
-
-/* A useful logging macro */
-static inline void
-dlog(struct context *ctx, struct pam_args *args, const char *fmt, ...)
-{
-	if (args->debug) {
-		const char *name;
-		char msg[256];
-		va_list args;
-
-		va_start(args, fmt);
-		vsnprintf(msg, sizeof(msg), fmt, args);
-		va_end(args);
-
-		name = ctx && ctx->name ? ctx->name : "none";
-		_dlog_to_syslog(name, msg);
-		_dlog_to_stderr(name, msg);
-		_dlog_to_file(name, msg);
-	}
-}
-
-/* The same, but not optional based on the debug setting. */
-static inline void
-error(struct context *ctx, const char *fmt, ...)
-{
-    const char *name;
-    char msg[256];
-    va_list args;
-
-    va_start(args, fmt);
-    vsnprintf(msg, sizeof(msg), fmt, args);
-    va_end(args);
-
-    name = ctx && ctx->name ? ctx->name : "none";
-    _dlog_to_syslog(name, msg);
-    _dlog_to_stderr(name, msg);
-    _dlog_to_file(name, msg);
-}
+/* Macros to record entry and exit from the main PAM functions. */
+#define ENTRY(ctx, args, flags) \
+    debug((ctx), (args), "%s: entry (0x%x)", __FUNCTION__, (flags))
+#define EXIT(ctx, args, pamret) \
+    debug((ctx), (args), "%s: exit (%s)", __FUNCTION__, \
+          ((pamret) == PAM_SUCCESS) ? "success" : "failure")
 
 #endif /* PAM_KRB5_H_ */

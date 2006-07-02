@@ -32,19 +32,20 @@ should_ignore_user(struct context *ctx, struct pam_args *args,
     struct passwd *pwd;
 
     if (args->ignore_root && strcmp("root", username) == 0) {
-        dlog(ctx, args, "ignoring root user");
+        debug(ctx, args, "ignoring root user");
         return 1;
     }
     if (args->minimum_uid > 0) {
         pwd = getpwnam(ctx->name);
         if (pwd != NULL && pwd->pw_uid < args->minimum_uid) {
-            dlog(ctx, args, "ignoring low-UID user (%d < %d)", pwd->pw_uid,
-                 args->minimum_uid);
+            debug(ctx, args, "ignoring low-UID user (%d < %d)", pwd->pw_uid,
+                  args->minimum_uid);
             return 1;
         }
     }
     return 0;
 }
+
 
 /*
  * Used to support trying each principal in the .k5login file.  Read through
@@ -157,6 +158,7 @@ fail:
     return PAM_AUTH_ERR;
 }
 
+
 /*
  * Prompt the user for a password and authenticate the password with the KDC.
  * If correct, fill in credlist with the obtained TGT or ticket.
@@ -204,7 +206,7 @@ password_auth(struct context *ctx, struct pam_args *args, char *in_tkt_service,
     /* Fill in the principal to authenticate as. */
     retval = krb5_parse_name(ctx->context, ctx->name, &ctx->princ);
     if (retval != 0) {
-        dlog(ctx, args, "krb5_parse_name: %s", error_message(retval));
+        debug_krb5(ctx, args, "krb5_parse_name", retval);
         retval = PAM_SERVICE_ERR;
         goto done;
     }
@@ -223,8 +225,7 @@ password_auth(struct context *ctx, struct pam_args *args, char *in_tkt_service,
             retval = get_user_info(ctx->pamh, "Password: ",
                                    PAM_PROMPT_ECHO_OFF, &pass);
             if (retval != PAM_SUCCESS) {
-                dlog(ctx, args, "get_user_info: %s",
-                     pam_strerror(ctx->pamh, retval));
+                debug_pam(ctx, args, "error getting password", retval);
                 retval = PAM_SERVICE_ERR;
                 goto done;
             }
@@ -233,8 +234,7 @@ password_auth(struct context *ctx, struct pam_args *args, char *in_tkt_service,
             retval = pam_set_item(ctx->pamh, PAM_AUTHTOK, pass);
             free(pass);
             if (retval != PAM_SUCCESS) {
-                dlog(ctx, args, "pam_set_item: %s",
-                     pam_strerror(ctx->pamh, retval));
+                debug_pam(ctx, args, "error storing password", retval);
                 retval = PAM_SERVICE_ERR;
                 goto done;
             }
@@ -287,14 +287,12 @@ password_auth(struct context *ctx, struct pam_args *args, char *in_tkt_service,
     if (retval == 0 && pass) {
         retval = pam_set_item(ctx->pamh, PAM_OLDAUTHTOK, pass);
         if (retval != PAM_SUCCESS) {
-            dlog(ctx, args, "pam_set_item: %s",
-                 pam_strerror(ctx->pamh, retval));
+            debug_pam(ctx, args, "error storing old password", retval);
             retval = PAM_SERVICE_ERR;
             goto done;
         }
     } else {
-        dlog(ctx, args, "krb5_get_init_creds_password: %s",
-             error_message(retval));
+        debug_krb5(ctx, args, "krb5_get_init_creds_password", retval);
         if (retval == KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN)
             retval = PAM_USER_UNKNOWN;
         else if (retval == KRB5_KDC_UNREACH)
@@ -308,6 +306,7 @@ password_auth(struct context *ctx, struct pam_args *args, char *in_tkt_service,
 done:
     return retval;
 }
+
 
 /*
  * Given a cache name and a credential list, initialize the cache, store the
@@ -323,20 +322,20 @@ init_ccache(struct context *ctx, struct pam_args *args, const char *ccname,
 
     retval = krb5_cc_resolve(ctx->context, ccname, cache);
     if (retval != 0) {
-        dlog(ctx, args, "krb5_cc_resolve: %s", error_message(retval));
+        debug_krb5(ctx, args, "krb5_cc_resolve", retval);
         retval = PAM_SERVICE_ERR;
         goto done;
     }
     retval = krb5_cc_initialize(ctx->context, *cache, ctx->princ);
     if (retval != 0) {
-        dlog(ctx, args, "krb5_cc_initialize: %s", error_message(retval));
+        debug_krb5(ctx, args, "krb5_cc_initialize", retval);
         retval = PAM_SERVICE_ERR;
         goto done;
     }
     for (cred = clist; cred != NULL; cred = cred->next) {
         retval = krb5_cc_store_cred(ctx->context, *cache, &cred->creds);
         if (retval != 0) {
-            dlog(ctx, args, "krb5_cc_store_cred: %s", error_message(retval));
+            debug_krb5(ctx, args, "krb5_cc_store_cred", retval);
             retval = PAM_SERVICE_ERR;
             goto done;
         }
@@ -347,6 +346,7 @@ done:
         krb5_cc_destroy(ctx->context, *cache);
     return retval;
 }
+
 
 /*
  * Get info from the user.  Disallow null responses (regardless of flags).
@@ -376,12 +376,10 @@ get_user_info(pam_handle_t *pamh, const char *prompt, int type,
     /* Caller should ignore errors for non-response conversations. */
     if (resp == NULL)
 	return PAM_CONV_ERR;
-
     if (resp->resp == NULL || resp->resp[0] == '\0') {
 	free(resp);
 	return PAM_AUTH_ERR;
     }
-
     *response = resp->resp;
     free(resp);
     return PAM_SUCCESS;

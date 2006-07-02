@@ -16,7 +16,11 @@
 #include "pam_krb5.h"
 #include "context.h"
 
-/* Check authorization of user. */
+/*
+ * Check the authorization of the user.  It's not entirely clear what this
+ * function is supposed to do, but rechecking .k5login and friends makes the
+ * most sense.
+ */
 int
 pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
@@ -26,7 +30,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
     pamret = fetch_context(pamh, &ctx);
     args = parse_args(ctx, flags, argc, argv);
-    dlog(ctx, args, "%s: entry", __FUNCTION__);
+    ENTRY(ctx, args, flags);
 
     /*
      * Succeed if the user did not use krb5 to login.  Yes, ideally we should
@@ -38,13 +42,13 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
     if (pamret != PAM_SUCCESS || ctx == NULL) {
         pamret = PAM_SUCCESS;
         ctx = NULL;
-        dlog(ctx, args, "%s: skipping non-Kerberos login", __FUNCTION__);
+        debug(ctx, args, "%s: skipping non-Kerberos login", __FUNCTION__);
         goto done;
     }
     pamret = validate_auth(ctx, args);
 
 done:
-    dlog(ctx, args, "%s: exit (%s)", __FUNCTION__, pamret ? "failure" : "success");
+    EXIT(ctx, args, pamret);
     free_args(args);
     return pamret;
 }

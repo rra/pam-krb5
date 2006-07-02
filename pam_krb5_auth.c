@@ -90,7 +90,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     int ccfd;
 
     args = parse_args(NULL, flags, argc, argv);
-    dlog(ctx, args, "%s: entry", __FUNCTION__);
+    ENTRY(ctx, args, flags);
 
     if ((pamret = new_context(pamh, &ctx)) != PAM_SUCCESS)
 	    goto done;
@@ -121,7 +121,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 
 done:
     free_credlist(ctx, clist);
-    dlog(ctx, args, "%s: exit (%s)", __FUNCTION__, pamret ? "failure" : "success");
+    EXIT(ctx, args, pamret);
 
     /* Clear the context on failure so that the account management module
        knows that we didn't authenticate with Kerberos. */
@@ -200,7 +200,7 @@ create_session_context(struct pam_args *args, pam_handle_t *pamh,
 {
     struct context *ctx = NULL;
     const char *tmpname;
-    int pamret;
+    int status, pamret;
 
     if (args->ignore_root || args->minimum_uid > 0) {
         pamret = pam_get_user(pamh, &tmpname, NULL);
@@ -211,29 +211,31 @@ create_session_context(struct pam_args *args, pam_handle_t *pamh,
     }
     pamret = new_context(pamh, &ctx);
     if (pamret != PAM_SUCCESS) {
-	dlog(ctx, args, "creating session context failed");
+	debug(ctx, args, "creating session context failed");
 	goto fail;
     }
     tmpname = get_krb5ccname(ctx, "PAM_KRB5CCNAME");
     if (tmpname == NULL) {
-	dlog(ctx, args, "unable to get PAM_KRB5CCNAME, assuming non-Kerberos login");
+	debug(ctx, args, "unable to get PAM_KRB5CCNAME, assuming"
+              " non-Kerberos login");
 	pamret = PAM_SUCCESS;
 	goto fail;
     }
-    dlog(ctx, args, "found initial ticket cache at %s", tmpname);
+    debug(ctx, args, "found initial ticket cache at %s", tmpname);
     if (krb5_cc_resolve(ctx->context, tmpname, &ctx->cache) != 0) {
-	dlog(ctx, args, "cannot resolve cache %s", tmpname);
+	debug(ctx, args, "cannot resolve cache %s", tmpname);
 	pamret = PAM_SERVICE_ERR;
 	goto fail;
     }
-    if (krb5_cc_get_principal(ctx->context, ctx->cache, &ctx->princ) != 0) {
-	dlog(ctx, args, "cannot retrieve principal");
+    status = krb5_cc_get_principal(ctx->context, ctx->cache, &ctx->princ);
+    if (status != 0) {
+	debug_krb5(ctx, args, "cannot retrieve principal", status);
 	pamret = PAM_SERVICE_ERR;
 	goto fail;
     }
-    if ((pamret = pam_set_data(pamh, "ctx", ctx,
-			       destroy_context)) != PAM_SUCCESS) {
-	dlog(ctx, args, "cannot set context data");
+    pamret = pam_set_data(pamh, "ctx", ctx, destroy_context);
+    if (pamret != PAM_SUCCESS) {
+	debug_pam(ctx, args, "cannot set context data", pamret);
 	goto fail;
     }
     *newctx = ctx;
@@ -263,7 +265,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
 
     pamret = fetch_context(pamh, &ctx);
     args = parse_args(ctx, flags, argc, argv);
-    dlog(ctx, args, "%s: entry (0x%x)", __FUNCTION__, flags); 
+    ENTRY(ctx, args, flags);
 
     if (flags & PAM_DELETE_CRED) {
 	pamret = pam_set_data(pamh, "ctx", NULL, destroy_context);
@@ -288,7 +290,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
      * ourselves.
      */
     if (pamret != PAM_SUCCESS) {
-	dlog(ctx, args, "%s: no context found, creating one", __FUNCTION__);
+	debug(ctx, args, "no context found, creating one");
 	pamret = create_session_context(args, pamh, &ctx);
 	if (ctx == NULL)
 	    goto done;
@@ -310,7 +312,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
     /* Get the uid. This should exist. */
     pw = getpwnam(ctx->name);
     if (!pw) {
-	dlog(ctx, args, "getpwnam failed for %s", ctx->name);
+	debug(ctx, args, "getpwnam failed for %s", ctx->name);
 	pamret = PAM_USER_UNKNOWN;
 	goto done;
     }
@@ -322,15 +324,17 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
 	const char *name, *k5name;
 
 	name = get_krb5ccname(ctx, "KRB5CCNAME");
-	if (!name) {
-	    dlog(ctx, args, "Unable to get KRB5CCNAME");
+	if (name == NULL) {
+	    debug(ctx, args, "unable to get KRB5CCNAME");
 	    pamret = PAM_SERVICE_ERR;
 	    goto done;
 	}
 
-	/* If the cache we have in the context and the cache we're
-	 * reinitializing are the same cache, don't do anything; otherwise,
-	 * we'll end up destroying the cache. */
+	/*
+         * If the cache we have in the context and the cache we're
+         * reinitializing are the same cache, don't do anything; otherwise,
+         * we'll end up destroying the cache.
+         */
 	if (ctx->cache != NULL) {
 	    k5name = krb5_cc_get_name(ctx->context, ctx->cache);
 	    if (k5name != NULL && strcmp(name, k5name) == 0) {
@@ -345,11 +349,13 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
 	    pamret = PAM_BUF_ERR;
 	    goto done;
 	}
-	dlog(ctx, args, "%s: attempting to refresh cred cache %s", __FUNCTION__, cache_name);
+	debug(ctx, args, "refreshing ticket cache %s", cache_name);
 
-	/* If we're refreshing the cache, we didn't really create it;
-	 * some other application (probably login?) is still using it.
-	 * Thus, don't remove it! */
+	/*
+         * If we're refreshing the cache, we didn't really create it and the
+         * user's open session created by login is probably still managing
+         * it.  Thus, don't remove it when PAM is shut down.
+         */
 	ctx->dont_destroy_cache = 1;
     }
     else {
@@ -374,22 +380,26 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
     }
 
     /* Initialize the new ccache */
-    dlog(ctx, args, "%s: initializing cred cache %s", __FUNCTION__, cache_name);
-    if ((pamret = copy_credlist(ctx, &clist, ctx->cache)) != PAM_SUCCESS)
+    debug(ctx, args, "initializing ticket cache %s", cache_name);
+    pamret = copy_credlist(ctx, &clist, ctx->cache);
+    if (pamret != PAM_SUCCESS)
 	goto done;
-    if ((pamret = init_ccache(ctx, args, cache_name, clist, &cache)) != PAM_SUCCESS)
+    pamret = init_ccache(ctx, args, cache_name, clist, &cache);
+    if (pamret != PAM_SUCCESS)
 	goto done;
-
     if (chown(cache_name, uid, gid) == -1) {
-	dlog(ctx, args, "chown of ticket cache failed: %s", strerror(errno));
+	debug(ctx, args, "chown of ticket cache failed: %s", strerror(errno));
 	pamret = PAM_SERVICE_ERR;	
 	goto done;
     }
-    if ((pamret = set_krb5ccname(ctx, cache_name, "KRB5CCNAME")) != PAM_SUCCESS)
+    pamret = set_krb5ccname(ctx, cache_name, "KRB5CCNAME");
+    if (pamret != PAM_SUCCESS)
 	goto done;
-    if (pam_getenv(pamh, "PAM_KRB5CCNAME") != NULL)
-	if ((pamret = pam_putenv(pamh, "PAM_KRB5CCNAME")) != PAM_SUCCESS)
+    if (pam_getenv(pamh, "PAM_KRB5CCNAME") != NULL) {
+        pamret = pam_putenv(pamh, "PAM_KRB5CCNAME");
+	if (pamret != PAM_SUCCESS)
 	    goto done;
+    }
     ctx->initialized = 1;
 
     krb5_cc_destroy(ctx->context, ctx->cache);
@@ -402,7 +412,7 @@ done:
     if (cache_name)
 	free(cache_name);
     free_credlist(ctx, clist);
-    dlog(ctx, args, "%s: exit (%s)", __FUNCTION__, pamret ? "failure" : "success");
+    EXIT(ctx, args, pamret);
     free_args(args);
     return pamret;
 }
