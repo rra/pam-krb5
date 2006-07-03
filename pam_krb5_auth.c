@@ -26,19 +26,22 @@
 #include "pam_krb5.h"
 #include "credlist.h"
 
+/*
+ * Get the name of a cache, given the name of the environment variable that
+ * should be set to indicate which cache to use.  This function handles both
+ * getting the final cache name (KRB5CCNAME) and the temporary cache name
+ * (PAM_KRB5CCNAME).
+ */
 static const char *
 get_krb5ccname(struct context *ctx, const char *key)
 {
-	const char *name;
+    const char *name;
 
-	/* TODO: figure out why pam_getenv() returns NULL */
-	name = pam_getenv(ctx->pamh, key);
-	if (!name)
-		name = getenv(key);
-	if (!name && ctx && ctx->context && ctx->cache)
-		name = krb5_cc_get_name(ctx->context, ctx->cache);
-
-	return name;
+    /* TODO: figure out why pam_getenv() returns NULL */
+    name = pam_getenv(ctx->pamh, key);
+    if (name == NULL)
+        name = getenv(key);
+    return name;
 }
 
 static int
@@ -324,8 +327,10 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
 	const char *name, *k5name;
 
 	name = get_krb5ccname(ctx, "KRB5CCNAME");
+        if (name == NULL)
+            name = krb5_cc_default_name(ctx->context);
 	if (name == NULL) {
-	    debug(ctx, args, "unable to get KRB5CCNAME");
+	    debug(ctx, args, "unable to get ticket cache name");
 	    pamret = PAM_SERVICE_ERR;
 	    goto done;
 	}
