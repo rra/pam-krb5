@@ -12,12 +12,13 @@
  * for pam_sm_close_session.
  */
 
+/* Get prototypes for both the authentication and session functions. */
 #define PAM_SM_AUTH
 #define PAM_SM_SESSION
 
-#include <security/pam_appl.h>
-#include <security/pam_modules.h>
 #include <krb5.h>
+#include <security/pam_modules.h>
+
 #include "pam_krb5.h"
 
 /* Store the user's credentials.  The flags are ignored. */

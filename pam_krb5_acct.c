@@ -5,16 +5,15 @@
  *
  */
 
+/* Get prototypes for the account management functions. */
 #define PAM_SM_ACCOUNT
 
-#include <syslog.h>
-#include <string.h>
-#include <security/pam_appl.h>
-#include <security/pam_modules.h>
-#include <krb5.h>
 #include <com_err.h>
+#include <krb5.h>
+#include <security/pam_modules.h>
+#include <string.h>
+
 #include "pam_krb5.h"
-#include "context.h"
 
 /*
  * Check the authorization of the user.  It's not entirely clear what this

@@ -21,8 +21,6 @@
 #include <string.h>
 
 #include "pam_krb5.h"
-#include "credlist.h"
-#include "context.h"
 
 
 /*

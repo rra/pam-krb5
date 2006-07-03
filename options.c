@@ -4,11 +4,10 @@
  * Option handling for pam-krb5.
  */
 
+#include <krb5.h>
 #include <string.h>
 
-#include <krb5.h>
 #include "pam_krb5.h"
-#include "context.h"
 
 /*
  * This is where we parse options.  Many of our options can be set in either

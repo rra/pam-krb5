@@ -4,20 +4,19 @@
  * Support functions for pam_krb5
  */
 
+#include <com_err.h>
 #include <errno.h>
+#include <krb5.h>
 #include <pwd.h>
+#include <security/pam_appl.h>
+#include <security/pam_modules.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <syslog.h>
 #include <unistd.h>
-#include <security/pam_appl.h>
-#include <security/pam_modules.h>
-#include <krb5.h>
-#include <com_err.h>
+
 #include "pam_krb5.h"
-#include "credlist.h"
 
 /*
  * Given the context (if any), the PAM arguments and the user we're
