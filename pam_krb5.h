@@ -83,6 +83,10 @@ int password_auth(struct context *, struct pam_args *, char *in_tkt_service,
 /* Generic prompting function to get information from the user. */
 int get_user_info(pam_handle_t *, const char *, int, char **);
 
+/* Prompting function for the Kerberos libraries. */
+krb5_error_code prompter_krb5(krb5_context, void *data, const char *name,
+                              const char *banner, int, krb5_prompt *);
+
 /* Check the user with krb5_kuserok or the configured equivalent. */
 int validate_auth(struct context *, struct pam_args *);
 
