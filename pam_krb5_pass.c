@@ -65,7 +65,7 @@ krb_pass_utter(pam_handle_t *pamh, int quiet, const char *text)
 static int
 get_new_password(struct context *ctx, struct pam_args *args, char **pass)
 {
-    int pamret = PAM_SUCCESS;
+    int pamret = PAM_AUTHTOK_ERR;
     char *pass2;
 
     /*
@@ -78,7 +78,7 @@ get_new_password(struct context *ctx, struct pam_args *args, char **pass)
         pam_get_item(ctx->pamh, PAM_AUTHTOK, (const void **) pass);
 
     /* Prompt for the new password if necessary. */
-    if (!*pass) {
+    if (*pass == NULL && !args->use_first_pass) {
         pamret = get_user_info(ctx->pamh, "Enter new password: ",
                                PAM_PROMPT_ECHO_OFF, pass);
         if (pamret != PAM_SUCCESS) {
