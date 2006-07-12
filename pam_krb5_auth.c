@@ -126,9 +126,6 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     pamret = validate_auth(ctx, args);
     if (pamret != PAM_SUCCESS)
         goto done;
-    pamret = set_krb5ccname(ctx, cache_name, "PAM_KRB5CCNAME");
-    if (pamret != PAM_SUCCESS)
-        goto done;
 
     /* Store the obtained credentials in a temporary cache. */
     if (args->no_ccache)
@@ -141,6 +138,9 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     }
     close(ccfd);
     pamret = init_ccache(ctx, args, cache_name, clist, &ctx->cache);
+    if (pamret != PAM_SUCCESS)
+        goto done;
+    pamret = set_krb5ccname(ctx, cache_name, "PAM_KRB5CCNAME");
     if (pamret != PAM_SUCCESS)
         goto done;
 
