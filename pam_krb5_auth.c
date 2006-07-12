@@ -119,18 +119,6 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     if (pamret != PAM_SUCCESS)
         goto done;
 
-    /* Store the obtained credentials in a temporary cache. */
-    ccfd = mkstemp(cache_name);
-    if (ccfd < 0) {
-        error(ctx, "mkstemp(\"%s\") failed: %s", cache_name, strerror(errno));
-        pamret = PAM_SERVICE_ERR;
-        goto done;
-    }
-    close(ccfd);
-    pamret = init_ccache(ctx, args, cache_name, clist, &ctx->cache);
-    if (pamret != PAM_SUCCESS)
-        goto done;
-
     /*
      * Check .k5login, and if everything is fine, tell pam_sm_setcred where
      * the ticket cache is.
@@ -139,6 +127,20 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     if (pamret != PAM_SUCCESS)
         goto done;
     pamret = set_krb5ccname(ctx, cache_name, "PAM_KRB5CCNAME");
+    if (pamret != PAM_SUCCESS)
+        goto done;
+
+    /* Store the obtained credentials in a temporary cache. */
+    if (args->no_ccache)
+        goto done;
+    ccfd = mkstemp(cache_name);
+    if (ccfd < 0) {
+        error(ctx, "mkstemp(\"%s\") failed: %s", cache_name, strerror(errno));
+        pamret = PAM_SERVICE_ERR;
+        goto done;
+    }
+    close(ccfd);
+    pamret = init_ccache(ctx, args, cache_name, clist, &ctx->cache);
     if (pamret != PAM_SUCCESS)
         goto done;
 
