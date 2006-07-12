@@ -45,12 +45,16 @@ OBJS = pam_krb5_auth.o pam_krb5_pass.o pam_krb5_acct.o pam_krb5_sess.o \
 	support.o credlist.o context.o options.o logging.o prompting.o \
 	${COMPAT:.c=.o}
 
-all: pam_krb5.so
+all: pam_krb5.so pam_krb5.5
 
 pam_krb5.so: $(OBJS)
 	$(CC) -o $@ $(LDFLAGS) $(OBJS) $(LIBS)
 
-install: pam_krb5.so
+pam_krb5.5: pam_krb5.pod
+	pod2man --section=5 --release=$(VERSION) --center='PAM Modules' \
+	    pam_krb5.pod > $@
+
+install: pam_krb5.so pam_krb5.5
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 0644 pam_krb5.so \
 	    ${PAMPREFIX}/pam_krb5.so
 	${INSTALL} -c -o ${MANOWN} -g ${MANGRP} -m 0644 pam_krb5.5 \
