@@ -35,7 +35,7 @@ should_ignore_user(struct context *ctx, struct pam_args *args,
         return 1;
     }
     if (args->minimum_uid > 0) {
-        pwd = getpwnam(ctx->name);
+        pwd = getpwnam(username);
         if (pwd != NULL && pwd->pw_uid < args->minimum_uid) {
             debug(ctx, args, "ignoring low-UID user (%d < %d)", pwd->pw_uid,
                   args->minimum_uid);
