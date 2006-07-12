@@ -1,6 +1,8 @@
 #
 # Makefile for pam_krb5
 #
+VERSION = 2.0
+
 KRB5BASE = /usr
 KRB5_IMPL = mit
 PAMPREFIX = $(DESTDIR)/lib/security
