@@ -107,11 +107,11 @@ parse_args(struct context *ctx, int flags, int argc, const char **argv)
             args->ignore_k5login = 1;
         else if (strcmp(argv[i], "ignore_root") == 0)
             args->ignore_root = 1;
-        else if (strcmp(argv[i], "minimum_uid=") == 0)
+        else if (strncmp(argv[i], "minimum_uid=", 12) == 0)
             args->minimum_uid = atoi(&argv[i][strlen("minimum_uid=")]);
         else if (strcmp(argv[i], "no_ccache") == 0)
             args->no_ccache = 1;
-        else if (strcmp(argv[i], "renew_lifetime=") == 0) {
+        else if (strncmp(argv[i], "renew_lifetime=", 15) == 0) {
             if (args->renew_lifetime != NULL)
                 free(args->renew_lifetime);
             args->renew_lifetime = strdup(&argv[i][strlen("renew_lifetime=")]);
