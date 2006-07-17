@@ -244,7 +244,7 @@ password_auth(struct context *ctx, struct pam_args *args, char *in_tkt_service,
                 retval = PAM_SERVICE_ERR;
                 goto done;
             }
-            pam_get_item(ctx->pamh, PAM_AUTHTOK, (void *) &pass);
+            pam_get_item(ctx->pamh, authtok, (void *) &pass);
         }
 
         /* Get a TGT */
