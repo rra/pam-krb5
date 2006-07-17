@@ -123,16 +123,16 @@ int copy_credlist(struct context *, struct credlist **, krb5_ccache);
 void free_credlist(struct context *, struct credlist *);
 
 /* Error reporting and debugging functions. */
-void error(struct context *, const char *, ...);
-void debug(struct context *, struct pam_args *, const char *, ...);
-void debug_pam(struct context *, struct pam_args *, const char *, int);
-void debug_krb5(struct context *, struct pam_args *, const char *, int);
+void pamk5_error(struct context *, const char *, ...);
+void pamk5_debug(struct context *, struct pam_args *, const char *, ...);
+void pamk5_debug_pam(struct context *, struct pam_args *, const char *, int);
+void pamk5_debug_krb5(struct context *, struct pam_args *, const char *, int);
 
 /* Macros to record entry and exit from the main PAM functions. */
 #define ENTRY(ctx, args, flags) \
-    debug((ctx), (args), "%s: entry (0x%x)", __FUNCTION__, (flags))
+    pamk5_debug((ctx), (args), "%s: entry (0x%x)", __FUNCTION__, (flags))
 #define EXIT(ctx, args, pamret) \
-    debug((ctx), (args), "%s: exit (%s)", __FUNCTION__, \
-          ((pamret) == PAM_SUCCESS) ? "success" : "failure")
+    pamk5_debug((ctx), (args), "%s: exit (%s)", __FUNCTION__, \
+                ((pamret) == PAM_SUCCESS) ? "success" : "failure")
 
 #endif /* PAM_KRB5_H_ */

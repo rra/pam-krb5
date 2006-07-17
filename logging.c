@@ -20,7 +20,7 @@
  * Basic error logging.  Log a message with LOG_NOTICE priority.
  */
 void
-error(struct context *ctx, const char *fmt, ...)
+pamk5_error(struct context *ctx, const char *fmt, ...)
 {
     const char *name;
     char msg[256];
@@ -38,7 +38,7 @@ error(struct context *ctx, const char *fmt, ...)
  * Log a generic debugging message only if debug is enabled.
  */
 void
-debug(struct context *ctx, struct pam_args *pargs, const char *fmt, ...)
+pamk5_debug(struct context *ctx, struct pam_args *pargs, const char *fmt, ...)
 {
     const char *name;
     char msg[256];
@@ -59,10 +59,10 @@ debug(struct context *ctx, struct pam_args *pargs, const char *fmt, ...)
  * Log a PAM failure if debugging is enabled.
  */
 void
-debug_pam(struct context *ctx, struct pam_args *args, const char *msg,
+pamk5_debug_pam(struct context *ctx, struct pam_args *args, const char *msg,
           int status)
 {
-    debug(ctx, args, "%s: %s", msg, pam_strerror(ctx->pamh, status));
+    pamk5_debug(ctx, args, "%s: %s", msg, pam_strerror(ctx->pamh, status));
 }
 
 
@@ -70,8 +70,8 @@ debug_pam(struct context *ctx, struct pam_args *args, const char *msg,
  * Log a Kerberos v5 failure if debugging is enabled.
  */
 void
-debug_krb5(struct context *ctx, struct pam_args *args, const char *msg,
+pamk5_debug_krb5(struct context *ctx, struct pam_args *args, const char *msg,
            int status)
 {
-    debug(ctx, args, "%s: %s", msg, error_message(status));
+    pamk5_debug(ctx, args, "%s: %s", msg, error_message(status));
 }

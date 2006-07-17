@@ -41,7 +41,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
     if (pamret != PAM_SUCCESS || ctx == NULL) {
         pamret = PAM_SUCCESS;
         ctx = NULL;
-        debug(ctx, args, "%s: skipping non-Kerberos login", __FUNCTION__);
+        pamk5_debug(ctx, args, "skipping non-Kerberos login");
         goto done;
     }
     pamret = validate_auth(ctx, args);

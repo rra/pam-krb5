@@ -31,14 +31,14 @@ should_ignore_user(struct context *ctx, struct pam_args *args,
     struct passwd *pwd;
 
     if (args->ignore_root && strcmp("root", username) == 0) {
-        debug(ctx, args, "ignoring root user");
+        pamk5_debug(ctx, args, "ignoring root user");
         return 1;
     }
     if (args->minimum_uid > 0) {
         pwd = getpwnam(username);
         if (pwd != NULL && pwd->pw_uid < args->minimum_uid) {
-            debug(ctx, args, "ignoring low-UID user (%d < %d)", pwd->pw_uid,
-                  args->minimum_uid);
+            pamk5_debug(ctx, args, "ignoring low-UID user (%d < %d)",
+                        pwd->pw_uid, args->minimum_uid);
             return 1;
         }
     }
@@ -196,7 +196,8 @@ password_auth(struct context *ctx, struct pam_args *args, char *in_tkt_service,
 
         ret = krb5_string_to_deltat(args->renew_lifetime, &rlife);
         if (ret != 0 || rlife == 0) {
-            error(ctx, "bad renew_lifetime value: %s", error_message(ret));
+            pamk5_error(ctx, "bad renew_lifetime value: %s",
+                        error_message(ret));
             retval = PAM_SERVICE_ERR;
             goto done;
         }
@@ -206,7 +207,7 @@ password_auth(struct context *ctx, struct pam_args *args, char *in_tkt_service,
     /* Fill in the principal to authenticate as. */
     retval = krb5_parse_name(ctx->context, ctx->name, &ctx->princ);
     if (retval != 0) {
-        debug_krb5(ctx, args, "krb5_parse_name", retval);
+        pamk5_debug_krb5(ctx, args, "krb5_parse_name", retval);
         retval = PAM_SERVICE_ERR;
         goto done;
     }
@@ -220,7 +221,7 @@ password_auth(struct context *ctx, struct pam_args *args, char *in_tkt_service,
     if (args->try_first_pass || args->use_first_pass || args->use_authtok)
         retval = pam_get_item(ctx->pamh, authtok, (void *) &pass);
     if (args->use_authtok && retval != PAM_SUCCESS) {
-        debug_pam(ctx, args, "no stored password", retval);
+        pamk5_debug_pam(ctx, args, "no stored password", retval);
         retval = PAM_SERVICE_ERR;
         goto done;
     }
@@ -230,7 +231,7 @@ password_auth(struct context *ctx, struct pam_args *args, char *in_tkt_service,
             retval = get_user_info(ctx->pamh, "Password: ",
                                    PAM_PROMPT_ECHO_OFF, &pass);
             if (retval != PAM_SUCCESS) {
-                debug_pam(ctx, args, "error getting password", retval);
+                pamk5_debug_pam(ctx, args, "error getting password", retval);
                 retval = PAM_SERVICE_ERR;
                 goto done;
             }
@@ -239,7 +240,7 @@ password_auth(struct context *ctx, struct pam_args *args, char *in_tkt_service,
             retval = pam_set_item(ctx->pamh, authtok, pass);
             free(pass);
             if (retval != PAM_SUCCESS) {
-                debug_pam(ctx, args, "error storing password", retval);
+                pamk5_debug_pam(ctx, args, "error storing password", retval);
                 retval = PAM_SERVICE_ERR;
                 goto done;
             }
@@ -278,7 +279,7 @@ password_auth(struct context *ctx, struct pam_args *args, char *in_tkt_service,
         retval = krb5_verify_init_creds(ctx->context, &creds, NULL, NULL,
                                         &ctx->cache, &verify_opts);
         if (retval != 0) {
-            error(ctx, "credential verification failed: %s",
+            pamk5_error(ctx, "credential verification failed: %s",
                   error_message(retval));
             retval = PAM_AUTH_ERR;
             goto done;
@@ -287,7 +288,7 @@ password_auth(struct context *ctx, struct pam_args *args, char *in_tkt_service,
 
     /* If we failed, return the appropriate PAM error code. */
     if (retval != 0) {
-        debug_krb5(ctx, args, "krb5_get_init_creds_password", retval);
+        pamk5_debug_krb5(ctx, args, "krb5_get_init_creds_password", retval);
         if (retval == KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN)
             retval = PAM_USER_UNKNOWN;
         else if (retval == KRB5_KDC_UNREACH)
@@ -317,20 +318,20 @@ init_ccache(struct context *ctx, struct pam_args *args, const char *ccname,
 
     retval = krb5_cc_resolve(ctx->context, ccname, cache);
     if (retval != 0) {
-        debug_krb5(ctx, args, "krb5_cc_resolve", retval);
+        pamk5_debug_krb5(ctx, args, "krb5_cc_resolve", retval);
         retval = PAM_SERVICE_ERR;
         goto done;
     }
     retval = krb5_cc_initialize(ctx->context, *cache, ctx->princ);
     if (retval != 0) {
-        debug_krb5(ctx, args, "krb5_cc_initialize", retval);
+        pamk5_debug_krb5(ctx, args, "krb5_cc_initialize", retval);
         retval = PAM_SERVICE_ERR;
         goto done;
     }
     for (cred = clist; cred != NULL; cred = cred->next) {
         retval = krb5_cc_store_cred(ctx->context, *cache, &cred->creds);
         if (retval != 0) {
-            debug_krb5(ctx, args, "krb5_cc_store_cred", retval);
+            pamk5_debug_krb5(ctx, args, "krb5_cc_store_cred", retval);
             retval = PAM_SERVICE_ERR;
             goto done;
         }
