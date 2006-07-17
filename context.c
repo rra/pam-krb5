@@ -74,7 +74,7 @@ fetch_context(pam_handle_t *pamh, struct context **ctx)
     pamret = pam_get_data(pamh, "ctx", (void *) ctx);
     if (pamret != PAM_SUCCESS)
         *ctx = NULL;
-    return pamret;
+    return (pamret == 0 && *ctx == NULL) ? PAM_SERVICE_ERR : pamret;
 }
 
 
