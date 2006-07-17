@@ -163,6 +163,8 @@ fail:
  * If correct, fill in credlist with the obtained TGT or ticket.
  * in_tkt_service, if non-NULL, specifies the service to get tickets for; the
  * only interesting non-null case is kadmin/changepw for changing passwords.
+ * Therefore, if it is non-null, we look for the password in PAM_OLDAUTHOK and
+ * save it there instead of using PAM_AUTHTOK.
  */
 int
 password_auth(struct context *ctx, struct pam_args *args, char *in_tkt_service,
@@ -171,10 +173,9 @@ password_auth(struct context *ctx, struct pam_args *args, char *in_tkt_service,
     krb5_get_init_creds_opt opts;
     krb5_creds creds;
     krb5_verify_init_creds_opt verify_opts;
-    int retval;
+    int retval, retry, success;
     char *pass = NULL;
-    int retry;
-    int success;
+    int authtok = in_tkt_service == NULL ? PAM_AUTHTOK : PAM_OLDAUTHTOK;
 
     /* Bail if we should be ignoring this user. */
     if (should_ignore_user(ctx, args, ctx->name)) {
@@ -217,7 +218,7 @@ password_auth(struct context *ctx, struct pam_args *args, char *in_tkt_service,
      */
     retry = args->try_first_pass ? 1 : 0;
     if (args->try_first_pass || args->use_first_pass)
-        pam_get_item(ctx->pamh, PAM_AUTHTOK, (void *) &pass);
+        pam_get_item(ctx->pamh, authtok, (void *) &pass);
     do {
         if (!pass) {
             retry = 0;
@@ -230,7 +231,7 @@ password_auth(struct context *ctx, struct pam_args *args, char *in_tkt_service,
             }
 
             /* Set this for the next PAM module's try_first_pass. */
-            retval = pam_set_item(ctx->pamh, PAM_AUTHTOK, pass);
+            retval = pam_set_item(ctx->pamh, authtok, pass);
             free(pass);
             if (retval != PAM_SUCCESS) {
                 debug_pam(ctx, args, "error storing password", retval);
@@ -279,18 +280,8 @@ password_auth(struct context *ctx, struct pam_args *args, char *in_tkt_service,
         }
     }
 
-    /*
-     * If we succeeded, also set PAM_OLDAUTHTOK in case we're changing the
-     * user's password.  Otherwise, return the appropriate PAM error code.
-     */
-    if (retval == 0 && pass) {
-        retval = pam_set_item(ctx->pamh, PAM_OLDAUTHTOK, pass);
-        if (retval != PAM_SUCCESS) {
-            debug_pam(ctx, args, "error storing old password", retval);
-            retval = PAM_SERVICE_ERR;
-            goto done;
-        }
-    } else {
+    /* If we failed, return the appropriate PAM error code. */
+    if (retval != 0) {
         debug_krb5(ctx, args, "krb5_get_init_creds_password", retval);
         if (retval == KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN)
             retval = PAM_USER_UNKNOWN;

@@ -56,9 +56,8 @@ krb_pass_utter(pam_handle_t *pamh, int quiet, const char *text)
 
 
 /*
- * Get the new password.  Memory allocation is annoying here since we may get
- * the password from a conversation function and it's unclear whether we're
- * allowed to free that memory.  Don't do so, which may create memory leaks.
+ * Get the new password.  Store it in PAM_AUTHTOK if we obtain it and verify
+ * it successfully.
  */
 static int
 get_new_password(struct context *ctx, struct pam_args *args, char **pass)
@@ -76,7 +75,7 @@ get_new_password(struct context *ctx, struct pam_args *args, char **pass)
         pam_get_item(ctx->pamh, PAM_AUTHTOK, (const void **) pass);
 
     /* Prompt for the new password if necessary. */
-    if (*pass == NULL && !args->use_first_pass) {
+    if (*pass == NULL) {
         pamret = get_user_info(ctx->pamh, "Enter new password: ",
                                PAM_PROMPT_ECHO_OFF, pass);
         if (pamret != PAM_SUCCESS) {
@@ -94,8 +93,19 @@ get_new_password(struct context *ctx, struct pam_args *args, char **pass)
         if (strcmp(*pass, pass2) != 0) {
             debug(ctx, args, "new passwords don't match");
             krb_pass_utter(ctx->pamh, args->quiet, "Passwords don't match");
+            free(*pass);
+            free(pass2);
             *pass = NULL;
             pamret = PAM_AUTHTOK_ERR;
+            goto done;
+        }
+        free(pass2);
+
+        /* Save the new password for other modules. */
+        pamret = pam_set_item(ctx->pamh, PAM_AUTHTOK, *pass);
+        if (pamret != PAM_SUCCESS) {
+            debug_pam(ctx, args, "error storing password", pamret);
+            pamret = PAM_SERVICE_ERR;
             goto done;
         }
     }
@@ -176,27 +186,20 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
     args = parse_args(ctx, flags, argc, argv);
     ENTRY(ctx, args, flags);
 
-    /*
-     * We don't do anything useful for the preliminary check.
-     * FIXME: It would be nice to check connectivity to the KDC somehow.
-     */
-    if (flags & PAM_PRELIM_CHECK)
-        goto done;
-
     /* We only support password changes. */
-    if (!(flags & PAM_UPDATE_AUTHTOK)) {
+    if (!(flags & PAM_UPDATE_AUTHTOK) && !(flags & PAM_PRELIM_CHECK)) {
         pamret = PAM_AUTHTOK_ERR;
         goto done;
     }
 
     /*
      * Skip root password changes on the assumption that they'll be handled by
-     * some other module.  Don't tromp on pamret here.
+     * some other module.  Don't tromp on pamret here unless we're failing.
      */
     if (args->ignore_root || args->minimum_uid > 0) {
         status = pam_get_user(pamh, &tmpname, NULL);
         if (status == PAM_SUCCESS && should_ignore_user(ctx, args, tmpname)) {
-            pamret = PAM_SUCCESS;
+            pamret = PAM_PERM_DENIED;
             goto done;
         }
     }
@@ -229,19 +232,24 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
         goto done;
     }
 
-    /* Now, get the new password. */
-    pamret = get_new_password(ctx, args, &pass);
-    if (pamret != PAM_SUCCESS)
-        goto cleanup;
-
-    /* Change it. */
-    pamret = password_change(ctx, args, clist, pass);
+    /*
+     * Now, get the new password and change it unless we're just doing the
+     * first check.
+     */
+    if (flags & PAM_UPDATE_AUTHTOK) {
+        pamret = get_new_password(ctx, args, &pass);
+        if (pamret != PAM_SUCCESS)
+            goto cleanup;
+        pamret = password_change(ctx, args, clist, pass);
+    }
 
 cleanup:
     free_credlist(ctx, clist);
 
 done:
     EXIT(ctx, args, pamret);
+    if (pass != NULL)
+        free(pass);
     free_args(args);
     return pamret;
 }
