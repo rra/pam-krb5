@@ -93,7 +93,7 @@ int
 pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
                     const char **argv)
 {
-    struct context *ctx;
+    struct context *ctx = NULL;
     struct pam_args *args;
     struct credlist *clist = NULL;
     int pamret = PAM_SERVICE_ERR;
