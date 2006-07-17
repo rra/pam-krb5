@@ -168,8 +168,8 @@ password_change(struct context *ctx, struct pam_args *args,
             free(message);
         }
     }
-    krb5_free_data(ctx->context, &result_string);
-    krb5_free_data(ctx->context, &result_code_string);
+    krb5_free_data_contents(ctx->context, &result_string);
+    krb5_free_data_contents(ctx->context, &result_code_string);
 
 done:
     return retval;
