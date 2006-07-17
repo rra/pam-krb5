@@ -273,8 +273,13 @@ password_auth(struct context *ctx, struct pam_args *args, char *in_tkt_service,
      * default, the Kerberos library will silently succeed if no verification
      * keys are available, but the user can change this by setting
      * verify_ap_req_nofail in [libdefaults] in /etc/krb5.conf.
+     *
+     * Don't do this if we're authenticating for password changes.  We can't
+     * get a service ticket from a kadmin/changepw ticket and the user
+     * probably isn't going to have access to a keytab to check KDC spoofing
+     * anyway.
      */
-    if (retval == 0) {
+    if (retval == 0 && in_tkt_service != NULL) {
         krb5_verify_init_creds_opt_init(&verify_opts);
         retval = krb5_verify_init_creds(ctx->context, &creds, NULL, NULL,
                                         &ctx->cache, &verify_opts);
