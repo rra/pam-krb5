@@ -71,8 +71,13 @@ get_new_password(struct context *ctx, struct pam_args *args, char **pass)
      * password; we don't reprompt even if the password was rejected.
      */
     *pass = NULL;
-    if (args->try_first_pass || args->use_first_pass)
-        pam_get_item(ctx->pamh, PAM_AUTHTOK, (const void **) pass);
+    if (args->try_first_pass || args->use_first_pass || args->use_authtok)
+        pamret = pam_get_item(ctx->pamh, PAM_AUTHTOK, (const void **) pass);
+    if (args->use_authtok && pamret != PAM_SUCCESS) {
+        debug_pam(ctx, args, "no stored password", pamret);
+        pamret = PAM_AUTHTOK_ERR;
+        goto done;
+    }
 
     /* Prompt for the new password if necessary. */
     if (*pass == NULL) {
@@ -80,14 +85,14 @@ get_new_password(struct context *ctx, struct pam_args *args, char **pass)
                                PAM_PROMPT_ECHO_OFF, pass);
         if (pamret != PAM_SUCCESS) {
             debug_pam(ctx, args, "error getting new password", pamret);
-            pamret = PAM_SERVICE_ERR;
+            pamret = PAM_AUTHTOK_ERR;
             goto done;
         }
         pamret = get_user_info(ctx->pamh, "Enter it again: ",
                                PAM_PROMPT_ECHO_OFF, &pass2);
         if (pamret != PAM_SUCCESS) {
             debug_pam(ctx, args, "error getting new password", pamret);
-            pamret = PAM_SERVICE_ERR;
+            pamret = PAM_AUTHTOK_ERR;
             goto done;
         }
         if (strcmp(*pass, pass2) != 0) {
@@ -105,7 +110,7 @@ get_new_password(struct context *ctx, struct pam_args *args, char **pass)
         pamret = pam_set_item(ctx->pamh, PAM_AUTHTOK, *pass);
         if (pamret != PAM_SUCCESS) {
             debug_pam(ctx, args, "error storing password", pamret);
-            pamret = PAM_SERVICE_ERR;
+            pamret = PAM_AUTHTOK_ERR;
             goto done;
         }
     }
@@ -228,7 +233,10 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
     /* Authenticate to the password changing service using the old password. */
     pamret = password_auth(ctx, args, "kadmin/changepw", &clist);
     if (pamret != PAM_SUCCESS) {
-        pamret = PAM_AUTHTOK_ERR;
+        if (pamret == PAM_SERVICE_ERR || pamret == PAM_AUTH_ERR)
+            pamret = PAM_AUTHTOK_RECOVER_ERR;
+        if (pamret == PAM_AUTHINFO_UNAVAIL)
+            pamret = PAM_AUTHTOK_ERR;
         goto done;
     }
 

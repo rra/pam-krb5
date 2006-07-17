@@ -113,6 +113,8 @@ parse_args(struct context *ctx, int flags, int argc, const char **argv)
             args->search_k5login = 1;
         else if (strcmp(argv[i], "try_first_pass") == 0)
             args->try_first_pass = 1;
+        else if (strcmp(argv[i], "use_authtok") == 0)
+            args->use_authtok = 1;
         else if (strcmp(argv[i], "use_first_pass") == 0)
             args->use_first_pass = 1;
     }

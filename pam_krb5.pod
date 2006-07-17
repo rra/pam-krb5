@@ -296,22 +296,27 @@ module obtained the user's password.
 This option is only applicable to the auth and password groups.  For the
 password group, it applies to both the old and new passwords.
 
+=item use_authtok
+
+Use the password obtained by a previous authentication module to
+authenticate the user and any password obtained by a previous password
+module for the new password when changing passwords.  If these passwords
+aren't available, fail.  Never prompt the user for a password under any
+circumstances.  This can be used to require passwords be checked by
+another, prior module, such as B<pam_cracklib>.
+
+This option is only applicable to the auth and password groups.
+
 =item use_first_pass
 
 Use the password obtained by a previous authentication module to
-authenticate the user without prompting them again.  When authenticating
-(either for a regular authentication or for a password change), if no
-previous module obtained the user's password, fall back on prompting the
+authenticate the user, and the password obtained by a previous password
+module as the new password when changing passwords, without prompting the
+user again again.  If no previous module obtained the user's password for
+either an authentication or password change, fall back on prompting the
 user.  If a previous module did obtain the user's password but
 authentication with that password fails, fail without further prompting
 the user.
-
-When prompting for the new password when changing a password, this option
-tells the Kerberos PAM module to always use a password obtained by a
-previous module.  If no new password was obtained by a previous module,
-the password change will fail, still without prompting the user.  This can
-be used to require passwords be checked by another, prior module, such as
-B<pam_cracklib>.
 
 This option is only applicable to the auth and password groups.
 

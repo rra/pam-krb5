@@ -217,10 +217,15 @@ password_auth(struct context *ctx, struct pam_args *args, char *in_tkt_service,
      * password doesn't work, prompt for the password (loop).
      */
     retry = args->try_first_pass ? 1 : 0;
-    if (args->try_first_pass || args->use_first_pass)
-        pam_get_item(ctx->pamh, authtok, (void *) &pass);
+    if (args->try_first_pass || args->use_first_pass || args->use_authtok)
+        retval = pam_get_item(ctx->pamh, authtok, (void *) &pass);
+    if (args->use_authtok && retval != PAM_SUCCESS) {
+        debug_pam(ctx, args, "no stored password", retval);
+        retval = PAM_SERVICE_ERR;
+        goto done;
+    }
     do {
-        if (!pass) {
+        if (pass == NULL) {
             retry = 0;
             retval = get_user_info(ctx->pamh, "Password: ",
                                    PAM_PROMPT_ECHO_OFF, &pass);

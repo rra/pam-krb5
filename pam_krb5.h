@@ -27,6 +27,7 @@ struct pam_args {
     char *renew_lifetime;       /* Renewable lifetime of credentials. */
     int search_k5login;         /* Try password with each line of .k5login. */
     int try_first_pass;         /* Try the previously entered password. */
+    int use_authtok;            /* Require a previous password be used. */
     int use_first_pass;         /* Always use the previous password. */
 
     /*
