@@ -52,8 +52,12 @@ parse_args(struct context *ctx, int flags, int argc, const char **argv)
             local_context = 1;
     }
     if (c != NULL) {
-        krb5_appdefault_string(c, "pam", NULL, "ccache", NULL, &args->ccache);
-        krb5_appdefault_string(c, "pam", NULL, "ccache_dir", NULL,
+        krb5_appdefault_string(c, "pam", NULL, "ccache", "", &args->ccache);
+        if (args->ccache[0] == '\0') {
+            free(args->ccache);
+            args->ccache = NULL;
+        }
+        krb5_appdefault_string(c, "pam", NULL, "ccache_dir", "/tmp",
                                &args->ccache_dir);
         krb5_appdefault_boolean(c, "pam", NULL, "debug", 0, &args->debug);
         krb5_appdefault_boolean(c, "pam", NULL, "forwardable", 0,
@@ -62,13 +66,16 @@ parse_args(struct context *ctx, int flags, int argc, const char **argv)
                                 &args->ignore_k5login);
         krb5_appdefault_boolean(c, "pam", NULL, "ignore_root", 0,
                                 &args->ignore_root);
-        krb5_appdefault_string(c, "pam", NULL, "minimum_uid", NULL, &tmp);
-        if (tmp != NULL) {
+        krb5_appdefault_string(c, "pam", NULL, "minimum_uid", "", &tmp);
+        if (tmp[0] != '\0')
             args->minimum_uid = atoi(tmp);
-            free(tmp);
-        }
-        krb5_appdefault_string(c, "pam", NULL, "renew_lifetime", NULL,
+        free(tmp);
+        krb5_appdefault_string(c, "pam", NULL, "renew_lifetime", "",
                                &args->renew_lifetime);
+        if (args->ccache_dir[0] == '\0') {
+            free(args->ccache_dir);
+            args->ccache_dir = NULL;
+        }
         krb5_appdefault_boolean(c, "pam", NULL, "search_k5login", 0,
                                 &args->search_k5login);
         if (local_context)
@@ -121,8 +128,6 @@ parse_args(struct context *ctx, int flags, int argc, const char **argv)
 	
     if (flags & PAM_SILENT)
         args->quiet++;
-    if (args->ccache_dir == NULL)
-        args->ccache_dir = "/tmp";
 
     return args;
 }
