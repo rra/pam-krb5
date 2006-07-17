@@ -72,9 +72,9 @@ parse_args(struct context *ctx, int flags, int argc, const char **argv)
         free(tmp);
         krb5_appdefault_string(c, "pam", NULL, "renew_lifetime", "",
                                &args->renew_lifetime);
-        if (args->ccache_dir[0] == '\0') {
-            free(args->ccache_dir);
-            args->ccache_dir = NULL;
+        if (args->renew_lifetime[0] == '\0') {
+            free(args->renew_lifetime);
+            args->renew_lifetime = NULL;
         }
         krb5_appdefault_boolean(c, "pam", NULL, "search_k5login", 0,
                                 &args->search_k5login);
