@@ -279,7 +279,7 @@ password_auth(struct context *ctx, struct pam_args *args, char *in_tkt_service,
      * probably isn't going to have access to a keytab to check KDC spoofing
      * anyway.
      */
-    if (retval == 0 && in_tkt_service != NULL) {
+    if (retval == 0 && in_tkt_service == NULL) {
         krb5_verify_init_creds_opt_init(&verify_opts);
         retval = krb5_verify_init_creds(ctx->context, &creds, NULL, NULL,
                                         &ctx->cache, &verify_opts);
