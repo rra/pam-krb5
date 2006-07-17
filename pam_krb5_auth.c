@@ -372,7 +372,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
      * Some programs (xdm, for instance) appear to call setcred over and over
      * again, so avoid doing useless work.
      */
-    if (ctx->initialized)
+    if (ctx != NULL && ctx->initialized)
         return PAM_SUCCESS;
 
     /*
