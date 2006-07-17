@@ -372,8 +372,10 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
      * Some programs (xdm, for instance) appear to call setcred over and over
      * again, so avoid doing useless work.
      */
-    if (ctx != NULL && ctx->initialized)
-        return PAM_SUCCESS;
+    if (ctx != NULL && ctx->initialized) {
+        pamret = PAM_SUCCESS;
+        goto done;
+    }
 
     /*
      * Get the uid.  The user is not required to be a local account for
@@ -496,7 +498,8 @@ done:
         krb5_cc_destroy(ctx->context, cache);
     if (cache_name != NULL)
         free(cache_name);
-    free_credlist(ctx, clist);
+    if (clist != NULL)
+        free_credlist(ctx, clist);
     EXIT(ctx, args, pamret);
     free_args(args);
     return pamret;
