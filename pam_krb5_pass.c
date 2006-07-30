@@ -187,7 +187,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
     const char *tmpname;
     char *pass = NULL;
 
-    pamret = fetch_context(pamh, &ctx);
+    pamret = pamk5_context_fetch(pamh, &ctx);
     args = parse_args(ctx, flags, argc, argv);
     ENTRY(ctx, args, flags);
 
@@ -210,19 +210,19 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
     }
 
     /*
-     * pamret holds the result of fetch_context from above.  If set to
+     * pamret holds the result of pamk5_context_fetch from above.  If set to
      * PAM_SUCCESS, we were able to find an existing context that we could
      * use; otherwise, we're going into this fresh and need to create a new
      * context.
      */
     if (pamret != PAM_SUCCESS) {
-        pamret = new_context(pamh, &ctx);
+        pamret = pamk5_context_new(pamh, &ctx);
         if (pamret != PAM_SUCCESS) {
             pamk5_debug_pam(ctx, args, "creating context failed", pamret);
             pamret = PAM_AUTHTOK_ERR;
             goto done;
         }
-        pamret = pam_set_data(pamh, "ctx", ctx, destroy_context);
+        pamret = pam_set_data(pamh, "ctx", ctx, pamk5_context_destroy);
         if (pamret != PAM_SUCCESS) {
             pamk5_debug_pam(ctx, args, "cannot set context data", pamret);
             pamret = PAM_AUTHTOK_ERR;

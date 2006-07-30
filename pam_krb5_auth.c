@@ -102,14 +102,14 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 
     args = parse_args(NULL, flags, argc, argv);
     ENTRY(ctx, args, flags);
-    pamret = new_context(pamh, &ctx);
+    pamret = pamk5_context_new(pamh, &ctx);
     if (pamret != PAM_SUCCESS)
         goto done;
 
-    /* Do this first so destroy_context magically cleans up for us. */
-    pamret = pam_set_data(pamh, "ctx", ctx, destroy_context);
+    /* Do this first so pamk5_context_destroy magically cleans up for us. */
+    pamret = pam_set_data(pamh, "ctx", ctx, pamk5_context_destroy);
     if (pamret != PAM_SUCCESS) {
-        free_context(ctx);
+        pamk5_context_free(ctx);
         pamret = PAM_SERVICE_ERR;
         goto done;
     }
@@ -254,7 +254,7 @@ create_session_context(struct pam_args *args, pam_handle_t *pamh,
      * ticket cache back into the context and flush out the other data that
      * would have been set if we'd kept our original context.
      */
-    pamret = new_context(pamh, &ctx);
+    pamret = pamk5_context_new(pamh, &ctx);
     if (pamret != PAM_SUCCESS) {
         pamk5_debug(ctx, args, "creating session context failed");
         goto fail;
@@ -284,7 +284,7 @@ create_session_context(struct pam_args *args, pam_handle_t *pamh,
      * further calls to session or account management, which OpenSSH does keep
      * the context for.
      */
-    pamret = pam_set_data(pamh, "ctx", ctx, destroy_context);
+    pamret = pam_set_data(pamh, "ctx", ctx, pamk5_context_destroy);
     if (pamret != PAM_SUCCESS) {
         pamk5_debug_pam(ctx, args, "cannot set context data", pamret);
         goto fail;
@@ -294,7 +294,7 @@ create_session_context(struct pam_args *args, pam_handle_t *pamh,
 
 fail:
     if (ctx != NULL)
-        free_context(ctx);
+        pamk5_context_free(ctx);
     return pamret;
 }
 
@@ -318,7 +318,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
     uid_t uid;
     gid_t gid;
 
-    pamret = fetch_context(pamh, &ctx);
+    pamret = pamk5_context_fetch(pamh, &ctx);
     args = parse_args(ctx, flags, argc, argv);
     ENTRY(ctx, args, flags);
 
@@ -355,7 +355,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
     }
 
     /*
-     * pamret holds the status of fetch_context from above, so indicates
+     * pamret holds the status of pamk5_context_fetch from above, so indicates
      * whether we were able to successfully find the context from the previous
      * authentication.  If we weren't, we were probably run by OpenSSH with
      * its broken PAM handling, so we're going to cobble up a new context for

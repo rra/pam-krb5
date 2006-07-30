@@ -79,7 +79,7 @@ parse_args(struct context *ctx, int flags, int argc, const char **argv)
         krb5_appdefault_boolean(c, "pam", NULL, "search_k5login", 0,
                                 &args->search_k5login);
         if (local_context)
-            krb5_free_context(c);
+            krb5_pamk5_context_free(c);
     }
 
     /*

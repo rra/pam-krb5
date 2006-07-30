@@ -27,7 +27,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
     struct context *ctx;
     int	pamret = PAM_AUTH_ERR;
 
-    pamret = fetch_context(pamh, &ctx);
+    pamret = pamk5_context_fetch(pamh, &ctx);
     args = parse_args(ctx, flags, argc, argv);
     ENTRY(ctx, args, flags);
 

@@ -17,7 +17,7 @@
  * a new Kerberos context.
  */
 int
-new_context(pam_handle_t *pamh, struct context **ctx)
+pamk5_context_new(pam_handle_t *pamh, struct context **ctx)
 {
     struct context *c;
     int retval;
@@ -55,7 +55,7 @@ new_context(pam_handle_t *pamh, struct context **ctx)
 
 done:
     if (c != NULL && retval != PAM_SUCCESS) {
-        free_context(c);
+        pamk5_context_free(c);
         *ctx = NULL;
     }
     return retval;
@@ -68,7 +68,7 @@ done:
  * and setcred, so failure shouldn't always be fatal.
  */
 int
-fetch_context(pam_handle_t *pamh, struct context **ctx)
+pamk5_context_fetch(pam_handle_t *pamh, struct context **ctx)
 {
     int pamret;
 
@@ -85,7 +85,7 @@ fetch_context(pam_handle_t *pamh, struct context **ctx)
  * a flag was set to preserve it.
  */
 void
-free_context(struct context *ctx)
+pamk5_context_free(struct context *ctx)
 {
     if (ctx == NULL)
         return;
@@ -100,7 +100,7 @@ free_context(struct context *ctx)
         }
         if (ctx->creds != NULL)
             free_credlist(ctx, ctx->creds);
-        krb5_free_context(ctx->context);
+        krb5_pamk5_context_free(ctx->context);
     }
     free(ctx);
 }
@@ -108,13 +108,14 @@ free_context(struct context *ctx)
 
 /*
  * The PAM callback to destroy the context stored in the PAM data structures.
- * Just does the necessary conversion of arguments and calls free_context.
+ * Just does the necessary conversion of arguments and calls
+ * pamk5_context_free.
  */
 void
-destroy_context(pam_handle_t *pamh, void *data, int pam_end_status)
+pamk5_context_destroy(pam_handle_t *pamh, void *data, int pam_end_status)
 {
     struct context *ctx = (struct context *) data;
 
     if (ctx != NULL)
-        free_context(ctx);
+        pamk5_context_free(ctx);
 }

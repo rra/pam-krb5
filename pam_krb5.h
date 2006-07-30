@@ -112,10 +112,10 @@ krb5_error_code compat_cc_next_cred(krb5_context, const krb5_ccache,
 krb5_prompter_fct pam_prompter;
 
 /* Context management. */
-int new_context(pam_handle_t *pamh, struct context **ctx);
-int fetch_context(pam_handle_t *pamh, struct context **ctx);
-void free_context(struct context *ctx);
-void destroy_context(pam_handle_t *pamh, void *data, int pam_end_status);
+int pamk5_context_new(pam_handle_t *, struct context **);
+int pamk5_context_fetch(pam_handle_t *, struct context **);
+void pamk5_context_free(struct context *);
+void pamk5_context_destroy(pam_handle_t *, void *data, int pam_end_status);
 
 /* Credential list handling. */
 int new_credlist(struct context *, struct credlist **);
