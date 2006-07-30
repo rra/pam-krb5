@@ -28,7 +28,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
     int	pamret = PAM_AUTH_ERR;
 
     pamret = pamk5_context_fetch(pamh, &ctx);
-    args = parse_args(ctx, flags, argc, argv);
+    args = pamk5_args_parse(ctx, flags, argc, argv);
     ENTRY(ctx, args, flags);
 
     /*
@@ -44,10 +44,10 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
         pamk5_debug(ctx, args, "skipping non-Kerberos login");
         goto done;
     }
-    pamret = validate_auth(ctx, args);
+    pamret = pamk5_validate_auth(ctx, args);
 
 done:
     EXIT(ctx, args, pamret);
-    free_args(args);
+    pamk5_args_free(args);
     return pamret;
 }

@@ -81,15 +81,15 @@ get_new_password(struct context *ctx, struct pam_args *args, char **pass)
 
     /* Prompt for the new password if necessary. */
     if (*pass == NULL) {
-        pamret = get_user_info(ctx->pamh, "Enter new password: ",
-                               PAM_PROMPT_ECHO_OFF, pass);
+        pamret = pamk5_prompt(ctx->pamh, "Enter new password: ",
+                              PAM_PROMPT_ECHO_OFF, pass);
         if (pamret != PAM_SUCCESS) {
             pamk5_debug_pam(ctx, args, "error getting new password", pamret);
             pamret = PAM_AUTHTOK_ERR;
             goto done;
         }
-        pamret = get_user_info(ctx->pamh, "Enter it again: ",
-                               PAM_PROMPT_ECHO_OFF, &pass2);
+        pamret = pamk5_prompt(ctx->pamh, "Enter it again: ",
+                              PAM_PROMPT_ECHO_OFF, &pass2);
         if (pamret != PAM_SUCCESS) {
             pamk5_debug_pam(ctx, args, "error getting new password", pamret);
             pamret = PAM_AUTHTOK_ERR;
@@ -188,7 +188,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
     char *pass = NULL;
 
     pamret = pamk5_context_fetch(pamh, &ctx);
-    args = parse_args(ctx, flags, argc, argv);
+    args = pamk5_args_parse(ctx, flags, argc, argv);
     ENTRY(ctx, args, flags);
 
     /* We only support password changes. */
@@ -203,7 +203,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
      */
     if (args->ignore_root || args->minimum_uid > 0) {
         status = pam_get_user(pamh, &tmpname, NULL);
-        if (status == PAM_SUCCESS && should_ignore_user(ctx, args, tmpname)) {
+        if (status == PAM_SUCCESS && pamk5_should_ignore(ctx, args, tmpname)) {
             pamret = PAM_PERM_DENIED;
             goto done;
         }
@@ -232,7 +232,8 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
     /* Authenticate to the password changing service using the old password. */
     if (ctx->creds == NULL) {
-        pamret = password_auth(ctx, args, "kadmin/changepw", &ctx->creds);
+        pamret = pamk5_password_auth(ctx, args, "kadmin/changepw",
+                                     &ctx->creds);
         if (pamret != PAM_SUCCESS) {
             if (pamret == PAM_SERVICE_ERR || pamret == PAM_AUTH_ERR)
                 pamret = PAM_AUTHTOK_RECOVER_ERR;
@@ -260,6 +261,6 @@ done:
     EXIT(ctx, args, pamret);
     if (pass != NULL)
         free(pass);
-    free_args(args);
+    pamk5_args_free(args);
     return pamret;
 }

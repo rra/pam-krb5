@@ -100,7 +100,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     char cache_name[] = "/tmp/krb5cc_pam_XXXXXX";
     int ccfd;
 
-    args = parse_args(NULL, flags, argc, argv);
+    args = pamk5_args_parse(NULL, flags, argc, argv);
     ENTRY(ctx, args, flags);
     pamret = pamk5_context_new(pamh, &ctx);
     if (pamret != PAM_SUCCESS)
@@ -115,7 +115,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     }
 
     /* Do the actual authentication. */
-    pamret = password_auth(ctx, args, NULL, &clist);
+    pamret = pamk5_password_auth(ctx, args, NULL, &clist);
     if (pamret != PAM_SUCCESS)
         goto done;
 
@@ -123,7 +123,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
      * Check .k5login, and if everything is fine, tell pam_sm_setcred where
      * the ticket cache is.
      */
-    pamret = validate_auth(ctx, args);
+    pamret = pamk5_validate_auth(ctx, args);
     if (pamret != PAM_SUCCESS)
         goto done;
 
@@ -138,7 +138,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
         goto done;
     }
     close(ccfd);
-    pamret = init_ccache(ctx, args, cache_name, clist, &ctx->cache);
+    pamret = pamk5_ccache_init(ctx, args, cache_name, clist, &ctx->cache);
     if (pamret != PAM_SUCCESS)
         goto done;
     pamret = set_krb5ccname(ctx, cache_name, "PAM_KRB5CCNAME");
@@ -155,7 +155,7 @@ done:
      */
     if (pamret != PAM_SUCCESS)
         pam_set_data(pamh, "ctx", NULL, NULL);
-    free_args(args);
+    pamk5_args_free(args);
     return pamret;
 }
 
@@ -243,7 +243,7 @@ create_session_context(struct pam_args *args, pam_handle_t *pamh,
     /* If we're going to ignore the user anyway, don't even bother. */
     if (args->ignore_root || args->minimum_uid > 0) {
         pamret = pam_get_user(pamh, &tmpname, NULL);
-        if (pamret == PAM_SUCCESS && should_ignore_user(ctx, args, tmpname)) {
+        if (pamret == PAM_SUCCESS && pamk5_should_ignore(ctx, args, tmpname)) {
             pamret = PAM_SUCCESS;
             goto fail;
         }
@@ -319,7 +319,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
     gid_t gid;
 
     pamret = pamk5_context_fetch(pamh, &ctx);
-    args = parse_args(ctx, flags, argc, argv);
+    args = pamk5_args_parse(ctx, flags, argc, argv);
     ENTRY(ctx, args, flags);
 
     /*
@@ -463,7 +463,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
     pamret = pamk5_credlist_copy(ctx, &clist, ctx->cache);
     if (pamret != PAM_SUCCESS)
         goto done;
-    pamret = init_ccache(ctx, args, cache_name, clist, &cache);
+    pamret = pamk5_ccache_init(ctx, args, cache_name, clist, &cache);
     if (pamret != PAM_SUCCESS)
         goto done;
     if (chown(cache_name, uid, gid) == -1) {
@@ -501,6 +501,6 @@ done:
     if (clist != NULL)
         pamk5_credlist_free(ctx, clist);
     EXIT(ctx, args, pamret);
-    free_args(args);
+    pamk5_args_free(args);
     return pamret;
 }

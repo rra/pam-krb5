@@ -25,8 +25,8 @@
  * Returns true if we should ignore them, false otherwise.
  */
 int
-should_ignore_user(struct context *ctx, struct pam_args *args,
-                   const char *username)
+pamk5_should_ignore(struct context *ctx, struct pam_args *args,
+                    const char *username)
 {
     struct passwd *pwd;
 
@@ -95,7 +95,7 @@ k5login_password_auth(struct context *ctx, krb5_creds *creds,
         if (k5_errno != 0)
             return PAM_SERVICE_ERR;
         *retval = krb5_get_init_creds_password(ctx->context, creds,
-                     ctx->princ, pass, pam_prompter, ctx->pamh, 0,
+                     ctx->princ, pass, pamk5_pam_prompter, ctx->pamh, 0,
                      in_tkt_service, opts);
         return (*retval == 0) ? PAM_SUCCESS : PAM_AUTH_ERR;
     }
@@ -135,7 +135,7 @@ k5login_password_auth(struct context *ctx, krb5_creds *creds,
 
         /* Now, attempt to authenticate as that user. */
         *retval = krb5_get_init_creds_password(ctx->context, creds,
-                     princ, pass, pam_prompter, ctx->pamh, 0,
+                     princ, pass, pamk5_pam_prompter, ctx->pamh, 0,
                      in_tkt_service, opts);
 
         /*
@@ -167,8 +167,8 @@ fail:
  * save it there instead of using PAM_AUTHTOK.
  */
 int
-password_auth(struct context *ctx, struct pam_args *args, char *in_tkt_service,
-              struct credlist **credlist)
+pamk5_password_auth(struct context *ctx, struct pam_args *args,
+                    char *in_tkt_service, struct credlist **credlist)
 {
     krb5_get_init_creds_opt opts;
     krb5_creds creds;
@@ -178,7 +178,7 @@ password_auth(struct context *ctx, struct pam_args *args, char *in_tkt_service,
     int authtok = in_tkt_service == NULL ? PAM_AUTHTOK : PAM_OLDAUTHTOK;
 
     /* Bail if we should be ignoring this user. */
-    if (should_ignore_user(ctx, args, ctx->name)) {
+    if (pamk5_should_ignore(ctx, args, ctx->name)) {
         retval = PAM_SERVICE_ERR;
         goto done;
     }
@@ -228,8 +228,8 @@ password_auth(struct context *ctx, struct pam_args *args, char *in_tkt_service,
     do {
         if (pass == NULL) {
             retry = 0;
-            retval = get_user_info(ctx->pamh, "Password: ",
-                                   PAM_PROMPT_ECHO_OFF, &pass);
+            retval = pamk5_prompt(ctx->pamh, "Password: ",
+                                  PAM_PROMPT_ECHO_OFF, &pass);
             if (retval != PAM_SUCCESS) {
                 pamk5_debug_pam(ctx, args, "error getting password", retval);
                 retval = PAM_SERVICE_ERR;
@@ -253,7 +253,7 @@ password_auth(struct context *ctx, struct pam_args *args, char *in_tkt_service,
                           in_tkt_service, pass, &retval);
         } else {
             retval = krb5_get_init_creds_password(ctx->context,
-                          &creds, ctx->princ, pass, pam_prompter,
+                          &creds, ctx->princ, pass, pamk5_pam_prompter,
                           ctx->pamh, 0, in_tkt_service, &opts);
             success = (retval == 0) ? PAM_SUCCESS : PAM_AUTH_ERR;
         }
@@ -315,8 +315,9 @@ done:
  * cache argument.  Returns a PAM success or error code.
  */
 int
-init_ccache(struct context *ctx, struct pam_args *args, const char *ccname,
-            struct credlist *clist, krb5_ccache *cache)
+pamk5_ccache_init(struct context *ctx, struct pam_args *args,
+                  const char *ccname, struct credlist *clist,
+                  krb5_ccache *cache)
 {
     struct credlist *cred;
     int retval;
@@ -355,8 +356,8 @@ done:
  * responsible for freeing it.
  */
 int
-get_user_info(pam_handle_t *pamh, const char *prompt, int type,
-              char **response)
+pamk5_prompt(pam_handle_t *pamh, const char *prompt, int type,
+             char **response)
 {
     int pamret;
     struct pam_message msg;
@@ -394,7 +395,7 @@ get_user_info(pam_handle_t *pamh, const char *prompt, int type,
  * component).
  */
 int
-validate_auth(struct context *ctx, struct pam_args *args)
+pamk5_validate_auth(struct context *ctx, struct pam_args *args)
 {
     struct passwd *pwd;
     char kuser[65];             /* MAX_USERNAME == 65 (MIT Kerberos 1.4.1). */

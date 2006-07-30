@@ -43,8 +43,8 @@
  * into the krb5_prompt structs to return to the Kerberos library.
  */
 krb5_error_code
-prompter_krb5(krb5_context context, void *data, const char *name,
-              const char *banner, int num_prompts, krb5_prompt *prompts)
+pamk5_prompter_krb5(krb5_context context, void *data, const char *name,
+                    const char *banner, int num_prompts, krb5_prompt *prompts)
 {
     int pam_prompts = num_prompts;
     int pamret, i;

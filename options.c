@@ -17,7 +17,7 @@
  * it's NULL, we create a temporary context just for this.
  */
 struct pam_args *
-parse_args(struct context *ctx, int flags, int argc, const char **argv)
+pamk5_args_parse(struct context *ctx, int flags, int argc, const char **argv)
 {
     struct pam_args *args;
     int i, retval;
@@ -136,7 +136,7 @@ parse_args(struct context *ctx, int flags, int argc, const char **argv)
  * Free the allocated args struct and any memory it points to.
  */
 void
-free_args(struct pam_args *args)
+pamk5_args_free(struct pam_args *args)
 {
     if (args != NULL) {
         if (args->ccache != NULL)

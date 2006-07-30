@@ -13,7 +13,7 @@
 
 /*
  * The global structure holding our arguments, both from krb5.conf and from
- * the PAM configuration.  Filled in by parse_args.
+ * the PAM configuration.  Filled in by pamk5_args_parse.
  */
 struct pam_args {
     char *ccache;               /* Path to write ticket cache to. */
@@ -63,15 +63,15 @@ struct context {
 };
 
 /* Parse the PAM flags, arguments, and krb5.conf and fill out pam_args. */
-struct pam_args *parse_args(struct context *, int flags, int argc,
-                            const char **argv);
+struct pam_args *pamk5_args_parse(struct context *, int flags, int argc,
+                                  const char **argv);
 
 /* Free the pam_args struct when we're done. */
-void free_args(struct pam_args *);
+void pamk5_args_free(struct pam_args *);
 
 /* Initialize a ticket cache from a credlist containing credentials. */
-int init_ccache(struct context *, struct pam_args *, const char *,
-                struct credlist *, krb5_ccache *);
+int pamk5_ccache_init(struct context *, struct pam_args *, const char *,
+                      struct credlist *, krb5_ccache *);
 
 /*
  * Authenticate the user.  Prompts for the password as needed and obtains
@@ -79,37 +79,39 @@ int init_ccache(struct context *, struct pam_args *, const char *,
  * credentials in the final argument.  If possible, the initial credentials
  * are verified by checking them against the local system key.
  */
-int password_auth(struct context *, struct pam_args *, char *in_tkt_service,
-                  struct credlist **);
+int pamk5_password_auth(struct context *, struct pam_args *,
+                        char *in_tkt_service, struct credlist **);
 
 /* Generic prompting function to get information from the user. */
-int get_user_info(pam_handle_t *, const char *, int, char **);
+int pamk5_prompt(pam_handle_t *, const char *, int, char **);
 
 /* Prompting function for the Kerberos libraries. */
-krb5_error_code prompter_krb5(krb5_context, void *data, const char *name,
-                              const char *banner, int, krb5_prompt *);
+krb5_error_code pamk5_prompter_krb5(krb5_context, void *data,
+                                    const char *name, const char *banner,
+                                    int, krb5_prompt *);
 
 /* Check the user with krb5_kuserok or the configured equivalent. */
-int validate_auth(struct context *, struct pam_args *);
+int pamk5_validate_auth(struct context *, struct pam_args *);
 
 /* Returns true if we should ignore this user (root or low UID). */
-int should_ignore_user(struct context *, struct pam_args *, const char *);
+int pamk5_should_ignore(struct context *, struct pam_args *,
+                             const char *);
 
 /*
  * Compatibility functions.  Depending on whether pam_krb5 is built with MIT
  * Kerberos or Heimdal, appropriate implementations for the Kerberos
  * implementation will be provided.
  */
-const char *compat_princ_component(krb5_context, krb5_principal, int);
-void compat_free_data_contents(krb5_context, krb5_data *);
-krb5_error_code compat_cc_next_cred(krb5_context, const krb5_ccache, 
-                                    krb5_cc_cursor *, krb5_creds *);
+const char *pamk5_compat_princ_component(krb5_context, krb5_principal, int);
+void pamk5_compat_free_data_contents(krb5_context, krb5_data *);
+krb5_error_code pamk5_compat_cc_next_cred(krb5_context, const krb5_ccache, 
+                                          krb5_cc_cursor *, krb5_creds *);
 
 /*
  * Set to the function to use to prompt for the user's password from inside
  * the Kerberos libraries.
  */
-krb5_prompter_fct pam_prompter;
+krb5_prompter_fct pamk5_pam_prompter;
 
 /* Context management. */
 int pamk5_context_new(pam_handle_t *, struct context **);
