@@ -125,23 +125,22 @@ done:
  * the new password, so do the work of actually changing the password.
  */
 static int
-password_change(struct context *ctx, struct pam_args *args,
-                struct credlist *clist, const char *pass)
+password_change(struct context *ctx, struct pam_args *args, const char *pass)
 {
     int retval = PAM_SUCCESS;
     int result_code;
     krb5_data result_code_string, result_string;
 
     /* Sanity check. */
-    if (clist == NULL) {
+    if (ctx->creds == NULL) {
         retval = PAM_AUTHTOK_ERR;
         goto done;
     }
 
     /* The actual change. */
-    retval = krb5_change_password(ctx->context, &clist->creds, (char *) pass,
-                                  &result_code, &result_code_string,
-                                  &result_string);
+    retval = krb5_change_password(ctx->context, &ctx->creds->creds,
+                 (char *) pass, &result_code, &result_code_string,
+                 &result_string);
 
     /* Everything from here on is just handling diagnostics and output. */
     if (retval != 0) {
@@ -232,13 +231,15 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
     }
 
     /* Authenticate to the password changing service using the old password. */
-    pamret = password_auth(ctx, args, "kadmin/changepw", &clist);
-    if (pamret != PAM_SUCCESS) {
-        if (pamret == PAM_SERVICE_ERR || pamret == PAM_AUTH_ERR)
-            pamret = PAM_AUTHTOK_RECOVER_ERR;
-        if (pamret == PAM_AUTHINFO_UNAVAIL)
-            pamret = PAM_AUTHTOK_ERR;
-        goto done;
+    if (ctx->creds == NULL) {
+        pamret = password_auth(ctx, args, "kadmin/changepw", &ctx->creds);
+        if (pamret != PAM_SUCCESS) {
+            if (pamret == PAM_SERVICE_ERR || pamret == PAM_AUTH_ERR)
+                pamret = PAM_AUTHTOK_RECOVER_ERR;
+            if (pamret == PAM_AUTHINFO_UNAVAIL)
+                pamret = PAM_AUTHTOK_ERR;
+            goto done;
+        }
     }
 
     /*
@@ -249,7 +250,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
         pamret = get_new_password(ctx, args, &pass);
         if (pamret != PAM_SUCCESS)
             goto cleanup;
-        pamret = password_change(ctx, args, clist, pass);
+        pamret = password_change(ctx, args, pass);
     }
 
 cleanup:

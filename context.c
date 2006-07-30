@@ -29,6 +29,7 @@ new_context(pam_handle_t *pamh, struct context **ctx)
     }
     *ctx = c;
     c->pamh = pamh;
+    c->creds = NULL;
 
     /*
      * This will prompt for the username if it's not already set (generally it
@@ -97,6 +98,8 @@ free_context(struct context *ctx)
             else
                 krb5_cc_destroy(ctx->context, ctx->cache);
         }
+        if (ctx->creds != NULL)
+            free_credlist(ctx, ctx->creds);
         krb5_free_context(ctx->context);
     }
     free(ctx);

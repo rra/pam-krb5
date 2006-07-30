@@ -38,6 +38,12 @@ struct pam_args {
     int quiet;
 };
 
+/* Stores a simple list of credentials. */
+struct credlist {
+    krb5_creds creds;
+    struct credlist *next;
+};
+
 /*
  * The global structure that holds the context, including all the data we want
  * to preserve across calls to the public entry points.  This context is
@@ -53,12 +59,7 @@ struct context {
     krb5_principal princ;       /* Principal being authenticated. */
     int dont_destroy_cache;     /* If set, don't destroy cache on shutdown. */
     int initialized;            /* If set, ticket cache initialized. */
-};
-
-/* Stores a simple list of credentials. */
-struct credlist {
-    krb5_creds creds;
-    struct credlist *next;
+    struct credlist *creds;     /* Credentials for password changing. */
 };
 
 /* Parse the PAM flags, arguments, and krb5.conf and fill out pam_args. */
