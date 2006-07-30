@@ -183,7 +183,7 @@ password_auth(struct context *ctx, struct pam_args *args, char *in_tkt_service,
         goto done;
     }
 
-    new_credlist(ctx, credlist);
+    pamk5_credlist_new(ctx, credlist);
     memset(&creds, 0, sizeof(krb5_creds));
 
     /* Set ticket options. */
@@ -258,7 +258,7 @@ password_auth(struct context *ctx, struct pam_args *args, char *in_tkt_service,
             success = (retval == 0) ? PAM_SUCCESS : PAM_AUTH_ERR;
         }
         if (success == PAM_SUCCESS) {
-            retval = append_to_credlist(ctx, credlist, creds);
+            retval = pamk5_credlist_append(ctx, credlist, creds);
             if (retval != PAM_SUCCESS)
                 goto done;
             break;

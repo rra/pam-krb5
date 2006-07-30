@@ -118,10 +118,10 @@ void pamk5_context_free(struct context *);
 void pamk5_context_destroy(pam_handle_t *, void *data, int pam_end_status);
 
 /* Credential list handling. */
-int new_credlist(struct context *, struct credlist **);
-int append_to_credlist(struct context *, struct credlist **, krb5_creds);
-int copy_credlist(struct context *, struct credlist **, krb5_ccache);
-void free_credlist(struct context *, struct credlist *);
+int pamk5_credlist_new(struct context *, struct credlist **);
+int pamk5_credlist_append(struct context *, struct credlist **, krb5_creds);
+int pamk5_credlist_copy(struct context *, struct credlist **, krb5_ccache);
+void pamk5_credlist_free(struct context *, struct credlist *);
 
 /* Error reporting and debugging functions. */
 void pamk5_error(struct context *, const char *, ...);

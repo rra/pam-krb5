@@ -17,7 +17,7 @@
  * Initialize a credlist structure.
  */
 int
-new_credlist(struct context *ctx, struct credlist **clist)
+pamk5_credlist_new(struct context *ctx, struct credlist **clist)
 {
     *clist = NULL;
     return PAM_SUCCESS;
@@ -28,7 +28,7 @@ new_credlist(struct context *ctx, struct credlist **clist)
  * Free a credlist, including all of the credentials stored in it.
  */
 void
-free_credlist(struct context *ctx, struct credlist *clist)
+pamk5_credlist_free(struct context *ctx, struct credlist *clist)
 {
     struct credlist *c;
 
@@ -46,8 +46,8 @@ free_credlist(struct context *ctx, struct credlist *clist)
  * PAM_SUCCESS on success.
  */
 int
-append_to_credlist(struct context *ctx, struct credlist **clist,
-                   krb5_creds creds)
+pamk5_credlist_append(struct context *ctx, struct credlist **clist,
+                      krb5_creds creds)
 {
     struct credlist *c;
 
@@ -66,7 +66,8 @@ append_to_credlist(struct context *ctx, struct credlist **clist,
  * PAM_SUCCESS on success and PAM_SERVICE_ERR on failure.
  */
 int
-copy_credlist(struct context *ctx, struct credlist **clist, krb5_ccache cache)
+pamk5_credlist_copy(struct context *ctx, struct credlist **clist,
+                    krb5_ccache cache)
 {
     krb5_cc_cursor c;
     krb5_creds creds;
@@ -76,7 +77,7 @@ copy_credlist(struct context *ctx, struct credlist **clist, krb5_ccache cache)
     if (retval != 0)
         return PAM_SERVICE_ERR;
     while (krb5_cc_next_cred(ctx->context, cache, &c, &creds) == 0) {
-        retval = append_to_credlist(ctx, clist, creds);
+        retval = pamk5_credlist_append(ctx, clist, creds);
         if (retval != PAM_SUCCESS)
             goto done;
     }

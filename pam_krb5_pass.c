@@ -254,7 +254,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
     }
 
 cleanup:
-    free_credlist(ctx, clist);
+    pamk5_credlist_free(ctx, clist);
 
 done:
     EXIT(ctx, args, pamret);

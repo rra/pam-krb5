@@ -99,8 +99,8 @@ pamk5_context_free(struct context *ctx)
                 krb5_cc_destroy(ctx->context, ctx->cache);
         }
         if (ctx->creds != NULL)
-            free_credlist(ctx, ctx->creds);
-        krb5_pamk5_context_free(ctx->context);
+            pamk5_credlist_free(ctx, ctx->creds);
+        krb5_free_context(ctx->context);
     }
     free(ctx);
 }

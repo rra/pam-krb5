@@ -146,7 +146,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
         goto done;
 
 done:
-    free_credlist(ctx, clist);
+    pamk5_credlist_free(ctx, clist);
     EXIT(ctx, args, pamret);
 
     /*
@@ -460,7 +460,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
      * the destroy the existing temporary cache.
      */
     pamk5_debug(ctx, args, "initializing ticket cache %s", cache_name);
-    pamret = copy_credlist(ctx, &clist, ctx->cache);
+    pamret = pamk5_credlist_copy(ctx, &clist, ctx->cache);
     if (pamret != PAM_SUCCESS)
         goto done;
     pamret = init_ccache(ctx, args, cache_name, clist, &cache);
@@ -499,7 +499,7 @@ done:
     if (cache_name != NULL)
         free(cache_name);
     if (clist != NULL)
-        free_credlist(ctx, clist);
+        pamk5_credlist_free(ctx, clist);
     EXIT(ctx, args, pamret);
     free_args(args);
     return pamret;
