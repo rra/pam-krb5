@@ -313,7 +313,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
     krb5_ccache cache = NULL;
     char *cache_name = NULL;
     int reinit = 0;
-    int pamret, allow;
+    int pamret, allow, status;
     struct passwd *pw = NULL;
     uid_t uid;
     gid_t gid;
@@ -403,6 +403,8 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
             pamret = PAM_SERVICE_ERR;
             goto done;
         }
+        if (strncmp(name, "FILE:", strlen("FILE:")) == 0)
+            name += strlen("FILE:");
 
         /*
          * If the cache we have in the context and the cache we're
@@ -413,9 +415,13 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
          */
         if (ctx->cache != NULL) {
             k5name = krb5_cc_get_name(ctx->context, ctx->cache);
-            if (k5name != NULL && strcmp(name, k5name) == 0) {
-                pamret = PAM_SUCCESS;
-                goto done;
+            if (k5name != NULL) {
+                if (strncmp(k5name, "FILE:", strlen("FILE:")) == 0)
+                    k5name += strlen("FILE:");
+                if (strcmp(name, k5name) == 0) {
+                    pamret = PAM_SUCCESS;
+                    goto done;
+                }
             }
         }
 
@@ -466,7 +472,11 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
     pamret = pamk5_ccache_init(ctx, args, cache_name, clist, &cache);
     if (pamret != PAM_SUCCESS)
         goto done;
-    if (chown(cache_name, uid, gid) == -1) {
+    if (strncmp(cache_name, "FILE:", strlen("FILE:")) == 0)
+        status = chown(cache_name + strlen("FILE:"), uid, gid);
+    else
+        status = chown(cache_name, uid, gid);
+    if (status == -1) {
         pamk5_debug(ctx, args, "chown of ticket cache failed: %s",
                     strerror(errno));
         pamret = PAM_SERVICE_ERR;       
