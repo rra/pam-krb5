@@ -62,6 +62,15 @@ install: pam_krb5.so pam_krb5.5
 	${INSTALL} -c -o ${MANOWN} -g ${MANGRP} -m 0644 pam_krb5.5 \
 	    ${MANPREFIX}/man8/pam_krb5.8
 
+dist: pam_krb5.5
+	rm -rf pam-krb5-$(VERSION) pam-krb5-$(VERSION).tar.gz
+	mkdir pam-krb5-$(VERSION)
+	bzr log --short > CHANGES
+	rsync -a CHANGES* COPYRIGHT Makefile NEWS README TODO *.c *.h \
+	    pam_krb5.pod pam_krb5.5 pam-krb5-$(VERSION)/
+	tar cf pam-krb5-$(VERSION).tar pam-krb5-$(VERSION)
+	gzip -9 pam-krb5-$(VERSION).tar
+
 clean:
 	rm -f *.so *.o
 
