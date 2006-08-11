@@ -176,7 +176,6 @@ pamk5_password_auth(struct context *ctx, struct pam_args *args,
     int retval, retry, success;
     char *pass = NULL;
     int authtok = in_tkt_service == NULL ? PAM_AUTHTOK : PAM_OLDAUTHTOK;
-	int success;
 
     /* Bail if we should be ignoring this user. */
     if (pamk5_should_ignore(ctx, args, ctx->name)) {
@@ -236,6 +235,7 @@ pamk5_password_auth(struct context *ctx, struct pam_args *args,
                 retval = PAM_SERVICE_ERR;
                 goto done;
             }
+
             /* Set this for the next PAM module's try_first_pass. */
             retval = pam_set_item(ctx->pamh, authtok, pass);
             free(pass);
@@ -394,7 +394,7 @@ pamk5_prompt(pam_handle_t *pamh, const char *prompt, int type,
  * with authorization issues for non-local accounts (ones containing a realm
  * component).
  */
-static int
+int
 pamk5_validate_auth(struct context *ctx, struct pam_args *args)
 {
     struct passwd *pwd;
@@ -420,39 +420,5 @@ pamk5_validate_auth(struct context *ctx, struct pam_args *args)
             return PAM_AUTH_ERR;
     }
 
-    return PAM_SUCCESS;
-}
-
-
-/* Verify the user authentication.  First, obtain and verify a service ticket
-   using their TGT, and then call krb5_kuserok if this is a local account.  We
-   don't need to check krb5_aname_to_localname since we derived the principal
-   name for the authentication from PAM_USER and it therefore either started
-   as an unqualified name or already has the domain that we want. */
-int
-validate_auth(struct context *ctx)
-{
-    struct passwd *pwd;
-
-    /* Sanity checks. */
-    if (ctx == NULL)
-        return PAM_SERVICE_ERR;
-    if (ctx->name == NULL)
-        return PAM_SERVICE_ERR;
-
-    /* Try to obtain and check a service ticket. */
-    if (verify_krb_v5_tgt(ctx->context, ctx->cache, ctx->service) == -1)
-        return PAM_AUTH_ERR;
-
-    /* If the account is a local account, call krb5_kuserok.  It's the
-       responsibility of the calling application to deal with authorization
-       issues for non-local accounts. */
-    if (strchr(ctx->name, '@') == NULL) {
-        pwd = getpwnam(ctx->name);
-        if (pwd != NULL && !krb5_kuserok(ctx->context, ctx->princ, ctx->name))
-            return PAM_AUTH_ERR;
-    }
-
-    /* Everything looks fine. */
     return PAM_SUCCESS;
 }

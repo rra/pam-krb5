@@ -21,7 +21,6 @@
 #include <string.h>
 
 #include "pam_krb5.h"
-#include "context.h"
 
 
 /*
@@ -242,7 +241,6 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
                 pamret = PAM_AUTHTOK_ERR;
             goto done;
         }
-    }
     }
 
     /*

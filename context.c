@@ -119,11 +119,3 @@ pamk5_context_destroy(pam_handle_t *pamh, void *data, int pam_end_status)
     if (ctx != NULL)
         pamk5_context_free(ctx);
 }
-
-void
-destroy_context(pam_handle_t *pamh, void *data, int pam_end_status)
-{
-	struct context *ctx = (struct context *) data;
-	if (ctx)
-		free_context(ctx);
-}
