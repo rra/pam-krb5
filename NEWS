@@ -1,6 +1,6 @@
                       User-Visible pam-krb5 Changes
 
-pam-krb5 2.0 (unreleased)
+pam-krb5 2.0 (2006-08-11)
 
     Always use a disk cache for temporary storage of credentials between
     authentication and setcred or session initialization.  This allows the
