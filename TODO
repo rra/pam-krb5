@@ -1,14 +1,17 @@
-Things for 1.1, in no particular order:
+                           pam-krb5 To-Do List
 
-Check against Solaris 7, Solaris 8 beta. Check SEAM compatibility.
-Check against Linux (Redhat, others?).
-Check against HPUX.
-Fix PAM flags checking.
-Add more debugging for successful calls.
-Move "entry" debugging up.
-Check bounds on str* calls. [paranoia]
+ * Support the remaining PAM options that the Sourceforge module supports.
+   The most interesting are banner, keytab, and ticket_lifetime.
 
-Get defaults from krb5.conf?
-** Allow no-xrealm, this module typically used for local login **
-** Add notes about runtime text relocation on Solaris **
+ * Currently, the module doesn't provide any useful realm to the Kerberos
+   libraries when reading krb5.conf defaults.  It should default the realm
+   to the local realm and allow the realm to be overridden via PAM
+   configuration.
 
+ * The current build system is only going to work on Linux and requires
+   Makefile twiddling to build against Heimdal instead of MIT.  Should use
+   Autoconf instead and automatically detect the desired Kerberos library.
+
+ * Try to support Solaris as well.  I don't know how close the module is
+   to just working and how much the Solaris PAM setup differs from Linux.
+   (HP-UX is probably not worth the effort.)

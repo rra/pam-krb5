@@ -1,3 +1,26 @@
+libpam-krb5 (2.0-1) UNRELEASED; urgency=low
+
+  * New upstream release from a new upstream maintainer.
+    - Incorporated all Debian packages into the upstream release.
+    - Added new use_authtok, ignore_k5login, minimum_uid, and
+      renew_lifetime configuration options.  (Closes: #360601, #355970)
+    - Support setting some options in krb5.conf.
+    - Better support for password changing, including more correct saving
+      of passwords in the PAM stack, support for initial checks, and
+      better behavior as part of a password change stack.
+    - Fall back to the default ticket cache when reinitializing
+      credentials without a KRB5CCNAME setting.
+    - Understand the FILE: prefix to Kerberos ticket caches when
+      initializing the cache.  (Closes: #381849)
+    - Improved support for the no_ccache option.
+    - Rewritten and significantly improved documentation.
+    - Use standard Kerberos library calls for ticket validation.
+    - Add a trailing nul to the password in the prompter function,
+      matching the behavior of the default Kerberos prompter.
+    - Extensive code, error status, memory, and namespace cleanup.
+
+ -- Russ Allbery <rra@debian.org>  Fri, 11 Aug 2006 13:51:02 -0700
+
 libpam-krb5 (1.2.0-3) unstable; urgency=low
 
   * Only call krb5_kuserok when the account to which we're authenticating

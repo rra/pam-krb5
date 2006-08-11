@@ -1,159 +1,165 @@
 /*
  * pam_krb5_auth.c
  *
- * PAM authentication management functions for pam_krb5
+ * PAM authentication management functions for pam_krb5.
  *
+ * This file implements pam_sm_authenticate and pam_sm_setcred.  The former
+ * does and checks the authentication, and the latter creates the final ticket
+ * cache and sets its permissions appropriately.
  */
 
+/* Get the prototypes for the authentication functions. */
 #define PAM_SM_AUTH
 
+#include <com_err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <krb5.h>
 #include <limits.h>
 #include <pwd.h>
+#include <security/pam_appl.h>
+#include <security/pam_modules.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
-#include <unistd.h>
 #include <sys/types.h>
+#include <unistd.h>
 
-#include <security/pam_appl.h>
-#include <security/pam_modules.h>
-
-#include <krb5.h>
-#include <com_err.h>
 #include "pam_krb5.h"
-#include "credlist.h"
 
-void Jokostat(char *);
-extern krb5_cc_ops krb5_mcc_ops;
-
-#if 0
-static int
-to_local_user(struct context *ctx)
-{
-	char lname[64];
-	int retval;
-
-	memset(lname, 0, sizeof(lname));
-
-	/* get a local account name for this principal */
-	if ((retval = krb5_aname_to_localname(ctx->context, ctx->princ,
-					sizeof(lname), lname)) != 0) {
-		dlog(ctx, "krb5_aname_to_localname(): %s", error_message(retval));
-		retval = PAM_USER_UNKNOWN;
-		goto done;
-	}
-	
-	dlog(ctx, "changing PAM_USER to %s", lname);
-	if ((retval = pam_set_item(ctx->pamh, PAM_USER, lname)) != 0) {
-		dlog(ctx, "pam_set_item(): %s", pam_strerror(ctx->pamh, retval));
-		retval = PAM_SERVICE_ERR;
-		goto done;
-	}
-	if ((retval = pam_get_item(ctx->pamh, PAM_USER, (const void **) &ctx->name) != 0)) {
-		dlog(ctx, "pam_get_item(): %s", pam_strerror(ctx->pamh, retval));
-		retval = PAM_SERVICE_ERR;
-	}
-done:
-	return retval;
-}
-#endif
-
+/*
+ * Get the name of a cache, given the name of the environment variable that
+ * should be set to indicate which cache to use.  This function handles both
+ * getting the final cache name (KRB5CCNAME) and the temporary cache name
+ * (PAM_KRB5CCNAME).
+ */
 static const char *
 get_krb5ccname(struct context *ctx, const char *key)
 {
-	const char *name;
+    const char *name;
 
-	/* TODO: figure out why pam_getenv() returns NULL */
-	name = pam_getenv(ctx->pamh, key);
-	if (!name)
-		name = getenv(key);
-	if (!name && ctx && ctx->context && ctx->cache)
-		name = krb5_cc_get_name(ctx->context, ctx->cache);
-
-	return name;
+    /* TODO: figure out why pam_getenv() returns NULL */
+    name = pam_getenv(ctx->pamh, key);
+    if (name == NULL)
+        name = getenv(key);
+    return name;
 }
 
+
+/*
+ * Put the ticket cache information into the environment.  Takes the path and
+ * the environment variable to set, since this is used both for the permanent
+ * cache (KRB5CCNAME) and the temporary cache (PAM_KRB5CCNAME).
+ */
 static int
 set_krb5ccname(struct context *ctx, const char *name, const char *key)
 {
-	char *env_name = NULL;
-	int pamret;
-       
-	env_name = malloc(strlen(key) + 1 + strlen(name) + 1);
-	if (!env_name) {
-		dlog(ctx, "malloc() failure");
-		pamret = PAM_BUF_ERR;
-		goto done;
-	}
+    char *env_name = NULL;
+    int pamret;
 
-	sprintf(env_name, "%s=%s", key, name);
-	if ((pamret = pam_putenv(ctx->pamh, env_name)) != PAM_SUCCESS) {
-		dlog(ctx, "pam_putenv(): %s", pam_strerror(ctx->pamh, pamret));
-		pamret = PAM_SERVICE_ERR;
-		goto done;
-	}
+    env_name = malloc(strlen(key) + 1 + strlen(name) + 1);
+    if (env_name == NULL) {
+        pamk5_error(ctx, "malloc failure: %s", strerror(errno));
+        pamret = PAM_BUF_ERR;
+        goto done;
+    }
+    sprintf(env_name, "%s=%s", key, name);
+    pamret = pam_putenv(ctx->pamh, env_name);
+    if (pamret != PAM_SUCCESS) {
+        pamk5_error(ctx, "pam_putenv: %s", pam_strerror(ctx->pamh, pamret));
+        pamret = PAM_SERVICE_ERR;
+        goto done;
+    }
+    pamret = PAM_SUCCESS;
 
-	pamret = PAM_SUCCESS;
 done:
-	if (env_name)
-		free(env_name);
-	return pamret;
+    if (env_name != NULL)
+        free(env_name);
+    return pamret;
 }
 
-/* Authenticate a user via krb5.
 
-   It would be nice to be able to save the ticket cache temporarily as a
-   memory cache and then only write it out to disk during the session
-   initialization.  Unfortunately, OpenSSH 4.2 does PAM authentication in a
-   subprocess and therefore has no saved module-specific data available once
-   it opens a session, so we have to save the ticket cache to disk and store
-   in the environment where it is. */
+/*
+ * Authenticate a user via Kerberos 5.
+ *
+ * It would be nice to be able to save the ticket cache temporarily as a
+ * memory cache and then only write it out to disk during the session
+ * initialization.  Unfortunately, OpenSSH 4.2 does PAM authentication in a
+ * subprocess and therefore has no saved module-specific data available once
+ * it opens a session, so we have to save the ticket cache to disk and store
+ * in the environment where it is.
+ */
 int
 pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
-		    const char **argv)
+                    const char **argv)
 {
     struct context *ctx = NULL;
+    struct pam_args *args;
     struct credlist *clist = NULL;
     int pamret = PAM_SERVICE_ERR;
     char cache_name[] = "/tmp/krb5cc_pam_XXXXXX";
     int ccfd;
 
-    parse_args(flags, argc, argv);
-    dlog(ctx, "%s: entry", __FUNCTION__);
+    args = pamk5_args_parse(NULL, flags, argc, argv);
+    ENTRY(ctx, args, flags);
+    pamret = pamk5_context_new(pamh, &ctx);
+    if (pamret != PAM_SUCCESS)
+        goto done;
 
-    if ((pamret = new_context(pamh, &ctx)) != PAM_SUCCESS)
-	    goto done;
-
-    /* do this first, so destroy_context magically cleans up for us */
-    if ((pamret = pam_set_data(pamh, "ctx", ctx,
-				    destroy_context)) != PAM_SUCCESS) {
-	free_context(ctx);
-	pamret = PAM_SERVICE_ERR;
-	goto done;
+    /* Do this first so pamk5_context_destroy magically cleans up for us. */
+    pamret = pam_set_data(pamh, "ctx", ctx, pamk5_context_destroy);
+    if (pamret != PAM_SUCCESS) {
+        pamk5_context_free(ctx);
+        pamret = PAM_SERVICE_ERR;
+        goto done;
     }
 
-    if ((pamret = password_auth(ctx, NULL, &clist)) != PAM_SUCCESS)
-	goto done;
-    ccfd = mkstemp(cache_name);
-    if (ccfd < 0) {
-	dlog(ctx, "mkstemp(\"%s\") failed: %s", cache_name, strerror(errno));
-	pamret = PAM_SERVICE_ERR;
-	goto done;
-    }
-    close(ccfd);
-    if ((pamret = init_ccache(ctx, cache_name, clist, &ctx->cache)) != PAM_SUCCESS)
-	goto done;
+    /* Do the actual authentication. */
+    pamret = pamk5_password_auth(ctx, args, NULL, &clist);
+    if (pamret != PAM_SUCCESS)
+        goto done;
+
+    /*
+     * Check .k5login, and if everything is fine, tell pam_sm_setcred where
+     * the ticket cache is.
+     */
+    pamret = pamk5_validate_auth(ctx, args);
+    if (pamret != PAM_SUCCESS)
+        goto done;
     if ((pamret = validate_auth(ctx)) != PAM_SUCCESS)
         goto done;
     if ((pamret = set_krb5ccname(ctx, cache_name, "PAM_KRB5CCNAME")) != PAM_SUCCESS)
 	goto done;
 
+    /* Store the obtained credentials in a temporary cache. */
+    if (args->no_ccache)
+        goto done;
+    ccfd = mkstemp(cache_name);
+    if (ccfd < 0) {
+        pamk5_error(ctx, "mkstemp(\"%s\") failed: %s", cache_name,
+                    strerror(errno));
+        pamret = PAM_SERVICE_ERR;
+        goto done;
+    }
+    close(ccfd);
+    pamret = pamk5_ccache_init(ctx, args, cache_name, clist, &ctx->cache);
+    if (pamret != PAM_SUCCESS)
+        goto done;
+    pamret = set_krb5ccname(ctx, cache_name, "PAM_KRB5CCNAME");
+    if (pamret != PAM_SUCCESS)
+        goto done;
+
 done:
-    free_credlist(ctx, clist);
-    dlog(ctx, "%s: exit (%s)", __FUNCTION__, pamret ? "failure" : "success");
+    pamk5_credlist_free(ctx, clist);
+    EXIT(ctx, args, pamret);
+
+    /*
+     * Clear the context on failure so that the account management module
+     * knows that we didn't authenticate with Kerberos.
+     */
+    if (pamret != PAM_SUCCESS)
+        pam_set_data(pamh, "ctx", NULL, NULL);
+    pamk5_args_free(args);
 
     /* Clear the context on failure so that the account management module
        knows that we didn't authenticate with Kerberos. */
@@ -162,289 +168,362 @@ done:
     return pamret;
 }
 
-/* Determine the name of the ticket cache.  Handles ccache and ccache_dir PAM
-   options and returns newly allocated memory. */
+
+/*
+ * Determine the name of a new ticket cache.  Handles ccache and ccache_dir
+ * PAM options and returns newly allocated memory.
+ *
+ * The ccache option, if set, contains a string with possible %u and %p
+ * escapes.  The former is replaced by the UID and the latter is replaced by
+ * the PID (a suitable unique string).
+ */
 static char *
-build_ccache_name(struct context *ctx, uid_t uid)
+build_ccache_name(struct context *ctx, struct pam_args *args, uid_t uid)
 {
     char *cache_name;
 
-    if (pam_args.ccache == NULL) {
-	size_t ccache_size = 1 + strlen(pam_args.ccache_dir) +
-	    strlen("/krb5cc_4294967295_XXXXXX");
+    if (args->ccache == NULL) {
+        size_t ccache_size = 1 + strlen(args->ccache_dir) +
+            strlen("/krb5cc_4294967295_XXXXXX");
 
-	cache_name = malloc(ccache_size);
-	if (!cache_name) {
-	    dlog(ctx, "malloc() failure");
-	    return NULL;
-	}
-	snprintf(cache_name, ccache_size, "%s/krb5cc_%d_XXXXXX",
-			pam_args.ccache_dir, uid);
+        cache_name = malloc(ccache_size);
+        if (!cache_name) {
+            pamk5_error(ctx, "malloc failure: %s", strerror(errno));
+            return NULL;
+        }
+        snprintf(cache_name, ccache_size, "%s/krb5cc_%d_XXXXXX",
+                 args->ccache_dir, uid);
     } else {
-	size_t len = 0, delta;
-	char *p, *q;
+        size_t len = 0, delta;
+        char *p, *q;
 
-	for (p = pam_args.ccache; *p != '\0'; p++) {
-	    if (p[0] == '%' && p[1] == 'u') {
-		len += snprintf(NULL, 0, "%d", uid);
-		p++;
-	    } else if (p[0] == '%' && p[1] == 'p') {
-		len += snprintf(NULL, 0, "%d", getpid());
-		p++;
-	    } else {
-		len++;
-	    }
-	}
-	len++;
-	cache_name = malloc(len);
-	if (cache_name == NULL) {
-	    dlog(ctx, "malloc() failure");
-	    return NULL;
-	}
-	for (p = pam_args.ccache, q = cache_name; *p != '\0'; p++) {
-	    if (p[0] == '%' && p[1] == 'u') {
-		delta = snprintf(q, len, "%d", uid);
-		q += delta;
-		len -= delta;
-		p++;
-	    } else if (p[0] == '%' && p[1] == 'p') {
-		delta = snprintf(q, len, "%d", getpid());
-		q += delta;
-		len -= delta;
-		p++;
-	    } else {
-		*q = *p;
-		q++;
-		len--;
-	    }
-	}
-	*q = '\0';
+        for (p = args->ccache; *p != '\0'; p++) {
+            if (p[0] == '%' && p[1] == 'u') {
+                len += snprintf(NULL, 0, "%ld", (long) uid);
+                p++;
+            } else if (p[0] == '%' && p[1] == 'p') {
+                len += snprintf(NULL, 0, "%ld", (long) getpid());
+                p++;
+            } else {
+                len++;
+            }
+        }
+        len++;
+        cache_name = malloc(len);
+        if (cache_name == NULL) {
+            pamk5_error(ctx, "malloc failure: %s", strerror(errno));
+            return NULL;
+        }
+        for (p = args->ccache, q = cache_name; *p != '\0'; p++) {
+            if (p[0] == '%' && p[1] == 'u') {
+                delta = snprintf(q, len, "%ld", (long) uid);
+                q += delta;
+                len -= delta;
+                p++;
+            } else if (p[0] == '%' && p[1] == 'p') {
+                delta = snprintf(q, len, "%ld", (long) getpid());
+                q += delta;
+                len -= delta;
+                p++;
+            } else {
+                *q = *p;
+                q++;
+                len--;
+            }
+        }
+        *q = '\0';
     }
     return cache_name;
 }
 
-/* Create a new context for a session if we've lost the context created during
-   authentication (such as when running under OpenSSH. */
+
+/*
+ * Create a new context for a session if we've lost the context created during
+ * authentication (such as when running under OpenSSH.
+ */
 static int
-create_session_context(pam_handle_t *pamh, struct context **newctx)
+create_session_context(struct pam_args *args, pam_handle_t *pamh,
+                       struct context **newctx)
 {
     struct context *ctx = NULL;
     const char *tmpname;
-    int pamret;
+    int status, pamret;
 
-    if (pam_args.ignore_root) {
+    /* If we're going to ignore the user anyway, don't even bother. */
+    if (args->ignore_root || args->minimum_uid > 0) {
         pamret = pam_get_user(pamh, &tmpname, NULL);
-        if (pamret == PAM_SUCCESS && strcmp("root", tmpname) == 0) {
-            dlog(ctx, "ignoring root login");
+        if (pamret == PAM_SUCCESS && pamk5_should_ignore(ctx, args, tmpname)) {
             pamret = PAM_SUCCESS;
             goto fail;
         }
     }
-    pamret = new_context(pamh, &ctx);
+
+    /*
+     * Create the context and locate the temporary ticket cache.  Load the
+     * ticket cache back into the context and flush out the other data that
+     * would have been set if we'd kept our original context.
+     */
+    pamret = pamk5_context_new(pamh, &ctx);
     if (pamret != PAM_SUCCESS) {
-	dlog(ctx, "creating session context failed");
-	goto fail;
+        pamk5_debug(ctx, args, "creating session context failed");
+        goto fail;
     }
     tmpname = get_krb5ccname(ctx, "PAM_KRB5CCNAME");
     if (tmpname == NULL) {
-	dlog(ctx, "unable to get PAM_KRB5CCNAME, assuming non-Kerberos login");
-	pamret = PAM_SUCCESS;
-	goto fail;
+        pamk5_debug(ctx, args, "unable to get PAM_KRB5CCNAME, assuming"
+                    " non-Kerberos login");
+        pamret = PAM_SUCCESS;
+        goto fail;
     }
-    dlog(ctx, "found initial ticket cache at %s", tmpname);
+    pamk5_debug(ctx, args, "found initial ticket cache at %s", tmpname);
     if (krb5_cc_resolve(ctx->context, tmpname, &ctx->cache) != 0) {
-	dlog(ctx, "cannot resolve cache %s", tmpname);
-	pamret = PAM_SERVICE_ERR;
-	goto fail;
+        pamk5_debug(ctx, args, "cannot resolve cache %s", tmpname);
+        pamret = PAM_SERVICE_ERR;
+        goto fail;
     }
-    if (krb5_cc_get_principal(ctx->context, ctx->cache, &ctx->princ) != 0) {
-	dlog(ctx, "cannot retrieve principal");
-	pamret = PAM_SERVICE_ERR;
-	goto fail;
+    status = krb5_cc_get_principal(ctx->context, ctx->cache, &ctx->princ);
+    if (status != 0) {
+        pamk5_debug_krb5(ctx, args, "cannot retrieve principal", status);
+        pamret = PAM_SERVICE_ERR;
+        goto fail;
     }
-    if ((pamret = pam_set_data(pamh, "ctx", ctx,
-			       destroy_context)) != PAM_SUCCESS) {
-	dlog(ctx, "cannot set context data");
-	goto fail;
+
+    /*
+     * We've rebuilt the context.  Push it back into the PAM state for any
+     * further calls to session or account management, which OpenSSH does keep
+     * the context for.
+     */
+    pamret = pam_set_data(pamh, "ctx", ctx, pamk5_context_destroy);
+    if (pamret != PAM_SUCCESS) {
+        pamk5_debug_pam(ctx, args, "cannot set context data", pamret);
+        goto fail;
     }
     *newctx = ctx;
     return PAM_SUCCESS;
 
 fail:
     if (ctx != NULL)
-	free_context(ctx);
+        pamk5_context_free(ctx);
     return pamret;
 }
 
-/* Called after a successful authentication. Set user credentials. */
+/*
+ * Should be called after a successful authentication.  Sets user credentials
+ * by creating the permanent ticket cache and setting the proper ownership.
+ * This function is also called by pam_sm_open_session; they both do the same
+ * thing.
+ */
 int
-pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
-	       const char **argv)
+pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
-    struct context *ctx = NULL;
+    struct context *ctx;
+    struct pam_args *args;
     struct credlist *clist = NULL;
     krb5_ccache cache = NULL;
     char *cache_name = NULL;
     int reinit = 0;
-    int pamret;
+    int pamret, allow, status;
     struct passwd *pw = NULL;
     uid_t uid;
     gid_t gid;
 
-    parse_args(flags, argc, argv);
-    dlog(ctx, "%s: entry (0x%x)", __FUNCTION__, flags); 
+    pamret = pamk5_context_fetch(pamh, &ctx);
+    args = pamk5_args_parse(ctx, flags, argc, argv);
+    ENTRY(ctx, args, flags);
 
-    if (flags & PAM_DELETE_CRED)
-	return pam_set_data(pamh, "ctx", NULL, destroy_context);
-
-    if (flags & (PAM_REINITIALIZE_CRED | PAM_REFRESH_CRED))
-	reinit = 1;
-
-    /* XXX: it may be worth checking for REINIT/REFRESH and ESTABLISH set
-     * at the same time; currently, REINIT/REFRESH will simply override.. */
-    if (!(flags & (PAM_REINITIALIZE_CRED | PAM_REFRESH_CRED | PAM_ESTABLISH_CRED)))
-	return PAM_SERVICE_ERR;
-
-    pamret = fetch_context(pamh, &ctx);
-    if (pamret != PAM_SUCCESS) {
-	dlog(ctx, "%s: no context found, creating one", __FUNCTION__);
-	pamret = create_session_context(pamh, &ctx);
-	if (ctx == NULL)
-	    goto done;
+    /*
+     * Special case.  Just free the context data, which will destroy the
+     * ticket cache as well.
+     */
+    if (flags & PAM_DELETE_CRED) {
+        pamret = pam_set_data(pamh, "ctx", NULL, NULL);
+        goto done;
     }
 
-    /* Revalidate the user. */
-    pamret = validate_auth(ctx);
-    if (pamret != PAM_SUCCESS)
+    /* If configured not to create a cache, we have nothing to do. */
+    if (args->no_ccache)
         goto done;
 
-    /* Some programs (xdm, for instance) appear to call setcred over and
-     * over again, so avoid doing useless work. */
-    if (ctx->initialized)
-	return PAM_SUCCESS;
+    /*
+     * Reinitialization requested, which means that rather than creating a new
+     * ticket cache and setting KRB5CCNAME, we should figure out the existing
+     * ticket cache and just refresh its tickets.
+     */
+    if (flags & (PAM_REINITIALIZE_CRED | PAM_REFRESH_CRED))
+        reinit = 1;
 
-    if (pam_args.no_ccache)
-	goto done;
+    /*
+     * FIXME: It may be worth checking for REINIT/REFRESH and ESTABLISH set
+     * at the same time, since that's probably a mistake.  Currently,
+     * REINIT/REFRESH will simply override.
+     */
+    allow = PAM_REINITIALIZE_CRED | PAM_REFRESH_CRED | PAM_ESTABLISH_CRED;
+    if (!(flags & allow)) {
+        pamret = PAM_SERVICE_ERR;
+        goto done;
+    }
 
-    /* Get the uid. This should exist. */
+    /*
+     * pamret holds the status of pamk5_context_fetch from above, so indicates
+     * whether we were able to successfully find the context from the previous
+     * authentication.  If we weren't, we were probably run by OpenSSH with
+     * its broken PAM handling, so we're going to cobble up a new context for
+     * ourselves.
+     */
+    if (pamret != PAM_SUCCESS) {
+        pamk5_debug(ctx, args, "no context found, creating one");
+        pamret = create_session_context(args, pamh, &ctx);
+        if (ctx == NULL)
+            goto done;
+    }
+
+    /*
+     * Some programs (xdm, for instance) appear to call setcred over and over
+     * again, so avoid doing useless work.
+     */
+    if (ctx != NULL && ctx->initialized) {
+        pamret = PAM_SUCCESS;
+        goto done;
+    }
+
+    /*
+     * Get the uid.  The user is not required to be a local account for
+     * pam_authenticate, but for either pam_setcred (other than DELETE) or for
+     * pam_open_session, the user must be a local account.
+     */
     pw = getpwnam(ctx->name);
-    if (!pw) {
-	dlog(ctx, "getpwnam(): %s", ctx->name);
-	pamret = PAM_USER_UNKNOWN;
-	goto done;
+    if (pw == NULL) {
+        pamk5_debug(ctx, args, "getpwnam failed for %s", ctx->name);
+        pamret = PAM_USER_UNKNOWN;
+        goto done;
     }
     uid = pw->pw_uid;
     gid = pw->pw_gid;
 
-    /* Get the cache name */
+    /* Get the cache name.  If reinitializing, this is our existing cache. */
     if (reinit) {
-	const char *name, *k5name;
+        const char *name, *k5name;
 
-	name = get_krb5ccname(ctx, "KRB5CCNAME");
-	if (!name) {
-	    dlog(ctx, "Unable to get KRB5CCNAME!");
-	    pamret = PAM_SERVICE_ERR;
-	    goto done;
-	}
+        name = get_krb5ccname(ctx, "KRB5CCNAME");
+        if (name == NULL)
+            name = krb5_cc_default_name(ctx->context);
+        if (name == NULL) {
+            pamk5_debug(ctx, args, "unable to get ticket cache name");
+            pamret = PAM_SERVICE_ERR;
+            goto done;
+        }
+        if (strncmp(name, "FILE:", strlen("FILE:")) == 0)
+            name += strlen("FILE:");
 
-	/* If the cache we have in the context and the cache we're
-	 * reinitializing are the same cache, don't do anything; otherwise,
-	 * we'll end up destroying the cache. */
-	if (ctx->cache != NULL) {
-	    k5name = krb5_cc_get_name(ctx->context, ctx->cache);
-	    if (k5name != NULL && strcmp(name, k5name) == 0) {
-		pamret = PAM_SUCCESS;
-		goto done;
-	    }
-	}
+        /*
+         * If the cache we have in the context and the cache we're
+         * reinitializing are the same cache, don't do anything; otherwise,
+         * we'll end up destroying the cache.  This should never happen; this
+         * case triggering is a sign of a bug, probably in the calling
+         * application.
+         */
+        if (ctx->cache != NULL) {
+            k5name = krb5_cc_get_name(ctx->context, ctx->cache);
+            if (k5name != NULL) {
+                if (strncmp(k5name, "FILE:", strlen("FILE:")) == 0)
+                    k5name += strlen("FILE:");
+                if (strcmp(name, k5name) == 0) {
+                    pamret = PAM_SUCCESS;
+                    goto done;
+                }
+            }
+        }
 
-	cache_name = strdup(name);
-	if (!cache_name) {
-	    dlog(ctx, "malloc() failure");
-	    pamret = PAM_BUF_ERR;
-	    goto done;
-	}
-	dlog(ctx, "%s: attempting to refresh cred cache %s", __FUNCTION__, cache_name);
+        cache_name = strdup(name);
+        if (!cache_name) {
+            pamk5_error(ctx, "malloc failure: %s", strerror(errno));
+            pamret = PAM_BUF_ERR;
+            goto done;
+        }
+        pamk5_debug(ctx, args, "refreshing ticket cache %s", cache_name);
 
-	/* If we're refreshing the cache, we didn't really create it;
-	 * some other application (probably login?) is still using it.
-	 * Thus, don't remove it! */
-	ctx->dont_destroy_cache = 1;
+        /*
+         * If we're refreshing the cache, we didn't really create it and the
+         * user's open session created by login is probably still managing
+         * it.  Thus, don't remove it when PAM is shut down.
+         */
+        ctx->dont_destroy_cache = 1;
+    } else {
+        int ccache_fd;
+        size_t len;
+
+        cache_name = build_ccache_name(ctx, args, uid);
+        if (cache_name == NULL) {
+            pamret = PAM_BUF_ERR;
+            goto done;
+        }
+        len = strlen(cache_name);
+        if (len > 6 && strncmp("XXXXXX", cache_name + len - 6, 6) == 0) {
+            ccache_fd = mkstemp(cache_name);
+            if (ccache_fd == -1) {
+                pamk5_error(ctx, "mkstemp failure: %s", strerror(errno));
+                pamret = PAM_SERVICE_ERR;
+                goto done;
+            }
+            close(ccache_fd);
+        }
     }
-    else {
-	int ccache_fd;
-	size_t len;
 
-	cache_name = build_ccache_name(ctx, uid);
-	if (cache_name == NULL) {
-	    pamret = PAM_BUF_ERR;
-	    goto done;
-	}
-	len = strlen(cache_name);
-	if (len > 6 && strncmp("XXXXXX", cache_name + len - 6, 6) == 0) {
-	    ccache_fd = mkstemp(cache_name);
-	    if (ccache_fd == -1) {
-		dlog(ctx, "mkstemp() failure");
-		pamret = PAM_SERVICE_ERR;
-		goto done;
-	    }
-	    close(ccache_fd);
-	}
+    /*
+     * Initialize the new ticket cache and point the environment at it.  We
+     * copy the credentials out of our existing cache into the new cache and
+     * the destroy the existing temporary cache.
+     */
+    pamk5_debug(ctx, args, "initializing ticket cache %s", cache_name);
+    pamret = pamk5_credlist_copy(ctx, &clist, ctx->cache);
+    if (pamret != PAM_SUCCESS)
+        goto done;
+    pamret = pamk5_ccache_init(ctx, args, cache_name, clist, &cache);
+    if (pamret != PAM_SUCCESS)
+        goto done;
+    if (strncmp(cache_name, "FILE:", strlen("FILE:")) == 0)
+        status = chown(cache_name + strlen("FILE:"), uid, gid);
+    else
+        status = chown(cache_name, uid, gid);
+    if (status == -1) {
+        pamk5_debug(ctx, args, "chown of ticket cache failed: %s",
+                    strerror(errno));
+        pamret = PAM_SERVICE_ERR;       
+        goto done;
     }
+    pamret = set_krb5ccname(ctx, cache_name, "KRB5CCNAME");
+    if (pamret != PAM_SUCCESS)
+        goto done;
 
-    /* Initialize the new ccache */
-    dlog(ctx, "%s: initializing cred cache %s", __FUNCTION__, cache_name);
-    if ((pamret = copy_credlist(ctx, &clist, ctx->cache)) != PAM_SUCCESS)
-	goto done;
-    if ((pamret = init_ccache(ctx, cache_name, clist, &cache)) != PAM_SUCCESS)
-	goto done;
-
-    if (chown(cache_name, uid, gid) == -1) {
-	dlog(ctx, "chown(): %s", strerror(errno));
-	pamret = PAM_SERVICE_ERR;	
-	goto done;
+    /*
+     * If we had a temporary ticket cache, delete the environment variable so
+     * that we won't get confused and think we still have a temporary ticket
+     * cache when called again.
+     */
+    if (pam_getenv(pamh, "PAM_KRB5CCNAME") != NULL) {
+        pamret = pam_putenv(pamh, "PAM_KRB5CCNAME");
+        if (pamret != PAM_SUCCESS)
+            goto done;
     }
-    if ((pamret = set_krb5ccname(ctx, cache_name, "KRB5CCNAME")) != PAM_SUCCESS)
-	goto done;
     if (pam_getenv(pamh, "PAM_KRB5CCNAME") != NULL)
 	if ((pamret = pam_putenv(pamh, "PAM_KRB5CCNAME")) != PAM_SUCCESS)
 	    goto done;
     ctx->initialized = 1;
 
+    /* Detroy the temporary cache and put the new cache in the context. */
     krb5_cc_destroy(ctx->context, ctx->cache);
     ctx->cache = cache;
     cache = NULL;
+    ctx->initialized = 1;
 
 done:
-    if (cache)
-	krb5_cc_destroy(ctx->context, cache);
-    if (cache_name)
-	free(cache_name);
-    free_credlist(ctx, clist);
-    dlog(ctx, "%s: exit (%s)", __FUNCTION__, pamret ? "failure" : "success");
+    if (cache != NULL)
+        krb5_cc_destroy(ctx->context, cache);
+    if (cache_name != NULL)
+        free(cache_name);
+    if (clist != NULL)
+        pamk5_credlist_free(ctx, clist);
+    EXIT(ctx, args, pamret);
+    pamk5_args_free(args);
     return pamret;
 }
-
-#include <sys/stat.h>
-void Jokostat(char *n)
-{
-	struct stat	b;
-	int		ret;
-
-	if (strstr(n, "FILE:") != n) {
-		syslog(LOG_DEBUG, "Jokostat: no fcache: %s", n);
-		return;
-	}
-
-	ret=stat(&n[5],&b);
-	if(ret!=0)
-	{
-		syslog(LOG_DEBUG, "Jokostat prout");
-		return;
-	}
-
-	syslog(LOG_DEBUG, "Jokostat: %d %d:%d %o", geteuid(), b.st_uid, b.st_gid, b.st_mode);
-
-	return;
-}
-

@@ -1,0 +1,314 @@
+   57 Russ Allbery	2006-08-11
+      Release 2.0.
+
+   56 Russ Allbery	2006-08-11
+      Add a make dist target and ignore the files that it generates.
+
+   55 Russ Allbery	2006-08-11
+      Add some notes about the mission of this module and features in the
+      Sourceforge module that it isn't going to support.
+
+   54 Russ Allbery	2006-08-11
+      Bring the TODO list back in line with reality.
+
+   53 Russ Allbery	2006-08-11
+      Move the old ChangeLog to CHANGES.old since we're going to generate a new
+      CHANGES file from bzr and since it's not in ChangeLog format.  Add a NEWS
+      file with a higher-level overview of interesting changes between versions
+      and fill out all the changes that have happened in 2.0.
+
+   52 Russ Allbery	2006-08-07
+      Support FILE: prefixes to the ticket cache names.
+
+   51 Russ Allbery	2006-07-29
+      Rename the rest of the public functions to avoid stomping on the
+      namespace of the application or glibc and running into unfortunate
+      conflicts.
+
+   50 Russ Allbery	2006-07-29
+      Rename all the credlist functions.  Fix some accidental renamings from
+      the context renaming.
+
+   49 Russ Allbery	2006-07-29
+      Rename all of the context functions to the pamk5_* namespace.
+
+   48 Russ Allbery	2006-07-29
+      Save the authentication credentials during the preliminary password
+      change check so that we don't have to reacquire them for the actual
+      password change.
+
+   47 Russ Allbery	2006-07-16
+      After setting the authentication token, retrieve it from the same storage
+      location as we stored it.  Otherwise, password changes prompt twice.
+
+   46 Russ Allbery	2006-07-16
+      Call krb5_free_data_contents, not krb5_free_data, on buffers that are
+      declared on the stack.
+
+   45 Russ Allbery	2006-07-16
+      The sense of the test in the last change was reversed.
+
+   44 Russ Allbery	2006-07-16
+      Don't try to verify the ticket cache when authenticating for password
+      changes.
+
+   43 Russ Allbery	2006-07-16
+      Use strncmp for the options that take arguments.
+
+   42 Russ Allbery	2006-07-16
+      If ctx is set to NULL, fetch_context must fail.
+
+   41 Russ Allbery	2006-07-16
+      Always exit pam_sm_setcred through the normal exit path and don't free
+      the clist unless it's non-NULL.
+
+   40 Russ Allbery	2006-07-16
+      Don't assume ctx is non-NULL when checking whether the ticket cache was
+      already initialized in pam_sm_setcred.
+
+   39 Russ Allbery	2006-07-16
+      Rename the logging functions to avoid conflicting with system functions
+      and calling the system error function by mistake.
+
+   38 Russ Allbery	2006-07-16
+      renew_lifetime defaults pulled from krb5.conf weren't handled properly.
+
+   37 Russ Allbery	2006-07-16
+      Initialize session to NULL in pam_sm_authenticate.
+
+   36 Russ Allbery	2006-07-16
+      krb5_appdefault_string has to have a default string; NULL doesn't work.
+
+   35 Russ Allbery	2006-07-16
+      Add support for use_authtok, which is like use_first_pass except that it
+      won't ever prompt the user, even if no prior module obtained the
+      password.
+      
+      Fix up the return status from password authentication and password
+      changing to reduce the number of PAM_SERVICE_ERRs we were returning from
+      calls that didn't accept that as a valid return status.
+
+   34 Russ Allbery	2006-07-16
+      Use PAM_OLDAUTHTOK to retrieve the user's password if we're changing the
+      password rather than PAM_AUTHTOK and save the password back into the same
+      place.  Don't always save authentication passwords into PAM_OLDAUTHTOK;
+      only do that if we're changing passwords.
+      
+      Free the passwords retrieved from the user.  We were doing that already
+      when obtaining the user's password for authentication, so apparently it
+      is safe.
+      
+      Save the new password when changing passwords into PAM_AUTHTOK if the
+      user enters the same password both times.
+      
+      Implement PAM_PRELIM_CHECK by doing all the steps up to prompting for the
+      new password and changing it.  That includes authenticating the user, so
+      PAM_PRELIM_CHECK now may prompt.
+
+   33 Russ Allbery	2006-07-12
+      Add a version number.
+
+   32 Russ Allbery	2006-07-12
+      Ignore the generated man page.
+
+   31 Russ Allbery	2006-07-12
+      Rewrite the man page in POD and add documentation for all the new
+      configuration options.
+
+   30 Russ Allbery	2006-07-12
+      Don't set PAM_KRB5CCNAME if no_ccache is set, and set it after we run
+      mkstemp so that it gets set to the correct value.
+
+   29 Russ Allbery	2006-07-12
+      If no_ccache is set, don't even create a temporary ticket cache in
+      pam_authenticate.
+
+   28 Russ Allbery	2006-07-12
+      When checking minimum_uid, use the passed in username rather than
+      ctx->name.
+
+   27 Russ Allbery	2006-07-03
+      Overhaul the README file and remove additional documentation that's no
+      longer interesting.
+
+   26 Russ Allbery	2006-07-03
+      Factor out the common code in the MIT and Heimdal prompting functions and
+      finish redoing all the code for style and formatting by doing the two
+      compat_*.c files.
+
+   25 Russ Allbery	2006-07-03
+      Mostly finish cleanup for style and formatting.  Merge all the headers
+      together; nothing is really gained from keeping the headers separate for
+      context.c and credlist.c.
+      
+      Still close the cache even if we're not supposed to destroy it on context
+      destruction just in case not closing it would leak resources.
+
+   24 Russ Allbery	2006-07-03
+      When obtaining the ticket cache name for pam_sm_setcred, never use the
+      name of the cache in the existing context.  That's the temporary cache
+      created by pam_sm_authenticate.  Instead, fall back on the default ticket
+      cache name for reinitialization if KRB5CCNAME isn't set in the
+      environment.
+
+   23 Russ Allbery	2006-07-03
+      If use_first_pass is set, password changing should never prompt for the
+      password and just fail if one wasn't obtained by a previous module.
+
+   22 Russ Allbery	2006-07-02
+      Switch to the new logging functions and macros everywhere.  Also fix some
+      other style and comment issues.
+
+   21 Russ Allbery	2006-07-02
+      Style and formatting cleanup.
+
+   20 Russ Allbery	2006-06-28
+      Verify the user's TGT immediately after obtaining it rather than
+      deferring to validate_auth, since then we have the krb5_creds handy and
+      don't have to dig them back out of the ticket cache.  Don't redo this
+      work in the other callers of validate_auth (pam_sm_setcred and
+      pam_sm_acct_mgmt); it's properly part of authentication and there isn't
+      a need.
+
+   19 Russ Allbery	2006-06-28
+      Remove the hand-rolled Kerberos v5 TGT verification and instead call
+      krb5_verify_init_creds.
+
+   18 Russ Allbery	2006-06-28
+      More reformatting for coding style.
+
+   17 Russ Allbery	2006-06-28
+      Add support for minimum_uid, which is like ignore_root but more general.
+      Centralize the code to check for ignore_root or minimum_uid.
+      
+      Reformat the password_auth function for indentation and comment style.
+
+   16 Russ Allbery	2006-06-27
+      Remove code that was omitted with #if 0.
+
+   15 Russ Allbery	2006-06-27
+      Reformat the code and comment about not freeing the response data to make
+      it clearer and remove #if 0 code and a pointless loop.
+
+   14 Russ Allbery	2006-06-27
+      Remove the unused Jokostat function.
+
+   13 Russ Allbery	2006-06-27
+      Allow ccache, ccache_dir, ignore_k5login, and renew_lifetime to be set
+      in krb5.conf as well.
+      
+      Store all string options as allocated strings.  Use strlen to find the
+      offset of the argument to string options in the PAM configuration for
+      better maintainability.  Free the allocated strings when freeing the args
+      structure.
+
+   12 Russ Allbery	2006-06-27
+      Eliminate the global pam_args struct.  Instead, allocate a new pam_args
+      struct at each of our entry points and then free it before exiting.
+
+   11 Russ Allbery	2006-06-27
+      ENCTYPE_DES_CBC_MD5 was not used in the source, so don't set it here.
+
+   10 Russ Allbery	2006-06-27
+      Remove reuse_ccache; nothing actually referenced it.
+
+    9 Russ Allbery	2006-06-27
+      Add support for the renew_lifetime option in the PAM configuration, which
+      if set specifies the renewable lifetime of obtained tickets.
+      
+      Alphabetize the option parsing code for easier maintenance.  Explicitly
+      initialize to NULL the pointer members of pam_args.
+
+    8 Russ Allbery	2006-06-27
+      Add an ignore_k5login option to not check .k5login files but still do the
+      krb5_aname_to_localname check, for sites that can't use .k5login files or
+      can't allow the system access to user's home directories for some reason.
+
+    7 Russ Allbery	2006-06-27
+      Reformat for clarity.  Remove the OpenVision copyright left over from the
+      MIT Kerberos code, since that only covered the kadmin interface, and none
+      of that code is in the PAM module.
+
+    6 Russ Allbery	2006-06-27
+      valid_context is no longer used (it was replaced with validate_auth).
+
+    5 Russ Allbery	2006-06-27
+      Get the default values for debug, forwardable, ignore_root, and
+      search_k5login out of krb5.conf.  The first two are also used by the
+      Red Hat module, so look for the values in the pam section for
+      compatibility.  Set up an infrastructure so that we can add further
+      defaults from krb5.conf in the future.
+      
+      Pass a context into parse_args if we have one available so that it
+      doesn't have to create its own krb5_context at least some of the time.
+      
+      Move parse_args into a new options.c source file and out of the support.c
+      grab bag.
+
+    4 Russ Allbery	2006-06-27
+      In the PAM prompting function, copy the trailing nul at the end of the
+      password into the krb5_prompt struct, even though the length set there
+      does not include the trailing nul.  This matches the behavior of the
+      prompter in the MIT Kerberos library, and something apparently depends
+      on finding it.
+      
+      Add some comments to the prompter, since it's otherwise very difficult
+      to follow what's going on.
+
+    3 Russ Allbery	2006-06-27
+      The old patches directory is no longer interesting.
+
+    2 Russ Allbery	2006-06-27
+      Apply the current Debian patch to 1.2.0.  This includes the following
+      changes:
+      
+        * Only call krb5_kuserok when the account to which we're authenticating
+          is a local account to allow use of pam_krb5 for application
+          authentication of users without local accounts.  (Closes: #354133)
+        * Restructure the code to do user validation after obtaining their
+          initial tickets.  This eliminates a lot of confusing special cases and
+          deferred checking and makes it easier to audit the code.
+        * Don't create the ticket cache until after successful authentication.
+          Otherwise, we leave files behind in /tmp.
+        * Document what principals libpam_krb5.so looks for in the system keytab
+          to do ticket validation.  (Closes: #350556)
+      
+        * Always use a disk cache for temporary storage of credentials and cope
+          with not having module-specific data during pam_sm_setcred by passing
+          the cache path in an environment variable.  This is required to cope
+          with OpenSSH's technique (when using ChallengeResponseAuthentication)
+          of doing PAM authentication in a child process and then opening the
+          session in the parent.  (Closes: #339734)
+        * Only initialize the ticket cache once no matter how many times setcred
+          is called.  Saves duplicate work and works around a bug in xdm, which
+          calls setcred repeatedly and discards the environment set by the final
+          call.
+        * Don't assume we already have a context when changing passwords; passwd
+          doesn't work that way.  (Closes: #344003)
+        * Fix the test for the new password.  I don't think this would have
+          worked at all before.
+        * Improve debugging output for password changes.
+        * If search_k5login is specified but no .k5login is found, still check
+          the user with krb5_kuserok in case there are custom principal mappings
+          defined.
+        * Handle ignore_root in a cleaner fashion and add support for
+          ignore_root on password changes.
+        * Document that ccache and ccache_dir must be specified as options to
+          the session module.  (Closes: #341926)
+        * Document that pam_sm_authenticate and pam_sm_setcred also call
+          krb5_kuserok.
+      
+        * Bug fixes to upstream version (all sent back to the maintainer):
+          - Succeed silently in account management if Kerberos wasn't used.
+          - Parse ccache_dir correctly.
+          - Bring the man page up to date.
+          - Link with -z defs to ensure all symbols were found.
+        * Readd the ccache option with a better implementation and allow for
+          randomization of the filename using mkstemp even if ccache is used.
+        * Add search_k5login option to allow authentication based on the
+          principals listed in ~/.k5login when the local account name doesn't
+          easily map to the Kerberos principal.
+
+    1 Russ Allbery	2006-06-27
+      Import of 1.2.0 release from Andres Salomon.
+
