@@ -1,6 +1,8 @@
 #
 # Makefile for pam_krb5
 #
+VERSION = 2.0
+
 KRB5BASE = /usr
 KRB5_IMPL = mit
 PAMPREFIX = $(DESTDIR)/lib/security
@@ -13,7 +15,7 @@ INSTALL = install
 
 CC = gcc
 CFLAGS = -O2 -fPIC -Wall
-LDFLAGS = -shared -Xlinker -x
+LDFLAGS = -shared -Wl,-x -Wl,-z,defs
 
 
 OSLIBS = -lpam -lresolv 
@@ -38,21 +40,36 @@ COMPAT = compat_${KRB5_IMPL}.c
 # No changes below this line
 
 SRCS = pam_krb5_auth.c pam_krb5_pass.c pam_krb5_acct.c pam_krb5_sess.c \
-	support.c credlist.c context.c ${COMPAT}
+	support.c credlist.c context.c options.c logging.c prompting.c \
+	${COMPAT}
 
 OBJS = pam_krb5_auth.o pam_krb5_pass.o pam_krb5_acct.o pam_krb5_sess.o \
-	support.o credlist.o context.o ${COMPAT:.c=.o}
+	support.o credlist.o context.o options.o logging.o prompting.o \
+	${COMPAT:.c=.o}
 
-all: pam_krb5.so
+all: pam_krb5.so pam_krb5.5
 
 pam_krb5.so: $(OBJS)
 	$(CC) -o $@ $(LDFLAGS) $(OBJS) $(LIBS)
 
-install: pam_krb5.so
+pam_krb5.5: pam_krb5.pod
+	pod2man --section=5 --release=$(VERSION) --center='PAM Modules' \
+	    pam_krb5.pod > $@
+
+install: pam_krb5.so pam_krb5.5
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 0644 pam_krb5.so \
 	    ${PAMPREFIX}/pam_krb5.so
 	${INSTALL} -c -o ${MANOWN} -g ${MANGRP} -m 0644 pam_krb5.5 \
 	    ${MANPREFIX}/man8/pam_krb5.8
+
+dist: pam_krb5.5
+	rm -rf pam-krb5-$(VERSION) pam-krb5-$(VERSION).tar.gz
+	mkdir pam-krb5-$(VERSION)
+	bzr log --short > CHANGES
+	rsync -a CHANGES* COPYRIGHT Makefile NEWS README TODO *.c *.h \
+	    pam_krb5.pod pam_krb5.5 pam-krb5-$(VERSION)/
+	tar cf pam-krb5-$(VERSION).tar pam-krb5-$(VERSION)
+	gzip -9 pam-krb5-$(VERSION).tar
 
 clean:
 	rm -f *.so *.o
@@ -69,13 +86,22 @@ pam_krb5_acct.o: pam_krb5_acct.c pam_krb5.h
 pam_krb5_sess.o: pam_krb5_sess.c pam_krb5.h
 	$(CC) -c $(CFLAGS) $(INC) $<
 
+logging.o: logging.c pam_krb5.h
+	$(CC) -c $(CFLAGS) $(INC) $<
+
+options.o: options.c pam_krb5.h
+	$(CC) -c $(CFLAGS) $(INC) $<
+
+prompting.o: prompting.c pam_krb5.h
+	$(CC) -c $(CFLAGS) $(INC) $<
+
 support.o: support.c pam_krb5.h
 	$(CC) -c $(CFLAGS) $(INC) $<
 
-credlist.o: credlist.c credlist.h
+credlist.o: credlist.c
 	$(CC) -c $(CFLAGS) $(INC) $<
 
-context.o: context.c context.h
+context.o: context.c
 	$(CC) -c $(CFLAGS) $(INC) $<
 
 compat_heimdal.o: compat_heimdal.c

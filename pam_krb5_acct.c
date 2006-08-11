@@ -5,41 +5,49 @@
  *
  */
 
+/* Get prototypes for the account management functions. */
 #define PAM_SM_ACCOUNT
 
-#include <syslog.h>
-#include <string.h>
-#include <security/pam_appl.h>
-#include <security/pam_modules.h>
-#include <krb5.h>
 #include <com_err.h>
-#include "pam_krb5.h"
-#include "context.h"
+#include <krb5.h>
+#include <security/pam_modules.h>
+#include <string.h>
 
-/* Check authorization of user */
+#include "pam_krb5.h"
+
+/*
+ * Check the authorization of the user.  It's not entirely clear what this
+ * function is supposed to do, but rechecking .k5login and friends makes the
+ * most sense.
+ */
 int
 pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
-    struct context *ctx = NULL;
+    struct pam_args *args;
+    struct context *ctx;
     int	pamret = PAM_AUTH_ERR;
 
-    parse_args(flags, argc, argv);
-    dlog(ctx, "%s: entry", __FUNCTION__);
+    pamret = pamk5_context_fetch(pamh, &ctx);
+    args = pamk5_args_parse(ctx, flags, argc, argv);
+    ENTRY(ctx, args, flags);
 
-    if (fetch_context(pamh, &ctx) != PAM_SUCCESS) {
-	/* User did not use krb5 to login */
-	/* pamret = PAM_SUCCESS;	// I don't think we want to do this.
-	 * 				// This policy should be in pam.conf,
-	 *				// not here.  Fail, instead.  Admin can
-	 *				// override w/ 'sufficient' */
-	goto done;
+    /*
+     * Succeed if the user did not use krb5 to login.  Yes, ideally we should
+     * probably fail and require that the user set up policy properly in their
+     * PAM configuration, but it's not common for the user to do so and that's
+     * not how other krb5 PAM modules work.  If we don't do this, root logins
+     * with the system root password fail, which is a bad failure mode.
+     */
+    if (pamret != PAM_SUCCESS || ctx == NULL) {
+        pamret = PAM_SUCCESS;
+        ctx = NULL;
+        pamk5_debug(ctx, args, "skipping non-Kerberos login");
+        goto done;
     }
-
-    /* XXX: we could be a bit more thorough here; see what krb5_kuserok
-     * *doesn't* check for, and check that here. */
+    pamret = pamk5_validate_auth(ctx, args);
 
 done:
-    dlog(ctx, "%s: exit (%s)", __FUNCTION__, pamret ? "failure" : "success");
+    EXIT(ctx, args, pamret);
+    pamk5_args_free(args);
     return pamret;
 }
-

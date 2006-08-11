@@ -1,0 +1,130 @@
+                      User-Visible pam-krb5 Changes
+
+pam-krb5 2.0 (2006-08-11)
+
+    Always use a disk cache for temporary storage of credentials between
+    authentication and setcred or session initialization.  This allows the
+    module to work correctly with OpenSSH ChallengeResponseAuthentication.
+
+    Add support for some PAM options that were supported by the
+    Sourceforge K5 PAM module, most notably minimum_uid and
+    renew_lifetime.
+
+    Support setting many PAM options from krb5.conf as well as on the PAM
+    command line, using the same application section as the Sourceforge
+    PAM module.  Use the profile reading functions provided by the
+    Kerberos libraries.
+
+    Add support for use_authtok, which is like use_first_pass except that
+    it will never prompt even if no password is currently set.
+
+    Add a search_k5login option to check the user's password against every
+    principal listed in .k5login, to support use of this module to
+    authenticate user access to shared accounts.
+
+    Add an ignore_k5login option that bypasses all checks of .k5login
+    files entirely and relies solely on krb5_aname_to_localname checks.
+
+    Re-add the ccache option to specify the exact file name of the ticket
+    cache, and allow for randomization using mkstemp even when this option
+    is used.
+
+    Only call krb5_kuserok (the .k5login check) when the account to which
+    the user is authenticating is a local account.  It's up to the
+    application to handle authorization checks for non-local accounts.
+
+    Support preliminary checks for password changing by using that to
+    obtain the user's current credentials.  Correctly handle saved
+    passwords from previous authentications or password changes when
+    changing passwords, and correctly set the saved passwords for
+    subsequent password changes in the PAM stack.
+
+    Only initialize the ticket cache once, no matter how many times
+    setcred is called.  This saves duplicate work and works around a bug
+    in X.org xdm that otherwise causes it to lose the PAM environment.
+
+    When reinitializing a ticket cache, never reinitialize the temporary
+    cache created by the authentication call.  Instead, fall back to the
+    default ticket cache name if KRB5CCNAME isn't set.
+
+    Improve support for no_ccache.  Now, it doesn't even generate a
+    temporary ticket cache during authentication but only uses an
+    in-memory credential list.
+
+    Do user ticket validation using the standard Kerberos library call
+    rather than rolling our own code.  This means that the user can now
+    set options in krb5.conf to control whether that call should fail if
+    the local keytab isn't readable or contains no usable keys.
+
+    Completely rewrite the man page.  Clean it up and make it more
+    readable and fully document all of the options.  Also rewrite the
+    README file and clean up the rest of the package documentation.
+
+    Don't create a ticket cache until after successful authentication.
+
+    Understand the FILE: prefix to Kerberos ticket cache names and compare
+    and chown ticket caches properly with that prefix.
+
+    Add a trailing nul to the password in the Kerberos prompter function,
+    since some code relies on it being there.
+
+    Review the return status of each PAM function and ensure that we only
+    return failure statuses that are supported for that function.
+
+    Rename all internal functions with a pamk5_* prefix to avoid
+    conflicting with any application or system library functions.
+
+    Eliminate global variables in the PAM module and do a better job at
+    cleaning up memory usage.  There are still a few places where the PAM
+    conversation functions may leak memory due to an incomplete
+    specification in the PAM API on who should free what memory.
+
+    The logging messages produced when debug is set should now be more
+    consistent and more complete.
+
+pam-krb5 1.2 (2005-09-27)
+
+    Don't reinitialize the ticket cache if the old and new cache have the
+    same name, since otherwise we end up destroying it.
+
+    Always set KRB5CCNAME, even when reinitializing.
+
+    When reinitializing, look for the ticket cache in the saved context
+    even if KRB5CCNAME isn't set.  OpenSSH calls it this way.
+
+    Drop the ccache option and add ccache_dir instead, which only
+    specifies the directory for ticket caches and is therefore easier to
+    implement.
+
+pam-krb5 1.1 (2005-08-31)
+
+    Add support for reinitialization/refreshing of credentials in
+    pam_sm_setcred.
+
+    Set PAM_AUTHTOK and PAM_OLDAUTHTOK when authenticating to better
+    support stacking this module with others.
+
+    Add an ignore_root option to not do anything when the account to which
+    the user is authenticating is root.  This allows one to log in via
+    console as root even when the network is down (thereby breaking the
+    PAM module in ways that login doesn't like due to timeouts in the
+    Kerberos libraries).
+
+    Store the entire context structure in PAM's memory rather than just
+    the name of the ticket cache so that we can pass around more data to
+    ourself.
+
+    Bring errors more in line with the official PAM specification.
+
+    Move prompt generation into the PAM module rather than letting the
+    Kerberos library generate the prompt.  This way we don't leak
+    principal information to the caller, and the non-standard prompt also
+    broke some applications like gksudo.
+
+    Support session management and destruction of the ticket cache on
+    close of session.
+
+    Don't require that the user have a local account on the system.
+
+    Include the user UID in the default ticket cache name so that rpc.gssd
+    and similar programs can find it.
