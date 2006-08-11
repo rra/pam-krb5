@@ -8,17 +8,17 @@ Kerberos and password changes should be made against Kerberos, with
 fallback to local authentication, the following basic configuration should
 work.  In /etc/pam.d/common-auth, put:
 
-    auth  sufficient  pam_krb5.so ignore_root
+    auth  sufficient  pam_krb5.so minimum_uid=1000
     auth  required    pam_unix.so try_first_pass nullok_secure
 
 In /etc/pam.d/common-session:
 
-    session  optional  pam_krb5.so ignore_root
+    session  optional  pam_krb5.so minimum_uid=1000
     session  required  pam_unix.so
 
 In /etc/pam.d/common-account:
 
-    account  required  pam_krb5.so ignore_root
+    account  required  pam_krb5.so minimum_uid=1000
     account  required  pam_unix.so
 
 (Note that the account function of pam_krb5.so will always succeed if the
@@ -28,19 +28,23 @@ their Kerberos authentication is checked against ~/.k5login if present.)
 
 Finally, in /etc/pam.d/common-password:
 
-    password  sufficient  pam_krb5.so ignore_root
+    password  sufficient  pam_krb5.so minimum_uid=1000
     password  required    pam_unix.so nullok obscure min=4 max=8 md5
 
-Note the ignore_root on all of these lines.  This is optional, but
+Note the minimum_uid=1000 on all of these lines.  This is optional, but
 normally sites do not create a single root@example.com Kerberos principal
-and use it for authentication to root accounts.  In addition, trying to do
-Kerberos authentication when the network is down may cause delays or
+and use it for authentication to root accounts and normally you don't want
+to allow Kerberos authentication to system accounts.  In addition, trying
+to do Kerberos authentication when the network is down may cause delays or
 timeouts, and this way such authentication is never attempted for a root
-login.
+login.  On Debian systems, regular user accounts normally start at UID
+1000; you may need to change this for local policy.
 
 If you regularly use ticket forwarding (such as with Kerberos rlogin or
 ssh with GSSAPI support), you may wish to add the "forwardable" option to
-the pam_krb5.so line in /etc/pam.d/common-auth.
+the pam_krb5.so line in /etc/pam.d/common-auth or equivalently set
+forwardable in /etc/krb5.conf (in either [libdefaults] for all Kerberos
+applications or in a pam group in [appdefaults] just for the PAM module).
 
 This configuration assumes that one can generate a person's Kerberos
 credential by appending the default realm to the local username.  If this
@@ -53,4 +57,4 @@ same name.  In this situation, you will probably also want to add the
 "search_k5login" option to the pam_krb5.so line in /etc/pam.d/common-auth;
 see the pam_krb5(5) man page for more information.
 
- -- Russ Allbery <rra@debian.org>, Fri Nov 18 13:18:48 2005
+ -- Russ Allbery <rra@debian.org>, Fri, 11 Aug 2006 14:03:43
