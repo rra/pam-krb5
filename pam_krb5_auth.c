@@ -126,10 +126,6 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     pamret = pamk5_validate_auth(ctx, args);
     if (pamret != PAM_SUCCESS)
         goto done;
-    if ((pamret = validate_auth(ctx)) != PAM_SUCCESS)
-        goto done;
-    if ((pamret = set_krb5ccname(ctx, cache_name, "PAM_KRB5CCNAME")) != PAM_SUCCESS)
-	goto done;
 
     /* Store the obtained credentials in a temporary cache. */
     if (args->no_ccache)
@@ -160,11 +156,6 @@ done:
     if (pamret != PAM_SUCCESS)
         pam_set_data(pamh, "ctx", NULL, NULL);
     pamk5_args_free(args);
-
-    /* Clear the context on failure so that the account management module
-       knows that we didn't authenticate with Kerberos. */
-    if (pamret != PAM_SUCCESS)
-	pam_set_data(pamh, "ctx", NULL, NULL);
     return pamret;
 }
 
@@ -505,10 +496,6 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
         if (pamret != PAM_SUCCESS)
             goto done;
     }
-    if (pam_getenv(pamh, "PAM_KRB5CCNAME") != NULL)
-	if ((pamret = pam_putenv(pamh, "PAM_KRB5CCNAME")) != PAM_SUCCESS)
-	    goto done;
-    ctx->initialized = 1;
 
     /* Detroy the temporary cache and put the new cache in the context. */
     krb5_cc_destroy(ctx->context, ctx->cache);
