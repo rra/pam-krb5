@@ -12,7 +12,9 @@ else
     CFLAGS += -O2
 endif
 
-build: build-stamp
+build: build-arch build-indep
+build-arch: build-stamp
+build-indep:
 build-stamp:
 	dh_testdir
 	$(MAKE) CFLAGS="$(CFLAGS)"
@@ -25,18 +27,19 @@ clean:
 	$(MAKE) clean
 	dh_clean
 
-install: build
+install: build-stamp
 	dh_testdir
 	dh_testroot
 	dh_clean
 	dh_installdirs
 	install -m 644 pam_krb5.so $(CURDIR)/debian/libpam-krb5/lib/security
 
-# Build architecture-dependent files here.
-binary-arch: build install
+binary: binary-arch binary-indep
+binary-indep:
+binary-arch: build-stamp install
 	dh_testdir
 	dh_testroot
-	dh_installchangelogs ChangeLog
+	dh_installchangelogs CHANGES
 	dh_installdocs
 	dh_installman pam_krb5.5
 	dh_link
@@ -49,6 +52,5 @@ binary-arch: build install
 	dh_md5sums
 	dh_builddeb
 
-binary-indep:
-binary: binary-arch binary-indep
-.PHONY: build clean binary-arch binary-indep binary install
+.PHONY: binary binary-arch binary-indep build build-arch build-indep clean
+.PHONY: install

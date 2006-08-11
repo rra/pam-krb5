@@ -3,15 +3,21 @@ Built for MIT Kerberos by Sam Hartman <hartmans@debian.org>     2000-11-30
 
 It was downloaded from:
 
-    <http://www.squishy.cc/software/pam-krb5/>
+    <http://www.eyrie.org/~eagle/software/pam-krb5/>
 
 Upstream Authors:
 
+    Russ Allbery <rra@debian.org>
     Andres Salomon <dilinger@debian.org>
     Frank Cusack <fcusack@fcusack.com>
 
+Upstream Maintainer:
+
+    Russ Allbery <rra@debian.org>
+
 Copyright:
 
+    Copyright (c) 2005, 2006 Russ Allbery <rra@debian.org>
     Copyright (c) 2005 Andres Salomon <dilinger@debian.org>
     Copyright (c) Frank Cusack, 1999-2000.
     fcusack@fcusack.com
@@ -120,9 +126,6 @@ This software may contain code from Derrick J. Brashear:
     DAMAGE.
 
 This software may contain code from MIT Kerberos 5:
-
-    Copyright Notice and Legal Administrivia
-    ----------------------------------------
 
     Copyright (C) 1996 by the Massachusetts Institute of Technology.
 

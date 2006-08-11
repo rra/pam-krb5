@@ -21,8 +21,9 @@ libpam-krb5 (2.0-1) UNRELEASED; urgency=low
   * Improve the package long description, removing the misleading caution
     about use with network services.
   * Update standards version to 3.7.2 (no changes required).
+  * Add build-arch and build-indep rulies just in case.
 
- -- Russ Allbery <rra@debian.org>  Fri, 11 Aug 2006 13:53:29 -0700
+ -- Russ Allbery <rra@debian.org>  Fri, 11 Aug 2006 13:56:12 -0700
 
 libpam-krb5 (1.2.0-3) unstable; urgency=low
 
