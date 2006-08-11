@@ -23,9 +23,12 @@ DESCRIPTION
   This is not the Kerberos v5 PAM module maintained on Sourceforge and
   used on Red Hat systems.  It is an independent implementation that, if
   it ever shared any common code, diverged long ago.  It supports some
-  features that the Sourceforge module does not, and does not support some
-  options (particularly ones not directly related to Kerberos v5) that it
-  does.
+  features that the Sourceforge module does not (particularly around
+  authorization), and does not support some options (particularly ones not
+  directly related to Kerberos v5) that it does.  This module will never
+  support Kerberos v4 and will probably never directly support AFS (AFS is
+  probably better-supported via a dedicated AFS PAM module that can be
+  stacked with the Kerberos module of your choice).
 
   Either MIT Kerberos or Heimdal are supported.  The Makefile will require
   some modifications to build with Heimdal.  The MIT Kerberos support is
