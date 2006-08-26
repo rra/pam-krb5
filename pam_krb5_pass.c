@@ -10,7 +10,13 @@
 /* Get declarations for the password functions. */
 #define PAM_SM_PASSWORD
 
-#include <com_err.h>
+#include "config.h"
+
+#ifdef HAVE_ET_COM_ERR_H
+# include <et/com_err.h>
+#else
+# include <com_err.h>
+#endif
 #include <errno.h>
 #include <krb5.h>
 #include <security/pam_appl.h>
@@ -145,7 +151,8 @@ password_change(struct context *ctx, struct pam_args *args, const char *pass)
     /* Everything from here on is just handling diagnostics and output. */
     if (retval != 0) {
         pamk5_debug_krb5(ctx, args, "krb5_change_password", retval);
-        krb_pass_utter(ctx->pamh, args->quiet, error_message(retval));
+        krb_pass_utter(ctx->pamh, args->quiet,
+                       pamk5_compat_get_err_text(ctx->context, retval));
         retval = PAM_AUTHTOK_ERR;
         goto done;
     }

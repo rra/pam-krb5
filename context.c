@@ -7,6 +7,8 @@
  * module between calls to the various public interfaces.
  */
 
+#include "config.h"
+
 #include <security/pam_modules.h>
 #include <string.h>
 
@@ -43,7 +45,7 @@ pamk5_context_new(pam_handle_t *pamh, struct context **ctx)
             retval = PAM_SERVICE_ERR;
         goto done;
     }
-    pam_get_item(c->pamh, PAM_SERVICE, (const void **) &c->service);
+    pam_get_item(c->pamh, PAM_SERVICE, (void *) &c->service);
     if (c->service == NULL)
         c->service = "unknown";
     retval = krb5_init_context(&c->context);

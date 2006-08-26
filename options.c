@@ -4,6 +4,8 @@
  * Option handling for pam-krb5.
  */
 
+#include "config.h"
+
 #include <krb5.h>
 #include <string.h>
 

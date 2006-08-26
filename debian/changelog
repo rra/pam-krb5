@@ -1,3 +1,11 @@
+libpam-krb5 (2.1-1) UNRELEASED; urgency=low
+
+  * New upstream release.
+    - Strip off a FILE: prefix from the cache path before creating it in
+      case the user set ccache or ccache_dir with a cache type prefix.
+
+ -- Russ Allbery <rra@debian.org>  Sat, 26 Aug 2006 01:09:05 -0700
+
 libpam-krb5 (2.0-1) unstable; urgency=low
 
   * New upstream release from a new upstream maintainer.

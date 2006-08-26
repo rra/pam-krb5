@@ -8,10 +8,9 @@
 /* Get prototypes for the account management functions. */
 #define PAM_SM_ACCOUNT
 
-#include <com_err.h>
-#include <krb5.h>
+#include "config.h"
+
 #include <security/pam_modules.h>
-#include <string.h>
 
 #include "pam_krb5.h"
 

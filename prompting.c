@@ -4,6 +4,8 @@
  * Functions to prompt users for information.
  */
 
+#include "config.h"
+
 #include <errno.h>
 #include <krb5.h>
 #include <security/pam_modules.h>
