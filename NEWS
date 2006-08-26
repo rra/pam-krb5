@@ -6,6 +6,10 @@ pam-krb5 2.1 (unreleased)
     case the user set ccache or ccache_dir with a cache type prefix.
     Thanks to Björn Torkelsson for the patch.
 
+    Added an Autoconf script to distinguish between Heimdal and MIT
+    Kerberos and take care of other portability issues.  Rewrote the
+    Makefile accordingly.
+
     Added portability and error reporting fixes for Heimdal, thanks to
     Matthijs Mohlmann.
 

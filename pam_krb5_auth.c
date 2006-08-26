@@ -11,7 +11,8 @@
 /* Get the prototypes for the authentication functions. */
 #define PAM_SM_AUTH
 
-#include <com_err.h>
+#include "config.h"
+
 #include <errno.h>
 #include <fcntl.h>
 #include <krb5.h>

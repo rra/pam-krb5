@@ -1,4 +1,6 @@
 CHANGES
 Makefile
+config.h.in
+configure
 pam-krb5-*
 pam_krb5.5

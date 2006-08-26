@@ -7,6 +7,8 @@
  * cache, or when copying credentials between ticket caches.
  */
 
+#include "config.h"
+
 #include <krb5.h>
 #include <stdlib.h>
 

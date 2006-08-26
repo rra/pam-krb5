@@ -16,7 +16,8 @@
 #define PAM_SM_AUTH
 #define PAM_SM_SESSION
 
-#include <krb5.h>
+#include "config.h"
+
 #include <security/pam_modules.h>
 
 #include "pam_krb5.h"

@@ -1,0 +1,65 @@
+# Makefile for pam_krb5
+
+srcdir		= @srcdir@
+VPATH		= @srcdir@
+
+PACKAGE		= @PACKAGE_TARNAME@
+VERSION		= @PACKAGE_VERSION@
+TARDIR		= $(PACKAGE)-$(VERSION)
+TARNAME		= $(TARDIR).tar
+
+prefix		= @prefix@
+exec_prefix	= @exec_prefix@
+libdir		= @libdir@
+pamdir		= $(libdir)/security
+datarootdir	= @datarootdir@
+mandir		= @mandir@
+
+CC		= @CC@
+CFLAGS		= @CFLAGS@ -fPIC
+CPPFLAGS	= -I. -I$(srcdir) @CPPFLAGS@
+LDFLAGS		= -shared @LDFLAGS@
+LIBS		= -lpam @LIBS@
+
+INSTALL		= @INSTALL@
+INSTALL_DATA	= @INSTALL_DATA@
+
+SOURCES		= compat.c context.c credlist.c logging.c options.c \
+		  pam_krb5_acct.c pam_krb5_auth.c pam_krb5_pass.c \
+		  pam_krb5_sess.c prompting.c support.c
+OBJECTS		= $(SOURCES:.c=.o)
+
+all: pam_krb5.so $(srcdir)/pam_krb5.5
+
+pam_krb5.so: $(OBJECTS)
+	$(CC) -o $@ $(LDFLAGS) $(OBJECTS) $(LIBS)
+
+$(srcdir)/pam_krb5.5: $(srcdir)/pam_krb5.pod
+	pod2man --section=5 --release=$(VERSION) --center='PAM Modules' \
+	    $(srcdir)/pam_krb5.pod > $@
+
+install: pam_krb5.so $(srcdir)/pam_krb5.5
+	$(INSTALL) -d $(pamdir)
+	$(INSTALL) -d $(mandir)/man5
+	$(INSTALL_DATA) pam_krb5.so $(pamdir)/pam_krb5.so
+	$(INSTALL_DATA) pam_krb5.5 $(mandir)/man5/pam_krb5.5
+
+# This target only works when builddir == srcdir, at least for now.
+dist: pam_krb5.5
+	rm -rf $(TARDIR) $(TARNAME).gz
+	mkdir $(TARDIR)
+	bzr log --short > CHANGES
+	rsync -a CHANGES* COPYRIGHT Makefile NEWS README TODO *.c *.h \
+	    pam_krb5.pod pam_krb5.5 $(TARDIR)/
+	tar cf $(TARNAME) $(TARDIR)
+	gzip -9 $(TARNAME)
+
+clean:
+	rm -f *.so *.o
+
+distclean: clean
+	rm -f Makefile config.cache config.h config.log config.status
+	rm -rf $(TARDIR)
+
+maintclean: distclean
+	rm -f config.h.in config.h.in~ pam_krb5.5 $(TARNAME).gz
