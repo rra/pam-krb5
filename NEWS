@@ -1,5 +1,11 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 2.2 (unreleased)
+
+    Update the build and installation documentation for the new
+    Autoconf-based build system.  This should have been in the last
+    release but was missed.
+
 pam-krb5 2.1 (2006-08-26)
 
     Strip off a FILE: prefix from the cache path before creating it in
