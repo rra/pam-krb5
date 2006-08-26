@@ -5,26 +5,42 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
-CFLAGS = -Wall -g -fPIC
+# Tell Autoconf the correct system types.  We need to know the host
+# architecture to determine whether setpag is available.
+DEB_HOST_ARCH      ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
+DEB_HOST_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
+DEB_BUILD_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
+ifeq ($(DEB_BUILD_GNU_TYPE),$(DEB_HOST_GNU_TYPE))
+    SYSTEM = --build $(DEB_HOST_GNU_TYPE)
+else
+    SYSTEM = --build $(DEB_BUILD_GNU_TYPE) --host $(DEB_HOST_GNU_TYPE)
+endif
+
+CFLAGS = -g
 ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
     CFLAGS += -O0
 else
     CFLAGS += -O2
 endif
 
+config.status: configure
+	dh_testdir
+	CFLAGS="$(CFLAGS)" ./configure $(SYSTEM) --prefix=/usr \
+	    --mandir=\$${prefix}/share/man --enable-reduced-depends
+
 build: build-arch build-indep
 build-arch: build-stamp
 build-indep:
 build-stamp:
 	dh_testdir
-	$(MAKE) CFLAGS="$(CFLAGS)"
+	$(MAKE)
 	touch build-stamp
 
 clean:
 	dh_testdir
 	dh_testroot
 	rm -f build-stamp
-	$(MAKE) clean
+	[ ! -f Makefile ] || $(MAKE) distclean
 	dh_clean
 
 install: build-stamp
