@@ -1,6 +1,6 @@
                       User-Visible pam-krb5 Changes
 
-pam-krb5 2.1 (unreleased)
+pam-krb5 2.1 (2006-08-26)
 
     Strip off a FILE: prefix from the cache path before creating it in
     case the user set ccache or ccache_dir with a cache type prefix.
