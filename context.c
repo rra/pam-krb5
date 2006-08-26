@@ -10,6 +10,7 @@
 #include "config.h"
 
 #include <security/pam_modules.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "pam_krb5.h"

@@ -7,6 +7,7 @@
 #include "config.h"
 
 #include <krb5.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "pam_krb5.h"
