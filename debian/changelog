@@ -1,4 +1,4 @@
-libpam-krb5 (2.1-1) UNRELEASED; urgency=low
+libpam-krb5 (2.1-1) unstable; urgency=low
 
   * New upstream release.
     - Strip off a FILE: prefix from the cache path before creating it in
@@ -6,7 +6,7 @@ libpam-krb5 (2.1-1) UNRELEASED; urgency=low
   * Upstream now uses Autoconf, so update the build rules accordingly.
   * Upstream renamed CHANGES.old to CHANGES-old.
 
- -- Russ Allbery <rra@debian.org>  Sat, 26 Aug 2006 01:19:11 -0700
+ -- Russ Allbery <rra@debian.org>  Sat, 26 Aug 2006 01:35:12 -0700
 
 libpam-krb5 (2.0-1) unstable; urgency=low
 
