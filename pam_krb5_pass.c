@@ -167,9 +167,10 @@ password_change(struct context *ctx, struct pam_args *args, const char *pass)
             pamk5_error(ctx, "malloc failure: %s", strerror(errno));
         else {
             sprintf(message, "%.*s%s%.*s",
-                    result_code_string.length, result_code_string.data,
+                    result_code_string.length,
+                    (char *) result_code_string.data,
                     result_string.length == 0 ? "" : ": ",
-                    result_string.length, result_string.data);
+                    result_string.length, (char *) result_string.data);
             krb_pass_utter(ctx->pamh, args->quiet, message);
             free(message);
         }
