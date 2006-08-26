@@ -49,8 +49,8 @@ dist: pam_krb5.5
 	rm -rf $(TARDIR) $(TARNAME).gz
 	mkdir $(TARDIR)
 	bzr log --short > CHANGES
-	rsync -a CHANGES* COPYRIGHT Makefile NEWS README TODO *.c *.h \
-	    pam_krb5.pod pam_krb5.5 $(TARDIR)/
+	rsync -C --exclude /debian/ -a ./ $(TARDIR)/
+	cd $(TARDIR) && ./autogen
 	tar cf $(TARNAME) $(TARDIR)
 	gzip -9 $(TARNAME)
 
@@ -62,4 +62,4 @@ distclean: clean
 	rm -rf $(TARDIR)
 
 maintclean: distclean
-	rm -f config.h.in config.h.in~ pam_krb5.5 $(TARNAME).gz
+	rm -f CHANGES config.h.in config.h.in~ pam_krb5.5 $(TARNAME).gz

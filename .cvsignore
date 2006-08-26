@@ -1,4 +1,4 @@
-CHANGES
+.bzr
 Makefile
 autom4te.cache
 config.cache
@@ -8,4 +8,3 @@ config.log
 config.status
 configure
 pam-krb5-*
-pam_krb5.5
