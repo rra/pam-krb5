@@ -6,6 +6,9 @@ pam-krb5 2.2 (unreleased)
     Autoconf-based build system.  This should have been in the last
     release but was missed.
 
+    Fix a typo that caused the Heimdal support not to compile.  Thanks,
+    Matthijs Mohlmann.
+
 pam-krb5 2.1 (2006-08-26)
 
     Strip off a FILE: prefix from the cache path before creating it in
