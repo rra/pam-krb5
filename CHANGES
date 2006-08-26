@@ -1,3 +1,7 @@
+   65 Russ Allbery	2006-08-26
+      Rename CHANGES.old so that rsync's default ignore list doesn't bite me.
+      Sneak this change into 2.1.
+
    64 Russ Allbery	2006-08-26
       Release 2.1.
 
