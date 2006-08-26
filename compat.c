@@ -9,7 +9,7 @@
 #ifdef HAVE_KRB5_MIT
 # include "compat_mit.c"
 #elif HAVE_KRB5_HEIMDAL
-# include "comat_heimdal.c"
+# include "compat_heimdal.c"
 #else
 # error "Unknown Kerberos implementation"
 #endif
