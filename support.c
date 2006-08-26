@@ -197,7 +197,7 @@ pamk5_password_auth(struct context *ctx, struct pam_args *args,
         ret = krb5_string_to_deltat(args->renew_lifetime, &rlife);
         if (ret != 0 || rlife == 0) {
             pamk5_error(ctx, "bad renew_lifetime value: %s",
-                        error_message(ret));
+                        pamk5_compat_get_err_text(ctx->context, ret));
             retval = PAM_SERVICE_ERR;
             goto done;
         }
@@ -285,7 +285,7 @@ pamk5_password_auth(struct context *ctx, struct pam_args *args,
                                         &ctx->cache, &verify_opts);
         if (retval != 0) {
             pamk5_error(ctx, "credential verification failed: %s",
-                  error_message(retval));
+                        pamk5_compat_get_err_text(ctx->context, retval));
             retval = PAM_AUTH_ERR;
             goto done;
         }

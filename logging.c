@@ -73,5 +73,9 @@ void
 pamk5_debug_krb5(struct context *ctx, struct pam_args *args, const char *msg,
            int status)
 {
-    pamk5_debug(ctx, args, "%s: %s", msg, error_message(status));
+    if (ctx != NULL && ctx->context != NULL)
+        pamk5_debug(ctx, args, "%s: %s", msg,
+                    pamk5_compat_get_err_text(ctx->context, status));
+    else
+        pamk5_debug(ctx, args, "%s: %s", msg, error_message(status));
 }

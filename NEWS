@@ -6,6 +6,9 @@ pam-krb5 2.1 (unreleased)
     case the user set ccache or ccache_dir with a cache type prefix.
     Thanks to Björn Torkelsson for the patch.
 
+    Added portability and error reporting fixes for Heimdal, thanks to
+    Matthijs Mohlmann.
+
 pam-krb5 2.0 (2006-08-11)
 
     Always use a disk cache for temporary storage of credentials between

@@ -104,8 +104,7 @@ int pamk5_should_ignore(struct context *, struct pam_args *,
  */
 const char *pamk5_compat_princ_component(krb5_context, krb5_principal, int);
 void pamk5_compat_free_data_contents(krb5_context, krb5_data *);
-krb5_error_code pamk5_compat_cc_next_cred(krb5_context, const krb5_ccache, 
-                                          krb5_cc_cursor *, krb5_creds *);
+const char *pamk5_compat_get_err_text(krb5_context, krb5_error_code);
 
 /*
  * Set to the function to use to prompt for the user's password from inside

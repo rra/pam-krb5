@@ -145,7 +145,8 @@ password_change(struct context *ctx, struct pam_args *args, const char *pass)
     /* Everything from here on is just handling diagnostics and output. */
     if (retval != 0) {
         pamk5_debug_krb5(ctx, args, "krb5_change_password", retval);
-        krb_pass_utter(ctx->pamh, args->quiet, error_message(retval));
+        krb_pass_utter(ctx->pamh, args->quiet,
+                       pamk5_compat_get_err_text(retval));
         retval = PAM_AUTHTOK_ERR;
         goto done;
     }
