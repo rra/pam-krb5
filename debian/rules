@@ -31,7 +31,7 @@ config.status: configure
 build: build-arch build-indep
 build-arch: build-stamp
 build-indep:
-build-stamp:
+build-stamp: config.status
 	dh_testdir
 	$(MAKE)
 	touch build-stamp
