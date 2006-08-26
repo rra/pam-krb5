@@ -8,7 +8,13 @@
  * always log.
  */
 
-#include <com_err.h>
+#include "config.h"
+
+#ifdef HAVE_ET_COM_ERR_H
+# include <et/com_err.h>
+#else
+# include <com_err.h>
+#endif
 #include <krb5.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -73,5 +79,9 @@ void
 pamk5_debug_krb5(struct context *ctx, struct pam_args *args, const char *msg,
            int status)
 {
-    pamk5_debug(ctx, args, "%s: %s", msg, error_message(status));
+    if (ctx != NULL && ctx->context != NULL)
+        pamk5_debug(ctx, args, "%s: %s", msg,
+                    pamk5_compat_get_err_text(ctx->context, status));
+    else
+        pamk5_debug(ctx, args, "%s: %s", msg, error_message(status));
 }

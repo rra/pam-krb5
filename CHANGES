@@ -1,3 +1,38 @@
+   64 Russ Allbery	2006-08-26
+      Release 2.1.
+
+   63 Russ Allbery	2006-08-26
+      Redid make dist to use rsync -C.  Added a .cvsignore file to control what
+      files rsync distributes.  Updated .bzrignore with all the Autoconf
+      droppings.
+
+   62 Russ Allbery	2006-08-26
+      Added an Autoconf script to distinguish between Heimdal and MIT Kerberos
+      and take care of other portability issues.  Rewrote the Makefile
+      accordingly.
+
+   61 Russ Allbery	2006-08-25
+      Pass the context in as the first argument to pamk5_compat_get_err_text.
+
+   60 Russ Allbery	2006-08-25
+      Call error_message for MIT Kerberos but krb5_get_err_text for Heimdal,
+      using the appropriate compat indirection.  (The only exception is that
+      we still call error_message for Heimdal if what failed was the creation
+      of a context.)
+      
+      Remove the pamk5_compat_cc_next_cred wrapper.  It wasn't actually used,
+      and Heimdal takes its arguments in the same order as MIT and the Heimdal
+      compat layer wouldn't compile.
+      
+      Patches from Matthijs Mohlmann, committed with modifications.
+
+   59 Russ Allbery	2006-08-24
+      Ignore the auto-generated CHANGES file.
+
+   58 Russ Allbery	2006-08-24
+      Strip off a FILE: prefix from the cache path before creating it in
+      case the user set ccache or ccache_dir with a cache type prefix.
+
    57 Russ Allbery	2006-08-11
       Release 2.0.
 

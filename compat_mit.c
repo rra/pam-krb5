@@ -4,6 +4,11 @@
  * Kerberos compatibility functions for MIT Kerberos.
  */
 
+#ifdef HAVE_ET_COM_ERR_H
+# include <et/com_err.h>
+#else
+# include <com_err.h>
+#endif
 #include <krb5.h>
 
 #include "pam_krb5.h"
@@ -22,11 +27,10 @@ pamk5_compat_free_data_contents(krb5_context c, krb5_data *data)
 }
 
 
-krb5_error_code
-pamk5_compat_cc_next_cred(krb5_context c, const krb5_ccache id, 
-                          krb5_cc_cursor *cursor, krb5_creds *creds)
+const char *
+pamk5_compat_get_err_text(krb5_context c, krb5_error_code code)
 {
-    return krb5_cc_next_cred(c, id, cursor, creds);
+    return error_message(code);
 }
 
 

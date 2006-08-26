@@ -1,5 +1,18 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 2.1 (2006-08-26)
+
+    Strip off a FILE: prefix from the cache path before creating it in
+    case the user set ccache or ccache_dir with a cache type prefix.
+    Thanks to Björn Torkelsson for the patch.
+
+    Added an Autoconf script to distinguish between Heimdal and MIT
+    Kerberos and take care of other portability issues.  Rewrote the
+    Makefile accordingly.
+
+    Added portability and error reporting fixes for Heimdal, thanks to
+    Matthijs Mohlmann.
+
 pam-krb5 2.0 (2006-08-11)
 
     Always use a disk cache for temporary storage of credentials between

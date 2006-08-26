@@ -11,7 +11,8 @@
 /* Get the prototypes for the authentication functions. */
 #define PAM_SM_AUTH
 
-#include <com_err.h>
+#include "config.h"
+
 #include <errno.h>
 #include <fcntl.h>
 #include <krb5.h>
@@ -441,6 +442,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
         ctx->dont_destroy_cache = 1;
     } else {
         int ccache_fd;
+        char *cache_name_tmp;
         size_t len;
 
         cache_name = build_ccache_name(ctx, args, uid);
@@ -450,7 +452,11 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
         }
         len = strlen(cache_name);
         if (len > 6 && strncmp("XXXXXX", cache_name + len - 6, 6) == 0) {
-            ccache_fd = mkstemp(cache_name);
+            if (strncmp(cache_name, "FILE:", strlen("FILE:")) == 0)
+                cache_name_tmp = cache_name + strlen("FILE:");
+            else
+                cache_name_tmp = cache_name;
+            ccache_fd = mkstemp(cache_name_tmp);
             if (ccache_fd == -1) {
                 pamk5_error(ctx, "mkstemp failure: %s", strerror(errno));
                 pamret = PAM_SERVICE_ERR;
