@@ -3,10 +3,15 @@
  * Support the remaining PAM options that the Sourceforge module supports.
    The most interesting are banner, keytab, and ticket_lifetime.
 
- * Currently, the module doesn't provide any useful realm to the Kerberos
-   libraries when reading krb5.conf defaults.  It should default the realm
-   to the local realm and allow the realm to be overridden via PAM
-   configuration.
+ * Refactor the krb5_appdefaults calls in options.c to use helper routines
+   that hide some of the nonsense, particularly the way string defaults
+   have to be handled.
+
+ * Support expose_account in the PAM configuration and, when set, use the
+   native Kerberos prompters that give more information about what account
+   the user is authenticating to.
+
+ * Diagnose unknown options to the PAM module.  Currently, they're ignored.
 
  * Try to support Solaris as well.  I don't know how close the module is
    to just working and how much the Solaris PAM setup differs from Linux.
