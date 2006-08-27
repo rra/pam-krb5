@@ -34,6 +34,8 @@ all: pam_krb5.so $(srcdir)/pam_krb5.5
 pam_krb5.so: $(OBJECTS)
 	$(CC) -o $@ $(LDFLAGS) $(OBJECTS) $(LIBS)
 
+compat.o: compat_heimdal.c compat_mit.c
+
 $(srcdir)/pam_krb5.5: $(srcdir)/pam_krb5.pod
 	pod2man --section=5 --release=$(VERSION) --center='PAM Modules' \
 	    $(srcdir)/pam_krb5.pod > $@

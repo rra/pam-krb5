@@ -224,7 +224,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
      * context.
      */
     if (pamret != PAM_SUCCESS) {
-        pamret = pamk5_context_new(pamh, &ctx);
+        pamret = pamk5_context_new(pamh, args, &ctx);
         if (pamret != PAM_SUCCESS) {
             pamk5_debug_pam(ctx, args, "creating context failed", pamret);
             pamret = PAM_AUTHTOK_ERR;

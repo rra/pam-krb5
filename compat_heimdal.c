@@ -4,7 +4,11 @@
  * Kerberos compatibility functions for Heimdal.
  */
 
+#include "config.h"
+
 #include <krb5.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "pam_krb5.h"
 
@@ -19,6 +23,26 @@ const char *
 pamk5_compat_get_err_text(krb5_context c, krb5_error_code code)
 {
     return krb5_get_err_text(c, code);
+}
+
+
+krb5_error_code
+pamk5_compat_store_realm(struct pam_args *args, const char *realm)
+{
+    pamk5_compat_free_realm(args);
+    args->realm_data = strdup(realm);
+    if (args->realm_data == NULL)
+        return errno;
+}
+
+
+void
+pamk5_compat_free_realm(struct pam_args *args)
+{
+    if (args->realm_data != NULL) {
+        free(args->realm_data);
+        args->realm_data = NULL;
+    }
 }
 
 

@@ -7,6 +7,8 @@
 #ifndef PAM_KRB5_H_
 #define PAM_KRB5_H_
 
+#include "config.h"
+
 #include <krb5.h>
 #include <security/pam_modules.h>
 #include <stdarg.h>
@@ -24,11 +26,23 @@ struct pam_args {
     int ignore_k5login;         /* Don't check .k5login files. */
     int minimum_uid;            /* Ignore users below this UID. */
     int no_ccache;              /* Don't create a ticket cache. */
+    char *realm;                /* Default realm. */
     char *renew_lifetime;       /* Renewable lifetime of credentials. */
     int search_k5login;         /* Try password with each line of .k5login. */
     int try_first_pass;         /* Try the previously entered password. */
     int use_authtok;            /* Require a previous password be used. */
     int use_first_pass;         /* Always use the previous password. */
+
+    /*
+     * The default realm, used mostly in option parsing but also for
+     * initializing krb5_get_init_creds_opt.  Unfortunately, the storage type
+     * varies between Heimdal and MIT.
+     */
+#ifdef HAVE_KRB5_HEIMDAL
+    krb5_realm realm_data;
+#else
+    krb5_data *realm_data;
+#endif
 
     /*
      * This isn't really an arg, but instead flags whether PAM_SILENT was
@@ -104,6 +118,8 @@ int pamk5_should_ignore(struct context *, struct pam_args *,
  */
 void pamk5_compat_free_data_contents(krb5_context, krb5_data *);
 const char *pamk5_compat_get_err_text(krb5_context, krb5_error_code);
+krb5_error_code pamk5_compat_set_realm(struct pam_args *, const char *);
+void pamk5_compat_free_realm(struct pam_args *);
 
 /*
  * Set to the function to use to prompt for the user's password from inside
@@ -112,7 +128,7 @@ const char *pamk5_compat_get_err_text(krb5_context, krb5_error_code);
 krb5_prompter_fct pamk5_pam_prompter;
 
 /* Context management. */
-int pamk5_context_new(pam_handle_t *, struct context **);
+int pamk5_context_new(pam_handle_t *, struct pam_args *, struct context **);
 int pamk5_context_fetch(pam_handle_t *, struct context **);
 void pamk5_context_free(struct context *);
 void pamk5_context_destroy(pam_handle_t *, void *data, int pam_end_status);
