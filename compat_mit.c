@@ -13,13 +13,6 @@
 
 #include "pam_krb5.h"
 
-const char *
-pamk5_compat_princ_component(krb5_context c, krb5_principal princ, int n)
-{
-    return krb5_princ_component(c, princ, n)->data;
-}
-
-
 void
 pamk5_compat_free_data_contents(krb5_context c, krb5_data *data)
 {

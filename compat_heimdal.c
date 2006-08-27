@@ -8,13 +8,6 @@
 
 #include "pam_krb5.h"
 
-const char *
-pamk5_compat_princ_component(krb5_context c, krb5_principal princ, int n)
-{
-    return princ->name.name_string.val[n];
-}
-
-
 void
 pamk5_compat_free_data_contents(krb5_context c, krb5_data *data)
 {

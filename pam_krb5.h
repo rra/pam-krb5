@@ -102,7 +102,6 @@ int pamk5_should_ignore(struct context *, struct pam_args *,
  * Kerberos or Heimdal, appropriate implementations for the Kerberos
  * implementation will be provided.
  */
-const char *pamk5_compat_princ_component(krb5_context, krb5_principal, int);
 void pamk5_compat_free_data_contents(krb5_context, krb5_data *);
 const char *pamk5_compat_get_err_text(krb5_context, krb5_error_code);
 
