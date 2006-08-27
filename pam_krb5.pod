@@ -265,7 +265,7 @@ pam_start_session() don't make sense with this option.
 
 This option is only applicable to the auth group.
 
-=iteam realm=<realm>
+=item realm=<realm>
 
 Obtain credentials in the specified realm rather than in the default realm
 for this system.  If this option is used, it should be set for all groups
