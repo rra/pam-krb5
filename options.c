@@ -69,7 +69,9 @@ pamk5_args_parse(struct context *ctx, int flags, int argc, const char **argv)
             local_context = 1;
     }
     if (c != NULL) {
-        if (krb5_get_default_realm(c, &args->realm) == 0)
+        if (args->realm == NULL)
+            krb5_get_default_realm(c, &args->realm);
+        if (args->realm != NULL)
             pamk5_compat_set_realm(args, args->realm);
         krb5_appdefault_string(c, "pam", args->realm_data, "ccache", "",
                                &args->ccache);
