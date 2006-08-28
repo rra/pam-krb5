@@ -1,6 +1,6 @@
                       User-Visible pam-krb5 Changes
 
-pam-krb5 2.2 (unreleased)
+pam-krb5 2.2 (2006-08-28)
 
     Allow the default realm to be overridden in the PAM options.
 
