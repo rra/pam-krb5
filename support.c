@@ -194,6 +194,10 @@ pamk5_password_auth(struct context *ctx, struct pam_args *args,
 
     /* Set ticket options. */
     krb5_get_init_creds_opt_init(&opts);
+#ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_DEFAULT_FLAGS
+    krb5_get_init_creds_opt_set_default_flags(ctx->context, "pam",
+                                              args->realm_data, &opts);
+#endif
     if (args->forwardable)
         krb5_get_init_creds_opt_set_forwardable(&opts, 1);
     if (args->renew_lifetime != NULL) {

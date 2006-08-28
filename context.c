@@ -10,6 +10,7 @@
 #include "config.h"
 
 #include <security/pam_modules.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "pam_krb5.h"
@@ -19,7 +20,8 @@
  * a new Kerberos context.
  */
 int
-pamk5_context_new(pam_handle_t *pamh, struct context **ctx)
+pamk5_context_new(pam_handle_t *pamh, struct pam_args *args,
+                  struct context **ctx)
 {
     struct context *c;
     int retval;
@@ -53,6 +55,17 @@ pamk5_context_new(pam_handle_t *pamh, struct context **ctx)
         pamk5_error(c, "krb5_init_context: %s", error_message(retval));
         retval = PAM_SERVICE_ERR;
         goto done;
+    }
+
+    /* Set a default realm if one was configured. */
+    if (args->realm != NULL) {
+        retval = krb5_set_default_realm(c->context, args->realm);
+        if (retval != 0) {
+            pamk5_error(c, "cannot set default realm: %s",
+                        pamk5_compat_get_err_text(c->context, retval));
+            retval = PAM_SERVICE_ERR;
+            goto done;
+        }
     }
 
 done:

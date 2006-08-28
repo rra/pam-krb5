@@ -6,6 +6,10 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
+/* Define to 1 if you have the `krb5_get_init_opt_set_default_flags' function.
+   */
+#undef HAVE_KRB5_GET_INIT_OPT_SET_DEFAULT_FLAGS
+
 /* Define if your Kerberos implementation is Heimdal. */
 #undef HAVE_KRB5_HEIMDAL
 

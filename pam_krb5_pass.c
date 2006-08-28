@@ -167,9 +167,10 @@ password_change(struct context *ctx, struct pam_args *args, const char *pass)
             pamk5_error(ctx, "malloc failure: %s", strerror(errno));
         else {
             sprintf(message, "%.*s%s%.*s",
-                    result_code_string.length, result_code_string.data,
+                    result_code_string.length,
+                    (char *) result_code_string.data,
                     result_string.length == 0 ? "" : ": ",
-                    result_string.length, result_string.data);
+                    result_string.length, (char *) result_string.data);
             krb_pass_utter(ctx->pamh, args->quiet, message);
             free(message);
         }
@@ -223,7 +224,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
      * context.
      */
     if (pamret != PAM_SUCCESS) {
-        pamret = pamk5_context_new(pamh, &ctx);
+        pamret = pamk5_context_new(pamh, args, &ctx);
         if (pamret != PAM_SUCCESS) {
             pamk5_debug_pam(ctx, args, "creating context failed", pamret);
             pamret = PAM_AUTHTOK_ERR;

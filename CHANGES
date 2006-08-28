@@ -1,3 +1,58 @@
+   80 Russ Allbery	2006-08-28
+      Release 2.2.
+
+   79 Russ Allbery	2006-08-28
+      Release 2.2.
+
+   78 Russ Allbery	2006-08-26
+      Document recent changes.
+
+   77 Russ Allbery	2006-08-26
+      Realm handling is now done.  Add a few more things that need doing.
+
+   76 Russ Allbery	2006-08-26
+      Don't override the configured realm with the default one before parsing
+      options.
+
+   75 Russ Allbery	2006-08-26
+      Fix POD typo.
+
+   74 Russ Allbery	2006-08-26
+      Check for the existence of krb5_get_init_opt_set_default_flags.
+
+   73 Russ Allbery	2006-08-26
+      Allow the user to set the default realm on the PAM option line.  Use that
+      both to set the default realm for other operations and when reading
+      defaults from the krb5.conf file.
+      
+      For Heimdal, also set default options from krb5.conf before getting tickets.
+      This mostly just duplicates lookups that the PAM module was already doing,
+      but it may also pick up configuration from [libdefaults] and [realms] under
+      some circumstances and supports all the options that Heimdal supports (even
+      if pam_krb5 doesn't handle them specially).
+
+   72 Russ Allbery	2006-08-26
+      pamk5_compat_princ_component wasn't used, so remove it.
+
+   71 Russ Allbery	2006-08-26
+      Note the fix for Heimdal compatibility.
+
+   70 Russ Allbery	2006-08-26
+      Add casts to silence compiler warnings.
+
+   69 Russ Allbery	2006-08-26
+      Resolve a couple of implicit declarations of free.
+
+   68 Russ Allbery	2006-08-26
+      Spell compat_heimdal.c correctly.
+
+   67 Russ Allbery	2006-08-26
+      We now use Autoconf, so remove the item saying to add it.
+
+   66 Russ Allbery	2006-08-26
+      Update the build and installation documentation for the new Autoconf-based
+      build system.  This should have been in the last release but was missed.
+
    65 Russ Allbery	2006-08-26
       Rename CHANGES.old so that rsync's default ignore list doesn't bite me.
       Sneak this change into 2.1.

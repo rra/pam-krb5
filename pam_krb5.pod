@@ -142,17 +142,26 @@ the PAM configuration.
 To set an option for the PAM module in the system F<krb5.conf> file, put
 that option in the [appdefaults] section.  The Kerberos v5 PAM module will
 look for options either at the top level of the [appdefaults] section or
-in a subsection named C<pam>.  For example, the following fragment of a
-F<krb5.conf> file would set I<forwardable> to true and I<minimum_uid> to
-100:
+in a subsection named C<pam>, inside or outside a section for the realm.
+For example, the following fragment of a F<krb5.conf> file would set
+I<forwardable> to true, I<minimum_uid> to 100, and set I<ignore_k5login>
+only if the realm is EXAMPLE.COM.
 
     [appdefaults]
         forwardable = true
         pam = {
             minimum_uid = 100
+            EXAMPLE.COM = {
+                ignore_k5login = true
+            }
         }
 
 For more information on the syntax of F<krb5.conf>, see krb5.conf(5).
+Note that options that depend on the realm will be set only on the basis
+of the default realm, either as configured in krb5.conf(5) or as set by
+the I<realm> option described below.  If the user authenticates to an
+account qualified with a realm, that realm will not be used when
+determining which options will apply.
 
 There is no difference to the PAM module whether options are specified at
 the top level or in a C<pam> section; the C<pam> section is supported in
@@ -255,6 +264,16 @@ call pam_authenticate(); other functions like pam_setcred() and
 pam_start_session() don't make sense with this option.
 
 This option is only applicable to the auth group.
+
+=item realm=<realm>
+
+Obtain credentials in the specified realm rather than in the default realm
+for this system.  If this option is used, it should be set for all groups
+being used for consistent results (although the account group currently
+doesn't care about realm).  This will not change authorization decisions.
+If the obtained credentials are supposed to allow access to a shell
+account, the user will need an appropriate F<.k5login> file entry or the
+system will have to have a custom aname_to_localname mapping.
 
 =item renew_lifetime=<lifetime>
 

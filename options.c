@@ -7,6 +7,7 @@
 #include "config.h"
 
 #include <krb5.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "pam_krb5.h"
@@ -36,13 +37,27 @@ pamk5_args_parse(struct context *ctx, int flags, int argc, const char **argv)
     args->ccache = NULL;
     args->ccache_dir = NULL;
     args->renew_lifetime = NULL;
+    args->realm = NULL;
+    args->realm_data = NULL;
 
     /*
-     * Obtain a context if we need to and then set defaults from krb5.conf.
-     * Use the pam section of appdefaults for compatibility with the Red Hat
-     * module.  If we can't get a context, just quietly proceed; we'll die
-     * soon enough later and this way we'll die after we know whether to debug
-     * things.
+     * Do an initial scan to see if the realm is already set in our options.
+     * If so, that overrides.
+     */
+    for (i = 0; i < argc; i++) {
+        if (strncmp(argv[i], "realm=", 6) == 0) {
+            if (args->realm != NULL)
+                free(args->realm);
+            args->realm = strdup(&argv[i][strlen("realm=")]);
+        }
+    }
+
+    /*
+     * Obtain a context and set the realm if we need to and then set defaults
+     * from krb5.conf.  Use the pam section of appdefaults for compatibility
+     * with the Red Hat module.  If we can't get a context, just quietly
+     * proceed; we'll die soon enough later and this way we'll die after we
+     * know whether to debug things.
      */
     if (ctx != NULL)
         c = ctx->context;
@@ -54,32 +69,39 @@ pamk5_args_parse(struct context *ctx, int flags, int argc, const char **argv)
             local_context = 1;
     }
     if (c != NULL) {
-        krb5_appdefault_string(c, "pam", NULL, "ccache", "", &args->ccache);
+        if (args->realm == NULL)
+            krb5_get_default_realm(c, &args->realm);
+        if (args->realm != NULL)
+            pamk5_compat_set_realm(args, args->realm);
+        krb5_appdefault_string(c, "pam", args->realm_data, "ccache", "",
+                               &args->ccache);
         if (args->ccache[0] == '\0') {
             free(args->ccache);
             args->ccache = NULL;
         }
-        krb5_appdefault_string(c, "pam", NULL, "ccache_dir", "/tmp",
-                               &args->ccache_dir);
-        krb5_appdefault_boolean(c, "pam", NULL, "debug", 0, &args->debug);
-        krb5_appdefault_boolean(c, "pam", NULL, "forwardable", 0,
+        krb5_appdefault_string(c, "pam", args->realm_data, "ccache_dir",
+                               "/tmp", &args->ccache_dir);
+        krb5_appdefault_boolean(c, "pam", args->realm_data, "debug", 0,
+                                &args->debug);
+        krb5_appdefault_boolean(c, "pam", args->realm_data, "forwardable", 0,
                                 &args->forwardable);
-        krb5_appdefault_boolean(c, "pam", NULL, "ignore_k5login", 0,
-                                &args->ignore_k5login);
-        krb5_appdefault_boolean(c, "pam", NULL, "ignore_root", 0,
+        krb5_appdefault_boolean(c, "pam", args->realm_data, "ignore_k5login",
+                                0, &args->ignore_k5login);
+        krb5_appdefault_boolean(c, "pam", args->realm_data, "ignore_root", 0,
                                 &args->ignore_root);
-        krb5_appdefault_string(c, "pam", NULL, "minimum_uid", "", &tmp);
+        krb5_appdefault_string(c, "pam", args->realm_data, "minimum_uid", "",
+                               &tmp);
         if (tmp[0] != '\0')
             args->minimum_uid = atoi(tmp);
         free(tmp);
-        krb5_appdefault_string(c, "pam", NULL, "renew_lifetime", "",
-                               &args->renew_lifetime);
+        krb5_appdefault_string(c, "pam", args->realm_data, "renew_lifetime",
+                               "", &args->renew_lifetime);
         if (args->renew_lifetime[0] == '\0') {
             free(args->renew_lifetime);
             args->renew_lifetime = NULL;
         }
-        krb5_appdefault_boolean(c, "pam", NULL, "search_k5login", 0,
-                                &args->search_k5login);
+        krb5_appdefault_boolean(c, "pam", args->realm_data, "search_k5login",
+                                0, &args->search_k5login);
         if (local_context)
             krb5_free_context(c);
     }
@@ -113,6 +135,8 @@ pamk5_args_parse(struct context *ctx, int flags, int argc, const char **argv)
             args->minimum_uid = atoi(&argv[i][strlen("minimum_uid=")]);
         else if (strcmp(argv[i], "no_ccache") == 0)
             args->no_ccache = 1;
+        else if (strncmp(argv[i], "realm=", 6) == 0)
+            ; /* Handled above. */
         else if (strncmp(argv[i], "renew_lifetime=", 15) == 0) {
             if (args->renew_lifetime != NULL)
                 free(args->renew_lifetime);
@@ -145,8 +169,11 @@ pamk5_args_free(struct pam_args *args)
             free(args->ccache);
         if (args->ccache_dir != NULL)
             free(args->ccache_dir);
+        if (args->realm != NULL)
+            free(args->realm);
         if (args->renew_lifetime != NULL)
             free(args->renew_lifetime);
+        pamk5_compat_free_realm(args);
         free(args);
     }
 }

@@ -103,7 +103,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 
     args = pamk5_args_parse(NULL, flags, argc, argv);
     ENTRY(ctx, args, flags);
-    pamret = pamk5_context_new(pamh, &ctx);
+    pamret = pamk5_context_new(pamh, args, &ctx);
     if (pamret != PAM_SUCCESS)
         goto done;
 
@@ -255,7 +255,7 @@ create_session_context(struct pam_args *args, pam_handle_t *pamh,
      * ticket cache back into the context and flush out the other data that
      * would have been set if we'd kept our original context.
      */
-    pamret = pamk5_context_new(pamh, &ctx);
+    pamret = pamk5_context_new(pamh, args, &ctx);
     if (pamret != PAM_SUCCESS) {
         pamk5_debug(ctx, args, "creating session context failed");
         goto fail;
