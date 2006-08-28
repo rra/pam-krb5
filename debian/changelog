@@ -1,3 +1,11 @@
+libpam-krb5 (2.2-1) unstable; urgency=low
+
+  * New upstream release.
+    - Allow the default realm to be overridden in the PAM options.
+    - Use the realm when reading krb5.conf configuration.
+
+ -- Russ Allbery <rra@debian.org>  Mon, 28 Aug 2006 16:39:31 -0700
+
 libpam-krb5 (2.1-1) unstable; urgency=low
 
   * New upstream release.

@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "PAM_KRB5 5"
-.TH PAM_KRB5 5 "2006-08-26" "2.1" "PAM Modules"
+.TH PAM_KRB5 5 "2006-08-28" "2.2" "PAM Modules"
 .SH "NAME"
 pam_krb5 \- Kerberos v5 PAM module
 .SH "SYNOPSIS"
@@ -264,19 +264,28 @@ the \s-1PAM\s0 configuration.
 To set an option for the \s-1PAM\s0 module in the system \fIkrb5.conf\fR file, put
 that option in the [appdefaults] section.  The Kerberos v5 \s-1PAM\s0 module will
 look for options either at the top level of the [appdefaults] section or
-in a subsection named \f(CW\*(C`pam\*(C'\fR.  For example, the following fragment of a
-\&\fIkrb5.conf\fR file would set \fIforwardable\fR to true and \fIminimum_uid\fR to
-100:
+in a subsection named \f(CW\*(C`pam\*(C'\fR, inside or outside a section for the realm.
+For example, the following fragment of a \fIkrb5.conf\fR file would set
+\&\fIforwardable\fR to true, \fIminimum_uid\fR to 100, and set \fIignore_k5login\fR
+only if the realm is \s-1EXAMPLE\s0.COM.
 .PP
-.Vb 5
+.Vb 8
 \&    [appdefaults]
 \&        forwardable = true
 \&        pam = {
 \&            minimum_uid = 100
+\&            EXAMPLE.COM = {
+\&                ignore_k5login = true
+\&            }
 \&        }
 .Ve
 .PP
 For more information on the syntax of \fIkrb5.conf\fR, see \fIkrb5.conf\fR\|(5).
+Note that options that depend on the realm will be set only on the basis
+of the default realm, either as configured in \fIkrb5.conf\fR\|(5) or as set by
+the \fIrealm\fR option described below.  If the user authenticates to an
+account qualified with a realm, that realm will not be used when
+determining which options will apply.
 .PP
 There is no difference to the \s-1PAM\s0 module whether options are specified at
 the top level or in a \f(CW\*(C`pam\*(C'\fR section; the \f(CW\*(C`pam\*(C'\fR section is supported in
@@ -369,6 +378,15 @@ call \fIpam_authenticate()\fR; other functions like \fIpam_setcred()\fR and
 \&\fIpam_start_session()\fR don't make sense with this option.
 .Sp
 This option is only applicable to the auth group.
+.IP "realm=<realm>" 4
+.IX Item "realm=<realm>"
+Obtain credentials in the specified realm rather than in the default realm
+for this system.  If this option is used, it should be set for all groups
+being used for consistent results (although the account group currently
+doesn't care about realm).  This will not change authorization decisions.
+If the obtained credentials are supposed to allow access to a shell
+account, the user will need an appropriate \fI.k5login\fR file entry or the
+system will have to have a custom aname_to_localname mapping.
 .IP "renew_lifetime=<lifetime>" 4
 .IX Item "renew_lifetime=<lifetime>"
 Obtain renewable tickets with a maximum renewable lifetime of <lifetime>.

@@ -1,5 +1,22 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 2.2 (2006-08-28)
+
+    Allow the default realm to be overridden in the PAM options.
+
+    Use the realm, default or otherwise, when reading options from
+    krb5.conf so that realm-specific sections in [appdefaults] work
+    correctly.
+
+    Update the build and installation documentation for the new
+    Autoconf-based build system.  This should have been in the last
+    release but was missed.
+
+    Initialize ticket options correctly when built with Heimdal.
+
+    Fix a typo that caused the Heimdal support not to compile.  Thanks,
+    Matthijs Mohlmann.
+
 pam-krb5 2.1 (2006-08-26)
 
     Strip off a FILE: prefix from the cache path before creating it in
