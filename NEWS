@@ -1,5 +1,12 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 2.3 (unreleased)
+
+    Adjust for the differences in Solaris's PAM libraries:  Include
+    pam_appl.h everywhere for structure and type definitions, and add
+    portability workarounds for the return statuses missing from the
+    Solaris implementation.
+
 pam-krb5 2.2 (2006-08-28)
 
     Allow the default realm to be overridden in the PAM options.

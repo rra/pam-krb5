@@ -9,11 +9,18 @@
 
 #include "config.h"
 
+#include <security/pam_appl.h>
 #include <security/pam_modules.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "pam_krb5.h"
+
+/* Solaris doesn't have these. */
+#ifndef PAM_CONV_AGAIN
+# define PAM_CONV_AGAIN 0
+# define PAM_INCOMPLETE PAM_SERVICE_ERR
+#endif
 
 /*
  * Create a new context and populate it with the user and service from PAM and
