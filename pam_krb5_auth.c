@@ -508,6 +508,8 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
     ctx->cache = cache;
     cache = NULL;
     ctx->initialized = 1;
+    if (args->retain)
+        ctx->dont_destroy_cache = 1;
 
 done:
     if (cache != NULL)

@@ -285,6 +285,22 @@ in the [libdefaults] section of F<krb5.conf>.
 This option can be set in F<krb5.conf> and is only applicable to the auth
 group.
 
+=item retain_after_close
+
+Normally, the user's ticket cache is destroyed when either pam_end() or
+pam_close_session() is called by the authenticating application so that
+ticket caches aren't left behind after the user logs out.  In some cases,
+however, this isn't desireable.  (On Solaris 8, for instance, the default
+behavior means login will destroy the ticket cache before running the
+user's shell.)  If this option is set, the PAM module will never destroy
+the user's ticket cache.  If you set this, you may want to call
+B<kdestroy> in the shell's logout configuration or run a temporary file
+removal program to avoid accumulating hundreds of ticket caches in
+F</tmp>.
+
+This option can be set in F<krb5.conf> and is only applicable to the auth
+and session groups.
+
 =item search_k5login
 
 Normally, the Kerberos implementation of pam_authenticate attempts to

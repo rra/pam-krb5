@@ -2,6 +2,9 @@
 
 pam-krb5 2.3 (unreleased)
 
+    Implement retain_after_close, which specifies that the PAM module
+    should never destroy the user's ticket cache, even on session end.
+
     Adjust for the differences in Solaris's PAM libraries:  Include
     pam_appl.h everywhere for structure and type definitions, and add
     portability workarounds for the return statuses missing from the
