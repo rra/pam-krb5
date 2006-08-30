@@ -120,10 +120,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     if (pamret != PAM_SUCCESS)
         goto done;
 
-    /*
-     * Check .k5login, and if everything is fine, tell pam_sm_setcred where
-     * the ticket cache is.
-     */
+    /* Check .k5login. */
     pamret = pamk5_validate_auth(ctx, args);
     if (pamret != PAM_SUCCESS)
         goto done;
@@ -231,7 +228,7 @@ build_ccache_name(struct context *ctx, struct pam_args *args, uid_t uid)
 
 /*
  * Create a new context for a session if we've lost the context created during
- * authentication (such as when running under OpenSSH.
+ * authentication (such as when running under OpenSSH).
  */
 static int
 create_session_context(struct pam_args *args, pam_handle_t *pamh,
