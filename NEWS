@@ -1,6 +1,6 @@
                       User-Visible pam-krb5 Changes
 
-pam-krb5 2.3 (unreleased)
+pam-krb5 2.3 (2006-09-03)
 
     Fix the interface between the Kerberos prompting function and the
     PAM conversation function on Linux.  Prior to this fix, the PAM module
