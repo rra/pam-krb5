@@ -12,7 +12,3 @@
    the user is authenticating to.
 
  * Diagnose unknown options to the PAM module.  Currently, they're ignored.
-
- * Try to support Solaris as well.  I don't know how close the module is
-   to just working and how much the Solaris PAM setup differs from Linux.
-   (HP-UX is probably not worth the effort.)

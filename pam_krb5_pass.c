@@ -28,6 +28,10 @@
 
 #include "pam_krb5.h"
 
+#ifndef PAM_AUTHTOK_RECOVER_ERR
+# define PAM_AUTHTOK_RECOVER_ERR PAM_AUTHTOK_ERR
+#endif
+
 
 /*
  * Utter an error message to the user that doesn't require a response.  If
