@@ -100,6 +100,8 @@ pamk5_args_parse(struct context *ctx, int flags, int argc, const char **argv)
             free(args->renew_lifetime);
             args->renew_lifetime = NULL;
         }
+        krb5_appdefault_boolean(c, "pam", args->realm_data,
+                                "retain_after_close", 0, &args->retain);
         krb5_appdefault_boolean(c, "pam", args->realm_data, "search_k5login",
                                 0, &args->search_k5login);
         if (local_context)
@@ -142,6 +144,8 @@ pamk5_args_parse(struct context *ctx, int flags, int argc, const char **argv)
                 free(args->renew_lifetime);
             args->renew_lifetime = strdup(&argv[i][strlen("renew_lifetime=")]);
         }
+        else if (strcmp(argv[i], "retain_after_close") == 0)
+            args->retain = 1;
         else if (strcmp(argv[i], "search_k5login") == 0)
             args->search_k5login = 1;
         else if (strcmp(argv[i], "try_first_pass") == 0)

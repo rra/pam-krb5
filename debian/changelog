@@ -1,3 +1,13 @@
+libpam-krb5 (2.3-1) unstable; urgency=low
+
+  * New upstream release.
+    - Fix prompting when the Kerberos library sends more than one prompt,
+      such as for changing an expired password.  Thanks to Joachim Keltsch
+      for the analysis and an initial patch.  (Closes: #385774)
+    - Add the retain_after_close option.
+
+ -- Russ Allbery <rra@debian.org>  Sun,  3 Sep 2006 19:39:54 -0700
+
 libpam-krb5 (2.2-1) unstable; urgency=low
 
   * New upstream release.

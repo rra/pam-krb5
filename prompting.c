@@ -8,6 +8,7 @@
 
 #include <errno.h>
 #include <krb5.h>
+#include <security/pam_appl.h>
 #include <security/pam_modules.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,7 +52,7 @@ pamk5_prompter_krb5(krb5_context context, void *data, const char *name,
     int pam_prompts = num_prompts;
     int pamret, i;
     int retval = KRB5KRB_ERR_GENERIC;
-    struct pam_message *msg;
+    struct pam_message **msg;
     struct pam_response *resp = NULL;
     struct pam_conv *conv;
     pam_handle_t *pamh = (pam_handle_t *) data;
@@ -67,41 +68,69 @@ pamk5_prompter_krb5(krb5_context context, void *data, const char *name,
     if (banner != NULL)
         pam_prompts++;
 
-    /* Allocate memory to copy all of the prompts into a pam_message. */
-    msg = calloc(sizeof(struct pam_message) * pam_prompts, 1);
+    /*
+     * Allocate memory to copy all of the prompts into a pam_message.
+     *
+     * Linux PAM and Solaris PAM expect different things here.  Solaris PAM
+     * expects to receive a pointer to a pointer to an array of pam_message
+     * structs.  Linux PAM expects to receive a pointer to an array of
+     * pointers to pam_message structs.  In order for the module to work with
+     * either PAM implementation, we need to set up a structure that is valid
+     * either way you look at it.
+     *
+     * We do this by making msg point to the array of struct pam_message
+     * pointers (what Linux PAM expects), and then make the first one of those
+     * pointers point to the array of pam_message structs.  Solaris will then
+     * be happy, looking at only the first element of the outer array and
+     * finding it pointing to the inner array.  Then, for Linux, we point the
+     * other elements of the outer array to the storage allocated in the inner
+     * array.
+     *
+     * All this also means we have to be careful how we free the resulting
+     * structure since it's double-linked in a subtle way.  Thankfully, we get
+     * to free it ourselves.
+     */
+    msg = calloc(pam_prompts, sizeof(struct pam_message *));
     if (msg == NULL)
         return ENOMEM;
+    *msg = calloc(pam_prompts, sizeof(struct pam_message));
+    if (*msg == NULL) {
+        free(msg);
+        return ENOMEM;
+    }
+    for (i = 1; i < pam_prompts; i++)
+        msg[i] = msg[0] + i;
 
     /* From this point on, pam_prompts is an index into msg. */
     pam_prompts = 0;
     if (name != NULL) {
-       msg[pam_prompts].msg = malloc(strlen(name) + 1);
-       if (msg[pam_prompts].msg == NULL)
+       msg[pam_prompts]->msg = malloc(strlen(name) + 1);
+       if (msg[pam_prompts]->msg == NULL)
            goto cleanup;
-       strcpy((char *) msg[pam_prompts].msg, name);
-       msg[pam_prompts].msg_style = PAM_TEXT_INFO;
+       strcpy((char *) msg[pam_prompts]->msg, name);
+       msg[pam_prompts]->msg_style = PAM_TEXT_INFO;
        pam_prompts++;
     }
     if (banner != NULL) {
-        msg[pam_prompts].msg = malloc(strlen(banner) + 1);
-        if (msg[pam_prompts].msg == NULL)
+        msg[pam_prompts]->msg = malloc(strlen(banner) + 1);
+        if (msg[pam_prompts]->msg == NULL)
             goto cleanup;
-        strcpy((char *) msg[pam_prompts].msg, banner);
-        msg[pam_prompts].msg_style = PAM_TEXT_INFO;
+        strcpy((char *) msg[pam_prompts]->msg, banner);
+        msg[pam_prompts]->msg_style = PAM_TEXT_INFO;
         pam_prompts++;
     }
     for (i = 0; i < num_prompts; i++) {
-        msg[pam_prompts].msg = malloc(strlen(prompts[i].prompt) + 3);
-        if (msg[pam_prompts].msg == NULL)
+        msg[pam_prompts]->msg = malloc(strlen(prompts[i].prompt) + 3);
+        if (msg[pam_prompts]->msg == NULL)
             goto cleanup;
-        sprintf((char *) msg[pam_prompts].msg, "%s: ", prompts[i].prompt);
-        msg[pam_prompts].msg_style = prompts[i].hidden ? PAM_PROMPT_ECHO_OFF
-                                                       : PAM_PROMPT_ECHO_ON;
+        sprintf((char *) msg[pam_prompts]->msg, "%s: ", prompts[i].prompt);
+        msg[pam_prompts]->msg_style = prompts[i].hidden ? PAM_PROMPT_ECHO_OFF
+                                                        : PAM_PROMPT_ECHO_ON;
         pam_prompts++;
     }
 
     /* Call into the application conversation function. */
-    pamret = conv->conv(pam_prompts, (const struct pam_message **) &msg, 
+    pamret = conv->conv(pam_prompts, (const struct pam_message **) msg,
                         &resp, conv->appdata_ptr);
     if (pamret != 0) 
         goto cleanup;
@@ -139,9 +168,10 @@ pamk5_prompter_krb5(krb5_context context, void *data, const char *name,
 
 cleanup:
     for (i = 0; i < pam_prompts; i++) {
-        if (msg[i].msg != NULL)
-            free((char *) msg[i].msg);
+        if (msg[i]->msg != NULL)
+            free((char *) msg[i]->msg);
     }
+    free(*msg);
     free(msg);
 
     /*
@@ -149,7 +179,7 @@ cleanup:
      * It's not clear if I should free it, or if the application has to.
      * Therefore most (all?) apps won't free it, and I can't either, as I am
      * not sure it was malloced.  All PAM implementations I've seen leak
-     * memory here.  Not so bad, IFF you fork/exec for each PAM authentication
+     * memory here.  Not so bad iff you fork/exec for each PAM authentication
      * (as is typical).
      */
     if (resp != NULL)

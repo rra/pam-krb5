@@ -1,3 +1,28 @@
+   85 Russ Allbery	2006-09-03
+      Release 2.3.
+
+   84 Russ Allbery	2006-09-03
+      Fix the interface between the Kerberos prompting function and the
+      PAM conversation function on Linux.  Prior to this fix, the PAM module
+      would only work on Solaris if Kerberos passed multiple prompts, which
+      happens when an account requires a password change.  Solaris and Linux
+      PAM implementations expect a different structure of pam_message
+      structs in the conversation function; use a workaround to cater to
+      both of them.  Based on a patch by Joachim Keltsch.
+
+   83 Russ Allbery	2006-08-29
+      Minor comment fixes.
+
+   82 Russ Allbery	2006-08-29
+      Implement retain_after_close, which specifies that the PAM module
+      should never destroy the user's ticket cache, even on session end.
+
+   81 Russ Allbery	2006-08-29
+      Adjust for the differences in Solaris's PAM libraries:  Include
+      pam_appl.h everywhere for structure and type definitions, and add
+      portability workarounds for the return statuses missing from the
+      Solaris implementation.
+
    80 Russ Allbery	2006-08-28
       Release 2.2.
 

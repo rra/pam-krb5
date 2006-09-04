@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "PAM_KRB5 5"
-.TH PAM_KRB5 5 "2006-08-28" "2.2" "PAM Modules"
+.TH PAM_KRB5 5 "2006-09-03" "2.3" "PAM Modules"
 .SH "NAME"
 pam_krb5 \- Kerberos v5 PAM module
 .SH "SYNOPSIS"
@@ -396,6 +396,21 @@ in the [libdefaults] section of \fIkrb5.conf\fR.
 .Sp
 This option can be set in \fIkrb5.conf\fR and is only applicable to the auth
 group.
+.IP "retain_after_close" 4
+.IX Item "retain_after_close"
+Normally, the user's ticket cache is destroyed when either \fIpam_end()\fR or
+\&\fIpam_close_session()\fR is called by the authenticating application so that
+ticket caches aren't left behind after the user logs out.  In some cases,
+however, this isn't desireable.  (On Solaris 8, for instance, the default
+behavior means login will destroy the ticket cache before running the
+user's shell.)  If this option is set, the \s-1PAM\s0 module will never destroy
+the user's ticket cache.  If you set this, you may want to call
+\&\fBkdestroy\fR in the shell's logout configuration or run a temporary file
+removal program to avoid accumulating hundreds of ticket caches in
+\&\fI/tmp\fR.
+.Sp
+This option can be set in \fIkrb5.conf\fR and is only applicable to the auth
+and session groups.
 .IP "search_k5login" 4
 .IX Item "search_k5login"
 Normally, the Kerberos implementation of pam_authenticate attempts to

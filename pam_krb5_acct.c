@@ -10,6 +10,7 @@
 
 #include "config.h"
 
+#include <security/pam_appl.h>
 #include <security/pam_modules.h>
 
 #include "pam_krb5.h"
