@@ -2,6 +2,14 @@
 
 pam-krb5 2.3 (unreleased)
 
+    Fix the interface between the Kerberos prompting function and the
+    PAM conversation function on Linux.  Prior to this fix, the PAM module
+    would only work on Solaris if Kerberos passed multiple prompts, which
+    happens when an account requires a password change.  Solaris and Linux
+    PAM implementations expect a different structure of pam_message
+    structs in the conversation function; use a workaround to cater to
+    both of them.  Based on a patch by Joachim Keltsch.
+
     Implement retain_after_close, which specifies that the PAM module
     should never destroy the user's ticket cache, even on session end.
 
