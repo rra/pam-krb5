@@ -1,5 +1,9 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 2.4 (unreleased)
+
+    Fix compilation problems with Heimdal.  Thanks, Matthijs Mohlmann.
+
 pam-krb5 2.3 (2006-09-03)
 
     Fix the interface between the Kerberos prompting function and the
