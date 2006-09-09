@@ -199,8 +199,13 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
     const char *tmpname;
     char *pass = NULL;
 
-    pamret = pamk5_context_fetch(pamh, &ctx);
     args = pamk5_args_parse(ctx, flags, argc, argv);
+    if (args == NULL) {
+        pamk5_error(ctx, "cannot allocate memory: %s", strerror(errno));
+        pamret = PAM_AUTHTOK_ERR;
+        goto done;
+    }
+    pamret = pamk5_context_fetch(pamh, &ctx);
     ENTRY(ctx, args, flags);
 
     /* We only support password changes. */

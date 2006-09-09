@@ -10,6 +10,7 @@
 
 #include "config.h"
 
+#include <errno.h>
 #include <security/pam_appl.h>
 #include <security/pam_modules.h>
 
@@ -25,10 +26,15 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
     struct pam_args *args;
     struct context *ctx;
-    int	pamret = PAM_AUTH_ERR;
+    int	pamret;
 
-    pamret = pamk5_context_fetch(pamh, &ctx);
     args = pamk5_args_parse(ctx, flags, argc, argv);
+    if (args == NULL) {
+        pamk5_error(ctx, "cannot allocate memory: %s", strerror(errno));
+        pamret = PAM_AUTH_ERR;
+        goto done;
+    }
+    pamret = pamk5_context_fetch(pamh, &ctx);
     ENTRY(ctx, args, flags);
 
     /*
