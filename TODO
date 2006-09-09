@@ -3,10 +3,6 @@
  * Support the remaining PAM options that the Sourceforge module supports.
    The most interesting are banner, keytab, and ticket_lifetime.
 
- * Refactor the krb5_appdefaults calls in options.c to use helper routines
-   that hide some of the nonsense, particularly the way string defaults
-   have to be handled.
-
  * Support expose_account in the PAM configuration and, when set, use the
    native Kerberos prompters that give more information about what account
    the user is authenticating to.
