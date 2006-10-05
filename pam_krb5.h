@@ -28,7 +28,7 @@ struct pam_args {
     int minimum_uid;            /* Ignore users below this UID. */
     int no_ccache;              /* Don't create a ticket cache. */
     char *realm;                /* Default realm. */
-    char *renew_lifetime;       /* Renewable lifetime of credentials. */
+    krb5_deltat renew_lifetime; /* Renewable lifetime of credentials. */
     int retain;                 /* Don't destroy the cache on session end. */
     int search_k5login;         /* Try password with each line of .k5login. */
     int try_first_pass;         /* Try the previously entered password. */

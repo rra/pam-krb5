@@ -99,6 +99,31 @@ default_boolean(struct pam_args *args, krb5_context c, const char *opt,
 }
 
 /*
+ * Load a time option from Kerberos appdefaults.  The native interface doesn't
+ * support times, so we actually read a string and then convert.
+ */
+static void
+default_number(struct pam_args *args, krb5_context c, const char *opt,
+               krb5_deltat defval, krb5_deltat *result)
+{
+    char *tmp;
+    int ret;
+
+    krb5_appdefault_string(c, "pam", args->realm_data, opt, "", &tmp);
+    if (tmp != NULL && tmp[0] != '\0') {
+        ret = krb5_string_to_deltat(tmp, result);
+        if (ret != 0) {
+            pamk5_error(NULL, "bad time value for %s: %s", opt,
+                        pamk5_compat_get_err_text(c, ret));
+            *result = defval;
+        }
+    } else
+        *result = defval;
+    if (tmp != NULL)
+        free(tmp);
+}
+
+/*
  * This is where we parse options.  Many of our options can be set in either
  * krb5.conf or in the PAM configuration, with the latter taking precedence
  * over the former.  In order to retrieve options from krb5.conf, we need a
@@ -157,7 +182,7 @@ pamk5_args_parse(struct context *ctx, int flags, int argc, const char **argv)
         default_boolean(args, c, "ignore_k5login", 0, &args->ignore_k5login);
         default_boolean(args, c, "ignore_root", 0, &args->ignore_root);
         default_number(args, c, "minimum_uid", 0, &args->minimum_uid);
-        default_string(args, c, "renew_lifetime", NULL, &args->renew_lifetime);
+        default_time(args, c, "renew_lifetime", 0, &args->renew_lifetime);
         default_boolean(args, c, "retain_after_close", 0, &args->retain);
         default_boolean(args, c, "search_k5login", 0, &args->search_k5login);
         if (local_context)
@@ -196,9 +221,10 @@ pamk5_args_parse(struct context *ctx, int flags, int argc, const char **argv)
         else if (strncmp(argv[i], "realm=", 6) == 0)
             ; /* Handled above. */
         else if (strncmp(argv[i], "renew_lifetime=", 15) == 0) {
-            if (args->renew_lifetime != NULL)
-                free(args->renew_lifetime);
-            args->renew_lifetime = strdup(&argv[i][strlen("renew_lifetime=")]);
+            char *value;
+
+            value = argv[i] + strlen("renew_lifetime=");
+            krb5_string_to_deltat(value, &args->renew_lifetime);
         }
         else if (strcmp(argv[i], "retain_after_close") == 0)
             args->retain = 1;

@@ -8,7 +8,9 @@ pam-krb5 2.4 (unreleased)
     than segfaulting.
 
     Refactor the code to read configuration from krb5.conf to be easier
-    to read and understand.
+    to read and understand.  Parse renew_lifetime immediately and always
+    report an error rather than deferring time parsing until acquiring
+    tickets.
 
 pam-krb5 2.3 (2006-09-03)
 
