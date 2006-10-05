@@ -12,6 +12,9 @@ pam-krb5 2.4 (unreleased)
     report an error rather than deferring time parsing until acquiring
     tickets.
 
+    Log errors (not just authentication failures) at the LOG_ERR level
+    to match (some of) the recommendations of the Linux PAM documentation.
+
 pam-krb5 2.3 (2006-09-03)
 
     Fix the interface between the Kerberos prompting function and the
