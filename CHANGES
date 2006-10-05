@@ -1,3 +1,55 @@
+   99 Russ Allbery	2006-10-05
+      Release 2.4.
+
+   98 Russ Allbery	2006-10-05
+      Fix several places where an uninitialized context could have been
+      passed into the argument parsing function.
+
+   97 Russ Allbery	2006-10-05
+      Cast result lengths to int before using them as field lengths to
+      avoid warnings when building with Heimdal.
+
+   96 Russ Allbery	2006-10-05
+      Current Heimdal sends the same arguments to the prompter function as
+      MIT, so we don't need a compat layer and the current compat layer was
+      actually registering an invalid prompting function for Heimdal.
+
+   95 Russ Allbery	2006-10-05
+      krb5_get_err_text handles NULL contexts fine, so we can use it to
+      report errors in creating a context as well.
+
+   94 Russ Allbery	2006-10-04
+      Log an error when an unknown option is passed via the PAM 
+      configuration.  
+
+   93 Russ Allbery	2006-10-04
+      Log errors (not just authentication failures) at the LOG_ERR level
+      to match (some of) the recommendations of the Linux PAM documentation.
+
+   92 Russ Allbery	2006-10-04
+      Clean up additional fallout from the previous change.
+
+   91 Russ Allbery	2006-10-04
+      Parse renew_lifetime immediately and always report an error rather than
+      deferring time parsing until acquiring tickets.
+
+   90 Russ Allbery	2006-10-04
+      Add some additional ideas from reviewing the FreeBSD module.
+
+   89 Russ Allbery	2006-09-08
+      Add a missing include.
+
+   88 Russ Allbery	2006-09-08
+      Refactor the code to read configuration from krb5.conf to be easier
+      to read and understand.
+
+   87 Russ Allbery	2006-09-08
+      Check for memory allocation failures when parsing PAM options rather
+      than segfaulting.
+
+   86 Russ Allbery	2006-09-08
+      Fix compilation problems with Heimdal.  Thanks, Matthijs Mohlmann.
+
    85 Russ Allbery	2006-09-03
       Release 2.3.
 

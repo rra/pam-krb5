@@ -10,8 +10,10 @@
 
 #include "config.h"
 
+#include <errno.h>
 #include <security/pam_appl.h>
 #include <security/pam_modules.h>
+#include <string.h>
 
 #include "pam_krb5.h"
 
@@ -25,10 +27,15 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
     struct pam_args *args;
     struct context *ctx;
-    int	pamret = PAM_AUTH_ERR;
+    int	pamret;
 
+    args = pamk5_args_parse(flags, argc, argv);
+    if (args == NULL) {
+        pamk5_error(ctx, "cannot allocate memory: %s", strerror(errno));
+        pamret = PAM_AUTH_ERR;
+        goto done;
+    }
     pamret = pamk5_context_fetch(pamh, &ctx);
-    args = pamk5_args_parse(ctx, flags, argc, argv);
     ENTRY(ctx, args, flags);
 
     /*

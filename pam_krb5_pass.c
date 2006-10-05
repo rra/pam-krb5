@@ -171,10 +171,10 @@ password_change(struct context *ctx, struct pam_args *args, const char *pass)
             pamk5_error(ctx, "malloc failure: %s", strerror(errno));
         else {
             sprintf(message, "%.*s%s%.*s",
-                    result_code_string.length,
+                    (int) result_code_string.length,
                     (char *) result_code_string.data,
                     result_string.length == 0 ? "" : ": ",
-                    result_string.length, (char *) result_string.data);
+                    (int) result_string.length, (char *) result_string.data);
             krb_pass_utter(ctx->pamh, args->quiet, message);
             free(message);
         }
@@ -191,7 +191,7 @@ done:
 int
 pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
-    struct context *ctx;
+    struct context *ctx = NULL;
     struct pam_args *args;
     struct credlist *clist = NULL;
     int pamret = PAM_SUCCESS;
@@ -199,8 +199,13 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
     const char *tmpname;
     char *pass = NULL;
 
+    args = pamk5_args_parse(flags, argc, argv);
+    if (args == NULL) {
+        pamk5_error(ctx, "cannot allocate memory: %s", strerror(errno));
+        pamret = PAM_AUTHTOK_ERR;
+        goto done;
+    }
     pamret = pamk5_context_fetch(pamh, &ctx);
-    args = pamk5_args_parse(ctx, flags, argc, argv);
     ENTRY(ctx, args, flags);
 
     /* We only support password changes. */

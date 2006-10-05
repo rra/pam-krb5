@@ -1,5 +1,27 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 2.4 (2006-10-05)
+
+    Fix compilation problems with Heimdal.  Thanks, Matthijs Mohlmann and
+    Douglas Engert.
+
+    Check for memory allocation failures when parsing PAM options rather
+    than segfaulting.
+
+    Fix several places where an uninitialized context could have been
+    passed into the argument parsing function.
+
+    Refactor the code to read configuration from krb5.conf to be easier
+    to read and understand.  Parse renew_lifetime immediately and always
+    report an error rather than deferring time parsing until acquiring
+    tickets.
+
+    Log errors (not just authentication failures) at the LOG_ERR level
+    to match (some of) the recommendations of the Linux PAM documentation.
+
+    Log an error when an unknown option is passed via the PAM
+    configuration.
+
 pam-krb5 2.3 (2006-09-03)
 
     Fix the interface between the Kerberos prompting function and the

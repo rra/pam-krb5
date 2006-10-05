@@ -3,12 +3,15 @@
  * Support the remaining PAM options that the Sourceforge module supports.
    The most interesting are banner, keytab, and ticket_lifetime.
 
- * Refactor the krb5_appdefaults calls in options.c to use helper routines
-   that hide some of the nonsense, particularly the way string defaults
-   have to be handled.
-
  * Support expose_account in the PAM configuration and, when set, use the
    native Kerberos prompters that give more information about what account
    the user is authenticating to.
 
- * Diagnose unknown options to the PAM module.  Currently, they're ignored.
+ * Call krb5_aname_to_localname on the provided username (if search_k5login
+   is not enabled) and store the result back in PAM_USER.  This lets people
+   log in with a full principal name.  It's not clear how useful this is,
+   but there's no reason not to support it.
+
+ * pam_sm_acct_mgt should probably require a Kerberos ticket cache, pull
+   the principal from it, and call kuserok on that rather than trusting
+   PAM_USER.
