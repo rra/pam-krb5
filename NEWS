@@ -15,6 +15,9 @@ pam-krb5 2.4 (unreleased)
     Log errors (not just authentication failures) at the LOG_ERR level
     to match (some of) the recommendations of the Linux PAM documentation.
 
+    Log an error when an unknown option is passed via the PAM
+    configuration.
+
 pam-krb5 2.3 (2006-09-03)
 
     Fix the interface between the Kerberos prompting function and the

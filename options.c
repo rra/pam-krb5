@@ -233,6 +233,8 @@ pamk5_args_parse(struct context *ctx, int flags, int argc, const char **argv)
             args->use_authtok = 1;
         else if (strcmp(argv[i], "use_first_pass") == 0)
             args->use_first_pass = 1;
+        else
+            pamk5_error(NULL, "unknown option %s", argv[i]);
     }
 	
     if (flags & PAM_SILENT)
