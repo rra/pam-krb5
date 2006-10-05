@@ -36,7 +36,7 @@ pamk5_error(struct context *ctx, const char *fmt, ...)
     vsnprintf(msg, sizeof(msg), fmt, args);
     va_end(args);
     name = (ctx != NULL && ctx->name != NULL) ? ctx->name : "none";
-    syslog(LOG_NOTICE, "(pam_krb5): %s: %s", name, msg);
+    syslog(LOG_ERR, "(pam_krb5): %s: %s", name, msg);
 }
 
 

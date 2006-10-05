@@ -101,7 +101,7 @@ k5login_password_auth(struct context *ctx, krb5_creds *creds,
         if (k5_errno != 0)
             return PAM_SERVICE_ERR;
         *retval = krb5_get_init_creds_password(ctx->context, creds,
-                     ctx->princ, pass, pamk5_pam_prompter, ctx->pamh, 0,
+                     ctx->princ, pass, pamk5_prompter_krb5, ctx->pamh, 0,
                      in_tkt_service, opts);
         return (*retval == 0) ? PAM_SUCCESS : PAM_AUTH_ERR;
     }
@@ -141,7 +141,7 @@ k5login_password_auth(struct context *ctx, krb5_creds *creds,
 
         /* Now, attempt to authenticate as that user. */
         *retval = krb5_get_init_creds_password(ctx->context, creds,
-                     princ, pass, pamk5_pam_prompter, ctx->pamh, 0,
+                     princ, pass, pamk5_prompter_krb5, ctx->pamh, 0,
                      in_tkt_service, opts);
 
         /*
@@ -200,19 +200,8 @@ pamk5_password_auth(struct context *ctx, struct pam_args *args,
 #endif
     if (args->forwardable)
         krb5_get_init_creds_opt_set_forwardable(&opts, 1);
-    if (args->renew_lifetime != NULL) {
-        krb5_deltat rlife;
-        int ret;
-
-        ret = krb5_string_to_deltat(args->renew_lifetime, &rlife);
-        if (ret != 0 || rlife == 0) {
-            pamk5_error(ctx, "bad renew_lifetime value: %s",
-                        pamk5_compat_get_err_text(ctx->context, ret));
-            retval = PAM_SERVICE_ERR;
-            goto done;
-        }
-        krb5_get_init_creds_opt_set_renew_life(&opts, rlife);
-    }
+    if (args->renew_lifetime != 0)
+        krb5_get_init_creds_opt_set_renew_life(&opts, args->renew_lifetime);
 
     /* Fill in the principal to authenticate as. */
     retval = krb5_parse_name(ctx->context, ctx->name, &ctx->princ);
@@ -263,7 +252,7 @@ pamk5_password_auth(struct context *ctx, struct pam_args *args,
                           in_tkt_service, pass, &retval);
         } else {
             retval = krb5_get_init_creds_password(ctx->context,
-                          &creds, ctx->princ, pass, pamk5_pam_prompter,
+                          &creds, ctx->princ, pass, pamk5_prompter_krb5,
                           ctx->pamh, 0, in_tkt_service, &opts);
             success = (retval == 0) ? PAM_SUCCESS : PAM_AUTH_ERR;
         }
