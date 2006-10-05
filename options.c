@@ -25,7 +25,6 @@ pamk5_args_new(void)
         return NULL;
     args->ccache = NULL;
     args->ccache_dir = NULL;
-    args->renew_lifetime = NULL;
     args->realm = NULL;
     args->realm_data = NULL;
     return args;
@@ -44,8 +43,6 @@ pamk5_args_free(struct pam_args *args)
             free(args->ccache_dir);
         if (args->realm != NULL)
             free(args->realm);
-        if (args->renew_lifetime != NULL)
-            free(args->renew_lifetime);
         pamk5_compat_free_realm(args);
         free(args);
     }
@@ -103,8 +100,8 @@ default_boolean(struct pam_args *args, krb5_context c, const char *opt,
  * support times, so we actually read a string and then convert.
  */
 static void
-default_number(struct pam_args *args, krb5_context c, const char *opt,
-               krb5_deltat defval, krb5_deltat *result)
+default_time(struct pam_args *args, krb5_context c, const char *opt,
+             krb5_deltat defval, krb5_deltat *result)
 {
     char *tmp;
     int ret;
@@ -221,10 +218,10 @@ pamk5_args_parse(struct context *ctx, int flags, int argc, const char **argv)
         else if (strncmp(argv[i], "realm=", 6) == 0)
             ; /* Handled above. */
         else if (strncmp(argv[i], "renew_lifetime=", 15) == 0) {
-            char *value;
+            const char *value;
 
             value = argv[i] + strlen("renew_lifetime=");
-            krb5_string_to_deltat(value, &args->renew_lifetime);
+            krb5_string_to_deltat((char *) value, &args->renew_lifetime);
         }
         else if (strcmp(argv[i], "retain_after_close") == 0)
             args->retain = 1;
