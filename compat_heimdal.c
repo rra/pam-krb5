@@ -46,13 +46,3 @@ pamk5_compat_free_realm(struct pam_args *args)
         args->realm_data = NULL;
     }
 }
-
-
-static krb5_error_code
-heimdal_pam_prompter(krb5_context c, void *data, const char *banner,
-                     int num_prompts, krb5_prompt prompts[])
-{
-    return pamk5_prompter_krb5(c, data, NULL, banner, num_prompts, prompts);
-}
-
-krb5_prompter_fct pamk5_pam_prompter = heimdal_pam_prompter;

@@ -101,7 +101,7 @@ k5login_password_auth(struct context *ctx, krb5_creds *creds,
         if (k5_errno != 0)
             return PAM_SERVICE_ERR;
         *retval = krb5_get_init_creds_password(ctx->context, creds,
-                     ctx->princ, pass, pamk5_pam_prompter, ctx->pamh, 0,
+                     ctx->princ, pass, pamk5_prompter_krb5, ctx->pamh, 0,
                      in_tkt_service, opts);
         return (*retval == 0) ? PAM_SUCCESS : PAM_AUTH_ERR;
     }
@@ -141,7 +141,7 @@ k5login_password_auth(struct context *ctx, krb5_creds *creds,
 
         /* Now, attempt to authenticate as that user. */
         *retval = krb5_get_init_creds_password(ctx->context, creds,
-                     princ, pass, pamk5_pam_prompter, ctx->pamh, 0,
+                     princ, pass, pamk5_prompter_krb5, ctx->pamh, 0,
                      in_tkt_service, opts);
 
         /*
@@ -252,7 +252,7 @@ pamk5_password_auth(struct context *ctx, struct pam_args *args,
                           in_tkt_service, pass, &retval);
         } else {
             retval = krb5_get_init_creds_password(ctx->context,
-                          &creds, ctx->princ, pass, pamk5_pam_prompter,
+                          &creds, ctx->princ, pass, pamk5_prompter_krb5,
                           ctx->pamh, 0, in_tkt_service, &opts);
             success = (retval == 0) ? PAM_SUCCESS : PAM_AUTH_ERR;
         }

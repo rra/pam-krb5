@@ -123,12 +123,6 @@ const char *pamk5_compat_get_err_text(krb5_context, krb5_error_code);
 krb5_error_code pamk5_compat_set_realm(struct pam_args *, const char *);
 void pamk5_compat_free_realm(struct pam_args *);
 
-/*
- * Set to the function to use to prompt for the user's password from inside
- * the Kerberos libraries.
- */
-krb5_prompter_fct pamk5_pam_prompter;
-
 /* Context management. */
 int pamk5_context_new(pam_handle_t *, struct pam_args *, struct context **);
 int pamk5_context_fetch(pam_handle_t *, struct context **);

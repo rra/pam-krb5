@@ -60,13 +60,3 @@ pamk5_compat_free_realm(struct pam_args *args)
         free(args->realm_data);
     }
 }
-
-
-static krb5_error_code
-mit_pam_prompter(krb5_context c, void *data, const char *name,
-                 const char *banner, int num_prompts, krb5_prompt prompts[])
-{
-    return pamk5_prompter_krb5(c, data, name, banner, num_prompts, prompts);
-}
-
-krb5_prompter_fct pamk5_pam_prompter = mit_pam_prompter;

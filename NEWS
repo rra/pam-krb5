@@ -2,7 +2,8 @@
 
 pam-krb5 2.4 (unreleased)
 
-    Fix compilation problems with Heimdal.  Thanks, Matthijs Mohlmann.
+    Fix compilation problems with Heimdal.  Thanks, Matthijs Mohlmann and
+    Douglas Engert.
 
     Check for memory allocation failures when parsing PAM options rather
     than segfaulting.
