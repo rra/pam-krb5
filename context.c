@@ -59,7 +59,8 @@ pamk5_context_new(pam_handle_t *pamh, struct pam_args *args,
         c->service = "unknown";
     retval = krb5_init_context(&c->context);
     if (retval != 0) {
-        pamk5_error(c, "krb5_init_context: %s", error_message(retval));
+        pamk5_error(c, "krb5_init_context: %s",
+                    pamk5_compat_get_err_text(c->context, retval));
         retval = PAM_SERVICE_ERR;
         goto done;
     }
