@@ -124,16 +124,16 @@ default_time(struct pam_args *args, krb5_context c, const char *opt,
  * This is where we parse options.  Many of our options can be set in either
  * krb5.conf or in the PAM configuration, with the latter taking precedence
  * over the former.  In order to retrieve options from krb5.conf, we need a
- * Kerberos context; we take a struct context as our first argument, and if
- * it's NULL, we create a temporary context just for this.
+ * Kerberos context, but we do this before we've retrieved any context from
+ * the PAM environment.  So instead, we create a temporary context just for
+ * this.
  */
 struct pam_args *
-pamk5_args_parse(struct context *ctx, int flags, int argc, const char **argv)
+pamk5_args_parse(int flags, int argc, const char **argv)
 {
     struct pam_args *args;
     int i, retval;
     krb5_context c;
-    int local_context = 0;
 
     args = pamk5_args_new();
     if (args == NULL)
@@ -158,15 +158,9 @@ pamk5_args_parse(struct context *ctx, int flags, int argc, const char **argv)
      * proceed; we'll die soon enough later and this way we'll die after we
      * know whether to debug things.
      */
-    if (ctx != NULL)
-        c = ctx->context;
-    else {
-        retval = krb5_init_context(&c);
-        if (retval != 0)
-            c = NULL;
-        else
-            local_context = 1;
-    }
+    retval = krb5_init_context(&c);
+    if (retval != 0)
+        c = NULL;
     if (c != NULL) {
         if (args->realm == NULL)
             krb5_get_default_realm(c, &args->realm);
@@ -182,8 +176,7 @@ pamk5_args_parse(struct context *ctx, int flags, int argc, const char **argv)
         default_time(args, c, "renew_lifetime", 0, &args->renew_lifetime);
         default_boolean(args, c, "retain_after_close", 0, &args->retain);
         default_boolean(args, c, "search_k5login", 0, &args->search_k5login);
-        if (local_context)
-            krb5_free_context(c);
+        krb5_free_context(c);
     }
 
     /*

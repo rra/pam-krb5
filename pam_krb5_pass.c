@@ -191,7 +191,7 @@ done:
 int
 pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
-    struct context *ctx;
+    struct context *ctx = NULL;
     struct pam_args *args;
     struct credlist *clist = NULL;
     int pamret = PAM_SUCCESS;
@@ -199,7 +199,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
     const char *tmpname;
     char *pass = NULL;
 
-    args = pamk5_args_parse(ctx, flags, argc, argv);
+    args = pamk5_args_parse(flags, argc, argv);
     if (args == NULL) {
         pamk5_error(ctx, "cannot allocate memory: %s", strerror(errno));
         pamret = PAM_AUTHTOK_ERR;

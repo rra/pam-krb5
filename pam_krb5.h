@@ -79,8 +79,7 @@ struct context {
 };
 
 /* Parse the PAM flags, arguments, and krb5.conf and fill out pam_args. */
-struct pam_args *pamk5_args_parse(struct context *, int flags, int argc,
-                                  const char **argv);
+struct pam_args *pamk5_args_parse(int flags, int argc, const char **argv);
 
 /* Free the pam_args struct when we're done. */
 void pamk5_args_free(struct pam_args *);

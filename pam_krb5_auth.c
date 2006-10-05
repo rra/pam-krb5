@@ -101,7 +101,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     char cache_name[] = "/tmp/krb5cc_pam_XXXXXX";
     int ccfd;
 
-    args = pamk5_args_parse(NULL, flags, argc, argv);
+    args = pamk5_args_parse(flags, argc, argv);
     if (args == NULL) {
         pamk5_error(ctx, "cannot allocate memory: %s", strerror(errno));
         pamret = PAM_SERVICE_ERR;
@@ -310,7 +310,7 @@ fail:
 int
 pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
-    struct context *ctx;
+    struct context *ctx = NULL;
     struct pam_args *args;
     struct credlist *clist = NULL;
     krb5_ccache cache = NULL;
@@ -321,7 +321,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
     uid_t uid;
     gid_t gid;
 
-    args = pamk5_args_parse(ctx, flags, argc, argv);
+    args = pamk5_args_parse(flags, argc, argv);
     if (args == NULL) {
         pamk5_error(ctx, "cannot allocate memory: %s", strerror(errno));
         pamret = PAM_SERVICE_ERR;

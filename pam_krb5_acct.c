@@ -29,7 +29,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
     struct context *ctx;
     int	pamret;
 
-    args = pamk5_args_parse(ctx, flags, argc, argv);
+    args = pamk5_args_parse(flags, argc, argv);
     if (args == NULL) {
         pamk5_error(ctx, "cannot allocate memory: %s", strerror(errno));
         pamret = PAM_AUTH_ERR;
