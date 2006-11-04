@@ -5,6 +5,13 @@ pam-krb5 2.5 (unreleased)
     Don't free the results of pam_get_item(PAM_AUTHTOK) when one is
     already available when changing passwords.  Thanks, Arne Nordmark.
 
+    Be a bit more thorough when checking authorization in
+    pam_sm_acct_mgmt.  Re-retrieve the value of user in case the
+    application changed it, and if we have a ticket cache (we may not even
+    after a successful authentication if no_ccache was specified),
+    retrieve the principal from it rather than using the principal from
+    the context.
+
     Overwrite passwords with 0 before freeing them, just out of paranoia
     (and because PAM also does this internally).
 

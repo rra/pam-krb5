@@ -396,23 +396,44 @@ pamk5_prompt(pam_handle_t *pamh, const char *prompt, int type,
 /*
  * Verify the user authentication.  Call krb5_kuserok if this is a local
  * account, or do the krb5_aname_to_localname verification if ignore_k5login
- * was requested.  It's the responsibility of the calling application to deal
- * with authorization issues for non-local accounts (ones containing a realm
- * component).
+ * was requested.  For non-local accounts, the principal must match the
+ * authentication identity.
  */
 int
 pamk5_validate_auth(struct context *ctx, struct pam_args *args)
 {
+    krb5_context c;
     struct passwd *pwd;
     char kuser[65];             /* MAX_USERNAME == 65 (MIT Kerberos 1.4.1). */
 
-    if (ctx == NULL)
+    if (ctx == NULL || ctx->context == NULL)
         return PAM_SERVICE_ERR;
     if (ctx->name == NULL)
         return PAM_SERVICE_ERR;
+    c = ctx->context;
 
-    if (strchr(ctx->name, '@') != NULL)
+    /*
+     * If the name to which we're authenticating contains @ (is fully
+     * qualified), it must match the principal exactly.
+     */
+    if (strchr(ctx->name, '@') != NULL) {
+        char *principal;
+        int retval;
+
+        retval = krb5_unparse_name(c, ctx->princ, &principal);
+        if (retval != 0)
+            return PAM_SERVICE_ERR;
+        if (strcmp(principal, ctx->name) != 0) {
+            free(principal);
+            return PAM_AUTH_ERR;
+        }
         return PAM_SUCCESS;
+    }
+
+    /*
+     * Otherwise, apply either krb5_aname_to_localname or krb5_kuserok
+     * depending on the situation.
+     */
     pwd = getpwnam(ctx->name);
     if (args->ignore_k5login || pwd == NULL) {
         krb5_context c = ctx->context;

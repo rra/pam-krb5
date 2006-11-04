@@ -11,6 +11,7 @@
 #include "config.h"
 
 #include <errno.h>
+#include <krb5.h>
 #include <security/pam_appl.h>
 #include <security/pam_modules.h>
 #include <string.h>
@@ -27,7 +28,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
     struct pam_args *args;
     struct context *ctx;
-    int	pamret;
+    int pamret, retval;
 
     args = pamk5_args_parse(flags, argc, argv);
     if (args == NULL) {
@@ -50,6 +51,41 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
         ctx = NULL;
         pamk5_debug(ctx, args, "skipping non-Kerberos login");
         goto done;
+    }
+
+    /*
+     * Re-retrieve the user rather than trusting our context; it's conceivable
+     * the application could have changed it.  We have to cast &ctx->name to
+     * void * due to C's broken type system.
+     *
+     * Use pam_get_item rather than pam_get_user here since the user should be
+     * set by the time we get to this point.  If we would have to prompt for a
+     * user, something is definitely broken and we should fail.
+     */
+    retval = pam_get_item(pamh, PAM_USER, (void *) &ctx->name);
+    if (retval != PAM_SUCCESS || ctx->name == NULL) {
+        retval = PAM_AUTH_ERR;
+        goto done;
+    }
+
+    /*
+     * If we have a ticket cache, then we can apply an additional bit of
+     * paranoia.  Rather than trusting princ in the context, extract the
+     * principal from the Kerberos ticket cache we actually received and then
+     * validate that.  This should make no difference in practice, but it's a
+     * bit more thorough.
+     */
+    if (ctx->cache != NULL) {
+        pamk5_debug(ctx, args, "retrieving principal from cache");
+        if (ctx->princ != NULL)
+            krb5_free_principal(ctx->context, ctx->princ);
+        retval = krb5_cc_get_principal(ctx->context, ctx->cache, &ctx->princ);
+        if (retval != 0) {
+            pamk5_error(ctx, "cannot retrieve principal from cache: %s",
+                        pamk5_compat_get_err_text(ctx->context, retval));
+            pamret = PAM_AUTH_ERR;
+            goto done;
+        }
     }
     pamret = pamk5_validate_auth(ctx, args);
 

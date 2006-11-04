@@ -11,7 +11,3 @@
    is not enabled) and store the result back in PAM_USER.  This lets people
    log in with a full principal name.  It's not clear how useful this is,
    but there's no reason not to support it.
-
- * pam_sm_acct_mgt should probably require a Kerberos ticket cache, pull
-   the principal from it, and call kuserok on that rather than trusting
-   PAM_USER.
