@@ -5,7 +5,7 @@ pam-krb5 2.5 (unreleased)
     Don't free the results of pam_get_item(PAM_AUTHTOK) when one is
     already available when changing passwords.  Thanks, Arne Nordmark.
 
-    Override passwords with 0 before freeing them, just out of paranoia
+    Overwrite passwords with 0 before freeing them, just out of paranoia
     (and because PAM also does this internally).
 
 pam-krb5 2.4 (2006-10-05)
