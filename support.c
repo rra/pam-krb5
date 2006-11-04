@@ -215,6 +215,12 @@ pamk5_password_auth(struct context *ctx, struct pam_args *args,
      * If try_first_pass or use_first_pass is set, grab the old password (if
      * set) instead of prompting.  If try_first_pass is set, and the old
      * password doesn't work, prompt for the password (loop).
+     *
+     * pass is a char * so &pass is a char **, which due to the stupid C type
+     * rules isn't convertable to a const void **.  If we cast directly to a
+     * const void **, gcc complains about type-punned pointers, even though
+     * void and char shouldn't worry about that rule.  So cast it to a void *
+     * to turn off type-checking entirely.
      */
     retry = args->try_first_pass ? 1 : 0;
     if (args->try_first_pass || args->use_first_pass || args->use_authtok)
@@ -237,6 +243,7 @@ pamk5_password_auth(struct context *ctx, struct pam_args *args,
 
             /* Set this for the next PAM module's try_first_pass. */
             retval = pam_set_item(ctx->pamh, authtok, pass);
+            memset(pass, 0, strlen(pass));
             free(pass);
             if (retval != PAM_SUCCESS) {
                 pamk5_debug_pam(ctx, args, "error storing password", retval);
