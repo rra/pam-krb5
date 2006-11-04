@@ -1,9 +1,9 @@
                       User-Visible pam-krb5 Changes
 
-pam-krb5 2.5 (unreleased)
+pam-krb5 2.5 (2006-11-03)
 
-    Don't free the results of pam_get_item(PAM_AUTHTOK) when one is
-    already available when changing passwords.  Thanks, Arne Nordmark.
+    Don't free the results of pam_get_item(PAM_AUTHTOK) when changing
+    passwords.  Thanks, Arne Nordmark.
 
     Be a bit more thorough when checking authorization in
     pam_sm_acct_mgmt.  Re-retrieve the value of user in case the
