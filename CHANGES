@@ -1,3 +1,33 @@
+  105 Russ Allbery	2006-11-03
+      Release 2.5.
+
+  104 Russ Allbery	2006-11-03
+      Add a blurb that I can use announcements.  Recommend use_authtok for
+      the password configuration where cracklib runs first.
+
+  103 Russ Allbery	2006-11-03
+      Nothing needs to include com_err.h any more except the MIT compat
+      code, since Kerberos error resolution is now done via the compat
+      function.
+
+  102 Russ Allbery	2006-11-03
+      Be a bit more thorough when checking authorization in
+      pam_sm_acct_mgmt.  Re-retrieve the value of user in case the
+      application changed it, and if we have a ticket cache (we may not even
+      after a successful authentication if no_ccache was specified),
+      retrieve the principal from it rather than using the principal from
+      the context.
+
+  101 Russ Allbery	2006-11-03
+      Fix typo in last news entry.
+
+  100 Russ Allbery	2006-11-03
+      Don't free the results of pam_get_item(PAM_AUTHTOK) when one is
+      already available when changing passwords.  Thanks, Arne Nordmark.
+      
+      Override passwords with 0 before freeing them, just out of paranoia
+      (and because PAM also does this internally).
+
    99 Russ Allbery	2006-10-05
       Release 2.4.
 

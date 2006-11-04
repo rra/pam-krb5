@@ -6,11 +6,6 @@
 
 #include "config.h"
 
-#ifdef HAVE_ET_COM_ERR_H
-# include <et/com_err.h>
-#else
-# include <com_err.h>
-#endif
 #include <errno.h>
 #include <krb5.h>
 #include <pwd.h>
@@ -215,6 +210,12 @@ pamk5_password_auth(struct context *ctx, struct pam_args *args,
      * If try_first_pass or use_first_pass is set, grab the old password (if
      * set) instead of prompting.  If try_first_pass is set, and the old
      * password doesn't work, prompt for the password (loop).
+     *
+     * pass is a char * so &pass is a char **, which due to the stupid C type
+     * rules isn't convertable to a const void **.  If we cast directly to a
+     * const void **, gcc complains about type-punned pointers, even though
+     * void and char shouldn't worry about that rule.  So cast it to a void *
+     * to turn off type-checking entirely.
      */
     retry = args->try_first_pass ? 1 : 0;
     if (args->try_first_pass || args->use_first_pass || args->use_authtok)
@@ -237,6 +238,7 @@ pamk5_password_auth(struct context *ctx, struct pam_args *args,
 
             /* Set this for the next PAM module's try_first_pass. */
             retval = pam_set_item(ctx->pamh, authtok, pass);
+            memset(pass, 0, strlen(pass));
             free(pass);
             if (retval != PAM_SUCCESS) {
                 pamk5_debug_pam(ctx, args, "error storing password", retval);
@@ -389,23 +391,44 @@ pamk5_prompt(pam_handle_t *pamh, const char *prompt, int type,
 /*
  * Verify the user authentication.  Call krb5_kuserok if this is a local
  * account, or do the krb5_aname_to_localname verification if ignore_k5login
- * was requested.  It's the responsibility of the calling application to deal
- * with authorization issues for non-local accounts (ones containing a realm
- * component).
+ * was requested.  For non-local accounts, the principal must match the
+ * authentication identity.
  */
 int
 pamk5_validate_auth(struct context *ctx, struct pam_args *args)
 {
+    krb5_context c;
     struct passwd *pwd;
     char kuser[65];             /* MAX_USERNAME == 65 (MIT Kerberos 1.4.1). */
 
-    if (ctx == NULL)
+    if (ctx == NULL || ctx->context == NULL)
         return PAM_SERVICE_ERR;
     if (ctx->name == NULL)
         return PAM_SERVICE_ERR;
+    c = ctx->context;
 
-    if (strchr(ctx->name, '@') != NULL)
+    /*
+     * If the name to which we're authenticating contains @ (is fully
+     * qualified), it must match the principal exactly.
+     */
+    if (strchr(ctx->name, '@') != NULL) {
+        char *principal;
+        int retval;
+
+        retval = krb5_unparse_name(c, ctx->princ, &principal);
+        if (retval != 0)
+            return PAM_SERVICE_ERR;
+        if (strcmp(principal, ctx->name) != 0) {
+            free(principal);
+            return PAM_AUTH_ERR;
+        }
         return PAM_SUCCESS;
+    }
+
+    /*
+     * Otherwise, apply either krb5_aname_to_localname or krb5_kuserok
+     * depending on the situation.
+     */
     pwd = getpwnam(ctx->name);
     if (args->ignore_k5login || pwd == NULL) {
         krb5_context c = ctx->context;

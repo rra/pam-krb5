@@ -1,3 +1,13 @@
+libpam-krb5 (2.5-1) unstable; urgency=low
+
+  * New upstream release.
+    - Don't free the results of pam_get_item on password changes.  Thanks,
+      Arne Nordmark.  (Closes: #395041)
+    - Be more paranoid when checking authorization in pam_sm_acct_mgmt.
+    - Zero passwords before freeing them.
+
+ -- Russ Allbery <rra@debian.org>  Fri,  3 Nov 2006 20:17:56 -0800
+
 libpam-krb5 (2.4-1) unstable; urgency=low
 
   * New upstream release.
