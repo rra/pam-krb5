@@ -1,4 +1,4 @@
-                               pam-krb5 2.4
+                               pam-krb5 2.5
                (PAM module for Kerberos v5 authentication)
 
                     Originally written by Frank Cusack
@@ -9,6 +9,17 @@
   redistribution information.  See the HISTORY section below for the
   e-mail addresses of contributors and thanks to those who have provided
   help.
+
+BLURB
+
+  pam-krb5 is a Kerberos v5 PAM module for either MIT Kerberos or Heimdal.
+  It supports ticket refreshing by screen savers, configurable
+  authorization handling, authentication of non-local accounts for network
+  services, password changing, and password expiration, as well as all the
+  standard expected PAM features.  It works correctly with OpenSSH, even
+  with ChallengeResponseAuthentication and PrivilegeSeparation enabled,
+  and supports configuration either by PAM options or in krb5.conf or
+  both.
 
 DESCRIPTION
 
@@ -120,7 +131,7 @@ CONFIGURING
   like:
 
       password required   pam_unix.so nullok obscure min=4 max=8 md5
-      password required   pam_krb5.so minimum_uid=1000
+      password required   pam_krb5.so use_authtok minimum_uid=1000
 
   There are many, many other possibilities.  See the Linux PAM
   documentation for all the configuration options.

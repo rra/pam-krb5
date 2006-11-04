@@ -10,11 +10,6 @@
 
 #include "config.h"
 
-#ifdef HAVE_ET_COM_ERR_H
-# include <et/com_err.h>
-#else
-# include <com_err.h>
-#endif
 #include <krb5.h>
 #include <stdarg.h>
 #include <stdio.h>

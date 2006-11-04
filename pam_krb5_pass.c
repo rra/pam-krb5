@@ -12,11 +12,6 @@
 
 #include "config.h"
 
-#ifdef HAVE_ET_COM_ERR_H
-# include <et/com_err.h>
-#else
-# include <com_err.h>
-#endif
 #include <errno.h>
 #include <krb5.h>
 #include <security/pam_appl.h>
@@ -74,6 +69,7 @@ get_new_password(struct context *ctx, struct pam_args *args, char **pass)
 {
     int pamret = PAM_AUTHTOK_ERR;
     char *pass2;
+    const void *tmp;
 
     /*
      * Try to use the password from a previous module, if so configured.  Note
@@ -81,8 +77,11 @@ get_new_password(struct context *ctx, struct pam_args *args, char **pass)
      * password; we don't reprompt even if the password was rejected.
      */
     *pass = NULL;
-    if (args->try_first_pass || args->use_first_pass || args->use_authtok)
-        pamret = pam_get_item(ctx->pamh, PAM_AUTHTOK, (const void **) pass);
+    if (args->try_first_pass || args->use_first_pass || args->use_authtok) {
+        pamret = pam_get_item(ctx->pamh, PAM_AUTHTOK, &tmp);
+        if (tmp != NULL)
+            *pass = strdup((const char *) tmp);
+    }
     if (args->use_authtok && pamret != PAM_SUCCESS) {
         pamk5_debug_pam(ctx, args, "no stored password", pamret);
         pamret = PAM_AUTHTOK_ERR;
@@ -108,12 +107,12 @@ get_new_password(struct context *ctx, struct pam_args *args, char **pass)
         if (strcmp(*pass, pass2) != 0) {
             pamk5_debug(ctx, args, "new passwords don't match");
             krb_pass_utter(ctx->pamh, args->quiet, "Passwords don't match");
-            free(*pass);
+            memset(pass2, 0, strlen(pass2));
             free(pass2);
-            *pass = NULL;
             pamret = PAM_AUTHTOK_ERR;
             goto done;
         }
+        memset(pass2, 0, strlen(pass2));
         free(pass2);
 
         /* Save the new password for other modules. */
@@ -276,8 +275,10 @@ cleanup:
 
 done:
     EXIT(ctx, args, pamret);
-    if (pass != NULL)
+    if (pass != NULL) {
+        memset(pass, 0, strlen(pass));
         free(pass);
+    }
     pamk5_args_free(args);
     return pamret;
 }
