@@ -18,7 +18,7 @@
 #include "pam_krb5.h"
 
 /*
- * Basic error logging.  Log a message with LOG_NOTICE priority.
+ * Basic error logging.  Log a message with LOG_ERR priority.
  */
 void
 pamk5_error(struct context *ctx, const char *fmt, ...)
