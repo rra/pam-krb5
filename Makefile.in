@@ -63,5 +63,6 @@ distclean: clean
 	rm -f Makefile config.cache config.h config.log config.status
 	rm -rf $(TARDIR)
 
-maintclean: distclean
-	rm -f CHANGES config.h.in config.h.in~ pam_krb5.5 $(TARNAME).gz
+maintclean maintainer-clean: distclean
+	rm -f CHANGES config.h.in config.h.in~ configure pam_krb5.5
+	rm -f $(TARNAME).gz
