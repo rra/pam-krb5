@@ -58,7 +58,7 @@ COMPILING AND INSTALLING
       make
 
   To install the module into /usr/local/lib/security and the man page into
-  /usr/local/share/man/man8, run:
+  /usr/local/share/man/man5, run:
 
       make install
 
