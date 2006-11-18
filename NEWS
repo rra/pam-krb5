@@ -1,5 +1,9 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 2.6 (unreleased)
+
+    Avoid a use of already freed memory when debugging is enabled.
+
 pam-krb5 2.5 (2006-11-03)
 
     Don't free the results of pam_get_item(PAM_AUTHTOK) when changing
