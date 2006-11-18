@@ -23,8 +23,8 @@
 #endif
 
 /*
- * Create a new context and populate it with the user and service from PAM and
- * a new Kerberos context.
+ * Create a new context and populate it with the user from PAM and a new
+ * Kerberos context.  Set the default realm if one was configured.
  */
 int
 pamk5_context_new(pam_handle_t *pamh, struct pam_args *args,
@@ -54,9 +54,6 @@ pamk5_context_new(pam_handle_t *pamh, struct pam_args *args,
             retval = PAM_SERVICE_ERR;
         goto done;
     }
-    pam_get_item(c->pamh, PAM_SERVICE, (void *) &c->service);
-    if (c->service == NULL)
-        c->service = "unknown";
     retval = krb5_init_context(&c->context);
     if (retval != 0) {
         pamk5_error(c, "krb5_init_context: %s",
