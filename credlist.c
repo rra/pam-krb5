@@ -64,7 +64,7 @@ pamk5_credlist_append(struct context *ctx, struct credlist **clist,
 
 
 /*
- * Copy the credentials from a credlist into a ticket cache.  Returns
+ * Copy the credentials from a ticket cache into a credlist.  Returns
  * PAM_SUCCESS on success and PAM_SERVICE_ERR on failure.
  */
 int
