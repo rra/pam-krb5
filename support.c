@@ -283,7 +283,7 @@ pamk5_password_auth(struct context *ctx, struct pam_args *args,
     if (retval == 0 && in_tkt_service == NULL) {
         krb5_verify_init_creds_opt_init(&verify_opts);
         retval = krb5_verify_init_creds(ctx->context, &creds, NULL, NULL,
-                                        &ctx->cache, &verify_opts);
+                                        NULL, &verify_opts);
         if (retval != 0) {
             pamk5_error(ctx, "credential verification failed: %s",
                         pamk5_compat_get_err_text(ctx->context, retval));
