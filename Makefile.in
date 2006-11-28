@@ -18,7 +18,7 @@ mandir		= @mandir@
 CC		= @CC@
 CFLAGS		= @CFLAGS@
 CPPFLAGS	= -I. -I$(srcdir) @CPPFLAGS@
-LDFLAGS		= -shared @LDFLAGS@
+LDFLAGS		= @LDFLAGS@
 LIBS		= -lpam @LIBS@
 
 INSTALL		= @INSTALL@

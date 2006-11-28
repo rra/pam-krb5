@@ -26,12 +26,12 @@ dnl More platforms could be handled here.  Contributions welcome.
 case "$host" in
 *-linux*)
     CFLAGS="-fPIC $CFLAGS"
-    LDFLAGS="-Wl,-z,defs -Wl,-Bsymbolic $LDFLAGS"
+    LDFLAGS="-shared -Wl,-z,defs -Wl,-Bsymbolic $LDFLAGS"
     ;;
 *-solaris2*)
     if test "$GCC" = "yes" ; then
         CFLAGS="-fPIC $CFLAGS"
-        LDFLAGS="-Wl,-Bsymbolic $LDFLAGS"
+        LDFLAGS="-shared -Wl,-Bsymbolic $LDFLAGS"
     else
         CFLAGS="-KPIC $CFLAGS"
         LDFLAGS="-G -xldscope=symbolic $LDFLAGS"
@@ -40,6 +40,9 @@ case "$host" in
 *)
     if test "$GCC" = "yes" ; then
         CFLAGS="-fPIC $CFLAGS"
+        LDFLAGS="-shared $LDFLAGS"
+    else
+        AC_MSG_ERROR([Only know compiler flags for gcc on this platform])
     fi
     ;;
 esac
