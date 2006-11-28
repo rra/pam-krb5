@@ -7,6 +7,10 @@ pam-krb5 2.6 (unreleased)
 
     Avoid a use of already freed memory when debugging is enabled.
 
+    Use __func__ instead of __FUNCTION__ and provide a fallback for older
+    versions of gcc and for systems that support neither.  Should fix
+    compilation issues with Sun's C compiler.
+
     On platforms where we know the appropriate compiler flags, try to
     build the module so that symbols are resolved within the module in
     preference to any externally available symbols.  Also add the
