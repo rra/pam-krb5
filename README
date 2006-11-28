@@ -46,9 +46,11 @@ DESCRIPTION
   better tested.  MIT Keberos 1.3 or later may be required; this module
   has not been tested with earlier versions.
 
-  Right now, it has only been tested on Linux.  Solaris will probably
-  require some porting; other PAM implementations will likely require even
-  more work.
+  This module should work on Linux and Solaris (and build with either gcc
+  or the Sun C compiler), but has been far more heavily tested on Linux.
+  Other PAM implementations will probably require some porting, and the
+  module requires gcc to even attempt to build on platforms other than
+  Solaris.
 
 COMPILING AND INSTALLING
 
@@ -56,6 +58,11 @@ COMPILING AND INSTALLING
 
       ./configure
       make
+
+  On Solaris, expect many warnings about type mismatches.  These warnings
+  should be harmless.  Linux and Solaris differ in which struct members
+  and function parameters are declared const and there is no simple way to
+  write code that compiles without warnings on both platforms.
 
   To install the module into /usr/local/lib/security and the man page into
   /usr/local/share/man/man5, run:
@@ -65,7 +72,8 @@ COMPILING AND INSTALLING
   You can change the installation locations with the --prefix, --mandir,
   and --libdir options to configure.  The module will be installed in a
   subdirectory of $libdir named security.  Alternately, you can simply
-  copy pam_krb5.so to whatever directory you use for PAM modules.
+  copy pam_krb5.so to whatever directory you use for PAM modules.  On
+  Solaris, you will need to make the module executable.
 
   If your Kerberos libraries aren't installed in a location found by your
   compiler by default, use the --with-kerberos=PATH option to configure.
@@ -146,6 +154,14 @@ CONFIGURING
   and no_ccache options to the authenticate module; .k5login authorization
   is only meaningful for local accounts and ticket caches are usually
   (although not always) only useful for interactive sessions.
+
+  Configuring the module for Solaris is both simpler and less flexible,
+  since Solaris (at least Solaris 8 and 9) use a single /etc/pam.conf file
+  that contains configuration for all programs.  See the pam.conf man page
+  for more information.  When using this module with Solaris login (at
+  least on Solaris 8 and 9), you will probably also need to add
+  retain_after_close to the PAM configuration to avoid having the user's
+  credentials deleted before they are logged in.
 
 IMPLEMENTATION NOTES
 
