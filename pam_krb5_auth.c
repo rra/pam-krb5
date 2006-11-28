@@ -186,7 +186,7 @@ build_ccache_name(struct context *ctx, struct pam_args *args, uid_t uid)
             return NULL;
         }
         snprintf(cache_name, ccache_size, "%s/krb5cc_%d_XXXXXX",
-                 args->ccache_dir, uid);
+                 args->ccache_dir, (int) uid);
     } else {
         size_t len = 0, delta;
         char *p, *q;
