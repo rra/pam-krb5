@@ -68,7 +68,7 @@ struct credlist {
  */
 struct context {
     pam_handle_t *pamh;         /* Pointer back to the PAM handle. */
-    const char *name;           /* Username being authenticated. */
+    char *name;                 /* Username being authenticated. */
     krb5_context context;       /* Kerberos context. */
     krb5_ccache cache;          /* Active credential cache, if any. */
     krb5_principal princ;       /* Principal being authenticated. */

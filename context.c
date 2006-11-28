@@ -32,6 +32,7 @@ pamk5_context_new(pam_handle_t *pamh, struct pam_args *args,
 {
     struct context *c;
     int retval;
+    const char *name;
 
     c = calloc(1, sizeof(*c));
     if (c == NULL) {
@@ -46,14 +47,15 @@ pamk5_context_new(pam_handle_t *pamh, struct pam_args *args,
      * This will prompt for the username if it's not already set (generally it
      * will be).  Otherwise, grab the saved username.
      */
-    retval = pam_get_user(c->pamh, &c->name, NULL);
-    if (retval != PAM_SUCCESS || c->name == NULL) {
+    retval = pam_get_user(c->pamh, &name, NULL);
+    if (retval != PAM_SUCCESS || name == NULL) {
         if (retval == PAM_CONV_AGAIN)
             retval = PAM_INCOMPLETE;
         else
             retval = PAM_SERVICE_ERR;
         goto done;
     }
+    c->name = strdup(name);
     retval = krb5_init_context(&c->context);
     if (retval != 0) {
         pamk5_error(c, "krb5_init_context: %s",
@@ -110,6 +112,8 @@ pamk5_context_free(struct context *ctx)
     if (ctx == NULL)
         return;
     if (ctx->context != NULL) {
+        if (ctx->name != NULL)
+            free(ctx->name);
         if (ctx->princ != NULL)
             krb5_free_principal(ctx->context, ctx->princ);
         if (ctx->cache != NULL) {

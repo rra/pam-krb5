@@ -2,6 +2,9 @@
 
 pam-krb5 2.6 (unreleased)
 
+    Don't assume the pointer set by pam_get_user is usable over the life
+    of the PAM module; instead, save a local copy.
+
     Avoid a use of already freed memory when debugging is enabled.
 
 pam-krb5 2.5 (2006-11-03)
