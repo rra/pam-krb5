@@ -33,6 +33,7 @@ all: pam_krb5.so $(srcdir)/pam_krb5.5
 
 pam_krb5.so: $(OBJECTS)
 	$(CC) -o $@ $(LDFLAGS) $(OBJECTS) $(LIBS)
+	chmod 644 $@
 
 compat.o: compat_heimdal.c compat_mit.c
 
