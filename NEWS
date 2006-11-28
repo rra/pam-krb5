@@ -1,6 +1,6 @@
                       User-Visible pam-krb5 Changes
 
-pam-krb5 2.6 (unreleased)
+pam-krb5 2.6 (2006-11-28)
 
     Don't assume the pointer set by pam_get_user is usable over the life
     of the PAM module; instead, save a local copy.
