@@ -1,3 +1,78 @@
+  125 Russ Allbery	2006-11-28
+      We need to retrieve the PAM user into a temporary pointer and then
+      strdup it in the account management code as well.
+
+  124 Russ Allbery	2006-11-28
+      Release 2.6.
+
+  123 Russ Allbery	2006-11-27
+      Update the current porting status and add documentation for Solaris.
+
+  122 Russ Allbery	2006-11-27
+      Use __func__ instead of __FUNCTION__ and provide a fallback for older
+      versions of gcc and for systems that support neither.  Should fix
+      compilation issues with Sun's C compiler.
+
+  121 Russ Allbery	2006-11-27
+      Make the PAM module non-executable.
+
+  120 Russ Allbery	2006-11-27
+      Pass -shared only to gcc.  Report an error for non-gcc compilers on
+      platforms other than Solaris, since we don't know how to create PIC
+      code or shared objects there.
+
+  119 Russ Allbery	2006-11-27
+      Cast uid_t to int before using it with a %d printf format.
+
+  118 Russ Allbery	2006-11-27
+      Solaris requires security/pam_appl.h always be included before
+      security/pam_modules.h.
+
+  117 Russ Allbery	2006-11-27
+      We now get the PIC flag from configure, so don't add it here.
+
+  116 Russ Allbery	2006-11-27
+      On platforms where we know the appropriate compiler flags, try to
+      build the module so that symbols are resolved within the module in
+      preference to any externally available symbols.  Also add the
+      hopefully correct compiler flags for Sun's C compiler.
+
+  115 Russ Allbery	2006-11-27
+      Add dependency information.
+
+  114 Russ Allbery	2006-11-27
+      Don't assume the pointer set by pam_get_user is usable over the life
+      of the PAM module; instead, save a local copy.
+
+  113 Russ Allbery	2006-11-17
+      Don't obtain and carry around the PAM service.  We don't actually use
+      it now that we're using krb5_verify_init_creds instead of rolling it
+      ourself.
+
+  112 Russ Allbery	2006-11-17
+      Don't ask krb5_verify_init_creds to create a new ticket cache for
+      us, since we just throw it away.  There still seems to be a memory
+      leak somewhere here, but this is at least more correct.
+
+  111 Russ Allbery	2006-11-17
+      Fix an incorrect comment for pamk5_credlist_copy.
+
+  110 Russ Allbery	2006-11-17
+      Avoid a use of already-freed memory when debugging is enabled.
+
+  109 Russ Allbery	2006-11-17
+      Man page is installed in man5, not man8.
+
+  108 Russ Allbery	2006-11-10
+      Add maintainer-clean as an alias for maintclean and remove configure as
+      well.
+
+  107 Russ Allbery	2006-11-08
+      Include security/pam_modules.h for the pam_strerror prototype.
+
+  106 Russ Allbery	2006-11-08
+      Comment fix for syslog priorities.
+
   105 Russ Allbery	2006-11-03
       Release 2.5.
 

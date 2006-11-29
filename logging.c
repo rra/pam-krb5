@@ -11,6 +11,8 @@
 #include "config.h"
 
 #include <krb5.h>
+#include <security/pam_appl.h>
+#include <security/pam_modules.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <syslog.h>
@@ -18,7 +20,7 @@
 #include "pam_krb5.h"
 
 /*
- * Basic error logging.  Log a message with LOG_NOTICE priority.
+ * Basic error logging.  Log a message with LOG_ERR priority.
  */
 void
 pamk5_error(struct context *ctx, const char *fmt, ...)

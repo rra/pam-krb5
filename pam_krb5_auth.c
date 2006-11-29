@@ -186,7 +186,7 @@ build_ccache_name(struct context *ctx, struct pam_args *args, uid_t uid)
             return NULL;
         }
         snprintf(cache_name, ccache_size, "%s/krb5cc_%d_XXXXXX",
-                 args->ccache_dir, uid);
+                 args->ccache_dir, (int) uid);
     } else {
         size_t len = 0, delta;
         char *p, *q;
@@ -336,6 +336,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
      */
     if (flags & PAM_DELETE_CRED) {
         pamret = pam_set_data(pamh, "ctx", NULL, NULL);
+        ctx = NULL;
         goto done;
     }
 
@@ -363,13 +364,11 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
     }
 
     /*
-     * pamret holds the status of pamk5_context_fetch from above, so indicates
-     * whether we were able to successfully find the context from the previous
-     * authentication.  If we weren't, we were probably run by OpenSSH with
-     * its broken PAM handling, so we're going to cobble up a new context for
-     * ourselves.
+     * If we weren't able to obtain a context, we were probably run by OpenSSH
+     * with its broken PAM handling, so we're going to cobble up a new context
+     * for ourselves.
      */
-    if (pamret != PAM_SUCCESS) {
+    if (ctx == NULL) {
         pamk5_debug(ctx, args, "no context found, creating one");
         pamret = create_session_context(args, pamh, &ctx);
         if (ctx == NULL)

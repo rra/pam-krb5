@@ -1,5 +1,8 @@
                            pam-krb5 To-Do List
 
+ * Integrate the patch for PKINIT support with the interfaces provided by
+   Heimdal.
+
  * Support the remaining PAM options that the Sourceforge module supports.
    The most interesting are banner, keytab, and ticket_lifetime.
 

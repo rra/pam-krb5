@@ -68,8 +68,7 @@ struct credlist {
  */
 struct context {
     pam_handle_t *pamh;         /* Pointer back to the PAM handle. */
-    const char *name;           /* Username being authenticated. */
-    const char *service;        /* PAM service to which to authenticate. */
+    char *name;                 /* Username being authenticated. */
     krb5_context context;       /* Kerberos context. */
     krb5_ccache cache;          /* Active credential cache, if any. */
     krb5_principal princ;       /* Principal being authenticated. */
@@ -140,11 +139,20 @@ void pamk5_debug(struct context *, struct pam_args *, const char *, ...);
 void pamk5_debug_pam(struct context *, struct pam_args *, const char *, int);
 void pamk5_debug_krb5(struct context *, struct pam_args *, const char *, int);
 
+/* __func__ is C99, but not provided by all implementations. */
+#if __STDC_VERSION__ < 199901L
+# if __GNUC__ >= 2
+#  define __func__ __FUNCTION__
+# else
+#  define __func__ "<unknown>"
+# endif
+#endif
+
 /* Macros to record entry and exit from the main PAM functions. */
 #define ENTRY(ctx, args, flags) \
-    pamk5_debug((ctx), (args), "%s: entry (0x%x)", __FUNCTION__, (flags))
+    pamk5_debug((ctx), (args), "%s: entry (0x%x)", __func__, (flags))
 #define EXIT(ctx, args, pamret) \
-    pamk5_debug((ctx), (args), "%s: exit (%s)", __FUNCTION__, \
+    pamk5_debug((ctx), (args), "%s: exit (%s)", __func__, \
                 ((pamret) == PAM_SUCCESS) ? "success" : "failure")
 
 #endif /* PAM_KRB5_H_ */
