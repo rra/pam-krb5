@@ -1,3 +1,12 @@
+libpam-krb5 (2.6-1) unstable; urgency=low
+
+  * New upstream release.
+    - Don't assume the return from pam_get_user will persist.
+    - Avoid a use of freed memory when debugging is enabled.
+    - Bind function calls within the PAM module where possible.
+
+ -- Russ Allbery <rra@debian.org>  Wed, 29 Nov 2006 13:46:32 -0800
+
 libpam-krb5 (2.5-1) unstable; urgency=low
 
   * New upstream release.
