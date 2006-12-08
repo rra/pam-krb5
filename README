@@ -157,9 +157,24 @@ CONFIGURING
 
   Configuring the module for Solaris is both simpler and less flexible,
   since Solaris (at least Solaris 8 and 9) use a single /etc/pam.conf file
-  that contains configuration for all programs.  See the pam.conf man page
-  for more information.  When using this module with Solaris login (at
-  least on Solaris 8 and 9), you will probably also need to add
+  that contains configuration for all programs.  For console login on
+  Solaris, try something like:
+
+      login auth sufficient /usr/local/lib/security/pam_krb5.so
+          minimum_uid=100
+      login auth required /usr/lib/security/pam_unix_auth.so.1
+          use_first_pass
+      login account required /usr/local/lib/security/pam_krb5.so
+          minimum_uid=100
+      login account required /usr/lib/security/pam_unix_account.so.1
+      login session required /usr/local/lib/security/pam_krb5.so
+          retain_after_close minimum_uid=100
+      login session required /usr/lib/security/pam_unix_session.so.1
+
+  (Each of those should be all on one line.)  A similar configuration
+  could be used for other services, such as ssh.  See the pam.conf man
+  page for more information.  When using this module with Solaris login
+  (at least on Solaris 8 and 9), you will probably also need to add
   retain_after_close to the PAM configuration to avoid having the user's
   credentials deleted before they are logged in.
 
