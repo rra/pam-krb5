@@ -21,7 +21,7 @@
 #include <syslog.h>
 #include <string.h>
 
-#include "pam_krb5.h"
+#include "internal.h"
 
 #ifndef PAM_AUTHTOK_RECOVER_ERR
 # define PAM_AUTHTOK_RECOVER_ERR PAM_AUTHTOK_ERR

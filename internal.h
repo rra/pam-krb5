@@ -1,11 +1,11 @@
 /*
- * pam_krb5.h
+ * internal.h
  *
- * $Id: pam_krb5.h,v 1.3 2000/12/19 22:53:11 hartmans Exp $
+ * Internal prototypes and structures for pam_krb5.
  */
 
-#ifndef PAM_KRB5_H_
-#define PAM_KRB5_H_
+#ifndef INTERNAL_H
+#define INTERNAL_H 1
 
 #include "config.h"
 
@@ -115,8 +115,7 @@ krb5_error_code pamk5_prompter_krb5(krb5_context, void *data,
 int pamk5_validate_auth(struct context *, struct pam_args *);
 
 /* Returns true if we should ignore this user (root or low UID). */
-int pamk5_should_ignore(struct context *, struct pam_args *,
-                             const char *);
+int pamk5_should_ignore(struct context *, struct pam_args *, const char *);
 
 /*
  * Compatibility functions.  Depending on whether pam_krb5 is built with MIT
@@ -162,4 +161,4 @@ void pamk5_debug_krb5(struct context *, struct pam_args *, const char *, int);
     pamk5_debug((ctx), (args), "%s: exit (%s)", __func__, \
                 ((pamret) == PAM_SUCCESS) ? "success" : "failure")
 
-#endif /* PAM_KRB5_H_ */
+#endif /* !INTERNAL_H */

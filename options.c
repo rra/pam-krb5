@@ -1,7 +1,7 @@
 /*
  * options.c
  *
- * Option handling for pam-krb5.
+ * Option handling for pam_krb5.
  */
 
 #include "config.h"
@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "pam_krb5.h"
+#include "internal.h"
 
 /*
  * Allocate a new struct pam_args and initialize its data members.

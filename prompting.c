@@ -14,7 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "pam_krb5.h"
+#include "internal.h"
 
 /*
  * This is the generic prompting function called by both the MIT Kerberos and

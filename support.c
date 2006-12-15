@@ -21,7 +21,7 @@
 # include <hx509_err.h>
 #endif
 
-#include "pam_krb5.h"
+#include "internal.h"
 
 /*
  * Given the context (if any), the PAM arguments and the user we're

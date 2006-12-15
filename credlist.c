@@ -12,7 +12,7 @@
 #include <krb5.h>
 #include <stdlib.h>
 
-#include "pam_krb5.h"
+#include "internal.h"
 
 
 /*

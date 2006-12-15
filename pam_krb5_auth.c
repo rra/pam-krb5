@@ -26,7 +26,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "pam_krb5.h"
+#include "internal.h"
 
 /*
  * Get the name of a cache, given the name of the environment variable that

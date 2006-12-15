@@ -14,7 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "pam_krb5.h"
+#include "internal.h"
 
 /* Solaris doesn't have these. */
 #ifndef PAM_CONV_AGAIN

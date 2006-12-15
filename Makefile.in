@@ -68,16 +68,16 @@ maintclean maintainer-clean: distclean
 	rm -f CHANGES config.h.in config.h.in~ configure pam_krb5.5
 	rm -f $(TARNAME).gz
 
-compat.o: compat.c config.h compat_mit.c compat_heimdal.c pam_krb5.h
-compat_heimdal.o: compat_heimdal.c config.h pam_krb5.h
-compat_mit.o: compat_mit.c config.h pam_krb5.h
-context.o: context.c config.h pam_krb5.h
-credlist.o: credlist.c config.h pam_krb5.h
-logging.o: logging.c config.h pam_krb5.h
-options.o: options.c config.h pam_krb5.h
-pam_krb5_acct.o: pam_krb5_acct.c config.h pam_krb5.h
-pam_krb5_auth.o: pam_krb5_auth.c config.h pam_krb5.h
-pam_krb5_pass.o: pam_krb5_pass.c config.h pam_krb5.h
-pam_krb5_sess.o: pam_krb5_sess.c config.h pam_krb5.h
-prompting.o: prompting.c config.h pam_krb5.h
-support.o: support.c config.h pam_krb5.h
+compat.o: compat.c config.h compat_mit.c compat_heimdal.c internal.h
+compat_heimdal.o: compat_heimdal.c config.h internal.h
+compat_mit.o: compat_mit.c config.h internal.h
+context.o: context.c config.h internal.h
+credlist.o: credlist.c config.h internal.h
+logging.o: logging.c config.h internal.h
+options.o: options.c config.h internal.h
+pam_krb5_acct.o: pam_krb5_acct.c config.h internal.h
+pam_krb5_auth.o: pam_krb5_auth.c config.h internal.h
+pam_krb5_pass.o: pam_krb5_pass.c config.h internal.h
+pam_krb5_sess.o: pam_krb5_sess.c config.h internal.h
+prompting.o: prompting.c config.h internal.h
+support.o: support.c config.h internal.h

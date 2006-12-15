@@ -1,8 +1,7 @@
 /*
  * pam_krb5_acct.c
  *
- * PAM account management functions for pam_krb5
- *
+ * PAM account management functions for pam_krb5.
  */
 
 /* Get prototypes for the account management functions. */
@@ -16,7 +15,7 @@
 #include <security/pam_modules.h>
 #include <string.h>
 
-#include "pam_krb5.h"
+#include "internal.h"
 
 /*
  * Check the authorization of the user.  It's not entirely clear what this

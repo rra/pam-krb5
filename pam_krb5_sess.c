@@ -21,7 +21,7 @@
 #include <security/pam_appl.h>
 #include <security/pam_modules.h>
 
-#include "pam_krb5.h"
+#include "internal.h"
 
 /* Store the user's credentials.  The flags are ignored. */
 int

@@ -16,7 +16,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "pam_krb5.h"
+#include "internal.h"
 
 void
 pamk5_compat_free_data_contents(krb5_context c, krb5_data *data)

@@ -17,7 +17,7 @@
 #include <stdio.h>
 #include <syslog.h>
 
-#include "pam_krb5.h"
+#include "internal.h"
 
 /*
  * Basic error logging.  Log a message with LOG_ERR priority.
