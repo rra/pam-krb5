@@ -126,7 +126,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
         goto done;
 
     /* Check .k5login. */
-    pamret = pamk5_validate_auth(ctx, args);
+    pamret = pamk5_authorized(ctx, args);
     if (pamret != PAM_SUCCESS)
         goto done;
 

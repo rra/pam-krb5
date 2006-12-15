@@ -504,13 +504,13 @@ done:
 
 
 /*
- * Verify the user authentication.  Call krb5_kuserok if this is a local
+ * Verify the user authorization.  Call krb5_kuserok if this is a local
  * account, or do the krb5_aname_to_localname verification if ignore_k5login
  * was requested.  For non-local accounts, the principal must match the
  * authentication identity.
  */
 int
-pamk5_validate_auth(struct context *ctx, struct pam_args *args)
+pamk5_authorized(struct context *ctx, struct pam_args *args)
 {
     krb5_context c;
     struct passwd *pwd;
@@ -553,7 +553,7 @@ pamk5_validate_auth(struct context *ctx, struct pam_args *args)
         if (strcmp(kuser, ctx->name) != 0)
             return PAM_AUTH_ERR;
     } else {
-        if (!krb5_kuserok(ctx->context, ctx->princ, ctx->name))
+        if (!krb5_kuserok(c, ctx->princ, ctx->name))
             return PAM_AUTH_ERR;
     }
 

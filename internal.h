@@ -117,7 +117,7 @@ krb5_error_code pamk5_prompter_krb5(krb5_context, void *data,
                                     int, krb5_prompt *);
 
 /* Check the user with krb5_kuserok or the configured equivalent. */
-int pamk5_validate_auth(struct context *, struct pam_args *);
+int pamk5_authorized(struct context *, struct pam_args *);
 
 /* Returns true if we should ignore this user (root or low UID). */
 int pamk5_should_ignore(struct context *, struct pam_args *, const char *);

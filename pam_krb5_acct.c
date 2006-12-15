@@ -90,7 +90,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
             goto done;
         }
     }
-    pamret = pamk5_validate_auth(ctx, args);
+    pamret = pamk5_authorized(ctx, args);
 
 done:
     EXIT(ctx, args, pamret);
