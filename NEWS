@@ -1,5 +1,16 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 3.0 (unreleased)
+
+    Work around a bug in MIT Kerberos prior to 1.4 causing the library to
+    cache the default realm and assume a particular realm even if the
+    default realm is later changed.  This bug prevented running two
+    instances of pam-krb5 with different realm settings in the same PAM
+    stack.  Thanks, Dave Botsch.
+
+    When debug is enabled, report the principal for which we're attempting
+    authentication to help catch realm configuration errors.
+
 pam-krb5 2.6 (2006-11-28)
 
     Don't assume the pointer set by pam_get_user is usable over the life

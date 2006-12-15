@@ -48,6 +48,36 @@ pamk5_should_ignore(struct context *ctx, struct pam_args *args,
 
 
 /*
+ * Fill in ctx->princ from the value of ctx->name.
+ *
+ * This is a separate function rather than just calling krb5_parse_name so
+ * that we can work around a bug in MIT Kerberos versions prior to 1.4, which
+ * store the realm in a static variable inside the library and don't notice
+ * changes.  If no realm is specified and a realm is set in our arguments,
+ * append the realm to force krb5_parse_name to do the right thing.
+ */
+static krb5_error_code
+parse_name(struct context *ctx, struct pam_args *args)
+{
+    char *user = ctx->name;
+    size_t length;
+    krb5_error_code k5_errno;
+
+    if (args->realm != NULL && strchr(ctx->name, '@') == NULL) {
+        length = strlen(ctx->name) + 1 + strlen(args->realm) + 1;
+        user = malloc(length);
+        if (user == NULL)
+            return KRB5_CC_NOMEM;
+        snprintf(user, length, "%s@%s", ctx->name, args->realm);
+    }
+    k5_errno = krb5_parse_name(ctx->context, user, &ctx->princ);
+    if (user != ctx->name)
+        free(user);
+    return k5_errno;
+}
+
+
+/*
  * Used to support trying each principal in the .k5login file.  Read through
  * each line that parses correctly as a principal and use the provided
  * password to try to authenticate as that user.  If at any point we succeed,
@@ -90,11 +120,11 @@ k5login_password_auth(struct context *ctx, krb5_creds *creds,
     filename[len] = '\0';
     strncat(filename, "/.k5login", len - strlen(pwd->pw_dir));
 
-    /* If there is no file, do this the easy way. */
+    /*
+     * If there is no file, do this the easy way.  Assume ctx->princ is
+     * already set properly.
+     */
     if (access(filename, R_OK) != 0) {
-        k5_errno = krb5_parse_name(ctx->context, ctx->name, &ctx->princ);
-        if (k5_errno != 0)
-            return PAM_SERVICE_ERR;
         *retval = krb5_get_init_creds_password(ctx->context, creds,
                      ctx->princ, pass, pamk5_prompter_krb5, ctx->pamh, 0,
                      in_tkt_service, opts);
@@ -199,11 +229,25 @@ pamk5_password_auth(struct context *ctx, struct pam_args *args,
         krb5_get_init_creds_opt_set_renew_life(&opts, args->renew_lifetime);
 
     /* Fill in the principal to authenticate as. */
-    retval = krb5_parse_name(ctx->context, ctx->name, &ctx->princ);
+    retval = parse_name(ctx, args);
     if (retval != 0) {
         pamk5_debug_krb5(ctx, args, "krb5_parse_name", retval);
         retval = PAM_SERVICE_ERR;
         goto done;
+    }
+
+    /* Log the principal we're attempting to authenticate as. */
+    if (args->debug) {
+        char *principal;
+
+        retval = krb5_unparse_name(ctx->context, ctx->princ, &principal);
+        if (retval != 0)
+            pamk5_debug_krb5(ctx, args, "krb5_unparse_name", retval);
+        else {
+            pamk5_debug(ctx, args, "attempting authentication as %s",
+                        principal);
+            free(principal);
+        }
     }
 
     /*
