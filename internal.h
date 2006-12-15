@@ -54,11 +54,11 @@ struct pam_args {
 #endif
 
     /*
-     * This isn't really an arg, but instead flags whether PAM_SILENT was
-     * included in the flags.  If set, don't report some messages back to the
-     * user (currently only error messages from password changing).
+     * This isn't really an arg but instead records whether PAM_SILENT was
+     * included in the flags.  If set, only call the conversation function for
+     * prompts, not informational messages or errors.
      */
-    int quiet;
+    int silent;
 };
 
 /* Stores a simple list of credentials. */
@@ -103,8 +103,13 @@ int pamk5_ccache_init(struct context *, struct pam_args *, const char *,
 int pamk5_password_auth(struct context *, struct pam_args *,
                         char *in_tkt_service, struct credlist **);
 
-/* Generic prompting function to get information from the user. */
-int pamk5_prompt(pam_handle_t *, const char *, int, char **);
+/*
+ * Generic conversation function to display messages or get information from
+ * the user.  Takes the message, the message type, and a place to put the
+ * result of a prompt.
+ */
+int pamk5_conv(struct context *, struct pam_args *, const char *, int,
+               char **);
 
 /* Prompting function for the Kerberos libraries. */
 krb5_error_code pamk5_prompter_krb5(krb5_context, void *data,

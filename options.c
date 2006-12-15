@@ -258,7 +258,7 @@ pamk5_args_parse(int flags, int argc, const char **argv)
     }
 
     if (flags & PAM_SILENT)
-        args->quiet++;
+        args->silent = 1;
 
     /* Warn if PKINIT options were set and PKINIT isn't supported. */
 #ifndef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT

@@ -17,6 +17,65 @@
 #include "internal.h"
 
 /*
+ * Get information from the user or display a message to the user, as
+ * determined by type.  If PAM_SILENT was given, don't pass any text or error
+ * messages to the application.
+ *
+ * The response variable is set to the response returned by the conversation
+ * function on a successful return if a response was desired.  Caller is
+ * responsible for freeing it.
+ */
+int
+pamk5_conv(struct context *ctx, struct pam_args *args, const char *message,
+           int type, char **response)
+{
+    int pamret;
+    struct pam_message msg;
+    const struct pam_message *pmsg;
+    struct pam_response	*resp = NULL;
+    struct pam_conv *conv;
+    int want_reply;
+
+    if (args->silent && (type == PAM_ERROR_MSG || type == PAM_TEXT_INFO))
+        return PAM_SUCCESS;
+    pamret = pam_get_item(ctx->pamh, PAM_CONV, (void *) &conv);
+    if (pamret != PAM_SUCCESS)
+	return pamret;
+    pmsg = &msg;
+    msg.msg_style = type;
+    msg.msg = message;
+    pamret = conv->conv(1, &pmsg, &resp, conv->appdata_ptr);
+    if (pamret != PAM_SUCCESS)
+	return pamret;
+
+    /*
+     * Only expect a response for PAM_PROMPT_ECHO_OFF or PAM_PROMPT_ECHO_ON
+     * message types.  This mildly annoying logic makes sure that everything
+     * is freed properly (except the response itself, if wanted, which is
+     * returned for the caller to free) and that the success status is set
+     * based on whether the reply matched our expectations.
+     *
+     * If we got a reply even though we didn't want one, still overwrite the
+     * reply before freeing in case it was a password.
+     */
+    want_reply = (type == PAM_PROMPT_ECHO_OFF || type == PAM_PROMPT_ECHO_ON);
+    if (resp == NULL || resp->resp == NULL)
+	pamret = want_reply ? PAM_CONV_ERR : PAM_SUCCESS;
+    else if (want_reply && response != NULL) {
+        *response = resp->resp;
+        pamret = PAM_SUCCESS;
+    } else {
+        memset(resp->resp, 0, strlen(resp->resp));
+        free(resp->resp);
+        pamret = want_reply ? PAM_SUCCESS : PAM_CONV_ERR;
+    }
+    if (resp != NULL)
+        free(resp);
+    return pamret;
+}
+
+
+/*
  * This is the generic prompting function called by both the MIT Kerberos and
  * Heimdal prompting implementations.  The MIT function takes a name and the
  * Heimdal function doesn't, which is the only difference between the two.
@@ -101,7 +160,10 @@ pamk5_prompter_krb5(krb5_context context, void *data, const char *name,
     for (i = 1; i < pam_prompts; i++)
         msg[i] = msg[0] + i;
 
-    /* From this point on, pam_prompts is an index into msg. */
+    /*
+     * From this point on, pam_prompts is an index into msg.  This doesn't
+     * honor PAM_SILENT as it should.
+     */
     pam_prompts = 0;
     if (name != NULL) {
        msg[pam_prompts]->msg = malloc(strlen(name) + 1);

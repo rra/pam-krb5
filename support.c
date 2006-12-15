@@ -258,11 +258,11 @@ pkinit_auth(struct context *ctx, struct pam_args *args, char *in_tkt_service,
      * no smart card is available.
      */
     if (args->pkinit_prompt) {
-        pamk5_prompt(ctx->pamh,
-                     args->use_pkinit
-                         ? 'Insert smart card and press Enter:'
-                         : 'Insert smart card if desired, then press Enter:',
-                     PAM_PROMPT_ECHO_OFF, &dummy);
+        pamk5_conv(ctx->pamh,
+                   args->use_pkinit
+                       ? "Insert smart card and press Enter:"
+                       : "Insert smart card if desired, then press Enter:",
+                   PAM_PROMPT_ECHO_OFF, &dummy);
     }
 
     /*
@@ -380,8 +380,8 @@ pamk5_password_auth(struct context *ctx, struct pam_args *args,
     do {
         if (pass == NULL) {
             retry = 0;
-            retval = pamk5_prompt(ctx->pamh, "Password: ",
-                                  PAM_PROMPT_ECHO_OFF, &pass);
+            retval = pamk5_conv(ctx, args, "Password: ", PAM_PROMPT_ECHO_OFF,
+                                &pass);
             if (retval != PAM_SUCCESS) {
                 pamk5_debug_pam(ctx, args, "error getting password", retval);
                 retval = PAM_SERVICE_ERR;
@@ -502,43 +502,6 @@ done:
     return retval;
 }
 
-
-/*
- * Get info from the user.  Disallow null responses (regardless of flags).
- * response is allocated and filled in on successful return.  Caller is
- * responsible for freeing it.
- */
-int
-pamk5_prompt(pam_handle_t *pamh, const char *prompt, int type,
-             char **response)
-{
-    int pamret;
-    struct pam_message msg;
-    const struct pam_message *pmsg;
-    struct pam_response	*resp = NULL;
-    struct pam_conv *conv;
-
-    pamret = pam_get_item(pamh, PAM_CONV, (void *) &conv);
-    if (pamret != PAM_SUCCESS)
-	return pamret;
-    pmsg = &msg;
-    msg.msg_style = type;
-    msg.msg = prompt;
-    pamret = conv->conv(1, &pmsg, &resp, conv->appdata_ptr);
-    if (pamret != PAM_SUCCESS)
-	return pamret;
-
-    /* Caller should ignore errors for non-response conversations. */
-    if (resp == NULL)
-	return PAM_CONV_ERR;
-    if (resp->resp == NULL || resp->resp[0] == '\0') {
-	free(resp);
-	return PAM_AUTH_ERR;
-    }
-    *response = resp->resp;
-    free(resp);
-    return PAM_SUCCESS;
-}
 
 /*
  * Verify the user authentication.  Call krb5_kuserok if this is a local
