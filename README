@@ -41,6 +41,8 @@ DESCRIPTION
   probably better-supported via a dedicated AFS PAM module that can be
   stacked with the Kerberos module of your choice).
 
+REQUIREMENTS
+
   Either MIT Kerberos or Heimdal are supported.  The Makefile will require
   some modifications to build with Heimdal.  The MIT Kerberos support is
   better tested.  MIT Keberos 1.3 or later may be required; this module
@@ -51,6 +53,21 @@ DESCRIPTION
   Other PAM implementations will probably require some porting, and the
   module requires gcc to even attempt to build on platforms other than
   Solaris.
+
+  Old versions of OpenSSH are known to call pam_authenticate followed by
+  pam_setcred(PAM_REINITIALIZE_CRED) without first calling
+  pam_open_session, thereby requesting that an existing ticket cache be
+  renewed (similar to what a screensaver would want) rather than
+  requesting a new ticket cache be created.  Since this behavior is
+  indistinguishable at the PAM level from a screensaver, pam-krb5 when
+  used with these old versions of OpenSSH will refresh the ticket cache of
+  the OpenSSH daemon rather than setting up a new ticket cache for the
+  user.  The resulting ticket cache will have the correct permissions
+  (this is not a security concern), but will not be named correctly or
+  referenced in the user's environment and will be overwritten by the next
+  user login.  The best solution to this problem is to upgrade OpenSSH.
+  I'm not sure exactly when this problem was fixed, but at the very least
+  OpenSSH 4.3 and later do not exhibit it.
 
 COMPILING AND INSTALLING
 
@@ -241,14 +258,15 @@ IMPLEMENTATION NOTES
   inside a screensaver) is:
 
       pam_authenticate
-      pam_setcred(PAM_REFRESH_CRED)
+      pam_setcred(PAM_REINITIALIZE_CRED)
       pam_acct_mgmt
 
-  Authentication proceeds as above.  At the pam_setcred stage, rather than
-  creating a new ticket cache, the module instead finds the current ticket
-  cache (from the KRB5CCNAME environment variable or the default ticket
-  cache location from the Kerberos library) and then reinitializes it with
-  the credentials from the temporary pam_authenticate ticket cache.  When
+  (PAM_REFRESH_CRED may be used instead.)  Authentication proceeds as
+  above.  At the pam_setcred stage, rather than creating a new ticket
+  cache, the module instead finds the current ticket cache (from the
+  KRB5CCNAME environment variable or the default ticket cache location
+  from the Kerberos library) and then reinitializes it with the
+  credentials from the temporary pam_authenticate ticket cache.  When
   refreshing a ticket cache, the application should *not* open a session.
   Calling pam_acct_mgmt is optional; pam-krb5 doesn't do anything
   different when it's called in this case.

@@ -11,6 +11,12 @@ pam-krb5 3.0 (unreleased)
     When debug is enabled, report the principal for which we're attempting
     authentication to help catch realm configuration errors.
 
+    Document the broken behavior of old versions of OpenSSH, which tell
+    PAM to refresh credentials rather than opening a session.  Thanks,
+    Michael C. Garrison.
+
+    Add a link to the distribution page to the pam-krb5 man page.
+
 pam-krb5 2.6 (2006-11-28)
 
     Don't assume the pointer set by pam_get_user is usable over the life

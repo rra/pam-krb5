@@ -403,8 +403,27 @@ account.
 
 =back
 
+=head1 CAVEATS
+
+Old versions of OpenSSH are known to call pam_authenticate followed by
+pam_setcred(PAM_REINITIALIZE_CRED) without first calling pam_open_session,
+thereby requesting that an existing ticket cache be renewed (similar to
+what a screensaver would want) rather than requesting a new ticket cache
+be created.  Since this behavior is indistinguishable at the PAM level
+from a screensaver, pam-krb5 when used with these old versions of OpenSSH
+will refresh the ticket cache of the OpenSSH daemon rather than setting up
+a new ticket cache for the user.  The resulting ticket cache will have the
+correct permissions (this is not a security concern), but will not be
+named correctly or referenced in the user's environment and will be
+overwritten by the next user login.  The best solution to this problem is
+to upgrade OpenSSH.  I'm not sure exactly when this problem was fixed, but
+at the very least OpenSSH 4.3 and later do not exhibit it.
+
 =head1 SEE ALSO
 
 kadmin(8), kdestroy(1), krb5.conf(5), pam(7), passwd(1), syslog(3)
+
+The current version of this module is available from its web page at
+L<http://www.eyrie.org/~eagle/software/pam-krb5/>.
 
 =cut
