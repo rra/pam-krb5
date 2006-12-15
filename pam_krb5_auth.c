@@ -470,6 +470,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
             }
             close(ccache_fd);
         }
+        pamk5_debug(ctx, args, "initializing ticket cache %s", cache_name);
     }
 
     /*
@@ -477,7 +478,6 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
      * copy the credentials out of our existing cache into the new cache and
      * the destroy the existing temporary cache.
      */
-    pamk5_debug(ctx, args, "initializing ticket cache %s", cache_name);
     pamret = pamk5_credlist_copy(ctx, &clist, ctx->cache);
     if (pamret != PAM_SUCCESS)
         goto done;
