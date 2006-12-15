@@ -17,6 +17,10 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#ifdef HAVE_HX509_ERR_H
+# include <hx509_err.h>
+#endif
+
 #include "pam_krb5.h"
 
 /*
@@ -190,6 +194,99 @@ fail:
 
 
 /*
+ * Set initial credential options based on our configuration information, and
+ * using the Heimdal call to set initial credential options if it's available.
+ * This function is used both for regular password authentication and for
+ * PKINIT.
+ */
+static void
+set_credential_options(struct context *ctx, struct pam_args *args,
+                       krb5_get_init_creds_opt *opts)
+{
+#ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_DEFAULT_FLAGS
+    krb5_get_init_creds_opt_set_default_flags(ctx->context, "pam",
+                                              args->realm_data, &opts);
+#endif
+    if (args->forwardable)
+        krb5_get_init_creds_opt_set_forwardable(opts, 1);
+    if (args->renew_lifetime != 0)
+        krb5_get_init_creds_opt_set_renew_life(opts, args->renew_lifetime);
+}
+
+
+#ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT
+/*
+ * Attempt authentication via PKINIT.  Currently, this uses an API specific to
+ * Heimdal.  Once MIT Kerberos supports PKINIT, some of the details may need
+ * to move into the compat layer.
+ *
+ * Some smart card readers require the user to enter the PIN at the keyboard
+ * after inserting the smart card.  Others have a pad on the card and no
+ * prompting by PAM is required.  The Kerberos library prompting functions
+ * should be able to work out which is required.
+ *
+ * PKINIT is just one of many pre-authentication mechanisms that could be
+ * used.  It's handled separately because of possible smart card interactions
+ * and the possibility that some users may be authenticated via PKINIT and
+ * others may not.
+ *
+ * Takes the same arguments as pamk5_password_auth except it takes a pointer
+ * to credential storage instead of a credlist and returns a krb5_error_code.
+ * If successful, the credentials will be stored in creds.
+ */
+static krb5_error_code
+pkinit_auth(struct context *ctx, struct pam_args *args, char *in_tkt_service,
+            krb5_creds *creds)
+{
+    krb5_get_init_creds_opt *opts = NULL;
+    krb5_error_code retval;
+    int status;
+    char *dummy = NULL;
+
+    /*
+     * We may not be able to dive directly into the PKINIT functions because
+     * the user may not have a chance to enter the smart card.  For example,
+     * gnome-screensaver jumps into PAM as soon as the mouse is moved and
+     * expects to be prompted for a password, which may not happen if the
+     * smart card is the type that has a pad for the PIN on the card.
+     *
+     * Allow the user to set pkinit_prompt as an option.  If set, we tell the
+     * user they need to insert the card.
+     *
+     * We always ignore the input.  If the user wants to use a password
+     * instead, they'll be prompted later when the PKINIT code discovers that
+     * no smart card is available.
+     */
+    if (args->pkinit_prompt) {
+        pamk5_prompt(ctx->pamh,
+                     args->use_pkinit
+                         ? 'Insert smart card and press Enter:'
+                         : 'Insert smart card if desired, then press Enter:',
+                     PAM_PROMPT_ECHO_OFF, &dummy);
+    }
+
+    /*
+     * Set credential options.  We have to use the allocated version of the
+     * credential option struct to store the PKINIT options.
+     */
+    retval = krb5_get_init_creds_opt_alloc(ctx->context, &opts);
+    if (retval != 0)
+        return retval;
+    set_credential_options(ctx, args, opts);
+    retval = krb5_get_init_creds_opt_set_pkinit(ctx->context, opts,
+                  ctx->princ, args->pkinit_user, args->pkinit_anchors, NULL,
+                  NULL, 0, pamk5_prompter_krb5, ctx->pamh, NULL);
+    if (retval != 0)
+        return retval;
+
+    /* Finally, do the actual work and return the results. */
+    return krb5_get_init_creds_password(ctx->context, creds, ctx->princ, NULL,
+               pamk5_prompter_krb5, ctx->pamh, 0, in_tkt_service, opts);
+}
+#endif /* HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT */
+
+
+/*
  * Prompt the user for a password and authenticate the password with the KDC.
  * If correct, fill in credlist with the obtained TGT or ticket.
  * in_tkt_service, if non-NULL, specifies the service to get tickets for; the
@@ -208,25 +305,13 @@ pamk5_password_auth(struct context *ctx, struct pam_args *args,
     char *pass = NULL;
     int authtok = in_tkt_service == NULL ? PAM_AUTHTOK : PAM_OLDAUTHTOK;
 
+    memset(&creds, 0, sizeof(krb5_creds));
+
     /* Bail if we should be ignoring this user. */
     if (pamk5_should_ignore(ctx, args, ctx->name)) {
         retval = PAM_USER_UNKNOWN;
         goto done;
     }
-
-    pamk5_credlist_new(ctx, credlist);
-    memset(&creds, 0, sizeof(krb5_creds));
-
-    /* Set ticket options. */
-    krb5_get_init_creds_opt_init(&opts);
-#ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_DEFAULT_FLAGS
-    krb5_get_init_creds_opt_set_default_flags(ctx->context, "pam",
-                                              args->realm_data, &opts);
-#endif
-    if (args->forwardable)
-        krb5_get_init_creds_opt_set_forwardable(&opts, 1);
-    if (args->renew_lifetime != 0)
-        krb5_get_init_creds_opt_set_renew_life(&opts, args->renew_lifetime);
 
     /* Fill in the principal to authenticate as. */
     retval = parse_name(ctx, args);
@@ -249,6 +334,29 @@ pamk5_password_auth(struct context *ctx, struct pam_args *args,
             free(principal);
         }
     }
+
+    /*
+     * If PKINIT is available and we were configured to attempt it, try
+     * authenticating with PKINIT first.
+     */
+#ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT
+    if (args->use_pkinit || args->try_pkinit) {
+        retval = pkinit_auth(ctx, args, in_tkt_service, &creds);
+        if (retval == 0) {
+            pamk5_credlist_new(ctx, credlist);
+            retval = pamk5_credlist_append(ctx, credlist, creds);
+            goto done;
+        }
+        if (retval != HX509_PKCS11_NO_TOKEN && retval != HX509_PKCS11_NO_SLOT)
+            goto done;
+        if (retval != 0 && args->use_pkinit)
+            goto done;
+    }
+#endif
+
+    /* Set credential options. */
+    krb5_get_init_creds_opt_init(&opts);
+    set_credential_options(ctx, args, &opts);
 
     /*
      * If try_first_pass or use_first_pass is set, grab the old password (if
@@ -303,6 +411,7 @@ pamk5_password_auth(struct context *ctx, struct pam_args *args,
             success = (retval == 0) ? PAM_SUCCESS : PAM_AUTH_ERR;
         }
         if (success == PAM_SUCCESS) {
+            pamk5_credlist_new(ctx, credlist);
             retval = pamk5_credlist_append(ctx, credlist, creds);
             if (retval != PAM_SUCCESS)
                 goto done;
@@ -336,6 +445,7 @@ pamk5_password_auth(struct context *ctx, struct pam_args *args,
         }
     }
 
+done:
     /* If we failed, return the appropriate PAM error code. */
     if (retval != 0) {
         pamk5_debug_krb5(ctx, args, "krb5_get_init_creds_password", retval);
@@ -348,8 +458,6 @@ pamk5_password_auth(struct context *ctx, struct pam_args *args,
         goto done;
     }
     retval = PAM_SUCCESS;
-
-done:
     return retval;
 }
 

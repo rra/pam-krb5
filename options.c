@@ -25,6 +25,8 @@ pamk5_args_new(void)
         return NULL;
     args->ccache = NULL;
     args->ccache_dir = NULL;
+    args->pkinit_anchors = NULL;
+    args->pkinit_user = NULL;
     args->realm = NULL;
     args->realm_data = NULL;
     return args;
@@ -41,6 +43,10 @@ pamk5_args_free(struct pam_args *args)
             free(args->ccache);
         if (args->ccache_dir != NULL)
             free(args->ccache_dir);
+        if (args->pkinit_anchors != NULL)
+            free(args->pkinit_anchors);
+        if (args->pkinit_user != NULL)
+            free(args->pkinit_user);
         if (args->realm != NULL)
             free(args->realm);
         pamk5_compat_free_realm(args);
@@ -173,9 +179,14 @@ pamk5_args_parse(int flags, int argc, const char **argv)
         default_boolean(args, c, "ignore_k5login", 0, &args->ignore_k5login);
         default_boolean(args, c, "ignore_root", 0, &args->ignore_root);
         default_number(args, c, "minimum_uid", 0, &args->minimum_uid);
+        default_string(args, c, "pkinit_anchors", NULL, &args->pkinit_anchors);
+        default_boolean(args, c, "pkinit_prompt", 0, &args->pkinit_prompt);
+        default_string(args, c, "pkinit_user", NULL, &args->pkinit_user);
         default_time(args, c, "renew_lifetime", 0, &args->renew_lifetime);
         default_boolean(args, c, "retain_after_close", 0, &args->retain);
         default_boolean(args, c, "search_k5login", 0, &args->search_k5login);
+        default_boolean(args, c, "try_pkinit", 0, &args->try_pkinit);
+        default_boolean(args, c, "use_pkinit", 0, &args->use_pkinit);
         krb5_free_context(c);
     }
 
@@ -208,6 +219,18 @@ pamk5_args_parse(int flags, int argc, const char **argv)
             args->minimum_uid = atoi(&argv[i][strlen("minimum_uid=")]);
         else if (strcmp(argv[i], "no_ccache") == 0)
             args->no_ccache = 1;
+        else if (strncmp(argv[i], "pkinit_anchors=", 15) == 0) {
+            if (args->pkinit_anchors != NULL)
+                free(args->pkinit_anchors);
+            args->pkinit_anchors = strdup(&argv[i][strlen("pkinit_anchors=")]);
+        }
+        else if (strcmp(argv[i], "pkinit_prompt") == 0)
+            args->pkinit_prompt = 1;
+        else if (strncmp(argv[i], "pkinit_user=", 12) == 0) {
+            if (args->pkinit_user != NULL)
+                free(args->pkinit_user);
+            args->pkinit_user = strdup(&argv[i][strlen("pkinit_user=")]);
+        }
         else if (strncmp(argv[i], "realm=", 6) == 0)
             ; /* Handled above. */
         else if (strncmp(argv[i], "renew_lifetime=", 15) == 0) {
@@ -222,16 +245,26 @@ pamk5_args_parse(int flags, int argc, const char **argv)
             args->search_k5login = 1;
         else if (strcmp(argv[i], "try_first_pass") == 0)
             args->try_first_pass = 1;
+        else if (strcmp(argv[i], "try_pkinit") == 0)
+            args->try_pkinit = 1;
         else if (strcmp(argv[i], "use_authtok") == 0)
             args->use_authtok = 1;
         else if (strcmp(argv[i], "use_first_pass") == 0)
             args->use_first_pass = 1;
+        else if (strcmp(argv[i], "use_pkinit") == 0)
+            args->use_pkinit = 1;
         else
             pamk5_error(NULL, "unknown option %s", argv[i]);
     }
-	
+
     if (flags & PAM_SILENT)
         args->quiet++;
+
+    /* Warn if PKINIT options were set and PKINIT isn't supported. */
+#ifndef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT
+    if (args->try_pkinit || args->use_pkinit)
+	pamk5_error(NULL, "PKINIT requested but not available");
+#endif
 
     return args;
 }

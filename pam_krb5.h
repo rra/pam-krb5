@@ -35,6 +35,13 @@ struct pam_args {
     int use_authtok;            /* Require a previous password be used. */
     int use_first_pass;         /* Always use the previous password. */
 
+    /* Options used for the optional PKINIT support. */
+    char *pkinit_anchors;       /* Trusted certificates, usually per realm. */
+    int pkinit_prompt;          /* Prompt user to insert smart card. */
+    char *pkinit_user;          /* User ID to pass to PKINIT. */
+    int try_pkinit;             /* Attempt PKINIT, fall back to password. */
+    int use_pkinit;             /* Require PKINIT. */
+
     /*
      * The default realm, used mostly in option parsing but also for
      * initializing krb5_get_init_creds_opt.  Unfortunately, the storage type

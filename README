@@ -41,12 +41,21 @@ DESCRIPTION
   probably better-supported via a dedicated AFS PAM module that can be
   stacked with the Kerberos module of your choice).
 
+  This module contains preliminary support for PKINIT authentication
+  provided that the Kerberos library against which it was built supports
+  PKINIT.  This code has not been well-tested and should be considered
+  alpha-quality.
+
 REQUIREMENTS
 
   Either MIT Kerberos or Heimdal are supported.  The Makefile will require
   some modifications to build with Heimdal.  The MIT Kerberos support is
   better tested.  MIT Keberos 1.3 or later may be required; this module
   has not been tested with earlier versions.
+
+  For PKINIT support, Heimdal 0.8rc1 or later is required.  MIT Kerberos
+  PKINIT support will be added once the MIT Kerberos APIs for PKINIT
+  stabilize.
 
   This module should work on Linux and Solaris (and build with either gcc
   or the Sun C compiler), but has been far more heavily tested on Linux.
@@ -71,7 +80,7 @@ REQUIREMENTS
 
 COMPILING AND INSTALLING
 
-  To build the module with MIT Kerberos on a Linux system, just run:
+  To build the module, just run:
 
       ./configure
       make
@@ -299,3 +308,7 @@ HISTORY AND ACKNOWLEDGEMENTS
   for compatibility with the Sourceforge module, commented and
   standardized the formatting of the code, and overhauled the
   documentation.
+
+  Thanks to Douglas E. Engert for the initial implementation of PKINIT
+  support.  I have since modified and reworked it extensively, so any bugs
+  or compilation problems are my fault.

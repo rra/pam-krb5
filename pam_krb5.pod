@@ -265,6 +265,45 @@ pam_start_session() don't make sense with this option.
 
 This option is only applicable to the auth group.
 
+=item pkinit_anchors=<anchors>
+
+When doing PKINIT authentication, use <anchors> as the client trust
+anchors.  This is normally a reference to a file containing the trusted
+certificate authorities.  This option is only used if I<try_pkinit> or
+I<use_pkinit> are set.
+
+This option can be set in F<krb5.conf> and is only applicable to the auth
+and password groups.
+
+=item pkinit_prompt
+
+Before attempting PKINIT authentication, prompt the user to insert a smart
+card.  You may want to set this option for programs such as
+B<gnome-screensaver> that call PAM as soon as the mouse is touched and
+don't give the user an opportunity to enter the smart card first.  Any
+information entered at the first prompt is ignored.  If I<try_pkinit> is
+set, a user who wishes to use a password instead can just press Enter and
+then enter their password as normal.
+
+This option can be set in F<krb5.conf> and is only applicable to the auth
+and password groups.
+
+=item pkinit_user=<userid>
+
+When doing PKINIT authentication, use <userid> as the user ID.  The value
+of this string is highly dependent on the type of PKINIT implementation
+you're using, but will generally be something like:
+
+    PKCS11:/usr/lib/pkcs11/lib/soft-pkcs11.so
+
+to specify the module to use with a smart card.  It may also point to a
+user certificate or to other types of user IDs.  See the Kerberos library
+documentation for more details.  This option is only used if I<try_pkinit>
+or I<use_pkinit> are set.
+
+This option can be set in F<krb5.conf> and is only applicable to the auth
+and password groups.
+
 =item realm=<realm>
 
 Obtain credentials in the specified realm rather than in the default realm
@@ -331,6 +370,17 @@ module obtained the user's password.
 This option is only applicable to the auth and password groups.  For the
 password group, it applies to both the old and new passwords.
 
+=item try_pkinit
+
+Attempt PKINIT authentication before trying a regular password.  You will
+probably also need to set the I<pkinit_user> configuration option.  If
+PKINIT fails, the PAM module will fall back on regular password
+authentication.  This option is currently only supported if pam-krb5 was
+built against Heimdal 0.8rc1 or later.
+
+This option can be set in F<krb5.conf> and is only applicable to the auth
+and password groups.
+
 =item use_authtok
 
 Use the password obtained by a previous authentication module to
@@ -354,6 +404,16 @@ authentication with that password fails, fail without further prompting
 the user.
 
 This option is only applicable to the auth and password groups.
+
+=item use_pkinit
+
+Require PKINIT authentication.  You will probably also need to set the
+I<pkinit_user> configuration option.  If PKINIT fails, authentication will
+fail.  This option is currently only supported if pam-krb5 was built
+against Heimdal 0.8rc1 or later.
+
+This option can be set in F<krb5.conf> and is only applicable to the auth
+and password groups.
 
 =back
 
