@@ -210,7 +210,7 @@ pamk5_password_auth(struct context *ctx, struct pam_args *args,
 
     /* Bail if we should be ignoring this user. */
     if (pamk5_should_ignore(ctx, args, ctx->name)) {
-        retval = PAM_SERVICE_ERR;
+        retval = PAM_USER_UNKNOWN;
         goto done;
     }
 

@@ -8,6 +8,9 @@ pam-krb5 3.0 (unreleased)
     instances of pam-krb5 with different realm settings in the same PAM
     stack.  Thanks, Dave Botsch.
 
+    Return unknown user rather than internal error when attempting
+    authentication of a user we're supposed to ignore.
+
     When debug is enabled, report the principal for which we're attempting
     authentication to help catch realm configuration errors.
 
