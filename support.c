@@ -299,8 +299,8 @@ pamk5_password_auth(struct context *ctx, struct pam_args *args,
                     char *in_tkt_service, struct credlist **credlist)
 {
     krb5_get_init_creds_opt opts;
-    krb5_creds creds;
     krb5_verify_init_creds_opt verify_opts;
+    krb5_creds creds;
     int retval, retry, success;
     char *pass = NULL;
     int authtok = in_tkt_service == NULL ? PAM_AUTHTOK : PAM_OLDAUTHTOK;
@@ -420,32 +420,30 @@ pamk5_password_auth(struct context *ctx, struct pam_args *args,
         pass = NULL;
     } while (retry && retval == KRB5KRB_AP_ERR_BAD_INTEGRITY);
 
+done:
     /*
-     * Last step.  Verify the obtained TGT by obtaining and checking a service
-     * ticket.  This is required to verify that no one is spoofing the KDC,
-     * but requires read access to a keytab with an appropriate key.  By
+     * If we think we succeeded, whether through the regular path or via
+     * PKINIT, try to verify the credentials by obtaining and checking a
+     * service ticket.  This is required to verify that no one is spoofing the
+     * KDC, but requires read access to a keytab with an appropriate key.  By
      * default, the Kerberos library will silently succeed if no verification
      * keys are available, but the user can change this by setting
      * verify_ap_req_nofail in [libdefaults] in /etc/krb5.conf.
      *
-     * Don't do this if we're authenticating for password changes.  We can't
-     * get a service ticket from a kadmin/changepw ticket and the user
-     * probably isn't going to have access to a keytab to check KDC spoofing
-     * anyway.
+     * Don't do this if we're authenticating for password changes (or any
+     * other case where we're not getting a TGT).  We can't get a service
+     * ticket from a kadmin/changepw ticket.
      */
     if (retval == 0 && in_tkt_service == NULL) {
         krb5_verify_init_creds_opt_init(&verify_opts);
-        retval = krb5_verify_init_creds(ctx->context, &creds, NULL, NULL,
-                                        NULL, &verify_opts);
+        retval = krb5_verify_init_creds(ctx->context, &creds, NULL, NULL, NULL,
+                                        &verify_opts);
         if (retval != 0) {
             pamk5_error(ctx, "credential verification failed: %s",
                         pamk5_compat_get_err_text(ctx->context, retval));
-            retval = PAM_AUTH_ERR;
-            goto done;
         }
     }
 
-done:
     /* If we failed, return the appropriate PAM error code. */
     if (retval != 0) {
         pamk5_debug_krb5(ctx, args, "krb5_get_init_creds_password", retval);
