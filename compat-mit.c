@@ -1,5 +1,5 @@
 /*
- * compat_mit.c
+ * compat-mit.c
  *
  * Kerberos compatibility functions for MIT Kerberos.
  */

@@ -7,9 +7,9 @@
 #include "config.h"
 
 #ifdef HAVE_KRB5_MIT
-# include "compat_mit.c"
+# include "compat-mit.c"
 #elif HAVE_KRB5_HEIMDAL
-# include "compat_heimdal.c"
+# include "compat-heimdal.c"
 #else
 # error "Unknown Kerberos implementation"
 #endif

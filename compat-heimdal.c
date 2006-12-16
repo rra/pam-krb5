@@ -1,5 +1,5 @@
 /*
- * compat_heimdal.c
+ * compat-heimdal.c
  *
  * Kerberos compatibility functions for Heimdal.
  */

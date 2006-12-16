@@ -35,8 +35,6 @@ pam_krb5.so: $(OBJECTS)
 	$(CC) -o $@ $(LDFLAGS) $(OBJECTS) $(LIBS)
 	chmod 644 $@
 
-compat.o: compat_heimdal.c compat_mit.c
-
 $(srcdir)/pam_krb5.5: $(srcdir)/pam_krb5.pod
 	pod2man --section=5 --release=$(VERSION) --center='PAM Modules' \
 	    $(srcdir)/pam_krb5.pod > $@
@@ -73,9 +71,9 @@ api-auth.o: api-auth.c config.h internal.h
 api-password.o: api-password.c config.h internal.h
 api-session.o: api-session.c config.h internal.h
 auth.o: auth.c config.h internal.h
-compat.o: compat.c config.h compat_mit.c compat_heimdal.c internal.h
-compat_heimdal.o: compat_heimdal.c config.h internal.h
-compat_mit.o: compat_mit.c config.h internal.h
+compat.o: compat.c config.h compat-mit.c compat-heimdal.c internal.h
+compat-heimdal.o: compat_heimdal.c config.h internal.h
+compat-mit.o: compat_mit.c config.h internal.h
 context.o: context.c config.h internal.h
 credlist.o: credlist.c config.h internal.h
 logging.o: logging.c config.h internal.h
