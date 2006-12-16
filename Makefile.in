@@ -24,9 +24,9 @@ LIBS		= -lpam @LIBS@
 INSTALL		= @INSTALL@
 INSTALL_DATA	= @INSTALL_DATA@
 
-SOURCES		= auth.c compat.c context.c credlist.c logging.c options.c \
-		  pam_krb5_acct.c pam_krb5_auth.c pam_krb5_pass.c \
-		  pam_krb5_sess.c prompting.c support.c
+SOURCES		= api-account.c api-auth.c api-password.c api-session.c \
+		  auth.c compat.c context.c credlist.c logging.c options.c \
+		  prompting.c support.c
 OBJECTS		= $(SOURCES:.c=.o)
 
 all: pam_krb5.so $(srcdir)/pam_krb5.5
@@ -68,6 +68,10 @@ maintclean maintainer-clean: distclean
 	rm -f CHANGES config.h.in config.h.in~ configure pam_krb5.5
 	rm -f $(TARNAME).gz
 
+api-account.o: api-account.c config.h internal.h
+api-auth.o: api-auth.c config.h internal.h
+api-password.o: api-password.c config.h internal.h
+api-session.o: api-session.c config.h internal.h
 auth.o: auth.c config.h internal.h
 compat.o: compat.c config.h compat_mit.c compat_heimdal.c internal.h
 compat_heimdal.o: compat_heimdal.c config.h internal.h
@@ -76,9 +80,5 @@ context.o: context.c config.h internal.h
 credlist.o: credlist.c config.h internal.h
 logging.o: logging.c config.h internal.h
 options.o: options.c config.h internal.h
-pam_krb5_acct.o: pam_krb5_acct.c config.h internal.h
-pam_krb5_auth.o: pam_krb5_auth.c config.h internal.h
-pam_krb5_pass.o: pam_krb5_pass.c config.h internal.h
-pam_krb5_sess.o: pam_krb5_sess.c config.h internal.h
 prompting.o: prompting.c config.h internal.h
 support.o: support.c config.h internal.h

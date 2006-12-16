@@ -1,11 +1,12 @@
 /*
- * pam_krb5_auth.c
+ * api-auth.c
  *
- * PAM authentication management functions for pam_krb5.
+ * Implements the PAM auth group API (pam_sm_authenticate and pam_sm_setcred).
  *
- * This file implements pam_sm_authenticate and pam_sm_setcred.  The former
- * does and checks the authentication, and the latter creates the final ticket
- * cache and sets its permissions appropriately.
+ * The former does and checks the authentication, and the latter creates the
+ * final ticket cache and sets its permissions appropriately.  pam_sm_setcred
+ * can also refresh an existing ticket cache or destroy a ticket cache,
+ * depending on the flags passed in.
  */
 
 /* Get the prototypes for the authentication functions. */
@@ -395,12 +396,11 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
      */
     if (flags & (PAM_REINITIALIZE_CRED | PAM_REFRESH_CRED))
         reinit = 1;
-
-    /*
-     * FIXME: It may be worth checking for REINIT/REFRESH and ESTABLISH set
-     * at the same time, since that's probably a mistake.  Currently,
-     * REINIT/REFRESH will simply override.
-     */
+    if (reinit && (flags & PAM_ESTABLISH_CRED)) {
+        pamk5_error(args, "requested establish and refresh at the same time");
+        pamret = PAM_SERVICE_ERR;
+        goto done;
+    }
     allow = PAM_REINITIALIZE_CRED | PAM_REFRESH_CRED | PAM_ESTABLISH_CRED;
     if (!(flags & allow)) {
         pamret = PAM_SERVICE_ERR;

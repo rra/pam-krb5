@@ -1,10 +1,9 @@
 /*
- * pam_krb5_pass.c
+ * api-password.c
  *
- * PAM password management functions for pam_krb5.
+ * Implements the PAM password group API (pam_sm_chauthtok).
  *
- * Handles prompting for a new password and changing passwords, including the
- * implementation of pam_sm_chauthtok.
+ * Handles prompting for a new password and changing passwords.
  */
 
 /* Get declarations for the password functions. */
@@ -23,6 +22,7 @@
 
 #include "internal.h"
 
+/* Solaris 8 has deficient PAM. */
 #ifndef PAM_AUTHTOK_RECOVER_ERR
 # define PAM_AUTHTOK_RECOVER_ERR PAM_AUTHTOK_ERR
 #endif

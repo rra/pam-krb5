@@ -1,7 +1,11 @@
 /*
- * pam_krb5_acct.c
+ * api-account.c
  *
- * PAM account management functions for pam_krb5.
+ * Implements the PAM account group API (pam_sm_acct_mgmt).
+ *
+ * We don't have much to do for account management, but we do recheck the
+ * user's authorization against .k5login (or whatever equivalent we've been
+ * configured for).
  */
 
 /* Get prototypes for the account management functions. */
