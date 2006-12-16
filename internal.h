@@ -44,6 +44,7 @@ struct pam_args {
     int ignore_root;            /* Skip authentication for root. */
     int ignore_k5login;         /* Don't check .k5login files. */
     char *keytab;               /* Keytab for credential validation. */
+    krb5_deltat lifetime;       /* Lifetime of credentials. */
     int minimum_uid;            /* Ignore users below this UID. */
     int no_ccache;              /* Don't create a ticket cache. */
     char *realm;                /* Default realm. */

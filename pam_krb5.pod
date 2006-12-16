@@ -377,6 +377,16 @@ authentication.
 This option can be set in F<krb5.conf> and is only applicable to the auth
 group.
 
+=item ticket_lifetime=<lifetime>
+
+Obtain tickets with a maximum lifetime of <lifetime>.  <lifetime> should
+be a Kerberos lifetime string such as C<2d4h10m> or a time in minutes.  If
+set, this overrides the Kerberos library default set in the [libdefaults]
+section of F<krb5.conf>.
+
+This option can be set in F<krb5.conf> and is only applicable to the auth
+group.
+
 =item try_first_pass
 
 If the authentication module isn't the first on the stack, and a previous

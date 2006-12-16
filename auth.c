@@ -73,6 +73,8 @@ set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts)
 #endif
     if (args->forwardable)
         krb5_get_init_creds_opt_set_forwardable(opts, 1);
+    if (args->lifetime != 0)
+        krb5_get_init_creds_opt_set_tkt_life(opts, args->lifetime);
     if (args->renew_lifetime != 0)
         krb5_get_init_creds_opt_set_renew_life(opts, args->renew_lifetime);
 }

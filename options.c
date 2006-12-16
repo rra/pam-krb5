@@ -196,6 +196,7 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
         default_time(args, c, "renew_lifetime", 0, &args->renew_lifetime);
         default_boolean(args, c, "retain_after_close", 0, &args->retain);
         default_boolean(args, c, "search_k5login", 0, &args->search_k5login);
+        default_time(args, c, "ticket_lifetime", 0, &args->lifetime);
         default_boolean(args, c, "try_pkinit", 0, &args->try_pkinit);
         default_boolean(args, c, "use_pkinit", 0, &args->use_pkinit);
         krb5_free_context(c);
@@ -259,6 +260,12 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
             args->retain = 1;
         else if (strcmp(argv[i], "search_k5login") == 0)
             args->search_k5login = 1;
+        else if (strncmp(argv[i], "ticket_lifetime=", 16) == 0) {
+            const char *value;
+
+            value = argv[i] + strlen("ticket_lifetime=");
+            krb5_string_to_deltat((char *) value, &args->lifetime);
+        }
         else if (strcmp(argv[i], "try_first_pass") == 0)
             args->try_first_pass = 1;
         else if (strcmp(argv[i], "try_pkinit") == 0)

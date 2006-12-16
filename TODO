@@ -1,7 +1,7 @@
                            pam-krb5 To-Do List
 
  * Support the remaining PAM options that the Sourceforge module supports.
-   The most interesting are banner and ticket_lifetime.
+   The most interesting is banner.
 
  * Support expose_account in the PAM configuration and, when set, use the
    native Kerberos prompters that give more information about what account
