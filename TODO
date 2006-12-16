@@ -11,9 +11,3 @@
    is not enabled) and store the result back in PAM_USER.  This lets people
    log in with a full principal name.  It's not clear how useful this is,
    but there's no reason not to support it.
-
- * Currently, any prompting that goes through the Kerberos prompter
-   function doesn't honor PAM_SILENT and may display error messages or
-   text strings if the Kerberos libraries think it should.  In order to
-   fix this, the prompter function will need to get back more information
-   than just the PAM handle so that it knows whether PAM_SILENT was set.

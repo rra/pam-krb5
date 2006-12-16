@@ -108,24 +108,24 @@ krb5_error_code
 pamk5_prompter_krb5(krb5_context context, void *data, const char *name,
                     const char *banner, int num_prompts, krb5_prompt *prompts)
 {
-    int pam_prompts = num_prompts;
-    int pamret, i;
+    struct pam_args *args = data;
+    int total_prompts = num_prompts;;
+    int pam_prompts, pamret, i;
     int retval = KRB5KRB_ERR_GENERIC;
     struct pam_message **msg;
     struct pam_response *resp = NULL;
     struct pam_conv *conv;
-    pam_handle_t *pamh = (pam_handle_t *) data;
 
     /* Obtain the conversation function from the application. */
-    pamret = pam_get_item(pamh, PAM_CONV, (void *) &conv);
+    pamret = pam_get_item(args->pamh, PAM_CONV, (void *) &conv);
     if (pamret != 0)
         return KRB5KRB_ERR_GENERIC;
 
     /* Treat the name and banner as prompts that doesn't need input. */
-    if (name != NULL)
-        pam_prompts++;
-    if (banner != NULL)
-        pam_prompts++;
+    if (name != NULL && !args->silent)
+        total_prompts++;
+    if (banner != NULL && !args->silent)
+        total_prompts++;
 
     /*
      * Allocate memory to copy all of the prompts into a pam_message.
@@ -149,23 +149,20 @@ pamk5_prompter_krb5(krb5_context context, void *data, const char *name,
      * structure since it's double-linked in a subtle way.  Thankfully, we get
      * to free it ourselves.
      */
-    msg = calloc(pam_prompts, sizeof(struct pam_message *));
+    msg = calloc(total_prompts, sizeof(struct pam_message *));
     if (msg == NULL)
         return ENOMEM;
-    *msg = calloc(pam_prompts, sizeof(struct pam_message));
+    *msg = calloc(total_prompts, sizeof(struct pam_message));
     if (*msg == NULL) {
         free(msg);
         return ENOMEM;
     }
-    for (i = 1; i < pam_prompts; i++)
+    for (i = 1; i < total_prompts; i++)
         msg[i] = msg[0] + i;
 
-    /*
-     * From this point on, pam_prompts is an index into msg.  This doesn't
-     * honor PAM_SILENT as it should.
-     */
+    /* pam_prompts is an index into msg and a count when we're done. */
     pam_prompts = 0;
-    if (name != NULL) {
+    if (name != NULL && !args->silent) {
        msg[pam_prompts]->msg = malloc(strlen(name) + 1);
        if (msg[pam_prompts]->msg == NULL)
            goto cleanup;
@@ -173,7 +170,7 @@ pamk5_prompter_krb5(krb5_context context, void *data, const char *name,
        msg[pam_prompts]->msg_style = PAM_TEXT_INFO;
        pam_prompts++;
     }
-    if (banner != NULL) {
+    if (banner != NULL && !args->silent) {
         msg[pam_prompts]->msg = malloc(strlen(banner) + 1);
         if (msg[pam_prompts]->msg == NULL)
             goto cleanup;
@@ -204,9 +201,9 @@ pamk5_prompter_krb5(krb5_context context, void *data, const char *name,
      * area of the krb5_prompt structs.
      */
     pam_prompts = 0;
-    if (name != NULL)
+    if (name != NULL && !args->silent)
         pam_prompts++;
-    if (banner != NULL)
+    if (banner != NULL && !args->silent)
         pam_prompts++;
     for (i = 0; i < num_prompts; i++, pam_prompts++) {
         size_t len;
@@ -229,7 +226,7 @@ pamk5_prompter_krb5(krb5_context context, void *data, const char *name,
     retval = 0;
 
 cleanup:
-    for (i = 0; i < pam_prompts; i++) {
+    for (i = 0; i < total_prompts; i++) {
         if (msg[i]->msg != NULL)
             free((char *) msg[i]->msg);
     }
@@ -237,15 +234,17 @@ cleanup:
     free(msg);
 
     /*
-     * Note that PAM is underspecified with respect to freeing resp[i].resp.
-     * It's not clear if I should free it, or if the application has to.
-     * Therefore most (all?) apps won't free it, and I can't either, as I am
-     * not sure it was malloced.  All PAM implementations I've seen leak
-     * memory here.  Not so bad iff you fork/exec for each PAM authentication
-     * (as is typical).
+     * Clean up the responses.  These may contain passwords, so we overwrite
+     * them before we free them.
      */
-    if (resp != NULL)
+    if (resp != NULL) {
+        for (i = 0; i < total_prompts; i++) {
+            if (resp[i].resp != NULL) {
+                memset(resp[i].resp, 0, strlen(resp[i].resp));
+                free(resp[i].resp);
+            }
+        }
         free(resp);
-
+    }
     return retval;
 }
