@@ -15,8 +15,26 @@
 #include <stdarg.h>
 
 /*
+ * An authentication context, including all the data we want to preserve
+ * across calls to the public entry points.  This context is stored in the PAM
+ * state and a pointer to it is stored in the pam_args struct that is passed
+ * as the first argument to most internal functions.
+ */
+struct context {
+    char *name;                 /* Username being authenticated. */
+    krb5_context context;       /* Kerberos context. */
+    krb5_ccache cache;          /* Active credential cache, if any. */
+    krb5_principal princ;       /* Principal being authenticated. */
+    int dont_destroy_cache;     /* If set, don't destroy cache on shutdown. */
+    int initialized;            /* If set, ticket cache initialized. */
+    struct credlist *creds;     /* Credentials for password changing. */
+};
+
+/*
  * The global structure holding our arguments, both from krb5.conf and from
- * the PAM configuration.  Filled in by pamk5_args_parse.
+ * the PAM configuration, and a pointer to our state.  Filled in by
+ * pamk5_args_parse and passed as a first argument to most internal
+ * functions.
  */
 struct pam_args {
     char *ccache;               /* Path to write ticket cache to. */
@@ -59,6 +77,10 @@ struct pam_args {
      * prompts, not informational messages or errors.
      */
     int silent;
+
+    /* Pointers to our state so that we can pass around only one struct. */
+    pam_handle_t *pamh;         /* Pointer back to the PAM handle. */
+    struct context *ctx;        /* Pointer to our authentication context. */
 };
 
 /* Stores a simple list of credentials. */
@@ -67,32 +89,16 @@ struct credlist {
     struct credlist *next;
 };
 
-/*
- * The global structure that holds the context, including all the data we want
- * to preserve across calls to the public entry points.  This context is
- * stored in the PAM state and passed as the first argument to most internal
- * functions.
- */
-struct context {
-    pam_handle_t *pamh;         /* Pointer back to the PAM handle. */
-    char *name;                 /* Username being authenticated. */
-    krb5_context context;       /* Kerberos context. */
-    krb5_ccache cache;          /* Active credential cache, if any. */
-    krb5_principal princ;       /* Principal being authenticated. */
-    int dont_destroy_cache;     /* If set, don't destroy cache on shutdown. */
-    int initialized;            /* If set, ticket cache initialized. */
-    struct credlist *creds;     /* Credentials for password changing. */
-};
-
 /* Parse the PAM flags, arguments, and krb5.conf and fill out pam_args. */
-struct pam_args *pamk5_args_parse(int flags, int argc, const char **argv);
+struct pam_args *pamk5_args_parse(pam_handle_t *pamh, int flags, int argc,
+                                  const char **argv);
 
 /* Free the pam_args struct when we're done. */
 void pamk5_args_free(struct pam_args *);
 
 /* Initialize a ticket cache from a credlist containing credentials. */
-int pamk5_ccache_init(struct context *, struct pam_args *, const char *,
-                      struct credlist *, krb5_ccache *);
+int pamk5_ccache_init(struct pam_args *, const char *, struct credlist *,
+                      krb5_ccache *);
 
 /*
  * Authenticate the user.  Prompts for the password as needed and obtains
@@ -100,16 +106,14 @@ int pamk5_ccache_init(struct context *, struct pam_args *, const char *,
  * credentials in the final argument.  If possible, the initial credentials
  * are verified by checking them against the local system key.
  */
-int pamk5_password_auth(struct context *, struct pam_args *,
-                        char *in_tkt_service, struct credlist **);
+int pamk5_password_auth(struct pam_args *, char *service, struct credlist **);
 
 /*
  * Generic conversation function to display messages or get information from
  * the user.  Takes the message, the message type, and a place to put the
  * result of a prompt.
  */
-int pamk5_conv(struct context *, struct pam_args *, const char *, int,
-               char **);
+int pamk5_conv(struct pam_args *, const char *, int, char **);
 
 /* Prompting function for the Kerberos libraries. */
 krb5_error_code pamk5_prompter_krb5(krb5_context, void *data,
@@ -117,10 +121,10 @@ krb5_error_code pamk5_prompter_krb5(krb5_context, void *data,
                                     int, krb5_prompt *);
 
 /* Check the user with krb5_kuserok or the configured equivalent. */
-int pamk5_authorized(struct context *, struct pam_args *);
+int pamk5_authorized(struct pam_args *);
 
 /* Returns true if we should ignore this user (root or low UID). */
-int pamk5_should_ignore(struct context *, struct pam_args *, const char *);
+int pamk5_should_ignore(struct pam_args *, const char *);
 
 /*
  * Compatibility functions.  Depending on whether pam_krb5 is built with MIT
@@ -133,22 +137,22 @@ krb5_error_code pamk5_compat_set_realm(struct pam_args *, const char *);
 void pamk5_compat_free_realm(struct pam_args *);
 
 /* Context management. */
-int pamk5_context_new(pam_handle_t *, struct pam_args *, struct context **);
-int pamk5_context_fetch(pam_handle_t *, struct context **);
+int pamk5_context_new(struct pam_args *);
+int pamk5_context_fetch(struct pam_args *);
 void pamk5_context_free(struct context *);
 void pamk5_context_destroy(pam_handle_t *, void *data, int pam_end_status);
 
 /* Credential list handling. */
-int pamk5_credlist_new(struct context *, struct credlist **);
-int pamk5_credlist_append(struct context *, struct credlist **, krb5_creds);
-int pamk5_credlist_copy(struct context *, struct credlist **, krb5_ccache);
-void pamk5_credlist_free(struct context *, struct credlist *);
+int pamk5_credlist_new(struct credlist **);
+int pamk5_credlist_append(struct credlist **, krb5_creds);
+int pamk5_credlist_copy(struct credlist **, krb5_context, krb5_ccache);
+void pamk5_credlist_free(struct credlist **, krb5_context);
 
 /* Error reporting and debugging functions. */
-void pamk5_error(struct context *, const char *, ...);
-void pamk5_debug(struct context *, struct pam_args *, const char *, ...);
-void pamk5_debug_pam(struct context *, struct pam_args *, const char *, int);
-void pamk5_debug_krb5(struct context *, struct pam_args *, const char *, int);
+void pamk5_error(struct pam_args *, const char *, ...);
+void pamk5_debug(struct pam_args *, const char *, ...);
+void pamk5_debug_pam(struct pam_args *, const char *, int);
+void pamk5_debug_krb5(struct pam_args *, const char *, int);
 
 /* __func__ is C99, but not provided by all implementations. */
 #if __STDC_VERSION__ < 199901L
@@ -160,10 +164,10 @@ void pamk5_debug_krb5(struct context *, struct pam_args *, const char *, int);
 #endif
 
 /* Macros to record entry and exit from the main PAM functions. */
-#define ENTRY(ctx, args, flags) \
-    pamk5_debug((ctx), (args), "%s: entry (0x%x)", __func__, (flags))
-#define EXIT(ctx, args, pamret) \
-    pamk5_debug((ctx), (args), "%s: exit (%s)", __func__, \
+#define ENTRY(args, flags) \
+    pamk5_debug((args), "%s: entry (0x%x)", __func__, (flags))
+#define EXIT(args, pamret) \
+    pamk5_debug((args), "%s: exit (%s)", __func__, \
                 ((pamret) == PAM_SUCCESS) ? "success" : "failure")
 
 #endif /* !INTERNAL_H */

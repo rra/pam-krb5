@@ -29,6 +29,8 @@ pamk5_args_new(void)
     args->pkinit_user = NULL;
     args->realm = NULL;
     args->realm_data = NULL;
+    args->ctx = NULL;
+    args->pamh = NULL;
     return args;
 }
 
@@ -135,7 +137,7 @@ default_time(struct pam_args *args, krb5_context c, const char *opt,
  * this.
  */
 struct pam_args *
-pamk5_args_parse(int flags, int argc, const char **argv)
+pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
     struct pam_args *args;
     int i, retval;
@@ -144,6 +146,7 @@ pamk5_args_parse(int flags, int argc, const char **argv)
     args = pamk5_args_new();
     if (args == NULL)
         return NULL;
+    args->pamh = pamh;
 
     /*
      * Do an initial scan to see if the realm is already set in our options.

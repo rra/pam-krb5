@@ -26,8 +26,8 @@
  * responsible for freeing it.
  */
 int
-pamk5_conv(struct context *ctx, struct pam_args *args, const char *message,
-           int type, char **response)
+pamk5_conv(struct pam_args *args, const char *message, int type,
+           char **response)
 {
     int pamret;
     struct pam_message msg;
@@ -38,7 +38,7 @@ pamk5_conv(struct context *ctx, struct pam_args *args, const char *message,
 
     if (args->silent && (type == PAM_ERROR_MSG || type == PAM_TEXT_INFO))
         return PAM_SUCCESS;
-    pamret = pam_get_item(ctx->pamh, PAM_CONV, (void *) &conv);
+    pamret = pam_get_item(args->pamh, PAM_CONV, (void *) &conv);
     if (pamret != PAM_SUCCESS)
 	return pamret;
     pmsg = &msg;

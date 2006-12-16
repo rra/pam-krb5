@@ -19,7 +19,7 @@
  * Initialize a credlist structure.
  */
 int
-pamk5_credlist_new(struct context *ctx, struct credlist **clist)
+pamk5_credlist_new(struct credlist **clist)
 {
     *clist = NULL;
     return PAM_SUCCESS;
@@ -30,14 +30,14 @@ pamk5_credlist_new(struct context *ctx, struct credlist **clist)
  * Free a credlist, including all of the credentials stored in it.
  */
 void
-pamk5_credlist_free(struct context *ctx, struct credlist *clist)
+pamk5_credlist_free(struct credlist **clist, krb5_context context)
 {
     struct credlist *c;
 
-    while (clist != NULL) {
-        krb5_free_cred_contents(ctx->context, &clist->creds);
-        c = clist;
-        clist = clist->next;
+    while (*clist != NULL) {
+        krb5_free_cred_contents(context, &(*clist)->creds);
+        c = *clist;
+        *clist = (*clist)->next;
         free(c);
     }
 }
@@ -48,8 +48,7 @@ pamk5_credlist_free(struct context *ctx, struct credlist *clist)
  * PAM_SUCCESS on success.
  */
 int
-pamk5_credlist_append(struct context *ctx, struct credlist **clist,
-                      krb5_creds creds)
+pamk5_credlist_append(struct credlist **clist, krb5_creds creds)
 {
     struct credlist *c;
 
@@ -68,24 +67,24 @@ pamk5_credlist_append(struct context *ctx, struct credlist **clist,
  * PAM_SUCCESS on success and PAM_SERVICE_ERR on failure.
  */
 int
-pamk5_credlist_copy(struct context *ctx, struct credlist **clist,
+pamk5_credlist_copy(struct credlist **clist, krb5_context context,
                     krb5_ccache cache)
 {
     krb5_cc_cursor c;
     krb5_creds creds;
     int retval;
 
-    retval = krb5_cc_start_seq_get(ctx->context, cache, &c);
+    retval = krb5_cc_start_seq_get(context, cache, &c);
     if (retval != 0)
         return PAM_SERVICE_ERR;
-    while (krb5_cc_next_cred(ctx->context, cache, &c, &creds) == 0) {
-        retval = pamk5_credlist_append(ctx, clist, creds);
+    while (krb5_cc_next_cred(context, cache, &c, &creds) == 0) {
+        retval = pamk5_credlist_append(clist, creds);
         if (retval != PAM_SUCCESS)
             goto done;
     }
     retval = PAM_SUCCESS;
 
 done:
-    krb5_cc_end_seq_get(ctx->context, cache, &c);
+    krb5_cc_end_seq_get(context, cache, &c);
     return retval;
 }
