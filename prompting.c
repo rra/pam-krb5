@@ -20,6 +20,93 @@
 #include "internal.h"
 
 /*
+ * Prompt for a password.
+ *
+ * This function handles prompting both for a password for regular
+ * authentication and for passwords when changing one's password.  The default
+ * prompt is simply "Password:" for the former.  For the latter, a string
+ * describing the type of password is passed in as prefix.  In this case, the
+ * prompts is:
+ *
+ *     <prefix> <banner> password:
+ *
+ * where <prefix> is the argument passed and <banner> is the value of
+ * args->banner (defaulting to "Kerberos").
+ *
+ * If args->expose_account is set, we append the principal name (taken from
+ * args->ctx->princ) before the colon, so the prompts are:
+ *
+ *     Password for <principal>:
+ *     <prefix> <banner> password for <principal>:
+ *
+ * Normally this is not done because it exposes the realm and possibly any
+ * username to principal mappings, plus may confuse some ssh clients if sshd
+ * passes the prompt back to the client.
+ *
+ * The entered password is stored in password.  The memory is allocated by the
+ * application and returned as part of the PAM conversation.  It must be freed
+ * by the caller.
+ *
+ * Returns a PAM success or error code.
+ */
+int
+pamk5_get_password(struct pam_args *args, const char *prefix, char **password)
+{
+    struct context *ctx = args->ctx;
+    char *prompt;
+    char *principal = NULL;
+    size_t length;
+    krb5_error_code k5_errno;
+    int retval;
+
+    if (args->expose_account || prefix != NULL) {
+        k5_errno = krb5_unparse_name(ctx->context, ctx->princ, &principal);
+        if (k5_errno != 0)
+            pamk5_debug_krb5(args, "krb5_unparse_name", k5_errno);
+    }
+    if (prefix == NULL) {
+        if (args->expose_account && principal != NULL) {
+            length = strlen("Password for ") + strlen(principal) + 3;
+            prompt = malloc(length);
+            if (prompt == NULL)
+                return PAM_BUF_ERR;
+            snprintf(prompt, length, "Password for %s: ", principal);
+        } else {
+            prompt = strdup("Password: ");
+            if (prompt == NULL)
+                return PAM_BUF_ERR;
+        }
+    } else {
+        if (args->expose_account && principal != NULL) {
+            length = strlen(prefix) + 1 + strlen(" password for ")
+                + strlen(principal) + 3;
+            if (args->banner != NULL)
+                length += strlen(args->banner) + 1;
+            prompt = malloc(length);
+            if (prompt == NULL)
+                return PAM_BUF_ERR;
+            snprintf(prompt, length, "%s%s%s password for %s: ", prefix,
+                     (args->banner == NULL) ? "" : " ",
+                     (args->banner == NULL) ? "" : args->banner, principal);
+        } else {
+            length = strlen(prefix) + 1 + strlen(" password: ");
+            if (args->banner != NULL)
+                length += strlen(args->banner) + 1;
+            prompt = malloc(length);
+            if (prompt == NULL)
+                return PAM_BUF_ERR;
+            snprintf(prompt, length, "%s%s%s password: ", prefix,
+                     (args->banner == NULL) ? "" : " ",
+                     (args->banner == NULL) ? "" : args->banner);
+        }
+    }
+    retval = pamk5_conv(args, prompt, PAM_PROMPT_ECHO_OFF, password);
+    free(prompt);
+    return retval;
+}
+
+
+/*
  * Get information from the user or display a message to the user, as
  * determined by type.  If PAM_SILENT was given, don't pass any text or error
  * messages to the application.

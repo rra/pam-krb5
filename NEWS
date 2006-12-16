@@ -8,11 +8,15 @@ pam-krb5 3.0 (unreleased)
     considered alpha-quality.  Currently, PKINIT support requires Heimdal
     0.8rc1 or later.
 
-    Support a keytab configuration option to use a different keytab for
+    Add a keytab configuration option to use a different keytab for
     initial credential validation.
 
-    Support a ticket_lifetime configuration option to set the lifetime of
+    Add a ticket_lifetime configuration option to set the lifetime of
     obtained credentials.
+
+    Add the banner and expose_account configuration options, which control
+    the prompts for authentication and password changing.  Provide more
+    informative prompts when changing passwords.
 
     Work around a bug in MIT Kerberos prior to 1.4 causing the library to
     cache the default realm and assume a particular realm even if the

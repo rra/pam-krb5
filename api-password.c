@@ -58,15 +58,13 @@ get_new_password(struct pam_args *args, char **pass)
 
     /* Prompt for the new password if necessary. */
     if (*pass == NULL) {
-        pamret = pamk5_conv(args, "Enter new password: ", PAM_PROMPT_ECHO_OFF,
-                            pass);
+        pamret = pamk5_get_password(args, "Enter new", pass);
         if (pamret != PAM_SUCCESS) {
             pamk5_debug_pam(args, "error getting new password", pamret);
             pamret = PAM_AUTHTOK_ERR;
             goto done;
         }
-        pamret = pamk5_conv(args, "Enter it again: ", PAM_PROMPT_ECHO_OFF,
-                            &pass2);
+        pamret = pamk5_get_password(args, "Retype new", &pass2);
         if (pamret != PAM_SUCCESS) {
             pamk5_debug_pam(args, "error getting new password", pamret);
             pamret = PAM_AUTHTOK_ERR;

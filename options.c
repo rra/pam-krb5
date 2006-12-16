@@ -17,7 +17,9 @@
 #include "internal.h"
 
 /*
- * Allocate a new struct pam_args and initialize its data members.
+ * Allocate a new struct pam_args and initialize its data members.  Explicitly
+ * setting the pointers to NULL only matters on hosts where NULL isn't the
+ * zero bit pattern, which probably don't exist, but I'm anal.
  */
 static struct pam_args *
 pamk5_args_new(void)
@@ -27,6 +29,7 @@ pamk5_args_new(void)
     args = calloc(1, sizeof(struct pam_args));
     if (args == NULL)
         return NULL;
+    args->banner = NULL;
     args->ccache = NULL;
     args->ccache_dir = NULL;
     args->keytab = NULL;
@@ -46,6 +49,8 @@ void
 pamk5_args_free(struct pam_args *args)
 {
     if (args != NULL) {
+        if (args->banner != NULL)
+            free(args->banner);
         if (args->ccache != NULL)
             free(args->ccache);
         if (args->ccache_dir != NULL)
@@ -142,6 +147,11 @@ default_time(struct pam_args *args, krb5_context c, const char *opt,
  * Kerberos context, but we do this before we've retrieved any context from
  * the PAM environment.  So instead, we create a temporary context just for
  * this.
+ *
+ * Yes, we redo this for every PAM invocation, and yes, I'm worried about the
+ * overhead too, but premature optimization is the root of all evil.  Mostly
+ * the krb5.conf searching and setting of defaults is the only issue; the long
+ * if statement only happens if there are PAM arguments.
  */
 struct pam_args *
 pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
@@ -182,9 +192,11 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
             krb5_get_default_realm(c, &args->realm);
         if (args->realm != NULL)
             pamk5_compat_set_realm(args, args->realm);
+        default_string(args, c, "banner", "Kerberos", &args->banner);
         default_string(args, c, "ccache", NULL, &args->ccache);
         default_string(args, c, "ccache_dir", "/tmp", &args->ccache_dir);
         default_boolean(args, c, "debug", 0, &args->debug);
+        default_boolean(args, c, "expose_account", 0, &args->expose_account);
         default_boolean(args, c, "forwardable", 0, &args->forwardable);
         default_boolean(args, c, "ignore_k5login", 0, &args->ignore_k5login);
         default_boolean(args, c, "ignore_root", 0, &args->ignore_root);
@@ -209,7 +221,12 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
      * sense in krb5.conf.
      */
     for (i = 0; i < argc; i++) {
-        if (strncmp(argv[i], "ccache=", 7) == 0) {
+        if (strncmp(argv[i], "banner=", 7) == 0) {
+            if (args->banner != NULL)
+                free(args->banner);
+            args->banner = strdup(&argv[i][strlen("banner=")]);
+        }
+        else if (strncmp(argv[i], "ccache=", 7) == 0) {
             if (args->ccache != NULL)
                 free(args->ccache);
             args->ccache = strdup(&argv[i][strlen("ccache=")]);
@@ -221,6 +238,8 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
         }
         else if (strcmp(argv[i], "debug") == 0)
             args->debug = 1;
+        else if (strcmp(argv[i], "expose_account") == 0)
+            args->expose_account = 1;
         else if (strcmp(argv[i], "forwardable") == 0)
             args->forwardable = 1;
         else if (strcmp(argv[i], "ignore_k5login") == 0)
@@ -282,6 +301,21 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
     if (flags & PAM_SILENT)
         args->silent = 1;
+
+    /* An empty banner should be treated the same as not having one. */
+    if (args->banner != NULL && args->banner[0] == '\0') {
+        free(args->banner);
+        args->banner = NULL;
+    }
+
+    /*
+     * Don't set expose_account if we're using search_k5login.  The user will
+     * get a principal formed from the account into which they're logging in,
+     * which isn't the password they'll use (that's the whole point of
+     * search_k5login).
+     */
+    if (args->search_k5login)
+        args->expose_account = 0;
 
     /* Warn if PKINIT options were set and PKINIT isn't supported. */
 #ifndef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT

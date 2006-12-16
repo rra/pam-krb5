@@ -1,8 +1,5 @@
                            pam-krb5 To-Do List
 
- * Support the remaining PAM options that the Sourceforge module supports.
-   The most interesting is banner.
-
- * Support expose_account in the PAM configuration and, when set, use the
-   native Kerberos prompters that give more information about what account
-   the user is authenticating to.
+ * The PAM option parsing is repetitive code that involves counting the
+   lengths of strings.  It should be possible to replace most of it with
+   some carefully-chosen macros.

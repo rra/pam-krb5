@@ -363,9 +363,10 @@ pamk5_password_auth(struct pam_args *args, char *service,
     }
     do {
         if (pass == NULL) {
+            const char *prompt = (service == NULL) ? NULL : "Current";
+
             retry = 0;
-            retval = pamk5_conv(args, "Password: ", PAM_PROMPT_ECHO_OFF,
-                                &pass);
+            retval = pamk5_get_password(args, prompt, &pass);
             if (retval != PAM_SUCCESS) {
                 pamk5_debug_pam(args, "error getting password", retval);
                 retval = PAM_SERVICE_ERR;

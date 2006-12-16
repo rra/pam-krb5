@@ -183,6 +183,25 @@ configuration that was turned on in F<krb5.conf>.
 
 =over 4
 
+=item banner=<banner>
+
+By default, the prompts when a user changes their password are:
+
+    Current Kerberos password:
+    Enter new Kerberos password:
+    Retype new Kerberos password:
+
+The string "Kerberos" is inserted so that users aren't confused about
+which password they're changing.  Setting this option replaces the word
+"Kerberos" with whatever this option is set to.  Setting this option to
+the empty string removes the word before "password:" entirely.
+
+If set in the PAM configuration, <banner> may not contain whitespace.  If
+you want a value containing whitespace, set it in F<krb5.conf>.
+
+This option can be set in F<krb5.conf> and is only applicable to the
+password group.
+
 =item ccache=<pattern>
 
 Use <pattern> as the pattern for creating credential cache names.
@@ -215,6 +234,24 @@ priority, including entry and exit from each of the external PAM
 interfaces (except pam_close_session).
 
 This option can be set in F<krb5.conf>.
+
+=item expose_account
+
+By default, the Kerberos PAM module password prompt is simply
+"Password:".  This avoids leaking any information about the system realm
+or account to principal conversions.  If this option is set, the string
+"for <principal>" is added before the colon, where <principal> is the
+user's principal.  This string is also added before the colon on prompts
+when changing the user's password.
+
+Enabling this option with ChallengeResponseAuthentication enabled in
+OpenSSH may cause problems for some ssh clients that only recognize
+"Password:" as a prompt.  This option is automatically disabled if
+I<search_k5login> is enabled since the principal displayed would be
+inaccurate.
+
+This option can be set in F<krb5.conf> and is only applicable to the auth
+and password groups.
 
 =item forwardable
 

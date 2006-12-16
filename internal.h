@@ -37,9 +37,11 @@ struct context {
  * functions.
  */
 struct pam_args {
+    char *banner;               /* Addition to password changing prompts. */
     char *ccache;               /* Path to write ticket cache to. */
     char *ccache_dir;           /* Directory for ticket cache. */
     int debug;                  /* Log debugging information. */
+    int expose_account;         /* Display principal in password prompts. */
     int forwardable;            /* Obtain forwardable tickets. */
     int ignore_root;            /* Skip authentication for root. */
     int ignore_k5login;         /* Don't check .k5login files. */
@@ -112,6 +114,13 @@ int pamk5_password_auth(struct pam_args *, char *service, struct credlist **);
  * result of a prompt.
  */
 int pamk5_conv(struct pam_args *, const char *, int, char **);
+
+/*
+ * Function specifically for getting a password.  Takes a prefix (if non-NULL,
+ * args->banner will also be prepended) and a pointer into which to store the
+ * password.  The password must be freed by the caller.
+ */
+int pamk5_get_password(struct pam_args *, const char *, char **);
 
 /* Prompting function for the Kerberos libraries. */
 krb5_error_code pamk5_prompter_krb5(krb5_context, void *data,
