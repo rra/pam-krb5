@@ -61,6 +61,12 @@ a custom aname to localname mapping in F<krb5.conf>; see the Kerberos
 documentation for details).  This can be customized with several
 configuration options; see below.
 
+If the username provided to PAM contains an C<@> and Kerberos can,
+treating the username as a principal, map it to a local account name,
+pam_authenticate() will change the PAM user to that local account name.
+This allows users to log in with their Kerberos principal and let Kerberos
+do the mapping to an account.
+
 When pam_setcred() is called to initialize a new ticket cache, the
 environment variable KRB5CCNAME is set to the path to that ticket cache.
 By default, the cache will be named F</tmp/krb5cc_UID_RANDOM> where UID is

@@ -123,6 +123,40 @@ done:
 
 
 /*
+ * If PAM_USER was a fully-qualified principal name, convert it to a local
+ * account name and reset it.  This allows users to log in with the full
+ * principal that they want to use and let the Kerberos library apply local
+ * mapping logic to convert this to an account name.  This should be done
+ * after the user is authenticated and authorized.
+ *
+ * If we fail, don't worry about it, just leave the PAM_USER alone.  It may be
+ * that the application doesn't care.
+ */
+static void
+canonicalize_name(struct pam_args *args)
+{
+    struct context *ctx = args->ctx;
+    krb5_context c = ctx->context;
+    char kuser[65] = "";        /* MAX_USERNAME == 65 (MIT Kerberos 1.4.1). */
+    char *user;
+    int pamret;
+
+    if (strchr(ctx->name, '@') != NULL) {
+        if (krb5_aname_to_localname(c, ctx->princ, sizeof(kuser), kuser) != 0)
+            return;
+        user = strdup(kuser);
+        if (user == NULL) {
+            pamk5_error(args, "cannot allocate memory: %s", strerror(errno));
+            return;
+        }
+        pamret = pam_set_item(args->pamh, PAM_USER, user);
+        if (pamret != PAM_SUCCESS)
+            pamk5_debug_pam(args, "cannot set PAM_USER", pamret);
+    }
+}
+
+
+/*
  * Authenticate a user via Kerberos 5.
  *
  * It would be nice to be able to save the ticket cache temporarily as a
@@ -190,6 +224,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     pamret = set_krb5ccname(args, cache_name, "PAM_KRB5CCNAME");
     if (pamret != PAM_SUCCESS)
         goto done;
+    canonicalize_name(args);
 
 done:
     if (clist != NULL)

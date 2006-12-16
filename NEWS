@@ -17,6 +17,10 @@ pam-krb5 3.0 (unreleased)
     Honor PAM_SILENT when the Kerberos library prompts for more
     information, passing to the application only prompts.
 
+    If PAM_USER is set to a fully-qualified principal that the Kerberos
+    library can map to a local account name, reset PAM_USER to that local
+    account name after authentication.
+
     Avoid memory leaks in the Kerberos prompter by freeing the PAM
     response strings.  We were already doing this elsewhere and the world
     didn't end, so assume that it's safe for the PAM module to do this.

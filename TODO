@@ -6,8 +6,3 @@
  * Support expose_account in the PAM configuration and, when set, use the
    native Kerberos prompters that give more information about what account
    the user is authenticating to.
-
- * Call krb5_aname_to_localname on the provided username (if search_k5login
-   is not enabled) and store the result back in PAM_USER.  This lets people
-   log in with a full principal name.  It's not clear how useful this is,
-   but there's no reason not to support it.
