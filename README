@@ -37,9 +37,10 @@ DESCRIPTION
   features that the Sourceforge module does not (particularly around
   authorization), and does not support some options (particularly ones not
   directly related to Kerberos v5) that it does.  This module will never
-  support Kerberos v4 and will probably never directly support AFS (AFS is
-  probably better-supported via a dedicated AFS PAM module that can be
-  stacked with the Kerberos module of your choice).
+  support Kerberos v4 or AFS.  For an AFS session module that works with
+  this module (or any other Kerberos v5 PAM module), see:
+
+      <http://www.eyrie.org/~eagle/software/pam-afs-session/>
 
   This module contains preliminary support for PKINIT authentication
   provided that the Kerberos library against which it was built supports
