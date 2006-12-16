@@ -48,6 +48,8 @@ pam-krb5 3.0 (unreleased)
 
     Add a link to the distribution page to the pam-krb5 man page.
 
+    Extensive refactoring and reorganization of the code.
+
 pam-krb5 2.6 (2006-11-28)
 
     Don't assume the pointer set by pam_get_user is usable over the life
