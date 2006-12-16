@@ -81,6 +81,47 @@ done:
 
 
 /*
+ * Given a cache name and a credential list, initialize the cache, store the
+ * credentials in that cache, and return a pointer to the new cache in the
+ * cache argument.  Returns a PAM success or error code.
+ */
+static int
+cache_init(struct pam_args *args, const char *ccname, struct credlist **clist,
+           krb5_ccache *cache)
+{
+    struct context *ctx;
+    int retval;
+
+    if (args == NULL || args->ctx == NULL || args->ctx->context == NULL)
+        return PAM_SERVICE_ERR;
+    ctx = args->ctx;
+    retval = krb5_cc_resolve(ctx->context, ccname, cache);
+    if (retval != 0) {
+        pamk5_debug_krb5(args, "krb5_cc_resolve", retval);
+        retval = PAM_SERVICE_ERR;
+        goto done;
+    }
+    retval = krb5_cc_initialize(ctx->context, *cache, ctx->princ);
+    if (retval != 0) {
+        pamk5_debug_krb5(args, "krb5_cc_initialize", retval);
+        retval = PAM_SERVICE_ERR;
+        goto done;
+    }
+    retval = pamk5_credlist_store(clist, ctx->context, *cache);
+    if (retval != 0) {
+        pamk5_debug_krb5(args, "krb5_cc_store_cred", retval);
+        retval = PAM_SERVICE_ERR;
+        goto done;
+    }
+
+done:
+    if (retval != PAM_SUCCESS && *cache != NULL)
+        krb5_cc_destroy(ctx->context, *cache);
+    return retval;
+}
+
+
+/*
  * Authenticate a user via Kerberos 5.
  *
  * It would be nice to be able to save the ticket cache temporarily as a
@@ -142,7 +183,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
         goto done;
     }
     close(ccfd);
-    pamret = pamk5_ccache_init(args, cache_name, clist, &ctx->cache);
+    pamret = cache_init(args, cache_name, &clist, &ctx->cache);
     if (pamret != PAM_SUCCESS)
         goto done;
     pamret = set_krb5ccname(args, cache_name, "PAM_KRB5CCNAME");
@@ -482,10 +523,13 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
      * copy the credentials out of our existing cache into the new cache and
      * the destroy the existing temporary cache.
      */
-    pamret = pamk5_credlist_copy(&clist, ctx->context, ctx->cache);
-    if (pamret != PAM_SUCCESS)
+    status = pamk5_credlist_copy(&clist, ctx->context, ctx->cache);
+    if (status != 0) {
+        pamk5_debug_krb5(args, "error reading cached credentials", status);
+        pamret = PAM_SERVICE_ERR;
         goto done;
-    pamret = pamk5_ccache_init(args, cache_name, clist, &cache);
+    }
+    pamret = cache_init(args, cache_name, &clist, &cache);
     if (pamret != PAM_SUCCESS)
         goto done;
     if (strncmp(cache_name, "FILE:", strlen("FILE:")) == 0)

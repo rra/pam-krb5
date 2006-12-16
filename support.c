@@ -417,7 +417,7 @@ pamk5_password_auth(struct pam_args *args, char *service,
         if (success == PAM_SUCCESS) {
             pamk5_credlist_new(credlist);
             retval = pamk5_credlist_append(credlist, creds);
-            if (retval != PAM_SUCCESS)
+            if (retval != 0)
                 goto done;
             break;
         }
@@ -460,50 +460,6 @@ done:
         goto done;
     }
     retval = PAM_SUCCESS;
-    return retval;
-}
-
-
-/*
- * Given a cache name and a credential list, initialize the cache, store the
- * credentials in that cache, and return a pointer to the new cache in the
- * cache argument.  Returns a PAM success or error code.
- */
-int
-pamk5_ccache_init(struct pam_args *args, const char *ccname,
-                  struct credlist *clist, krb5_ccache *cache)
-{
-    struct context *ctx;
-    struct credlist *cred;
-    int retval;
-
-    if (args == NULL || args->ctx == NULL || args->ctx->context == NULL)
-        return PAM_SERVICE_ERR;
-    ctx = args->ctx;
-    retval = krb5_cc_resolve(ctx->context, ccname, cache);
-    if (retval != 0) {
-        pamk5_debug_krb5(args, "krb5_cc_resolve", retval);
-        retval = PAM_SERVICE_ERR;
-        goto done;
-    }
-    retval = krb5_cc_initialize(ctx->context, *cache, ctx->princ);
-    if (retval != 0) {
-        pamk5_debug_krb5(args, "krb5_cc_initialize", retval);
-        retval = PAM_SERVICE_ERR;
-        goto done;
-    }
-    for (cred = clist; cred != NULL; cred = cred->next) {
-        retval = krb5_cc_store_cred(ctx->context, *cache, &cred->creds);
-        if (retval != 0) {
-            pamk5_debug_krb5(args, "krb5_cc_store_cred", retval);
-            retval = PAM_SERVICE_ERR;
-            goto done;
-        }
-    }
-
-done:
-    if (retval != PAM_SUCCESS && *cache != NULL)
-        krb5_cc_destroy(ctx->context, *cache);
     return retval;
 }
 

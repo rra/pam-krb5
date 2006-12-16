@@ -96,10 +96,6 @@ struct pam_args *pamk5_args_parse(pam_handle_t *pamh, int flags, int argc,
 /* Free the pam_args struct when we're done. */
 void pamk5_args_free(struct pam_args *);
 
-/* Initialize a ticket cache from a credlist containing credentials. */
-int pamk5_ccache_init(struct pam_args *, const char *, struct credlist *,
-                      krb5_ccache *);
-
 /*
  * Authenticate the user.  Prompts for the password as needed and obtains
  * tickets for in_tkt_service, krbtgt/<realm> by default.  Stores the initial
@@ -143,10 +139,13 @@ void pamk5_context_free(struct context *);
 void pamk5_context_destroy(pam_handle_t *, void *data, int pam_end_status);
 
 /* Credential list handling. */
-int pamk5_credlist_new(struct credlist **);
-int pamk5_credlist_append(struct credlist **, krb5_creds);
-int pamk5_credlist_copy(struct credlist **, krb5_context, krb5_ccache);
+void pamk5_credlist_new(struct credlist **);
 void pamk5_credlist_free(struct credlist **, krb5_context);
+krb5_error_code pamk5_credlist_append(struct credlist **, krb5_creds);
+krb5_error_code pamk5_credlist_copy(struct credlist **, krb5_context,
+                                    krb5_ccache);
+krb5_error_code pamk5_credlist_store(struct credlist **, krb5_context,
+                                     krb5_ccache);
 
 /* Error reporting and debugging functions. */
 void pamk5_error(struct pam_args *, const char *, ...);

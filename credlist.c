@@ -9,6 +9,7 @@
 
 #include "config.h"
 
+#include <errno.h>
 #include <krb5.h>
 #include <stdlib.h>
 
@@ -18,11 +19,10 @@
 /*
  * Initialize a credlist structure.
  */
-int
+void
 pamk5_credlist_new(struct credlist **clist)
 {
     *clist = NULL;
-    return PAM_SUCCESS;
 }
 
 
@@ -44,29 +44,29 @@ pamk5_credlist_free(struct credlist **clist, krb5_context context)
 
 
 /*
- * Append a credential to a credlist.  Returns PAM_BUF_ERR on failure and
- * PAM_SUCCESS on success.
+ * Append a credential to a credlist.  Returns 0 on success and ENOMEM on
+ * failure.
  */
-int
+krb5_error_code
 pamk5_credlist_append(struct credlist **clist, krb5_creds creds)
 {
     struct credlist *c;
 
     c = calloc(1, sizeof(*c));
     if (c == NULL)
-        return PAM_BUF_ERR;
+        return ENOMEM;
     c->creds = creds;
     c->next = *clist;
     *clist = c;
-    return PAM_SUCCESS;
+    return 0;
 }
 
 
 /*
- * Copy the credentials from a ticket cache into a credlist.  Returns
- * PAM_SUCCESS on success and PAM_SERVICE_ERR on failure.
+ * Copy the credentials from a ticket cache into a credlist.  Returns a
+ * Kerberos v5 error code.
  */
-int
+krb5_error_code
 pamk5_credlist_copy(struct credlist **clist, krb5_context context,
                     krb5_ccache cache)
 {
@@ -76,15 +76,35 @@ pamk5_credlist_copy(struct credlist **clist, krb5_context context,
 
     retval = krb5_cc_start_seq_get(context, cache, &c);
     if (retval != 0)
-        return PAM_SERVICE_ERR;
+        return retval;
     while (krb5_cc_next_cred(context, cache, &c, &creds) == 0) {
         retval = pamk5_credlist_append(clist, creds);
-        if (retval != PAM_SUCCESS)
+        if (retval != 0)
             goto done;
     }
-    retval = PAM_SUCCESS;
+    retval = 0;
 
 done:
     krb5_cc_end_seq_get(context, cache, &c);
     return retval;
+}
+
+
+/*
+ * Store the credentials from a credlist into a ticket cache.  Returns a
+ * Kerberos v5 error code.
+ */
+krb5_error_code
+pamk5_credlist_store(struct credlist **clist, krb5_context context,
+                     krb5_ccache cache)
+{
+    struct credlist *cred;
+    int retval;
+
+    for (cred = *clist; cred != NULL; cred = cred->next) {
+        retval = krb5_cc_store_cred(context, cache, &cred->creds);
+        if (retval != 0)
+            return retval;
+    }
+    return 0;
 }
