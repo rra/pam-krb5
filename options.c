@@ -2,6 +2,10 @@
  * options.c
  *
  * Option handling for pam_krb5.
+ *
+ * Responsible for initializing the args struct that's passed to nearly all
+ * internal functions.  Retrieves configuration information from krb5.conf and
+ * parses the PAM configuration.
  */
 
 #include "config.h"

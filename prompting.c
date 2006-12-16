@@ -1,7 +1,10 @@
 /*
  * prompting.c
  *
- * Functions to prompt users for information.
+ * Prompt users for information.
+ *
+ * Handles all interaction with the PAM conversation, either directly or
+ * indirectly through the Kerberos libraries.
  */
 
 #include "config.h"
