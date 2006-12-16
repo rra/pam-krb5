@@ -29,6 +29,7 @@ pamk5_args_new(void)
         return NULL;
     args->ccache = NULL;
     args->ccache_dir = NULL;
+    args->keytab = NULL;
     args->pkinit_anchors = NULL;
     args->pkinit_user = NULL;
     args->realm = NULL;
@@ -49,6 +50,8 @@ pamk5_args_free(struct pam_args *args)
             free(args->ccache);
         if (args->ccache_dir != NULL)
             free(args->ccache_dir);
+        if (args->keytab != NULL)
+            free(args->keytab);
         if (args->pkinit_anchors != NULL)
             free(args->pkinit_anchors);
         if (args->pkinit_user != NULL)
@@ -185,6 +188,7 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
         default_boolean(args, c, "forwardable", 0, &args->forwardable);
         default_boolean(args, c, "ignore_k5login", 0, &args->ignore_k5login);
         default_boolean(args, c, "ignore_root", 0, &args->ignore_root);
+        default_string(args, c, "keytab", NULL, &args->keytab);
         default_number(args, c, "minimum_uid", 0, &args->minimum_uid);
         default_string(args, c, "pkinit_anchors", NULL, &args->pkinit_anchors);
         default_boolean(args, c, "pkinit_prompt", 0, &args->pkinit_prompt);
@@ -222,6 +226,11 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
             args->ignore_k5login = 1;
         else if (strcmp(argv[i], "ignore_root") == 0)
             args->ignore_root = 1;
+        else if (strncmp(argv[i], "keytab=", 7) == 0) {
+            if (args->keytab != NULL)
+                free(args->keytab);
+            args->pkinit_anchors = strdup(&argv[i][strlen("keytab=")]);
+        }
         else if (strncmp(argv[i], "minimum_uid=", 12) == 0)
             args->minimum_uid = atoi(&argv[i][strlen("minimum_uid=")]);
         else if (strcmp(argv[i], "no_ccache") == 0)

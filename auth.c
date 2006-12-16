@@ -278,6 +278,7 @@ pamk5_password_auth(struct pam_args *args, char *service,
     struct context *ctx;
     krb5_get_init_creds_opt opts;
     krb5_verify_init_creds_opt verify_opts;
+    krb5_keytab keytab = NULL;
     krb5_creds creds;
     int retval, retry, success;
     char *pass = NULL;
@@ -417,8 +418,16 @@ done:
      */
     if (retval == 0 && service == NULL) {
         krb5_verify_init_creds_opt_init(&verify_opts);
-        retval = krb5_verify_init_creds(ctx->context, &creds, NULL, NULL, NULL,
-                                        &verify_opts);
+        if (args->keytab) {
+            retval = krb5_kt_resolve(ctx->context, args->keytab, &keytab);
+            if (retval != 0) {
+                pamk5_error(args, "cannot open keytab %s: %s", args->keytab,
+                            pamk5_compat_get_err_text(ctx->context, retval));
+                keytab = NULL;
+            }
+        }
+        retval = krb5_verify_init_creds(ctx->context, &creds, NULL, keytab,
+                                        NULL, &verify_opts);
         if (retval != 0) {
             pamk5_error(args, "credential verification failed: %s",
                         pamk5_compat_get_err_text(ctx->context, retval));

@@ -43,12 +43,14 @@ attempt to obtain tickets for a key in the local system keytab and then
 verify those tickets.  Unless this step is performed, the authentication
 is vulnerable to KDC spoofing, but it requires that the system have a
 local key and that the PAM module be running as a user that can read the
-keytab file (normally F</etc/krb5.keytab>.  If that keytab cannot be read
-or if no keys are found in it, the default (potentially insecure) behavior
-is to skip this check.  If you want to instead fail authentication if the
-obtained tickets cannot be checked, set C<verify_ap_req_nofail> to true in
-the [libdefaults] section of F</etc/krb5.conf>.  Note that this will
-affect applications other than this PAM module.
+keytab file (normally F</etc/krb5.keytab>.  You can point the Kerberos PAM
+module at a different keytab with the I<keytab> option.  If that keytab
+cannot be read or if no keys are found in it, the default (potentially
+insecure) behavior is to skip this check.  If you want to instead fail
+authentication if the obtained tickets cannot be checked, set
+C<verify_ap_req_nofail> to true in the [libdefaults] section of
+F</etc/krb5.conf>.  Note that this will affect applications other than
+this PAM module.
 
 By default, whenever the user is authenticated, a basic authorization
 check will also be done using krb5_kuserok().  The default behavior of
@@ -244,6 +246,17 @@ supported and will remain, but normally you want to use I<minimum_uid>
 instead.
 
 This option can be set in F<krb5.conf>.
+
+=item keytab=<path>
+
+Specifies the keytab to use when validating the user's credentials.  The
+default is the default system keytab (normally F</etc/krb5.keytab>), which
+is usually only readable by root.  Applications not running as root that
+use this PAM module for authentication may wish to point it to another
+keytab the application can read.
+
+This option can be set in F<krb5.conf> and is only applicable to the auth
+group.
 
 =item minimum_uid=<uid>
 
