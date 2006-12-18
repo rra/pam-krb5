@@ -205,6 +205,11 @@ CONFIGURING
   retain_after_close to the PAM configuration to avoid having the user's
   credentials deleted before they are logged in.
 
+  Some configuration options may be put in the krb5.conf file used by your
+  Kerberos libraries (usually /etc/krb5.conf or /usr/local/etc/krb5.conf)
+  instead or in addition to the PAM configuration.  See the man page for
+  more details.
+
 IMPLEMENTATION NOTES
 
   The normal sequence of actions taken for a user login is:
