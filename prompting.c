@@ -199,7 +199,7 @@ pamk5_prompter_krb5(krb5_context context, void *data, const char *name,
                     const char *banner, int num_prompts, krb5_prompt *prompts)
 {
     struct pam_args *args = data;
-    int total_prompts = num_prompts;;
+    int total_prompts = num_prompts;
     int pam_prompts, pamret, i;
     int retval = KRB5KRB_ERR_GENERIC;
     struct pam_message **msg;

@@ -446,7 +446,6 @@ done:
             retval = PAM_AUTHINFO_UNAVAIL;
         else
             retval = PAM_AUTH_ERR;
-        goto done;
     }
     retval = PAM_SUCCESS;
     return retval;

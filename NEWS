@@ -1,5 +1,11 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 3.1 (unreleased)
+
+    Fix an infinite loop with failed Kerberos authentication and a doubled
+    colon that causes a syntax error with some compilers.  Thanks, Markus
+    Moeller.
+
 pam-krb5 3.0 (2006-12-18)
 
     Add preliminary PKINIT support, contributed by Douglas E. Engert.
