@@ -438,7 +438,9 @@ done:
     }
 
     /* If we failed, return the appropriate PAM error code. */
-    if (retval != 0) {
+    if (retval == 0)
+        retval = PAM_SUCCESS;
+    else {
         pamk5_debug_krb5(args, "krb5_get_init_creds_password", retval);
         if (retval == KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN)
             retval = PAM_USER_UNKNOWN;
@@ -447,6 +449,5 @@ done:
         else
             retval = PAM_AUTH_ERR;
     }
-    retval = PAM_SUCCESS;
     return retval;
 }
