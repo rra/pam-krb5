@@ -197,6 +197,12 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
         goto done;
     }
 
+    /* Check whether we should ignore this user. */
+    if (pamk5_should_ignore(args, ctx->name)) {
+        pamret = PAM_USER_UNKNOWN;
+        goto done;
+    }
+
     /* Do the actual authentication. */
     pamret = pamk5_password_auth(args, NULL, &clist);
     if (pamret != PAM_SUCCESS)

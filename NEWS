@@ -6,6 +6,11 @@ pam-krb5 3.1 (unreleased)
     colon that causes a syntax error with some compilers.  Thanks, Markus
     Moeller.
 
+    Move the check for users we should ignore to pam_sm_authenticate
+    from pamk5_password_auth so that it's consistently done in the API
+    function.  This also avoids bogus log messages when authenticating as
+    an ignored user with debug enabled.
+
 pam-krb5 3.0 (2006-12-18)
 
     Add preliminary PKINIT support, contributed by Douglas E. Engert.

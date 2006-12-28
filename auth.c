@@ -292,18 +292,11 @@ pamk5_password_auth(struct pam_args *args, char *service,
     ctx = args->ctx;
     memset(&creds, 0, sizeof(krb5_creds));
 
-    /* Bail if we should be ignoring this user. */
-    if (pamk5_should_ignore(args, ctx->name)) {
-        retval = PAM_USER_UNKNOWN;
-        goto done;
-    }
-
     /* Fill in the principal to authenticate as. */
     retval = parse_name(args);
     if (retval != 0) {
         pamk5_debug_krb5(args, "krb5_parse_name", retval);
-        retval = PAM_SERVICE_ERR;
-        goto done;
+        return PAM_SERVICE_ERR;
     }
 
     /* Log the principal we're attempting to authenticate as. */
