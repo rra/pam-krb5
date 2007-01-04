@@ -3,3 +3,6 @@
  * The PAM option parsing is repetitive code that involves counting the
    lengths of strings.  It should be possible to replace most of it with
    some carefully-chosen macros.
+
+ * Add an option to prompt the user for a Kerberos principal to use for
+   authentication.
