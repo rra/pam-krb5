@@ -115,9 +115,8 @@ password_change(struct pam_args *args, const char *pass)
     ctx = args->ctx;
 
     /* The actual change. */
-    retval = krb5_change_password(ctx->context, &ctx->creds->creds,
-                 (char *) pass, &result_code, &result_code_string,
-                 &result_string);
+    retval = krb5_change_password(ctx->context, ctx->creds, (char *) pass,
+                 &result_code, &result_code_string, &result_string);
 
     /* Everything from here on is just handling diagnostics and output. */
     if (retval != 0) {

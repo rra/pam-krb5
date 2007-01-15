@@ -27,7 +27,7 @@ struct context {
     krb5_principal princ;       /* Principal being authenticated. */
     int dont_destroy_cache;     /* If set, don't destroy cache on shutdown. */
     int initialized;            /* If set, ticket cache initialized. */
-    struct credlist *creds;     /* Credentials for password changing. */
+    krb5_creds *creds;          /* Credentials for password changing. */
 };
 
 /*
@@ -87,12 +87,6 @@ struct pam_args {
     struct context *ctx;        /* Pointer to our authentication context. */
 };
 
-/* Stores a simple list of credentials. */
-struct credlist {
-    krb5_creds creds;
-    struct credlist *next;
-};
-
 /* Parse the PAM flags, arguments, and krb5.conf and fill out pam_args. */
 struct pam_args *pamk5_args_parse(pam_handle_t *pamh, int flags, int argc,
                                   const char **argv);
@@ -103,10 +97,11 @@ void pamk5_args_free(struct pam_args *);
 /*
  * Authenticate the user.  Prompts for the password as needed and obtains
  * tickets for in_tkt_service, krbtgt/<realm> by default.  Stores the initial
- * credentials in the final argument.  If possible, the initial credentials
- * are verified by checking them against the local system key.
+ * credentials in the final argument, allocating a new krb5_creds structure.
+ * If possible, the initial credentials are verified by checking them against
+ * the local system key.
  */
-int pamk5_password_auth(struct pam_args *, char *service, struct credlist **);
+int pamk5_password_auth(struct pam_args *, char *service, krb5_creds **);
 
 /*
  * Generic conversation function to display messages or get information from
@@ -148,15 +143,6 @@ int pamk5_context_new(struct pam_args *);
 int pamk5_context_fetch(struct pam_args *);
 void pamk5_context_free(struct context *);
 void pamk5_context_destroy(pam_handle_t *, void *data, int pam_end_status);
-
-/* Credential list handling. */
-void pamk5_credlist_new(struct credlist **);
-void pamk5_credlist_free(struct credlist **, krb5_context);
-krb5_error_code pamk5_credlist_append(struct credlist **, krb5_creds);
-krb5_error_code pamk5_credlist_copy(struct credlist **, krb5_context,
-                                    krb5_ccache);
-krb5_error_code pamk5_credlist_store(struct credlist **, krb5_context,
-                                     krb5_ccache);
 
 /* Error reporting and debugging functions. */
 void pamk5_error(struct pam_args *, const char *, ...);

@@ -82,12 +82,12 @@ done:
 
 
 /*
- * Given a cache name and a credential list, initialize the cache, store the
- * credentials in that cache, and return a pointer to the new cache in the
+ * Given a cache name and the initial credentials, initialize the cache, store
+ * the credentials in that cache, and return a pointer to the new cache in the
  * cache argument.  Returns a PAM success or error code.
  */
 static int
-cache_init(struct pam_args *args, const char *ccname, struct credlist **clist,
+cache_init(struct pam_args *args, const char *ccname, krb5_creds *creds,
            krb5_ccache *cache)
 {
     struct context *ctx;
@@ -108,7 +108,7 @@ cache_init(struct pam_args *args, const char *ccname, struct credlist **clist,
         retval = PAM_SERVICE_ERR;
         goto done;
     }
-    retval = pamk5_credlist_store(clist, ctx->context, *cache);
+    retval = krb5_cc_store_cred(ctx->context, *cache, creds);
     if (retval != 0) {
         pamk5_debug_krb5(args, "krb5_cc_store_cred", retval);
         retval = PAM_SERVICE_ERR;
@@ -121,6 +121,66 @@ done:
     return retval;
 }
 
+
+/*
+ * Given a cache name and an existing cache, initialize a new cache, store the
+ * credentials from the existing cache in it, and return a pointer to the new
+ * cache in the cache argument.  Returns a PAM success or error code.
+ */
+static int
+cache_init_from_cache(struct pam_args *args, const char *ccname,
+                      krb5_ccache old, krb5_ccache *cache)
+{
+    struct context *ctx;
+    krb5_creds creds;
+    krb5_cc_cursor cursor;
+    int pamret;
+    krb5_error_code status;
+
+    memset(&creds, 0, sizeof(creds));
+    if (args == NULL || args->ctx == NULL || args->ctx->context == NULL)
+        return PAM_SERVICE_ERR;
+    ctx = args->ctx;
+    status = krb5_cc_start_seq_get(ctx->context, old, &cursor);
+    if (status != 0) {
+        pamk5_debug_krb5(args, "error reading cached credentials", status);
+        return PAM_SERVICE_ERR;
+    }
+    status = krb5_cc_next_cred(ctx->context, old, &cursor, &creds);
+    if (status != 0) {
+        pamk5_debug_krb5(args, "error reading cached credentials", status);
+        pamret = PAM_SERVICE_ERR;
+        goto done;
+    }
+    pamret = cache_init(args, ccname, &creds, cache);
+    if (pamret != PAM_SUCCESS) {
+        krb5_free_cred_contents(ctx->context, &creds);
+        pamret = PAM_SERVICE_ERR;
+        goto done;
+    }
+    krb5_free_cred_contents(ctx->context, &creds);
+
+    /*
+     * There probably won't be any additional credentials, but check for them
+     * and copy them just in case.
+     */
+    while (krb5_cc_next_cred(ctx->context, old, &cursor, &creds) == 0) {
+        status = krb5_cc_store_cred(ctx->context, *cache, &creds);
+        krb5_free_cred_contents(ctx->context, &creds);
+        if (status != 0) {
+            pamk5_debug_krb5(args, "krb5_cc_store_cred", status);
+            pamret = PAM_SERVICE_ERR;
+            goto done;
+        }
+    }
+    pamret = PAM_SUCCESS;
+
+done:
+    krb5_cc_end_seq_get(ctx->context, ctx->cache, &cursor);
+    if (pamret != PAM_SUCCESS && *cache != NULL)
+        krb5_cc_destroy(ctx->context, *cache);
+    return pamret;
+}
 
 /*
  * If PAM_USER was a fully-qualified principal name, convert it to a local
@@ -172,7 +232,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 {
     struct context *ctx = NULL;
     struct pam_args *args;
-    struct credlist *clist = NULL;
+    krb5_creds *creds = NULL;
     int pamret;
     char cache_name[] = "/tmp/krb5cc_pam_XXXXXX";
     int ccfd;
@@ -204,7 +264,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     }
 
     /* Do the actual authentication. */
-    pamret = pamk5_password_auth(args, NULL, &clist);
+    pamret = pamk5_password_auth(args, NULL, &creds);
     if (pamret != PAM_SUCCESS)
         goto done;
 
@@ -224,7 +284,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
         goto done;
     }
     close(ccfd);
-    pamret = cache_init(args, cache_name, &clist, &ctx->cache);
+    pamret = cache_init(args, cache_name, creds, &ctx->cache);
     if (pamret != PAM_SUCCESS)
         goto done;
     pamret = set_krb5ccname(args, cache_name, "PAM_KRB5CCNAME");
@@ -233,8 +293,10 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     canonicalize_name(args);
 
 done:
-    if (clist != NULL)
-        pamk5_credlist_free(&clist, ctx->context);
+    if (creds != NULL) {
+        krb5_free_cred_contents(ctx->context, creds);
+        free(creds);
+    }
     EXIT(args, pamret);
 
     /*
@@ -398,7 +460,6 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
     struct context *ctx = NULL;
     struct pam_args *args;
-    struct credlist *clist = NULL;
     krb5_ccache cache = NULL;
     char *cache_name = NULL;
     int reinit = 0;
@@ -559,18 +620,8 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
         pamk5_debug(args, "initializing ticket cache %s", cache_name);
     }
 
-    /*
-     * Initialize the new ticket cache and point the environment at it.  We
-     * copy the credentials out of our existing cache into the new cache and
-     * the destroy the existing temporary cache.
-     */
-    status = pamk5_credlist_copy(&clist, ctx->context, ctx->cache);
-    if (status != 0) {
-        pamk5_debug_krb5(args, "error reading cached credentials", status);
-        pamret = PAM_SERVICE_ERR;
-        goto done;
-    }
-    pamret = cache_init(args, cache_name, &clist, &cache);
+    /* Initialize the new ticket cache and point the environment at it. */
+    pamret = cache_init_from_cache(args, cache_name, ctx->cache, &cache);
     if (pamret != PAM_SUCCESS)
         goto done;
     if (strncmp(cache_name, "FILE:", strlen("FILE:")) == 0)
@@ -610,8 +661,6 @@ done:
         krb5_cc_destroy(ctx->context, cache);
     if (cache_name != NULL)
         free(cache_name);
-    if (clist != NULL)
-        pamk5_credlist_free(&clist, ctx->context);
     EXIT(args, pamret);
     pamk5_args_free(args);
     return pamret;

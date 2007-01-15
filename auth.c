@@ -11,6 +11,7 @@
 
 #include "config.h"
 
+#include <errno.h>
 #include <krb5.h>
 #include <pwd.h>
 #include <security/pam_appl.h>
@@ -209,12 +210,11 @@ fail:
  * and the possibility that some users may be authenticated via PKINIT and
  * others may not.
  *
- * Takes the same arguments as pamk5_password_auth except it takes a pointer
- * to credential storage instead of a credlist and returns a krb5_error_code.
- * If successful, the credentials will be stored in creds.
+ * Takes the same arguments as pamk5_password_auth and returns a
+ * krb5_error_code.  If successful, the credentials will be stored in creds.
  */
 static krb5_error_code
-pkinit_auth(struct pam_args *args, char *service, krb5_creds *creds)
+pkinit_auth(struct pam_args *args, char *service, krb5_creds **creds)
 {
     struct context *ctx = args->ctx;
     krb5_get_init_creds_opt *opts = NULL;
@@ -237,7 +237,7 @@ pkinit_auth(struct pam_args *args, char *service, krb5_creds *creds)
      * no smart card is available.
      */
     if (args->pkinit_prompt) {
-        pamk5_conv(args->pamh,
+        pamk5_conv(args,
                    args->use_pkinit
                        ? "Insert smart card and press Enter:"
                        : "Insert smart card if desired, then press Enter:",
@@ -248,6 +248,9 @@ pkinit_auth(struct pam_args *args, char *service, krb5_creds *creds)
      * Set credential options.  We have to use the allocated version of the
      * credential option struct to store the PKINIT options.
      */
+    *creds = calloc(1, sizeof(krb5_creds));
+    if (*creds == NULL)
+        return ENOMEM;
     retval = krb5_get_init_creds_opt_alloc(ctx->context, &opts);
     if (retval != 0)
         return retval;
@@ -256,32 +259,39 @@ pkinit_auth(struct pam_args *args, char *service, krb5_creds *creds)
                   ctx->princ, args->pkinit_user, args->pkinit_anchors, NULL,
                   NULL, 0, pamk5_prompter_krb5, args, NULL);
     if (retval != 0)
-        return retval;
+        goto done;
 
     /* Finally, do the actual work and return the results. */
-    return krb5_get_init_creds_password(ctx->context, creds, ctx->princ, NULL,
-               pamk5_prompter_krb5, args, 0, service, opts);
+    retval = krb5_get_init_creds_password(ctx->context, *creds, ctx->princ,
+                 NULL, pamk5_prompter_krb5, args, 0, service, opts);
+
+done:
+    krb5_get_init_creds_opt_free(ctx->context, opts);
+    if (retval != 0) {
+        krb5_free_cred_contents(*creds);
+        free(*creds);
+        *creds = NULL;
+    }
+    return retval;
 }
 #endif /* HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT */
 
 
 /*
  * Prompt the user for a password and authenticate the password with the KDC.
- * If correct, fill in credlist with the obtained TGT or ticket.  service, if
+ * If correct, fill in creds with the obtained TGT or ticket.  service, if
  * non-NULL, specifies the service to get tickets for; the only interesting
  * non-null case is kadmin/changepw for changing passwords.  Therefore, if it
  * is non-null, we look for the password in PAM_OLDAUTHOK and save it there
  * instead of using PAM_AUTHTOK.
  */
 int
-pamk5_password_auth(struct pam_args *args, char *service,
-                    struct credlist **credlist)
+pamk5_password_auth(struct pam_args *args, char *service, krb5_creds **creds)
 {
     struct context *ctx;
     krb5_get_init_creds_opt opts;
     krb5_verify_init_creds_opt verify_opts;
     krb5_keytab keytab = NULL;
-    krb5_creds creds;
     int retval, retry, success;
     char *pass = NULL;
     int authtok = service == NULL ? PAM_AUTHTOK : PAM_OLDAUTHTOK;
@@ -290,7 +300,6 @@ pamk5_password_auth(struct pam_args *args, char *service,
     if (args->ctx == NULL)
         return PAM_SERVICE_ERR;
     ctx = args->ctx;
-    memset(&creds, 0, sizeof(krb5_creds));
 
     /* Fill in the principal to authenticate as. */
     retval = parse_name(args);
@@ -318,12 +327,9 @@ pamk5_password_auth(struct pam_args *args, char *service,
      */
 #ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT
     if (args->use_pkinit || args->try_pkinit) {
-        retval = pkinit_auth(args, service, &creds);
-        if (retval == 0) {
-            pamk5_credlist_new(args, credlist);
-            retval = pamk5_credlist_append(args, credlist, creds);
+        retval = pkinit_auth(args, service, creds);
+        if (retval == 0)
             goto done;
-        }
         if (retval != HX509_PKCS11_NO_TOKEN && retval != HX509_PKCS11_NO_SLOT)
             goto done;
         if (retval != 0 && args->use_pkinit)
@@ -331,7 +337,10 @@ pamk5_password_auth(struct pam_args *args, char *service,
     }
 #endif
 
-    /* Set credential options. */
+    /* Allocate cred structure and set credential options. */
+    *creds = calloc(1, sizeof(krb5_creds));
+    if (*creds == NULL)
+        return PAM_SERVICE_ERR;
     krb5_get_init_creds_opt_init(&opts);
     set_credential_options(args, &opts);
 
@@ -380,17 +389,15 @@ pamk5_password_auth(struct pam_args *args, char *service,
 
         /* Get a TGT */
         if (args->search_k5login) {
-            success = k5login_password_auth(args, &creds, &opts, service,
+            success = k5login_password_auth(args, *creds, &opts, service,
                           pass, &retval);
         } else {
-            retval = krb5_get_init_creds_password(ctx->context, &creds,
+            retval = krb5_get_init_creds_password(ctx->context, *creds,
                           ctx->princ, pass, pamk5_prompter_krb5, args, 0,
                           service, &opts);
             success = (retval == 0) ? PAM_SUCCESS : PAM_AUTH_ERR;
         }
         if (success == PAM_SUCCESS) {
-            pamk5_credlist_new(credlist);
-            retval = pamk5_credlist_append(credlist, creds);
             if (retval != 0)
                 goto done;
             break;
@@ -422,7 +429,7 @@ done:
                 keytab = NULL;
             }
         }
-        retval = krb5_verify_init_creds(ctx->context, &creds, NULL, keytab,
+        retval = krb5_verify_init_creds(ctx->context, *creds, NULL, keytab,
                                         NULL, &verify_opts);
         if (retval != 0) {
             pamk5_error(args, "credential verification failed: %s",
@@ -430,11 +437,19 @@ done:
         }
     }
 
-    /* If we failed, return the appropriate PAM error code. */
+    /*
+     * If we failed, free any credentials we have sitting around and return
+     * the appropriate PAM error code.
+     */ 
     if (retval == 0)
         retval = PAM_SUCCESS;
     else {
         pamk5_debug_krb5(args, "krb5_get_init_creds_password", retval);
+        if (*creds != NULL) {
+            krb5_free_cred_contents(ctx->context, *creds);
+            free(*creds);
+            *creds = NULL;
+        }
         if (retval == KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN)
             retval = PAM_USER_UNKNOWN;
         else if (retval == KRB5_KDC_UNREACH)

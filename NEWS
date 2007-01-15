@@ -2,8 +2,24 @@
 
 pam-krb5 3.2 (unreleased)
 
+    This release fixes numerous bugs all identified by Douglas E. Engert
+    while testing with Heimdal and PKINIT support.  Thank you!
+
+    Kerberos authentication was storing initial credentials in a
+    stack-allocated structure and then referring to it after exit from
+    that stack frame.  This accidentally worked in practice but could have
+    broken at any moment.  Rewrite the code to drop the credlist data
+    structure (since we only ever have one set of credentials), allocate
+    new krb5_creds objects, and do proper memory management.
+
+    Probe for the correct Heimdal function to set default initial
+    credential options.
+
     Fix installation of the manual page when building from a different
-    directory than the source directory.  Thanks, Douglas E. Engert.
+    directory than the source directory.
+
+    Fix several compilation errors with the PKINIT support with Heimdal
+    0.8rc1 or later.  This code should still be considered alpha-quality.
 
 pam-krb5 3.1 (2007-01-03)
 

@@ -42,8 +42,8 @@ AC_CHECK_MEMBER([krb5_creds.session],
     [AC_DEFINE([HAVE_KRB5_MIT], [1],
         [Define if your Kerberos implementation is MIT.])],
     [#include <krb5.h>])
-AC_CHECK_FUNCS([krb5_get_init_opt_set_default_flags])
-AC_CHECK_FUNCS([krb5_get_init_opt_set_pkinit])])
+AC_CHECK_FUNCS([krb5_get_init_creds_opt_set_default_flags])
+AC_CHECK_FUNCS([krb5_get_init_creds_opt_set_pkinit])])
 
 dnl The main macro.
 AC_DEFUN([RRA_LIB_KRB5],
