@@ -1,5 +1,10 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 3.2 (unreleased)
+
+    Fix installation of the manual page when building from a different
+    directory than the source directory.  Thanks, Douglas E. Engert.
+
 pam-krb5 3.1 (2007-01-03)
 
     Fix an infinite loop with failed Kerberos authentication and a doubled
