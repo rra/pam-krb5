@@ -270,8 +270,10 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 
     /* Check .k5login. */
     pamret = pamk5_authorized(args);
-    if (pamret != PAM_SUCCESS)
+    if (pamret != PAM_SUCCESS) {
+        pamk5_debug(args, "failed authorization check");
         goto done;
+    }
 
     /* Store the obtained credentials in a temporary cache. */
     if (args->no_ccache)
