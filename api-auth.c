@@ -143,12 +143,12 @@ cache_init_from_cache(struct pam_args *args, const char *ccname,
     ctx = args->ctx;
     status = krb5_cc_start_seq_get(ctx->context, old, &cursor);
     if (status != 0) {
-        pamk5_debug_krb5(args, "error reading cached credentials", status);
+        pamk5_debug_krb5(args, "krb5_cc_start_seq_get", status);
         return PAM_SERVICE_ERR;
     }
     status = krb5_cc_next_cred(ctx->context, old, &cursor, &creds);
     if (status != 0) {
-        pamk5_debug_krb5(args, "error reading cached credentials", status);
+        pamk5_debug_krb5(args, "krb5_cc_next_cred", status);
         pamret = PAM_SERVICE_ERR;
         goto done;
     }
