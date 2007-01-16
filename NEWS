@@ -13,6 +13,9 @@ pam-krb5 3.2 (unreleased)
     Probe for the correct Heimdal function to set default initial
     credential options.
 
+    Prefix the default cache path with "FILE:" to make the cache type
+    explicit.
+
     Fix installation of the manual page when building from a different
     directory than the source directory.
 

@@ -223,6 +223,9 @@ and session groups.
 
 Store user ticket caches in <directory> instead of in F</tmp>.  The
 algorithm for generating the ticket cache name is otherwise unchanged.
+<directory> may be prefixed with C<FILE:> to make the cache type
+unambiguous (and this may be required on systems that use a cache type
+other than file as the default).
 
 This option can be set in F<krb5.conf> and is only applicable to the auth
 and session groups.
@@ -491,7 +494,8 @@ and password groups.
 
 Set by pam_setcred() with the PAM_ESTABLISH_CRED option, and therefore
 also by pam_open_session(), to point to the new credential cache for the
-user.  See the I<ccache> and I<ccache_dir> options.
+user.  See the I<ccache> and I<ccache_dir> options.  By default, the cache
+name will be prefixed with C<FILE:> to make the cache type unambiguous.
 
 =item PAM_KRB5CCNAME
 

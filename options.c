@@ -194,7 +194,7 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
             pamk5_compat_set_realm(args, args->realm);
         default_string(args, c, "banner", "Kerberos", &args->banner);
         default_string(args, c, "ccache", NULL, &args->ccache);
-        default_string(args, c, "ccache_dir", "/tmp", &args->ccache_dir);
+        default_string(args, c, "ccache_dir", "FILE:/tmp", &args->ccache_dir);
         default_boolean(args, c, "debug", 0, &args->debug);
         default_boolean(args, c, "expose_account", 0, &args->expose_account);
         default_boolean(args, c, "forwardable", 0, &args->forwardable);
