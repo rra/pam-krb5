@@ -70,7 +70,7 @@ set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts)
 {
 #ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_DEFAULT_FLAGS
     krb5_get_init_creds_opt_set_default_flags(args->ctx->context, "pam",
-                                              args->realm_data, &opts);
+                                              args->realm_data, opts);
 #endif
     if (args->forwardable)
         krb5_get_init_creds_opt_set_forwardable(opts, 1);
@@ -197,7 +197,7 @@ fail:
 }
 
 
-#ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT
+#if HAVE_KRB5_HEIMDAL && HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT
 /*
  * Attempt authentication via PKINIT.  Currently, this uses an API specific to
  * Heimdal.  Once MIT Kerberos supports PKINIT, some of the details may need
@@ -271,13 +271,13 @@ pkinit_auth(struct pam_args *args, char *service, krb5_creds **creds)
 done:
     krb5_get_init_creds_opt_free(ctx->context, opts);
     if (retval != 0) {
-        krb5_free_cred_contents(*creds);
+        krb5_free_cred_contents(ctx->context, *creds);
         free(*creds);
         *creds = NULL;
     }
     return retval;
 }
-#endif /* HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT */
+#endif /* HAVE_KRB5_HEIMDAL && HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT */
 
 
 /*
@@ -328,7 +328,7 @@ pamk5_password_auth(struct pam_args *args, char *service, krb5_creds **creds)
      * If PKINIT is available and we were configured to attempt it, try
      * authenticating with PKINIT first.
      */
-#ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT
+#if HAVE_KRB5_HEIMDAL && HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT
     if (args->use_pkinit || args->try_pkinit) {
         retval = pkinit_auth(args, service, creds);
         if (retval == 0)
