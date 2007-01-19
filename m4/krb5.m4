@@ -42,6 +42,7 @@ AC_CHECK_MEMBER([krb5_creds.session],
     [AC_DEFINE([HAVE_KRB5_MIT], [1],
         [Define if your Kerberos implementation is MIT.])],
     [#include <krb5.h>])
+AC_CHECK_FUNCS([krb5_get_init_creds_opt_set_change_password_prompt])
 AC_CHECK_FUNCS([krb5_get_init_creds_opt_set_default_flags])
 AC_CHECK_FUNCS([krb5_get_init_creds_opt_set_pkinit])])
 

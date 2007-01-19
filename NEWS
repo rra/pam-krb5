@@ -1,5 +1,11 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 3.3 (unreleased)
+
+    Enable prompting for a new password if the password is expired with
+    MIT Kerberos 1.5 and later.  (This is the default behavior in earlier
+    versions of MIT Kerberos.)  Thanks to Jacob Williams for the report.
+
 pam-krb5 3.2 (2007-01-16)
 
     This release fixes numerous bugs all identified by Douglas E. Engert
