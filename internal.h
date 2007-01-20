@@ -135,6 +135,9 @@ int pamk5_should_ignore(struct pam_args *, const char *);
  */
 void pamk5_compat_free_data_contents(krb5_context, krb5_data *);
 const char *pamk5_compat_get_err_text(krb5_context, krb5_error_code);
+krb5_error_code pamk5_compat_opt_alloc(krb5_context,
+                                       krb5_get_init_creds_opt **);
+void pamk5_compat_opt_free(krb5_context, krb5_get_init_creds_opt *);
 krb5_error_code pamk5_compat_set_realm(struct pam_args *, const char *);
 void pamk5_compat_free_realm(struct pam_args *);
 

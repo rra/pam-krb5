@@ -81,6 +81,16 @@ set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts)
 #ifdef KRB5_GET_INIT_CREDS_OPT_SET_CHANGE_PASSWORD_PROMPT
     krb5_get_init_creds_opt_set_change_password_prompt(opts, 1);
 #endif
+#ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PA
+    if (args->try_pkinit) {
+        if (args->pkinit_user != NULL)
+            krb5_get_init_creds_opt_set_pa(args->ctx->context, opts,
+                "X509_user_identity", args->pkinit_user);
+        if (args->pkinit_anchors != NULL)
+            krb5_get_init_creds_opt_set_pa(args->ctx->context, opts,
+                "X509_anchors", args->pkinit_anchors);
+    }
+#endif
 }
 
 
@@ -292,7 +302,7 @@ int
 pamk5_password_auth(struct pam_args *args, char *service, krb5_creds **creds)
 {
     struct context *ctx;
-    krb5_get_init_creds_opt opts;
+    krb5_get_init_creds_opt *opts = NULL;
     krb5_verify_init_creds_opt verify_opts;
     krb5_keytab keytab = NULL;
     int retval, retry, success;
@@ -326,7 +336,9 @@ pamk5_password_auth(struct pam_args *args, char *service, krb5_creds **creds)
 
     /*
      * If PKINIT is available and we were configured to attempt it, try
-     * authenticating with PKINIT first.
+     * authenticating with PKINIT first.  Otherwise, fail all authentication
+     * if PKINIT is not available and use_pkinit was set.  Fake an error code
+     * that gives an approximately correct error message.
      */
 #if HAVE_KRB5_HEIMDAL && HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT
     if (args->use_pkinit || args->try_pkinit) {
@@ -338,14 +350,26 @@ pamk5_password_auth(struct pam_args *args, char *service, krb5_creds **creds)
         if (retval != 0 && args->use_pkinit)
             goto done;
     }
+#else
+    if (args->use_pkinit) {
+        retval = KRB5_KDC_UNREACH;
+        goto done;
+    }
 #endif
 
     /* Allocate cred structure and set credential options. */
     *creds = calloc(1, sizeof(krb5_creds));
-    if (*creds == NULL)
+    if (*creds == NULL) {
+        pamk5_error(args, "cannot allocate memory: %s", strerror(errno));
         return PAM_SERVICE_ERR;
-    krb5_get_init_creds_opt_init(&opts);
-    set_credential_options(args, &opts);
+    }
+    retval = pamk5_compat_opt_alloc(ctx->context, &opts);
+    if (retval != 0) {
+        pamk5_error(args, "failed to allocate credential options: %s",
+                    pamk5_compat_get_err_text(ctx->context, retval));
+        goto done;
+    }
+    set_credential_options(args, opts);
 
     /*
      * If try_first_pass or use_first_pass is set, grab the old password (if
@@ -392,12 +416,12 @@ pamk5_password_auth(struct pam_args *args, char *service, krb5_creds **creds)
 
         /* Get a TGT */
         if (args->search_k5login) {
-            success = k5login_password_auth(args, *creds, &opts, service,
+            success = k5login_password_auth(args, *creds, opts, service,
                           pass, &retval);
         } else {
             retval = krb5_get_init_creds_password(ctx->context, *creds,
                           ctx->princ, pass, pamk5_prompter_krb5, args, 0,
-                          service, &opts);
+                          service, opts);
             success = (retval == 0) ? PAM_SUCCESS : PAM_AUTH_ERR;
         }
         if (success == PAM_SUCCESS) {
@@ -460,5 +484,7 @@ done:
         else
             retval = PAM_AUTH_ERR;
     }
+    if (opts != NULL)
+        pamk5_compat_opt_free(ctx->context, opts);
     return retval;
 }

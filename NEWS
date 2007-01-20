@@ -10,6 +10,13 @@ pam-krb5 3.3 (unreleased)
     confused by a similar function in the MIT Kerberos PKINIT branch.
     Thanks to Douglas E. Engert for the testing and patch.
 
+    Initial support for the MIT Kerberos PKINIT branch, which uses a
+    different mechanism for configuring PKINIT support than Heimdal.
+    Thanks to Douglas E. Engert for the initial patch.
+
+    If use_pkinit is set in the PAM configuration and PKINIT isn't
+    available or cannot be forced, always fail authentication.
+
 pam-krb5 3.2 (2007-01-16)
 
     This release fixes numerous bugs all identified by Douglas E. Engert

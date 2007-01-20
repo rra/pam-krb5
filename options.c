@@ -317,10 +317,18 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
     if (args->search_k5login)
         args->expose_account = 0;
 
-    /* Warn if PKINIT options were set and PKINIT isn't supported. */
+    /*
+     * Warn if PKINIT options were set and PKINIT isn't supported.  The MIT
+     * method (krb5_get_init_creds_opt_set_pa) can't support use_pkinit.
+     */
 #ifndef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT
-    if (args->try_pkinit || args->use_pkinit)
-	pamk5_error(NULL, "PKINIT requested but not available");
+# ifndef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PA
+    if (args->try_pkinit)
+	pamk5_error(NULL, "try_pkinit requested but PKINIT not available");
+# endif
+    if (args->use_pkinit)
+	pamk5_error(NULL, "use_pkinit requested but PKINIT not available"
+                    " or cannot be enforced");
 #endif
 
     return args;
