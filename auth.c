@@ -26,6 +26,17 @@
 # include <hx509_err.h>
 #endif
 
+/*
+ * If the PKINIT smart card error statuses aren't defined, define them to 0.
+ * This will cause the right thing to happen with the logic around PKINIT.
+ */
+#ifndef HX509_PKCS11_NO_TOKEN
+# define HX509_PKCS11_NO_TOKEN 0
+#endif
+#ifndef HX509_PKCS11_NO_SLOT
+# define HX509_PKCS11_NO_SLOT 0
+#endif
+
 #include "internal.h"
 
 /*

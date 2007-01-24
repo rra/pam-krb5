@@ -6,3 +6,7 @@
 
  * Add an option to prompt the user for a Kerberos principal to use for
    authentication.
+
+ * The PKINIT code for Heimdal involves too many #ifdefs right now for my
+   taste.  Find a way to restructure it to only wrap the main PKINIT
+   function for Heimdal.

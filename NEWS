@@ -10,6 +10,10 @@ pam-krb5 3.3 (unreleased)
     confused by a similar function in the MIT Kerberos PKINIT branch.
     Thanks to Douglas E. Engert for the testing and patch.
 
+    Fix compilation errors with Heimdal 0.7, which has some of the PKINIT
+    functions but doesn't define the same error codes.  Thanks, Morgan
+    LEFIEUX.
+
     Initial support for the MIT Kerberos PKINIT branch, which uses a
     different mechanism for configuring PKINIT support than Heimdal.
     Thanks to Douglas E. Engert for the initial patch.
