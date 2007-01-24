@@ -6,6 +6,8 @@ pam-krb5 3.3 (unreleased)
     MIT Kerberos 1.5 and later.  (This is the default behavior in earlier
     versions of MIT Kerberos.)  Thanks to Jacob Williams for the report.
 
+    Support the new MIT Kerberos error message functions.
+
     Fix compilation errors in the Heimdal PKINIT support and don't be
     confused by a similar function in the MIT Kerberos PKINIT branch.
     Thanks to Douglas E. Engert for the testing and patch.

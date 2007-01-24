@@ -39,6 +39,23 @@ pamk5_error(struct pam_args *pargs, const char *fmt, ...)
 
 
 /*
+ * Log a Kerberos v5 failure with LOG_ERR priority.
+ */
+void
+pamk5_error_krb5(struct pam_args *args, const char *msg, int status)
+{
+    const char *k5_msg = NULL;
+
+    if (args != NULL && args->ctx != NULL && args->ctx->context != NULL)
+        k5_msg = pamk5_compat_get_error(args->ctx->context, status);
+    pamk5_error(args, "%s: %s", msg,
+                (k5_msg == NULL) ? error_message(status) : k5_msg);
+    if (k5_msg != NULL)
+        pamk5_compat_free_error(args->ctx->context, k5_msg);
+}
+
+
+/*
  * Log a generic debugging message only if debug is enabled.
  */
 void
@@ -76,9 +93,12 @@ pamk5_debug_pam(struct pam_args *args, const char *msg, int status)
 void
 pamk5_debug_krb5(struct pam_args *args, const char *msg, int status)
 {
+    const char *k5_msg = NULL;
+
     if (args != NULL && args->ctx != NULL && args->ctx->context != NULL)
-        pamk5_debug(args, "%s: %s", msg,
-                    pamk5_compat_get_err_text(args->ctx->context, status));
-    else
-        pamk5_debug(args, "%s: %s", msg, error_message(status));
+        k5_msg = pamk5_compat_get_error(args->ctx->context, status);
+    pamk5_debug(args, "%s: %s", msg,
+                (k5_msg == NULL) ? error_message(status) : k5_msg);
+    if (k5_msg != NULL)
+        pamk5_compat_free_error(args->ctx->context, k5_msg);
 }

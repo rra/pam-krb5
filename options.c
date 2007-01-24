@@ -125,13 +125,15 @@ default_time(struct pam_args *args, krb5_context c, const char *opt,
 {
     char *tmp;
     int ret;
+    const char *message;
 
     krb5_appdefault_string(c, "pam", args->realm_data, opt, "", &tmp);
     if (tmp != NULL && tmp[0] != '\0') {
         ret = krb5_string_to_deltat(tmp, result);
         if (ret != 0) {
-            pamk5_error(NULL, "bad time value for %s: %s", opt,
-                        pamk5_compat_get_err_text(c, ret));
+            message = pamk5_compat_get_error(c, ret);
+            pamk5_error(NULL, "bad time value for %s: %s", opt, message);
+            pamk5_compat_free_error(c, message);
             *result = defval;
         }
     } else

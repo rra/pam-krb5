@@ -134,7 +134,8 @@ int pamk5_should_ignore(struct pam_args *, const char *);
  * implementation will be provided.
  */
 void pamk5_compat_free_data_contents(krb5_context, krb5_data *);
-const char *pamk5_compat_get_err_text(krb5_context, krb5_error_code);
+const char *pamk5_compat_get_error(krb5_context, krb5_error_code);
+void pamk5_compat_free_error(krb5_context, const char *);
 krb5_error_code pamk5_compat_opt_alloc(krb5_context,
                                        krb5_get_init_creds_opt **);
 void pamk5_compat_opt_free(krb5_context, krb5_get_init_creds_opt *);
@@ -149,6 +150,7 @@ void pamk5_context_destroy(pam_handle_t *, void *data, int pam_end_status);
 
 /* Error reporting and debugging functions. */
 void pamk5_error(struct pam_args *, const char *, ...);
+void pamk5_error_krb5(struct pam_args *, const char *, int);
 void pamk5_debug(struct pam_args *, const char *, ...);
 void pamk5_debug_pam(struct pam_args *, const char *, int);
 void pamk5_debug_krb5(struct pam_args *, const char *, int);

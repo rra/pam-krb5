@@ -318,7 +318,8 @@ pamk5_password_auth(struct pam_args *args, char *service, krb5_creds **creds)
     krb5_keytab keytab = NULL;
     int retval, retry, success;
     char *pass = NULL;
-    int authtok = service == NULL ? PAM_AUTHTOK : PAM_OLDAUTHTOK;
+    const char *message;
+    int authtok = (service == NULL) ? PAM_AUTHTOK : PAM_OLDAUTHTOK;
 
     /* Sanity check and initialization. */
     if (args->ctx == NULL)
@@ -376,8 +377,7 @@ pamk5_password_auth(struct pam_args *args, char *service, krb5_creds **creds)
     }
     retval = pamk5_compat_opt_alloc(ctx->context, &opts);
     if (retval != 0) {
-        pamk5_error(args, "failed to allocate credential options: %s",
-                    pamk5_compat_get_err_text(ctx->context, retval));
+        pamk5_error_krb5(args, "cannot allocate credential options", retval);
         goto done;
     }
     set_credential_options(args, opts);
@@ -462,17 +462,17 @@ done:
         if (args->keytab) {
             retval = krb5_kt_resolve(ctx->context, args->keytab, &keytab);
             if (retval != 0) {
+                message = pamk5_compat_get_error(ctx->context, retval);
                 pamk5_error(args, "cannot open keytab %s: %s", args->keytab,
-                            pamk5_compat_get_err_text(ctx->context, retval));
+                            message);
+                pamk5_compat_free_error(ctx->context, message);
                 keytab = NULL;
             }
         }
         retval = krb5_verify_init_creds(ctx->context, *creds, NULL, keytab,
                                         NULL, &verify_opts);
-        if (retval != 0) {
-            pamk5_error(args, "credential verification failed: %s",
-                        pamk5_compat_get_err_text(ctx->context, retval));
-        }
+        if (retval != 0)
+            pamk5_error_krb5(args, "credential verification failed", retval);
     }
 
     /*

@@ -106,6 +106,7 @@ password_change(struct pam_args *args, const char *pass)
     int retval = PAM_SUCCESS;
     int result_code;
     krb5_data result_code_string, result_string;
+    const char *message;
 
     /* Sanity check. */
     if (args == NULL || args->ctx == NULL || args->ctx->creds == NULL) {
@@ -121,8 +122,9 @@ password_change(struct pam_args *args, const char *pass)
     /* Everything from here on is just handling diagnostics and output. */
     if (retval != 0) {
         pamk5_debug_krb5(args, "krb5_change_password", retval);
-        pamk5_conv(args, pamk5_compat_get_err_text(ctx->context, retval),
-                   PAM_ERROR_MSG, NULL);
+        message = pamk5_compat_get_error(ctx->context, retval);
+        pamk5_conv(args, message, PAM_ERROR_MSG, NULL);
+        pamk5_compat_free_error(ctx->context, message);
         retval = PAM_AUTHTOK_ERR;
         goto done;
     }

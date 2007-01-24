@@ -21,9 +21,16 @@ pamk5_compat_free_data_contents(krb5_context c, krb5_data *data)
 
 
 const char *
-pamk5_compat_get_err_text(krb5_context c, krb5_error_code code)
+pamk5_compat_get_error(krb5_context c, krb5_error_code code)
 {
     return krb5_get_err_text(c, code);
+}
+
+
+void
+pamk5_compat_free_error(krb5_context c, const char *msg)
+{
+    return;
 }
 
 

@@ -88,8 +88,8 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
             krb5_free_principal(ctx->context, ctx->princ);
         retval = krb5_cc_get_principal(ctx->context, ctx->cache, &ctx->princ);
         if (retval != 0) {
-            pamk5_error(args, "cannot retrieve principal from cache: %s",
-                        pamk5_compat_get_err_text(ctx->context, retval));
+            pamk5_error_krb5(args, "cannot retrieve principal from cache",
+                             retval);
             pamret = PAM_AUTH_ERR;
             goto done;
         }

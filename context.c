@@ -56,8 +56,7 @@ pamk5_context_new(struct pam_args *args)
     ctx->name = strdup(name);
     retval = krb5_init_context(&ctx->context);
     if (retval != 0) {
-        pamk5_error(args, "krb5_init_context: %s",
-                    pamk5_compat_get_err_text(ctx->context, retval));
+        pamk5_error_krb5(args, "krb5_init_context", retval);
         retval = PAM_SERVICE_ERR;
         goto done;
     }
@@ -66,8 +65,7 @@ pamk5_context_new(struct pam_args *args)
     if (args->realm != NULL) {
         retval = krb5_set_default_realm(ctx->context, args->realm);
         if (retval != 0) {
-            pamk5_error(args, "cannot set default realm: %s",
-                        pamk5_compat_get_err_text(ctx->context, retval));
+            pamk5_error_krb5(args, "cannot set default realm", retval);
             retval = PAM_SERVICE_ERR;
             goto done;
         }
