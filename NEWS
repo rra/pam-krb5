@@ -1,6 +1,6 @@
                       User-Visible pam-krb5 Changes
 
-pam-krb5 3.3 (unreleased)
+pam-krb5 3.3 (2007-01-24)
 
     Support the new MIT Kerberos error message functions.
 
