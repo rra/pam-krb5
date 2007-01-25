@@ -64,6 +64,10 @@ struct pam_args {
     int try_pkinit;             /* Attempt PKINIT, fall back to password. */
     int use_pkinit;             /* Require PKINIT. */
 
+    /* Options used for MIT Kerberos preauth plugins. */
+    char **preauth_opt;         /* Preauth options. */
+    int preauth_opt_count;      /* Number of preauth options set. */
+
     /*
      * The default realm, used mostly in option parsing but also for
      * initializing krb5_get_init_creds_opt.  Unfortunately, the storage type

@@ -97,8 +97,29 @@ set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts)
         if (args->pkinit_anchors != NULL)
             krb5_get_init_creds_opt_set_pa(args->ctx->context, opts,
                 "X509_anchors", args->pkinit_anchors);
+        if (args->preauth_opt != NULL && args->preauth_opt_count > 0) {
+            int i;
+            char *name, *value;
+            char save;
+
+            for (i = 0; i < args->preauth_opt_count; i++) {
+                name = args->preauth_opt[i];
+                if (name == NULL)
+                    continue;
+                value = strchr(name, '=');
+                if (value != NULL) {
+                    save = *value;
+                    *value = '\0';
+                    value++;
+                }
+                krb5_get_init_creds_opt_set_pa(args->ctx->context, opts,
+                    name, (value != NULL) ? value : "yes");
+                if (value != NULL)
+                    value[-1] = save;
+            }
+        }
     }
-#endif
+#endif /* HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PA */
 }
 
 

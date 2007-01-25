@@ -10,3 +10,13 @@
  * The PKINIT code for Heimdal involves too many #ifdefs right now for my
    taste.  Find a way to restructure it to only wrap the main PKINIT
    function for Heimdal.
+
+ * All of the option parsing code does not deal clealy with failure to
+   allocate memory.  Generally, we just don't set the parameter.  This may
+   not always be safe, or may lead to unexpected behavior.  We should
+   always check memory allocation failures and abort PAM if we see any.
+
+ * When doing password authentication, we don't map as many Kerberos error
+   codes as we probably could (and for example do not catch expired
+   credentials when changing the password didn't work).  Compare against
+   the Sourceforge PAM module.

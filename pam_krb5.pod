@@ -364,6 +364,33 @@ or I<use_pkinit> are set.
 This option can be set in F<krb5.conf> and is only applicable to the auth
 and password groups.
 
+=item preauth_opt=<option>
+
+Sets a preauth option (currently only applicable when built with MIT
+Kerberos).  <option> is either a key/value pair with the key separated
+from the value by C<=> or a boolean option (in which case it's turned
+on).  In F<krb5.conf>, multiple options should be separated by
+whitespace.  In the PAM configuration, this option can be given multiple
+times to set multiple options.  In either case, <option> may not contain
+whitespace.
+
+The primary use of this option, at least in the near future, will be to
+set options for the MIT Kerberos PKINIT support.  For the full list of
+possible options, see the PKINIT plugin documentation.  At the time of
+this writing, C<X509_user_identity> is equivalent to I<pkinit_user> and
+C<X509_anchors> is equivalent to I<pkinit_anchors>.  C<flag_DSA_PROTOCOL>
+can only be set via this option.
+
+Any settings made with this option are applied after the I<pkinit_anchors>
+and I<pkinit_user> options, so if an equivalent setting is made via
+I<preauth_opt>, it will probably override the other setting.
+
+This option can be set in F<krb5.conf> and is only applicable to the auth
+and password groups.  Note that there is no way to remove a setting made
+in F<krb5.conf> using the PAM configuration, but options set in the PAM
+configuration are applied after options set in F<krb5.conf> and therefore
+may override earlier settings.
+
 =item realm=<realm>
 
 Obtain credentials in the specified realm rather than in the default realm

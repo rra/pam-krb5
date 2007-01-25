@@ -17,6 +17,24 @@
 #include "internal.h"
 
 /*
+ * Not all platforms have this, so just implement it ourselves.  Copy a
+ * certain number of characters of a string into a newly allocated
+ * nul-terminated string.
+ */
+static char *
+xstrndup(const char *s, size_t n)
+{
+    char *p;
+
+    p = malloc(n + 1);
+    if (p == NULL)
+        return NULL;
+    memcpy(p, s, n);
+    p[n] = '\0';
+    return p;
+}
+
+/*
  * Allocate a new struct pam_args and initialize its data members.  Explicitly
  * setting the pointers to NULL only matters on hosts where NULL isn't the
  * zero bit pattern, which probably don't exist, but I'm anal.
@@ -35,6 +53,7 @@ pamk5_args_new(void)
     args->keytab = NULL;
     args->pkinit_anchors = NULL;
     args->pkinit_user = NULL;
+    args->preauth_opt = NULL;
     args->realm = NULL;
     args->realm_data = NULL;
     args->ctx = NULL;
@@ -48,6 +67,8 @@ pamk5_args_new(void)
 void
 pamk5_args_free(struct pam_args *args)
 {
+    int i;
+
     if (args != NULL) {
         if (args->banner != NULL)
             free(args->banner);
@@ -63,6 +84,12 @@ pamk5_args_free(struct pam_args *args)
             free(args->pkinit_user);
         if (args->realm != NULL)
             free(args->realm);
+        if (args->preauth_opt != NULL) {
+            for (i = 0; i < args->preauth_opt_count; i++)
+                if (args->preauth_opt[i] != NULL)
+                    free(args->preauth_opt[i]);
+            free(args->preauth_opt);
+        }
         pamk5_compat_free_realm(args);
         free(args);
     }
@@ -143,6 +170,63 @@ default_time(struct pam_args *args, krb5_context c, const char *opt,
 }
 
 /*
+ * Splits preauth options apart on spaces and stores the result in the
+ * provided pam_args struct.  We don't return success.  On memory allocation
+ * failure, we just don't set the attribute, which will generally cause
+ * preauth to fail.
+ */
+static int
+split_preauth(struct pam_args *args, const char *preauth)
+{
+    const char *p, *start;
+    size_t count, i;
+
+    /* Count the number of options. */
+    if (*preauth == '\0')
+        return 1;
+    for (count = 1, p = preauth + 1; *p != '\0'; p++)
+        if ((*p == ' ' || *p == '\t') && !(p[-1] == ' ' || p[-1] == '\t'))
+            count++;
+
+    /*
+     * If the string ends in whitespace, we've overestimated the number of
+     * strings by one.
+     */
+    if (p[-1] == ' ' || p[-1] == '\t')
+        count--;
+    if (count == 0)
+        return 1;
+
+    /* Allocate the array and fill it in. */
+    args->preauth_opt = malloc(count * sizeof(char *));
+    if (args->preauth_opt == NULL)
+        return 0;
+    for (start = preauth, p = preauth, i = 0; *p != '\0'; p++)
+        if (*p == ' ' || *p == '\t') {
+            if (start != p) {
+                args->preauth_opt[i] = xstrndup(start, p - start);
+                if (args->preauth_opt[i] == NULL)
+                    goto fail;
+            }
+            start = p + 1;
+        }
+    if (start != p) {
+        args->preauth_opt[i] = xstrndup(start, p - start);
+        if (args->preauth_opt[i] == NULL)
+            goto fail;
+    }
+    args->preauth_opt_count = i;
+    return 1;
+
+fail:
+    for (; i > 0; i--)
+        free(args->preauth_opt[i - 1]);
+    free(args->preauth_opt);
+    args->preauth_opt = NULL;
+    return 0;
+}
+
+/*
  * This is where we parse options.  Many of our options can be set in either
  * krb5.conf or in the PAM configuration, with the latter taking precedence
  * over the former.  In order to retrieve options from krb5.conf, we need a
@@ -159,8 +243,10 @@ struct pam_args *
 pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
     struct pam_args *args;
-    int i, retval;
+    int i, num, retval;
     krb5_context c;
+    char *preauth_opt = NULL;
+    char **new_preauth;
 
     args = pamk5_args_new();
     if (args == NULL)
@@ -207,6 +293,7 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
         default_string(args, c, "pkinit_anchors", NULL, &args->pkinit_anchors);
         default_boolean(args, c, "pkinit_prompt", 0, &args->pkinit_prompt);
         default_string(args, c, "pkinit_user", NULL, &args->pkinit_user);
+        default_string(args, c, "preauth_opt", NULL, &preauth_opt);
         default_time(args, c, "renew_lifetime", 0, &args->renew_lifetime);
         default_boolean(args, c, "retain_after_close", 0, &args->retain);
         default_boolean(args, c, "search_k5login", 0, &args->search_k5login);
@@ -214,6 +301,12 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
         default_boolean(args, c, "try_pkinit", 0, &args->try_pkinit);
         default_boolean(args, c, "use_pkinit", 0, &args->use_pkinit);
         krb5_free_context(c);
+
+        /* If preauth_opt was set, split it on spaces. */
+        if (preauth_opt != NULL) {
+            split_preauth(args, preauth_opt);
+            free(preauth_opt);
+        }
     }
 
     /*
@@ -269,7 +362,16 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
                 free(args->pkinit_user);
             args->pkinit_user = strdup(&argv[i][strlen("pkinit_user=")]);
         }
-        else if (strncmp(argv[i], "realm=", 6) == 0)
+        else if (strncmp(argv[i], "preauth_opt=", 12) == 0) {
+            num = args->preauth_opt_count;
+            new_preauth = realloc(args->preauth_opt,
+                                  sizeof(char *) * args->preauth_opt_count);
+            if (new_preauth != NULL) {
+                args->preauth_opt[num]
+                    = strdup(&argv[i][strlen("preauth_opt")]);
+                args->preauth_opt_count++;
+            }
+        } else if (strncmp(argv[i], "realm=", 6) == 0)
             ; /* Handled above. */
         else if (strncmp(argv[i], "renew_lifetime=", 15) == 0) {
             const char *value;

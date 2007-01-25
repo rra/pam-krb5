@@ -13,8 +13,10 @@ pam-krb5 3.3 (unreleased)
     LEFIEUX.
 
     Initial support for the MIT Kerberos PKINIT branch, which uses a
-    different mechanism for configuring PKINIT support than Heimdal.
-    Thanks to Douglas E. Engert for the initial patch.
+    different mechanism for configuring PKINIT support than Heimdal.  Also
+    support configuration of general preauth parameters for the MIT
+    preauth plugin system via the preauth_opt option.  Thanks to Douglas
+    E. Engert for the initial patch.
 
     If use_pkinit is set in the PAM configuration and PKINIT isn't
     available or cannot be forced, always fail authentication.
