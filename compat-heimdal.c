@@ -56,13 +56,6 @@ pamk5_compat_free_error(krb5_context c, const char *msg)
 #endif /* !HAVE_KRB5_FREE_ERROR_MESSAGE */
 
 
-void
-pamk5_compat_free_error(krb5_context c, const char *msg)
-{
-    return;
-}
-
-
 krb5_error_code
 pamk5_compat_set_realm(struct pam_args *args, const char *realm)
 {
