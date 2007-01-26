@@ -39,7 +39,10 @@ pamk5_error(struct pam_args *pargs, const char *fmt, ...)
 
 
 /*
- * Log a Kerberos v5 failure with LOG_ERR priority.
+ * Log a Kerberos v5 failure with LOG_ERR priority.  We don't free the message
+ * if we have no context under the assumption that no memory would be
+ * allocated in that case.  This is true for the current MIT Kerberos
+ * implementation.
  */
 void
 pamk5_error_krb5(struct pam_args *args, const char *msg, int status)
@@ -48,9 +51,10 @@ pamk5_error_krb5(struct pam_args *args, const char *msg, int status)
 
     if (args != NULL && args->ctx != NULL && args->ctx->context != NULL)
         k5_msg = pamk5_compat_get_error(args->ctx->context, status);
-    pamk5_error(args, "%s: %s", msg,
-                (k5_msg == NULL) ? error_message(status) : k5_msg);
-    if (k5_msg != NULL)
+    else
+        k5_msg = pamk5_compat_get_error(NULL, status);
+    pamk5_error(args, "%s: %s", msg, k5_msg);
+    if (args != NULL && args->ctx != NULL && args->ctx->context != NULL)
         pamk5_compat_free_error(args->ctx->context, k5_msg);
 }
 
@@ -88,7 +92,10 @@ pamk5_debug_pam(struct pam_args *args, const char *msg, int status)
 
 
 /*
- * Log a Kerberos v5 failure if debugging is enabled.
+ * Log a Kerberos v5 failure if debugging is enabled.  We don't free the
+ * message if we have no context under the assumption that no memory would be
+ * allocated in that case.  This is true for the current MIT Kerberos
+ * implementation.
  */
 void
 pamk5_debug_krb5(struct pam_args *args, const char *msg, int status)
@@ -97,8 +104,9 @@ pamk5_debug_krb5(struct pam_args *args, const char *msg, int status)
 
     if (args != NULL && args->ctx != NULL && args->ctx->context != NULL)
         k5_msg = pamk5_compat_get_error(args->ctx->context, status);
-    pamk5_debug(args, "%s: %s", msg,
-                (k5_msg == NULL) ? error_message(status) : k5_msg);
-    if (k5_msg != NULL)
+    else
+        k5_msg = pamk5_compat_get_error(NULL, status);
+    pamk5_debug(args, "%s: %s", msg, k5_msg);
+    if (args != NULL && args->ctx != NULL && args->ctx->context != NULL)
         pamk5_compat_free_error(args->ctx->context, k5_msg);
 }

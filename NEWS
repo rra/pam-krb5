@@ -5,6 +5,10 @@ pam-krb5 3.4 (unreleased)
     More compilation fixes for Heimdal 0.7, which has a pkinit function
     but takes a different number of arguments.  Thanks, Morgan LEFIEUX.
 
+    Never call error_message directly on Heimdal.  krb5_get_err_text can
+    cope with a NULL context and krb5-config on Heimdal doesn't include
+    -lcom_err.
+
 pam-krb5 3.3 (2007-01-24)
 
     Support the new MIT Kerberos error message functions.
