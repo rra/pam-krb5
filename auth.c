@@ -261,7 +261,6 @@ pkinit_auth(struct pam_args *args, char *service, krb5_creds **creds)
     struct context *ctx = args->ctx;
     krb5_get_init_creds_opt *opts = NULL;
     krb5_error_code retval;
-    int status;
     char *dummy = NULL;
 
     /*
