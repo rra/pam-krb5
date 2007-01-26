@@ -79,6 +79,7 @@ AC_CHECK_MEMBER([krb5_creds.session],
         [Define if your Kerberos implementation is MIT.])],
     [#include <krb5.h>])
 AC_CHECK_FUNCS([krb5_get_error_message \
+    krb5_free_error_message \
     krb5_get_init_creds_opt_alloc \
     krb5_get_init_creds_opt_set_default_flags \
     krb5_get_init_creds_opt_set_pa])

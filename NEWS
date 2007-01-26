@@ -9,6 +9,12 @@ pam-krb5 3.4 (unreleased)
     cope with a NULL context and krb5-config on Heimdal doesn't include
     -lcom_err.
 
+    Handle a NULL return from krb5_get_error_message, since that seems
+    possible in some edge cases.
+
+    Call krb5_get_error_message on Heimdal as well if it's available,
+    since it's supported by the 0.8 release candidates.
+
 pam-krb5 3.3 (2007-01-24)
 
     Support the new MIT Kerberos error message functions.

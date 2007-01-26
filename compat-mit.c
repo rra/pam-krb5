@@ -26,34 +26,39 @@ pamk5_compat_free_data_contents(krb5_context c, krb5_data *data)
 
 
 #ifdef HAVE_KRB5_GET_ERROR_MESSAGE
-
 const char *
 pamk5_compat_get_error(krb5_context c, krb5_error_code code)
 {
-    return krb5_get_error_message(c, code);
-}
+    const char *msg;
 
-void
-pamk5_compat_free_error(krb5_context c, const char *msg)
-{
-    krb5_free_error_message(c, msg);
+    msg = krb5_get_error_message(c, code);
+    if (msg == NULL)
+        return "unknown error";
+    else
+        return msg;
 }
-
 #else /* !HAVE_KRB5_GET_ERROR_MESSAGE */
-
 const char *
 pamk5_compat_get_error(krb5_context c, krb5_error_code code)
 {
     return error_message(code);
 }
+#endif
 
+
+#ifdef HAVE_KRB5_FREE_ERROR_MESSAGE
+void
+pamk5_compat_free_error(krb5_context c, const char *msg)
+{
+    krb5_free_error_message(c, msg);
+}
+#else /* !HAVE_KRB5_FREE_ERROR_MESSAGE */
 void
 pamk5_compat_free_error(krb5_context c, const char *msg)
 {
     return;
 }
-
-#endif /* !HAVE_KRB5_GET_ERROR_MESSAGE */
+#endif /* !HAVE_KRB5_FREE_ERROR_MESSAGE */
 
 
 krb5_error_code
