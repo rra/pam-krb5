@@ -82,7 +82,7 @@ AC_CHECK_FUNCS([krb5_get_error_message \
     krb5_get_init_creds_opt_alloc \
     krb5_get_init_creds_opt_set_default_flags \
     krb5_get_init_creds_opt_set_pa])
-AC_CHECK_FUNCS([krb5_get_init_creds_set_pkinit],
+AC_CHECK_FUNCS([krb5_get_init_creds_opt_set_pkinit],
     [RRA_FUNC_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT_ARGS])
 AC_CHECK_FUNC([krb5_get_init_creds_opt_free],
     [RRA_FUNC_KRB5_GET_INIT_CREDS_OPT_FREE_ARGS])])
