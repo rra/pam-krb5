@@ -1,5 +1,11 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 3.5 (unreleased)
+
+    Don't try to chown non-FILE ticket caches, which among other things
+    breaks using pam-krb5 with Heimdal KCM caches.  Thanks, Jeremy
+    Jackson.
+
 pam-krb5 3.4 (2007-01-28)
 
     More compilation fixes for Heimdal 0.7, which has a pkinit function

@@ -622,13 +622,18 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
         pamk5_debug(args, "initializing ticket cache %s", cache_name);
     }
 
-    /* Initialize the new ticket cache and point the environment at it. */
+    /*
+     * Initialize the new ticket cache and point the environment at it.  Only
+     * chown the cache if the cache is of type FILE or has no type (making the
+     * assumption that the default cache type is FILE; otherwise, due to the
+     * type prefix, we'd end up with an invalid path.
+     */
     pamret = cache_init_from_cache(args, cache_name, ctx->cache, &cache);
     if (pamret != PAM_SUCCESS)
         goto done;
     if (strncmp(cache_name, "FILE:", strlen("FILE:")) == 0)
         status = chown(cache_name + strlen("FILE:"), uid, gid);
-    else
+    else if (strchr(cache_name, ':') == NULL)
         status = chown(cache_name, uid, gid);
     if (status == -1) {
         pamk5_debug(args, "chown of ticket cache failed: %s", strerror(errno));
