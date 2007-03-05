@@ -464,8 +464,8 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
     struct pam_args *args;
     krb5_ccache cache = NULL;
     char *cache_name = NULL;
-    int reinit = 0;
-    int pamret, allow, status;
+    int reinit = 0, status = 0;
+    int pamret, allow;
     struct passwd *pw = NULL;
     uid_t uid;
     gid_t gid;
