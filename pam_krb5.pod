@@ -563,6 +563,18 @@ account.
 
 =head1 CAVEATS
 
+The Kerberos library, via pam-krb5, will prompt the user to change their
+password if their password is expired, but when using OpenSSH, this will
+only work when ChallengeResponseAuthentication is enabled.  Unless this
+option is enabled, OpenSSH doesn't pass PAM messages to the user and can
+only respond to a simple password prompt.
+
+If you are using MIT Kerberos, be aware that users whose passwords are
+expired will not be prompted to change their password unless the KDC
+configuration for your realm in [realms] in krb5.conf contains a
+master_kdc setting or, if using DNS SRV records, you have a DNS entry for
+_kerberos-master as well as _kerberos.
+
 Old versions of OpenSSH are known to call pam_authenticate followed by
 pam_setcred(PAM_REINITIALIZE_CRED) without first calling pam_open_session,
 thereby requesting that an existing ticket cache be renewed (similar to
