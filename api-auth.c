@@ -485,7 +485,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
      */
     if (flags & PAM_DELETE_CRED) {
         pamret = pam_set_data(pamh, "ctx", NULL, NULL);
-        ctx = NULL;
+        args->ctx = NULL;
         goto done;
     }
 

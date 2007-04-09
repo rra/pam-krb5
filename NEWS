@@ -6,6 +6,10 @@ pam-krb5 3.5 (unreleased)
     breaks using pam-krb5 with Heimdal KCM caches.  Thanks, Jeremy
     Jackson.
 
+    When logging session deletion via pam_setcred or pam_close_session,
+    don't look for the username in the PAM context after it's been freed.
+    Thanks, Markus Moeller.
+
 pam-krb5 3.4 (2007-01-28)
 
     More compilation fixes for Heimdal 0.7, which has a pkinit function
