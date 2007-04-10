@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Sam Hartman <hartmans@debian.org>
 Uploaders: Russ Allbery <rra@debian.org>
 Standards-Version: 3.7.2
-Build-Depends: debhelper (>= 4.0.0), libkrb5-dev, comerr-dev, libpam0g-dev
+Build-Depends: debhelper (>= 5), libkrb5-dev, comerr-dev, libpam0g-dev
 
 Package: libpam-krb5
 Architecture: any

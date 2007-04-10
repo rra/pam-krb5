@@ -16,6 +16,7 @@ libpam-krb5 (3.5-1) unstable; urgency=low
     - Fix various memory leaks and memory handling problems.
     - Better error message handling with later Kerberos releases.
     - Various improvements to debug logging.
+  * Update debhelper compatibility level to V5.
 
  --
 
