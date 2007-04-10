@@ -1,4 +1,4 @@
-                               pam-krb5 2.6
+                               pam-krb5 3.5
                (PAM module for Kerberos v5 authentication)
 
                     Originally written by Frank Cusack
@@ -37,14 +37,30 @@ DESCRIPTION
   features that the Sourceforge module does not (particularly around
   authorization), and does not support some options (particularly ones not
   directly related to Kerberos v5) that it does.  This module will never
-  support Kerberos v4 and will probably never directly support AFS (AFS is
-  probably better-supported via a dedicated AFS PAM module that can be
-  stacked with the Kerberos module of your choice).
+  support Kerberos v4 or AFS.  For an AFS session module that works with
+  this module (or any other Kerberos v5 PAM module), see:
+
+      <http://www.eyrie.org/~eagle/software/pam-afs-session/>
+
+  If there are other options besides AFS and Kerberos v4 support from the
+  Sourceforge PAM module that you're missing in this module, please let me
+  know.
+
+  This module contains preliminary support for PKINIT authentication
+  provided that the Kerberos library against which it was built supports
+  PKINIT.  This code has not been well-tested and should be considered
+  alpha-quality.
+
+REQUIREMENTS
 
   Either MIT Kerberos or Heimdal are supported.  The Makefile will require
   some modifications to build with Heimdal.  The MIT Kerberos support is
   better tested.  MIT Keberos 1.3 or later may be required; this module
   has not been tested with earlier versions.
+
+  For PKINIT support, Heimdal 0.8rc1 or later is required.  MIT Kerberos
+  PKINIT support will be added once the MIT Kerberos APIs for PKINIT
+  stabilize.
 
   This module should work on Linux and Solaris (and build with either gcc
   or the Sun C compiler), but has been far more heavily tested on Linux.
@@ -52,9 +68,24 @@ DESCRIPTION
   module requires gcc to even attempt to build on platforms other than
   Solaris.
 
+  Old versions of OpenSSH are known to call pam_authenticate followed by
+  pam_setcred(PAM_REINITIALIZE_CRED) without first calling
+  pam_open_session, thereby requesting that an existing ticket cache be
+  renewed (similar to what a screensaver would want) rather than
+  requesting a new ticket cache be created.  Since this behavior is
+  indistinguishable at the PAM level from a screensaver, pam-krb5 when
+  used with these old versions of OpenSSH will refresh the ticket cache of
+  the OpenSSH daemon rather than setting up a new ticket cache for the
+  user.  The resulting ticket cache will have the correct permissions
+  (this is not a security concern), but will not be named correctly or
+  referenced in the user's environment and will be overwritten by the next
+  user login.  The best solution to this problem is to upgrade OpenSSH.
+  I'm not sure exactly when this problem was fixed, but at the very least
+  OpenSSH 4.3 and later do not exhibit it.
+
 COMPILING AND INSTALLING
 
-  To build the module with MIT Kerberos on a Linux system, just run:
+  To build the module, just run:
 
       ./configure
       make
@@ -157,11 +188,43 @@ CONFIGURING
 
   Configuring the module for Solaris is both simpler and less flexible,
   since Solaris (at least Solaris 8 and 9) use a single /etc/pam.conf file
-  that contains configuration for all programs.  See the pam.conf man page
-  for more information.  When using this module with Solaris login (at
-  least on Solaris 8 and 9), you will probably also need to add
+  that contains configuration for all programs.  For console login on
+  Solaris, try something like:
+
+      login auth sufficient /usr/local/lib/security/pam_krb5.so
+          minimum_uid=100
+      login auth required /usr/lib/security/pam_unix_auth.so.1
+          use_first_pass
+      login account required /usr/local/lib/security/pam_krb5.so
+          minimum_uid=100
+      login account required /usr/lib/security/pam_unix_account.so.1
+      login session required /usr/local/lib/security/pam_krb5.so
+          retain_after_close minimum_uid=100
+      login session required /usr/lib/security/pam_unix_session.so.1
+
+  (Each of those should be all on one line.)  A similar configuration
+  could be used for other services, such as ssh.  See the pam.conf man
+  page for more information.  When using this module with Solaris login
+  (at least on Solaris 8 and 9), you will probably also need to add
   retain_after_close to the PAM configuration to avoid having the user's
   credentials deleted before they are logged in.
+
+  Some configuration options may be put in the krb5.conf file used by your
+  Kerberos libraries (usually /etc/krb5.conf or /usr/local/etc/krb5.conf)
+  instead or in addition to the PAM configuration.  See the man page for
+  more details.
+
+  The Kerberos library, via pam-krb5, will prompt the user to change their
+  password if their password is expired, but when using OpenSSH, this will
+  only work when ChallengeResponseAuthentication is enabled.  Unless this
+  option is enabled, OpenSSH doesn't pass PAM messages to the user and can
+  only respond to a simple password prompt.
+
+  If you are using MIT Kerberos, be aware that users whose passwords are
+  expired will not be prompted to change their password unless the KDC
+  configuration for your realm in [realms] in krb5.conf contains a
+  master_kdc setting or, if using DNS SRV records, you have a DNS entry
+  for _kerberos-master as well as _kerberos.
 
 IMPLEMENTATION NOTES
 
@@ -226,14 +289,15 @@ IMPLEMENTATION NOTES
   inside a screensaver) is:
 
       pam_authenticate
-      pam_setcred(PAM_REFRESH_CRED)
+      pam_setcred(PAM_REINITIALIZE_CRED)
       pam_acct_mgmt
 
-  Authentication proceeds as above.  At the pam_setcred stage, rather than
-  creating a new ticket cache, the module instead finds the current ticket
-  cache (from the KRB5CCNAME environment variable or the default ticket
-  cache location from the Kerberos library) and then reinitializes it with
-  the credentials from the temporary pam_authenticate ticket cache.  When
+  (PAM_REFRESH_CRED may be used instead.)  Authentication proceeds as
+  above.  At the pam_setcred stage, rather than creating a new ticket
+  cache, the module instead finds the current ticket cache (from the
+  KRB5CCNAME environment variable or the default ticket cache location
+  from the Kerberos library) and then reinitializes it with the
+  credentials from the temporary pam_authenticate ticket cache.  When
   refreshing a ticket cache, the application should *not* open a session.
   Calling pam_acct_mgmt is optional; pam-krb5 doesn't do anything
   different when it's called in this case.
@@ -266,3 +330,7 @@ HISTORY AND ACKNOWLEDGEMENTS
   for compatibility with the Sourceforge module, commented and
   standardized the formatting of the code, and overhauled the
   documentation.
+
+  Thanks to Douglas E. Engert for the initial implementation of PKINIT
+  support.  I have since modified and reworked it extensively, so any bugs
+  or compilation problems are my fault.

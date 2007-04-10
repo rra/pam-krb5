@@ -43,12 +43,14 @@ attempt to obtain tickets for a key in the local system keytab and then
 verify those tickets.  Unless this step is performed, the authentication
 is vulnerable to KDC spoofing, but it requires that the system have a
 local key and that the PAM module be running as a user that can read the
-keytab file (normally F</etc/krb5.keytab>.  If that keytab cannot be read
-or if no keys are found in it, the default (potentially insecure) behavior
-is to skip this check.  If you want to instead fail authentication if the
-obtained tickets cannot be checked, set C<verify_ap_req_nofail> to true in
-the [libdefaults] section of F</etc/krb5.conf>.  Note that this will
-affect applications other than this PAM module.
+keytab file (normally F</etc/krb5.keytab>.  You can point the Kerberos PAM
+module at a different keytab with the I<keytab> option.  If that keytab
+cannot be read or if no keys are found in it, the default (potentially
+insecure) behavior is to skip this check.  If you want to instead fail
+authentication if the obtained tickets cannot be checked, set
+C<verify_ap_req_nofail> to true in the [libdefaults] section of
+F</etc/krb5.conf>.  Note that this will affect applications other than
+this PAM module.
 
 By default, whenever the user is authenticated, a basic authorization
 check will also be done using krb5_kuserok().  The default behavior of
@@ -60,6 +62,12 @@ the principal matches the account name (this can be changed by configuring
 a custom aname to localname mapping in F<krb5.conf>; see the Kerberos
 documentation for details).  This can be customized with several
 configuration options; see below.
+
+If the username provided to PAM contains an C<@> and Kerberos can,
+treating the username as a principal, map it to a local account name,
+pam_authenticate() will change the PAM user to that local account name.
+This allows users to log in with their Kerberos principal and let Kerberos
+do the mapping to an account.
 
 When pam_setcred() is called to initialize a new ticket cache, the
 environment variable KRB5CCNAME is set to the path to that ticket cache.
@@ -175,6 +183,25 @@ configuration that was turned on in F<krb5.conf>.
 
 =over 4
 
+=item banner=<banner>
+
+By default, the prompts when a user changes their password are:
+
+    Current Kerberos password:
+    Enter new Kerberos password:
+    Retype new Kerberos password:
+
+The string "Kerberos" is inserted so that users aren't confused about
+which password they're changing.  Setting this option replaces the word
+"Kerberos" with whatever this option is set to.  Setting this option to
+the empty string removes the word before "password:" entirely.
+
+If set in the PAM configuration, <banner> may not contain whitespace.  If
+you want a value containing whitespace, set it in F<krb5.conf>.
+
+This option can be set in F<krb5.conf> and is only applicable to the
+password group.
+
 =item ccache=<pattern>
 
 Use <pattern> as the pattern for creating credential cache names.
@@ -196,6 +223,9 @@ and session groups.
 
 Store user ticket caches in <directory> instead of in F</tmp>.  The
 algorithm for generating the ticket cache name is otherwise unchanged.
+<directory> may be prefixed with C<FILE:> to make the cache type
+unambiguous (and this may be required on systems that use a cache type
+other than file as the default).
 
 This option can be set in F<krb5.conf> and is only applicable to the auth
 and session groups.
@@ -207,6 +237,24 @@ priority, including entry and exit from each of the external PAM
 interfaces (except pam_close_session).
 
 This option can be set in F<krb5.conf>.
+
+=item expose_account
+
+By default, the Kerberos PAM module password prompt is simply
+"Password:".  This avoids leaking any information about the system realm
+or account to principal conversions.  If this option is set, the string
+"for <principal>" is added before the colon, where <principal> is the
+user's principal.  This string is also added before the colon on prompts
+when changing the user's password.
+
+Enabling this option with ChallengeResponseAuthentication enabled in
+OpenSSH may cause problems for some ssh clients that only recognize
+"Password:" as a prompt.  This option is automatically disabled if
+I<search_k5login> is enabled since the principal displayed would be
+inaccurate.
+
+This option can be set in F<krb5.conf> and is only applicable to the auth
+and password groups.
 
 =item forwardable
 
@@ -239,6 +287,17 @@ instead.
 
 This option can be set in F<krb5.conf>.
 
+=item keytab=<path>
+
+Specifies the keytab to use when validating the user's credentials.  The
+default is the default system keytab (normally F</etc/krb5.keytab>), which
+is usually only readable by root.  Applications not running as root that
+use this PAM module for authentication may wish to point it to another
+keytab the application can read.
+
+This option can be set in F<krb5.conf> and is only applicable to the auth
+group.
+
 =item minimum_uid=<uid>
 
 Do not do anything if the authenticated account name corresponds to a
@@ -264,6 +323,73 @@ call pam_authenticate(); other functions like pam_setcred() and
 pam_start_session() don't make sense with this option.
 
 This option is only applicable to the auth group.
+
+=item pkinit_anchors=<anchors>
+
+When doing PKINIT authentication, use <anchors> as the client trust
+anchors.  This is normally a reference to a file containing the trusted
+certificate authorities.  This option is only used if I<try_pkinit> or
+I<use_pkinit> are set.
+
+This option can be set in F<krb5.conf> and is only applicable to the auth
+and password groups.
+
+=item pkinit_prompt
+
+Before attempting PKINIT authentication, prompt the user to insert a smart
+card.  You may want to set this option for programs such as
+B<gnome-screensaver> that call PAM as soon as the mouse is touched and
+don't give the user an opportunity to enter the smart card first.  Any
+information entered at the first prompt is ignored.  If I<try_pkinit> is
+set, a user who wishes to use a password instead can just press Enter and
+then enter their password as normal.  This option is only used if
+I<try_pkinit> or I<use_pkinit> are set.
+
+This option can be set in F<krb5.conf> and is only applicable to the auth
+and password groups.
+
+=item pkinit_user=<userid>
+
+When doing PKINIT authentication, use <userid> as the user ID.  The value
+of this string is highly dependent on the type of PKINIT implementation
+you're using, but will generally be something like:
+
+    PKCS11:/usr/lib/pkcs11/lib/soft-pkcs11.so
+
+to specify the module to use with a smart card.  It may also point to a
+user certificate or to other types of user IDs.  See the Kerberos library
+documentation for more details.  This option is only used if I<try_pkinit>
+or I<use_pkinit> are set.
+
+This option can be set in F<krb5.conf> and is only applicable to the auth
+and password groups.
+
+=item preauth_opt=<option>
+
+Sets a preauth option (currently only applicable when built with MIT
+Kerberos).  <option> is either a key/value pair with the key separated
+from the value by C<=> or a boolean option (in which case it's turned
+on).  In F<krb5.conf>, multiple options should be separated by
+whitespace.  In the PAM configuration, this option can be given multiple
+times to set multiple options.  In either case, <option> may not contain
+whitespace.
+
+The primary use of this option, at least in the near future, will be to
+set options for the MIT Kerberos PKINIT support.  For the full list of
+possible options, see the PKINIT plugin documentation.  At the time of
+this writing, C<X509_user_identity> is equivalent to I<pkinit_user> and
+C<X509_anchors> is equivalent to I<pkinit_anchors>.  C<flag_DSA_PROTOCOL>
+can only be set via this option.
+
+Any settings made with this option are applied after the I<pkinit_anchors>
+and I<pkinit_user> options, so if an equivalent setting is made via
+I<preauth_opt>, it will probably override the other setting.
+
+This option can be set in F<krb5.conf> and is only applicable to the auth
+and password groups.  Note that there is no way to remove a setting made
+in F<krb5.conf> using the PAM configuration, but options set in the PAM
+configuration are applied after options set in F<krb5.conf> and therefore
+may override earlier settings.
 
 =item realm=<realm>
 
@@ -319,6 +445,16 @@ authentication.
 This option can be set in F<krb5.conf> and is only applicable to the auth
 group.
 
+=item ticket_lifetime=<lifetime>
+
+Obtain tickets with a maximum lifetime of <lifetime>.  <lifetime> should
+be a Kerberos lifetime string such as C<2d4h10m> or a time in minutes.  If
+set, this overrides the Kerberos library default set in the [libdefaults]
+section of F<krb5.conf>.
+
+This option can be set in F<krb5.conf> and is only applicable to the auth
+group.
+
 =item try_first_pass
 
 If the authentication module isn't the first on the stack, and a previous
@@ -330,6 +466,17 @@ module obtained the user's password.
 
 This option is only applicable to the auth and password groups.  For the
 password group, it applies to both the old and new passwords.
+
+=item try_pkinit
+
+Attempt PKINIT authentication before trying a regular password.  You will
+probably also need to set the I<pkinit_user> configuration option.  If
+PKINIT fails, the PAM module will fall back on regular password
+authentication.  This option is currently only supported if pam-krb5 was
+built against Heimdal 0.8rc1 or later or the MIT Kerberos PKINIT branch.
+
+This option can be set in F<krb5.conf> and is only applicable to the auth
+and password groups.
 
 =item use_authtok
 
@@ -355,6 +502,16 @@ the user.
 
 This option is only applicable to the auth and password groups.
 
+=item use_pkinit
+
+Require PKINIT authentication.  You will probably also need to set the
+I<pkinit_user> configuration option.  If PKINIT fails, authentication will
+fail.  This option is currently only supported if pam-krb5 was built
+against Heimdal 0.8rc1 or later.
+
+This option can be set in F<krb5.conf> and is only applicable to the auth
+and password groups.
+
 =back
 
 =head1 ENVIRONMENT
@@ -365,7 +522,8 @@ This option is only applicable to the auth and password groups.
 
 Set by pam_setcred() with the PAM_ESTABLISH_CRED option, and therefore
 also by pam_open_session(), to point to the new credential cache for the
-user.  See the I<ccache> and I<ccache_dir> options.
+user.  See the I<ccache> and I<ccache_dir> options.  By default, the cache
+name will be prefixed with C<FILE:> to make the cache type unambiguous.
 
 =item PAM_KRB5CCNAME
 
@@ -403,8 +561,39 @@ account.
 
 =back
 
+=head1 CAVEATS
+
+The Kerberos library, via pam-krb5, will prompt the user to change their
+password if their password is expired, but when using OpenSSH, this will
+only work when ChallengeResponseAuthentication is enabled.  Unless this
+option is enabled, OpenSSH doesn't pass PAM messages to the user and can
+only respond to a simple password prompt.
+
+If you are using MIT Kerberos, be aware that users whose passwords are
+expired will not be prompted to change their password unless the KDC
+configuration for your realm in [realms] in krb5.conf contains a
+master_kdc setting or, if using DNS SRV records, you have a DNS entry for
+_kerberos-master as well as _kerberos.
+
+Old versions of OpenSSH are known to call pam_authenticate followed by
+pam_setcred(PAM_REINITIALIZE_CRED) without first calling pam_open_session,
+thereby requesting that an existing ticket cache be renewed (similar to
+what a screensaver would want) rather than requesting a new ticket cache
+be created.  Since this behavior is indistinguishable at the PAM level
+from a screensaver, pam-krb5 when used with these old versions of OpenSSH
+will refresh the ticket cache of the OpenSSH daemon rather than setting up
+a new ticket cache for the user.  The resulting ticket cache will have the
+correct permissions (this is not a security concern), but will not be
+named correctly or referenced in the user's environment and will be
+overwritten by the next user login.  The best solution to this problem is
+to upgrade OpenSSH.  I'm not sure exactly when this problem was fixed, but
+at the very least OpenSSH 4.3 and later do not exhibit it.
+
 =head1 SEE ALSO
 
 kadmin(8), kdestroy(1), krb5.conf(5), pam(7), passwd(1), syslog(3)
+
+The current version of this module is available from its web page at
+L<http://www.eyrie.org/~eagle/software/pam-krb5/>.
 
 =cut

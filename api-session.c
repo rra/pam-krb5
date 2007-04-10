@@ -1,7 +1,8 @@
 /*
- * pam_krb5_sess.c
+ * api-session.c
  *
- * PAM session management functions for pam_krb5.
+ * Implements the PAM session group API (pam_sm_open_session and
+ * pam_sm_close_session).
  *
  * Opening a session is equivalent to calling pam_setcred with the flag to
  * establish credentials.  Closing a session destroys the PAM context, which
@@ -21,7 +22,7 @@
 #include <security/pam_appl.h>
 #include <security/pam_modules.h>
 
-#include "pam_krb5.h"
+#include "internal.h"
 
 /* Store the user's credentials.  The flags are ignored. */
 int

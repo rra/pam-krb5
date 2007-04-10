@@ -1,8 +1,11 @@
 /*
- * pam_krb5_acct.c
+ * api-account.c
  *
- * PAM account management functions for pam_krb5
+ * Implements the PAM account group API (pam_sm_acct_mgmt).
  *
+ * We don't have much to do for account management, but we do recheck the
+ * user's authorization against .k5login (or whatever equivalent we've been
+ * configured for).
  */
 
 /* Get prototypes for the account management functions. */
@@ -14,9 +17,10 @@
 #include <krb5.h>
 #include <security/pam_appl.h>
 #include <security/pam_modules.h>
+#include <stdlib.h>
 #include <string.h>
 
-#include "pam_krb5.h"
+#include "internal.h"
 
 /*
  * Check the authorization of the user.  It's not entirely clear what this
@@ -31,14 +35,14 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
     int pamret, retval;
     const char *name;
 
-    args = pamk5_args_parse(flags, argc, argv);
+    args = pamk5_args_parse(pamh, flags, argc, argv);
     if (args == NULL) {
-        pamk5_error(ctx, "cannot allocate memory: %s", strerror(errno));
+        pamk5_error(NULL, "cannot allocate memory: %s", strerror(errno));
         pamret = PAM_AUTH_ERR;
         goto done;
     }
-    pamret = pamk5_context_fetch(pamh, &ctx);
-    ENTRY(ctx, args, flags);
+    pamret = pamk5_context_fetch(args);
+    ENTRY(args, flags);
 
     /*
      * Succeed if the user did not use krb5 to login.  Yes, ideally we should
@@ -47,10 +51,9 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
      * not how other krb5 PAM modules work.  If we don't do this, root logins
      * with the system root password fail, which is a bad failure mode.
      */
-    if (pamret != PAM_SUCCESS || ctx == NULL) {
+    if (pamret != PAM_SUCCESS || args->ctx == NULL) {
         pamret = PAM_SUCCESS;
-        ctx = NULL;
-        pamk5_debug(ctx, args, "skipping non-Kerberos login");
+        pamk5_debug(args, "skipping non-Kerberos login");
         goto done;
     }
 
@@ -68,6 +71,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
         retval = PAM_AUTH_ERR;
         goto done;
     }
+    ctx = args->ctx;
     if (ctx->name != NULL)
         free(ctx->name);
     ctx->name = strdup(name);
@@ -80,21 +84,21 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
      * bit more thorough.
      */
     if (ctx->cache != NULL) {
-        pamk5_debug(ctx, args, "retrieving principal from cache");
+        pamk5_debug(args, "retrieving principal from cache");
         if (ctx->princ != NULL)
             krb5_free_principal(ctx->context, ctx->princ);
         retval = krb5_cc_get_principal(ctx->context, ctx->cache, &ctx->princ);
         if (retval != 0) {
-            pamk5_error(ctx, "cannot retrieve principal from cache: %s",
-                        pamk5_compat_get_err_text(ctx->context, retval));
+            pamk5_error_krb5(args, "cannot retrieve principal from cache",
+                             retval);
             pamret = PAM_AUTH_ERR;
             goto done;
         }
     }
-    pamret = pamk5_validate_auth(ctx, args);
+    pamret = pamk5_authorized(args);
 
 done:
-    EXIT(ctx, args, pamret);
+    EXIT(args, pamret);
     pamk5_args_free(args);
     return pamret;
 }

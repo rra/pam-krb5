@@ -1,7 +1,10 @@
 /*
  * prompting.c
  *
- * Functions to prompt users for information.
+ * Prompt users for information.
+ *
+ * Handles all interaction with the PAM conversation, either directly or
+ * indirectly through the Kerberos libraries.
  */
 
 #include "config.h"
@@ -14,7 +17,153 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "pam_krb5.h"
+#include "internal.h"
+
+/*
+ * Prompt for a password.
+ *
+ * This function handles prompting both for a password for regular
+ * authentication and for passwords when changing one's password.  The default
+ * prompt is simply "Password:" for the former.  For the latter, a string
+ * describing the type of password is passed in as prefix.  In this case, the
+ * prompts is:
+ *
+ *     <prefix> <banner> password:
+ *
+ * where <prefix> is the argument passed and <banner> is the value of
+ * args->banner (defaulting to "Kerberos").
+ *
+ * If args->expose_account is set, we append the principal name (taken from
+ * args->ctx->princ) before the colon, so the prompts are:
+ *
+ *     Password for <principal>:
+ *     <prefix> <banner> password for <principal>:
+ *
+ * Normally this is not done because it exposes the realm and possibly any
+ * username to principal mappings, plus may confuse some ssh clients if sshd
+ * passes the prompt back to the client.
+ *
+ * The entered password is stored in password.  The memory is allocated by the
+ * application and returned as part of the PAM conversation.  It must be freed
+ * by the caller.
+ *
+ * Returns a PAM success or error code.
+ */
+int
+pamk5_get_password(struct pam_args *args, const char *prefix, char **password)
+{
+    struct context *ctx = args->ctx;
+    char *prompt;
+    char *principal = NULL;
+    size_t length;
+    krb5_error_code k5_errno;
+    int retval;
+
+    if (args->expose_account || prefix != NULL) {
+        k5_errno = krb5_unparse_name(ctx->context, ctx->princ, &principal);
+        if (k5_errno != 0)
+            pamk5_debug_krb5(args, "krb5_unparse_name", k5_errno);
+    }
+    if (prefix == NULL) {
+        if (args->expose_account && principal != NULL) {
+            length = strlen("Password for ") + strlen(principal) + 3;
+            prompt = malloc(length);
+            if (prompt == NULL)
+                return PAM_BUF_ERR;
+            snprintf(prompt, length, "Password for %s: ", principal);
+        } else {
+            prompt = strdup("Password: ");
+            if (prompt == NULL)
+                return PAM_BUF_ERR;
+        }
+    } else {
+        if (args->expose_account && principal != NULL) {
+            length = strlen(prefix) + 1 + strlen(" password for ")
+                + strlen(principal) + 3;
+            if (args->banner != NULL)
+                length += strlen(args->banner) + 1;
+            prompt = malloc(length);
+            if (prompt == NULL)
+                return PAM_BUF_ERR;
+            snprintf(prompt, length, "%s%s%s password for %s: ", prefix,
+                     (args->banner == NULL) ? "" : " ",
+                     (args->banner == NULL) ? "" : args->banner, principal);
+        } else {
+            length = strlen(prefix) + 1 + strlen(" password: ");
+            if (args->banner != NULL)
+                length += strlen(args->banner) + 1;
+            prompt = malloc(length);
+            if (prompt == NULL)
+                return PAM_BUF_ERR;
+            snprintf(prompt, length, "%s%s%s password: ", prefix,
+                     (args->banner == NULL) ? "" : " ",
+                     (args->banner == NULL) ? "" : args->banner);
+        }
+    }
+    retval = pamk5_conv(args, prompt, PAM_PROMPT_ECHO_OFF, password);
+    free(prompt);
+    return retval;
+}
+
+
+/*
+ * Get information from the user or display a message to the user, as
+ * determined by type.  If PAM_SILENT was given, don't pass any text or error
+ * messages to the application.
+ *
+ * The response variable is set to the response returned by the conversation
+ * function on a successful return if a response was desired.  Caller is
+ * responsible for freeing it.
+ */
+int
+pamk5_conv(struct pam_args *args, const char *message, int type,
+           char **response)
+{
+    int pamret;
+    struct pam_message msg;
+    const struct pam_message *pmsg;
+    struct pam_response	*resp = NULL;
+    struct pam_conv *conv;
+    int want_reply;
+
+    if (args->silent && (type == PAM_ERROR_MSG || type == PAM_TEXT_INFO))
+        return PAM_SUCCESS;
+    pamret = pam_get_item(args->pamh, PAM_CONV, (void *) &conv);
+    if (pamret != PAM_SUCCESS)
+	return pamret;
+    pmsg = &msg;
+    msg.msg_style = type;
+    msg.msg = message;
+    pamret = conv->conv(1, &pmsg, &resp, conv->appdata_ptr);
+    if (pamret != PAM_SUCCESS)
+	return pamret;
+
+    /*
+     * Only expect a response for PAM_PROMPT_ECHO_OFF or PAM_PROMPT_ECHO_ON
+     * message types.  This mildly annoying logic makes sure that everything
+     * is freed properly (except the response itself, if wanted, which is
+     * returned for the caller to free) and that the success status is set
+     * based on whether the reply matched our expectations.
+     *
+     * If we got a reply even though we didn't want one, still overwrite the
+     * reply before freeing in case it was a password.
+     */
+    want_reply = (type == PAM_PROMPT_ECHO_OFF || type == PAM_PROMPT_ECHO_ON);
+    if (resp == NULL || resp->resp == NULL)
+	pamret = want_reply ? PAM_CONV_ERR : PAM_SUCCESS;
+    else if (want_reply && response != NULL) {
+        *response = resp->resp;
+        pamret = PAM_SUCCESS;
+    } else {
+        memset(resp->resp, 0, strlen(resp->resp));
+        free(resp->resp);
+        pamret = want_reply ? PAM_SUCCESS : PAM_CONV_ERR;
+    }
+    if (resp != NULL)
+        free(resp);
+    return pamret;
+}
+
 
 /*
  * This is the generic prompting function called by both the MIT Kerberos and
@@ -49,24 +198,24 @@ krb5_error_code
 pamk5_prompter_krb5(krb5_context context, void *data, const char *name,
                     const char *banner, int num_prompts, krb5_prompt *prompts)
 {
-    int pam_prompts = num_prompts;
-    int pamret, i;
+    struct pam_args *args = data;
+    int total_prompts = num_prompts;
+    int pam_prompts, pamret, i;
     int retval = KRB5KRB_ERR_GENERIC;
     struct pam_message **msg;
     struct pam_response *resp = NULL;
     struct pam_conv *conv;
-    pam_handle_t *pamh = (pam_handle_t *) data;
 
     /* Obtain the conversation function from the application. */
-    pamret = pam_get_item(pamh, PAM_CONV, (void *) &conv);
+    pamret = pam_get_item(args->pamh, PAM_CONV, (void *) &conv);
     if (pamret != 0)
         return KRB5KRB_ERR_GENERIC;
 
     /* Treat the name and banner as prompts that doesn't need input. */
-    if (name != NULL)
-        pam_prompts++;
-    if (banner != NULL)
-        pam_prompts++;
+    if (name != NULL && !args->silent)
+        total_prompts++;
+    if (banner != NULL && !args->silent)
+        total_prompts++;
 
     /*
      * Allocate memory to copy all of the prompts into a pam_message.
@@ -90,20 +239,20 @@ pamk5_prompter_krb5(krb5_context context, void *data, const char *name,
      * structure since it's double-linked in a subtle way.  Thankfully, we get
      * to free it ourselves.
      */
-    msg = calloc(pam_prompts, sizeof(struct pam_message *));
+    msg = calloc(total_prompts, sizeof(struct pam_message *));
     if (msg == NULL)
         return ENOMEM;
-    *msg = calloc(pam_prompts, sizeof(struct pam_message));
+    *msg = calloc(total_prompts, sizeof(struct pam_message));
     if (*msg == NULL) {
         free(msg);
         return ENOMEM;
     }
-    for (i = 1; i < pam_prompts; i++)
+    for (i = 1; i < total_prompts; i++)
         msg[i] = msg[0] + i;
 
-    /* From this point on, pam_prompts is an index into msg. */
+    /* pam_prompts is an index into msg and a count when we're done. */
     pam_prompts = 0;
-    if (name != NULL) {
+    if (name != NULL && !args->silent) {
        msg[pam_prompts]->msg = malloc(strlen(name) + 1);
        if (msg[pam_prompts]->msg == NULL)
            goto cleanup;
@@ -111,7 +260,7 @@ pamk5_prompter_krb5(krb5_context context, void *data, const char *name,
        msg[pam_prompts]->msg_style = PAM_TEXT_INFO;
        pam_prompts++;
     }
-    if (banner != NULL) {
+    if (banner != NULL && !args->silent) {
         msg[pam_prompts]->msg = malloc(strlen(banner) + 1);
         if (msg[pam_prompts]->msg == NULL)
             goto cleanup;
@@ -142,9 +291,9 @@ pamk5_prompter_krb5(krb5_context context, void *data, const char *name,
      * area of the krb5_prompt structs.
      */
     pam_prompts = 0;
-    if (name != NULL)
+    if (name != NULL && !args->silent)
         pam_prompts++;
-    if (banner != NULL)
+    if (banner != NULL && !args->silent)
         pam_prompts++;
     for (i = 0; i < num_prompts; i++, pam_prompts++) {
         size_t len;
@@ -167,7 +316,7 @@ pamk5_prompter_krb5(krb5_context context, void *data, const char *name,
     retval = 0;
 
 cleanup:
-    for (i = 0; i < pam_prompts; i++) {
+    for (i = 0; i < total_prompts; i++) {
         if (msg[i]->msg != NULL)
             free((char *) msg[i]->msg);
     }
@@ -175,15 +324,17 @@ cleanup:
     free(msg);
 
     /*
-     * Note that PAM is underspecified with respect to freeing resp[i].resp.
-     * It's not clear if I should free it, or if the application has to.
-     * Therefore most (all?) apps won't free it, and I can't either, as I am
-     * not sure it was malloced.  All PAM implementations I've seen leak
-     * memory here.  Not so bad iff you fork/exec for each PAM authentication
-     * (as is typical).
+     * Clean up the responses.  These may contain passwords, so we overwrite
+     * them before we free them.
      */
-    if (resp != NULL)
+    if (resp != NULL) {
+        for (i = 0; i < total_prompts; i++) {
+            if (resp[i].resp != NULL) {
+                memset(resp[i].resp, 0, strlen(resp[i].resp));
+                free(resp[i].resp);
+            }
+        }
         free(resp);
-
+    }
     return retval;
 }
