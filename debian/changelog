@@ -18,7 +18,7 @@ libpam-krb5 (3.5-1) unstable; urgency=low
     - Various improvements to debug logging.
   * Update debhelper compatibility level to V5.
 
- --
+ -- Russ Allbery <rra@debian.org>  Tue, 10 Apr 2007 16:37:41 -0700
 
 libpam-krb5 (2.6-1) unstable; urgency=low
 
