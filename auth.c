@@ -511,12 +511,23 @@ done:
             free(*creds);
             *creds = NULL;
         }
-        if (retval == KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN)
+        switch (retval) {
+        case KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN:
             retval = PAM_USER_UNKNOWN;
-        else if (retval == KRB5_KDC_UNREACH)
+            break;
+        case KRB5KDC_ERR_KEY_EXP:
+            retval = PAM_NEW_AUTHTOK_REQD;
+            break;
+        case KRB5KDC_ERR_NAME_EXP:
+            retval = PAM_ACCT_EXPIRED;
+            break;
+        case KRB5_KDC_UNREACH:
             retval = PAM_AUTHINFO_UNAVAIL;
-        else
+            break;
+        default:
             retval = PAM_AUTH_ERR;
+            break;
+        }
     }
     if (opts != NULL)
         pamk5_compat_opt_free(ctx->context, opts);

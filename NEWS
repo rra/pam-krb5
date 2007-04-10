@@ -10,6 +10,9 @@ pam-krb5 3.5 (unreleased)
     don't look for the username in the PAM context after it's been freed.
     Thanks, Markus Moeller.
 
+    Map more Kerberos status codes to PAM status codes for authentication
+    errors.
+
 pam-krb5 3.4 (2007-01-28)
 
     More compilation fixes for Heimdal 0.7, which has a pkinit function
