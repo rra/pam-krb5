@@ -1,3 +1,287 @@
+  185 Russ Allbery	2007-04-10
+      Release 3.5.
+
+  184 Russ Allbery	2007-04-10
+      Map more Kerberos status codes to PAM status codes for authentication
+      errors.
+
+  183 Russ Allbery	2007-04-09
+      When logging session deletion via pam_setcred or pam_close_session,
+      don't look for the username in the PAM context after it's been freed.
+      Thanks, Markus Moeller.
+
+  182 Russ Allbery	2007-03-18
+      Document that ChallengeResponseAuthentication is necessary for password
+      change with OpenSSH.  Add the note about master_kdc in the README to the
+      CAVEATS section of the man page as well.
+
+  181 Russ Allbery	2007-03-05
+      Another variable needs initialization as a side effect of the last
+      change.
+
+  180 Russ Allbery	2007-03-05
+      Don't try to chown non-FILE ticket caches, which among other things
+      breaks using pam-krb5 with Heimdal KCM caches.  Thanks, Jeremy
+      Jackson.
+
+  179 Russ Allbery	2007-01-28
+      Release 3.4.
+
+  178 Russ Allbery	2007-01-25
+      Remove some stray duplicate code in compat-heimdal.c.
+
+  177 Russ Allbery	2007-01-25
+      Clean up a few more compiler warnings that showed up with Heimdal.
+
+  176 Russ Allbery	2007-01-25
+      Handle a NULL return from krb5_get_error_message, since that seems
+      possible in some edge cases.
+      
+      Call krb5_get_error_message on Heimdal as well if it's available,
+      since it's supported by the 0.8 release candidates.
+
+  175 Russ Allbery	2007-01-25
+      Never call error_message directly on Heimdal.  krb5_get_err_text can
+      cope with a NULL context and krb5-config on Heimdal doesn't include
+      -lcom_err.
+
+  174 Russ Allbery	2007-01-25
+      Spell krb5_get_init_creds_opt_set_pkinit correctly in the Autoconf
+      probe.
+
+  173 Russ Allbery	2007-01-25
+      More compilation fixes for Heimdal 0.7, which has a pkinit function
+      but takes a different number of arguments.  Thanks, Morgan LEFIEUX.
+
+  172 Russ Allbery	2007-01-25
+      Include stdlib.h in api-account.c for free().
+
+  171 Russ Allbery	2007-01-24
+      Release 3.3.
+
+  170 Russ Allbery	2007-01-24
+      Add support for the preauth_opt option to set arbitrary preauth
+      options for the MIT Kerberos plugin support.  Add some more TODO
+      list entries for the coding mess in options.c I need to clean up.
+
+  169 Russ Allbery	2007-01-24
+      Document MIT Kerberos's requirement for setting master_kdc.
+
+  168 Russ Allbery	2007-01-24
+      Revert the krb5_get_init_creds_opt_set_change_password change.  This
+      wasn't the problem; the default is still to prompt.  The problem was
+      probably a missing master_kdc configuration entry.
+
+  167 Russ Allbery	2007-01-24
+      Support the new MIT Kerberos error message functions.
+
+  166 Russ Allbery	2007-01-24
+      Fix compilation errors with Heimdal 0.7, which has some of the PKINIT
+      functions but doesn't define the same error codes.  Thanks, Morgan
+      LEFIEUX.
+
+  165 Russ Allbery	2007-01-19
+      Initial support for the MIT Kerberos PKINIT branch, which uses a
+      different mechanism for configuring PKINIT support than Heimdal.
+      Thanks to Douglas E. Engert for the initial patch.
+      
+      If use_pkinit is set in the PAM configuration and PKINIT isn't
+      available or cannot be forced, always fail authentication.
+
+  164 Russ Allbery	2007-01-19
+      Fix compilation errors in the Heimdal PKINIT support and don't be
+      confused by a similar function in the MIT Kerberos PKINIT branch.
+      Thanks to Douglas E. Engert for the testing and patch.
+
+  163 Russ Allbery	2007-01-19
+      Enable prompting for a new password if the password is expired with
+      MIT Kerberos 1.5 and later.  (This is the default behavior in earlier
+      versions of MIT Kerberos.)  Thanks to Jacob Williams for the report.
+
+  162 Russ Allbery	2007-01-16
+      Release 3.2.
+
+  161 Russ Allbery	2007-01-16
+      Prefix the default cache path with "FILE:" to make the cache type
+      explicit.
+
+  160 Russ Allbery	2007-01-16
+      Change debugging messages from cache_init_from_cache to show the
+      Kerberos function call.
+
+  159 Russ Allbery	2007-01-16
+      We weren't really using stack-allocated memory for krb5_creds.
+      There was a structure copy involved.  We were just being sloppy
+      about allocated memory cleanup.  Adjust the NEWS entry accordingly.
+
+  158 Russ Allbery	2007-01-16
+      Add a debugging message when authorization checks fail.
+
+  157 Russ Allbery	2007-01-15
+      Kerberos authentication was storing initial credentials in a
+      stack-allocated structure and then referring to it after exit from
+      that stack frame.  This accidentally worked in practice but could have
+      broken at any moment.  Rewrite the code to drop the credlist data
+      structure (since we only ever have one set of credentials), allocate
+      new krb5_creds objects, and do proper memory management.
+      
+      Probe for the correct Heimdal function to set default initial
+      credential options.
+      
+      Fix several compilation errors with the PKINIT support with Heimdal
+      0.8rc1 or later.  This code should still be considered alpha-quality.
+
+  156 Russ Allbery	2007-01-14
+      Fix installation of the manual page when building from a different
+      directory than the source directory.  Thanks, Douglas E. Engert.
+
+  155 Russ Allbery	2007-01-04
+      Add to TODO prompting for a Kerberos principal.
+
+  154 Russ Allbery	2007-01-03
+      Release 3.1.
+
+  153 Russ Allbery	2006-12-28
+      Move the check for users we should ignore to pam_sm_authenticate 
+      from pamk5_password_auth so that it's consistently done in the API
+      function.  This also avoids bogus log messages when authenticating as
+      an ignored user with debug enabled.
+
+  152 Russ Allbery	2006-12-19
+      Fix the retval handling when returning from password authentication
+      properly.
+
+  151 Russ Allbery	2006-12-19
+      Fix an infinite loop with failed Kerberos authentication and a doubled
+      colon that causes a syntax error with some compilers.  Thanks, Markus
+      Moeller.
+
+  150 Russ Allbery	2006-12-18
+      Release 3.0.
+
+  149 Russ Allbery	2006-12-18
+      Note in README that configuration options can be put in krb5.conf.
+
+  148 Russ Allbery	2006-12-15
+      Add a pointer to my AFS PAM module in README.
+
+  147 Russ Allbery	2006-12-15
+      Note the refactoring work in NEWS.
+
+  146 Russ Allbery	2006-12-15
+      Add the banner and expose_account configuration options, which control
+      the prompts for authentication and password changing.  Provide more
+      informative prompts when changing passwords.
+
+  145 Russ Allbery	2006-12-15
+      Support a ticket_lifetime configuration option to set the lifetime of
+      obtained credentials.
+
+  144 Russ Allbery	2006-12-15
+      Support a keytab configuration option to use a different keytab for
+      initial credential validation.
+
+  143 Russ Allbery	2006-12-15
+      If PAM_USER is set to a fully-qualified principal that the Kerberos
+      library can map to a local account name, reset PAM_USER to that local
+      account name after authentication.
+
+  142 Russ Allbery	2006-12-15
+      Rename the compat_*.c files to change underscore to hyphen.  Remove
+      a duplicate dependency rule in the Makefile.
+
+  141 Russ Allbery	2006-12-15
+      Rename all the pam_krb5_*.c source files to api-*.c, which is a bit
+      easier on tab completion and looks better.  Add better introductory
+      comments.
+
+  140 Russ Allbery	2006-12-15
+      Add better introductory file comments.
+
+  139 Russ Allbery	2006-12-15
+      Break the authentication functions out into their own file and
+      leave support.c only for general utility functions.
+
+  138 Russ Allbery	2006-12-15
+      Clean up the return status of the credlist functions.  Those that
+      don't return void now return krb5_error_code.  pamk5_ccache_init is
+      now a private function of the authentication group and calls a new
+      credlist function to store a credlist into a ticket cache.
+
+  137 Russ Allbery	2006-12-15
+      Honor PAM_SILENT when the Kerberos library prompts for more
+      information, passing to the application only prompts.
+      
+      Avoid memory leaks in the Kerberos prompter by freeing the PAM
+      response strings.  We were already doing this elsewhere and the world
+      didn't end, so assume that it's safe for the PAM module to do this.
+      Also avoid memory leaks in some unusual error conditions.
+      
+      Use service rather than in_tkt_service in the rest of the credential
+      functions.
+
+  136 Russ Allbery	2006-12-15
+      Store the PAM handle in args, not ctx.  Store a pointer to ctx in
+      args.  Then take advantage of that by only passing around args and
+      not ctx.
+      
+      Modify the credlist functions to not take args or ctx and to always
+      take a credlist ** as their first argument.
+      
+      Don't log erroneous principal names when we're using search_k5login.
+
+  135 Russ Allbery	2006-12-15
+      Do credential verification for the PKINIT case as well.
+
+  134 Russ Allbery	2006-12-15
+      Rename pamk5_validate_auth to pamk5_authorized.  This function does
+      the krb5_kuserok authorization check, so that's a more accurate name.
+
+  133 Russ Allbery	2006-12-15
+      Don't say that we're initializing the ticket cache when we're
+      refreshing it.
+
+  132 Russ Allbery	2006-12-15
+      Make pamk5_prompt more generic, rename it to pamk5_conv, and move
+      it to prompting.c.  Use it for informational and error messages as
+      well and eliminate the duplicate function in pam_krb5_pass.c.  Note
+      that the Kerberos prompter function currently doesn't honor
+      PAM_SILENT.
+
+  131 Russ Allbery	2006-12-15
+      Rename pam_krb5.h to internal.h.
+
+  130 Russ Allbery	2006-12-15
+      Add preliminary PKINIT support, contributed by Douglas E. Engert.
+      I reorganized and refactored the code extensively and it therefore may
+      not compile; until it has received more testing, it should be
+      considered alpha-quality.  Currently, PKINIT support requires Heimdal
+      0.8rc1 or later.
+
+  129 Russ Allbery	2006-12-15
+      Return unknown user rather than internal error when attempting
+      authentication of a user we're supposed to ignore.
+
+  128 Russ Allbery	2006-12-14
+      Document the broken behavior of old versions of OpenSSH, which tell
+      PAM to refresh credentials rather than opening a session.  Thanks,
+      Michael C. Garrison.
+      
+      Add a link to the distribution page to the pam-krb5 man page.
+
+  127 Russ Allbery	2006-12-14
+      Work around a bug in MIT Kerberos prior to 1.4 causing the library to
+      cache the default realm and assume a particular realm even if the
+      default realm is later changed.  This bug prevented running two
+      instances of pam-krb5 with different realm settings in the same PAM
+      stack.  Thanks, Dave Botsch.
+      
+      When debug is enabled, report the principal for which we're attempting
+      authentication to help catch realm configuration errors.
+
+  126 Russ Allbery	2006-12-08
+      Add additional documentation for PAM configuration on Solaris.
+
   125 Russ Allbery	2006-11-28
       We need to retrieve the PAM user into a temporary pointer and then
       strdup it in the account management code as well.

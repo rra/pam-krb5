@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "PAM_KRB5 5"
-.TH PAM_KRB5 5 "2006-11-28" "2.6" "PAM Modules"
+.TH PAM_KRB5 5 "2007-04-10" "3.5" "PAM Modules"
 .SH "NAME"
 pam_krb5 \- Kerberos v5 PAM module
 .SH "SYNOPSIS"
@@ -171,12 +171,14 @@ attempt to obtain tickets for a key in the local system keytab and then
 verify those tickets.  Unless this step is performed, the authentication
 is vulnerable to \s-1KDC\s0 spoofing, but it requires that the system have a
 local key and that the \s-1PAM\s0 module be running as a user that can read the
-keytab file (normally \fI/etc/krb5.keytab\fR.  If that keytab cannot be read
-or if no keys are found in it, the default (potentially insecure) behavior
-is to skip this check.  If you want to instead fail authentication if the
-obtained tickets cannot be checked, set \f(CW\*(C`verify_ap_req_nofail\*(C'\fR to true in
-the [libdefaults] section of \fI/etc/krb5.conf\fR.  Note that this will
-affect applications other than this \s-1PAM\s0 module.
+keytab file (normally \fI/etc/krb5.keytab\fR.  You can point the Kerberos \s-1PAM\s0
+module at a different keytab with the \fIkeytab\fR option.  If that keytab
+cannot be read or if no keys are found in it, the default (potentially
+insecure) behavior is to skip this check.  If you want to instead fail
+authentication if the obtained tickets cannot be checked, set
+\&\f(CW\*(C`verify_ap_req_nofail\*(C'\fR to true in the [libdefaults] section of
+\&\fI/etc/krb5.conf\fR.  Note that this will affect applications other than
+this \s-1PAM\s0 module.
 .Sp
 By default, whenever the user is authenticated, a basic authorization
 check will also be done using \fIkrb5_kuserok()\fR.  The default behavior of
@@ -188,6 +190,12 @@ the principal matches the account name (this can be changed by configuring
 a custom aname to localname mapping in \fIkrb5.conf\fR; see the Kerberos
 documentation for details).  This can be customized with several
 configuration options; see below.
+.Sp
+If the username provided to \s-1PAM\s0 contains an \f(CW\*(C`@\*(C'\fR and Kerberos can,
+treating the username as a principal, map it to a local account name,
+\&\fIpam_authenticate()\fR will change the \s-1PAM\s0 user to that local account name.
+This allows users to log in with their Kerberos principal and let Kerberos
+do the mapping to an account.
 .Sp
 When \fIpam_setcred()\fR is called to initialize a new ticket cache, the
 environment variable \s-1KRB5CCNAME\s0 is set to the path to that ticket cache.
@@ -296,6 +304,26 @@ If the same option is set in \fIkrb5.conf\fR and in the \s-1PAM\s0 configuration
 the latter takes precedent.  Note, however, that due to the configuration
 syntax, there's no way to turn off a boolean option in the \s-1PAM\s0
 configuration that was turned on in \fIkrb5.conf\fR.
+.IP "banner=<banner>" 4
+.IX Item "banner=<banner>"
+By default, the prompts when a user changes their password are:
+.Sp
+.Vb 3
+\&    Current Kerberos password:
+\&    Enter new Kerberos password:
+\&    Retype new Kerberos password:
+.Ve
+.Sp
+The string \*(L"Kerberos\*(R" is inserted so that users aren't confused about
+which password they're changing.  Setting this option replaces the word
+\&\*(L"Kerberos\*(R" with whatever this option is set to.  Setting this option to
+the empty string removes the word before \*(L"password:\*(R" entirely.
+.Sp
+If set in the \s-1PAM\s0 configuration, <banner> may not contain whitespace.  If
+you want a value containing whitespace, set it in \fIkrb5.conf\fR.
+.Sp
+This option can be set in \fIkrb5.conf\fR and is only applicable to the
+password group.
 .IP "ccache=<pattern>" 4
 .IX Item "ccache=<pattern>"
 Use <pattern> as the pattern for creating credential cache names.
@@ -316,6 +344,9 @@ and session groups.
 .IX Item "ccache_dir=<directory>"
 Store user ticket caches in <directory> instead of in \fI/tmp\fR.  The
 algorithm for generating the ticket cache name is otherwise unchanged.
+<directory> may be prefixed with \f(CW\*(C`FILE:\*(C'\fR to make the cache type
+unambiguous (and this may be required on systems that use a cache type
+other than file as the default).
 .Sp
 This option can be set in \fIkrb5.conf\fR and is only applicable to the auth
 and session groups.
@@ -326,6 +357,23 @@ priority, including entry and exit from each of the external \s-1PAM\s0
 interfaces (except pam_close_session).
 .Sp
 This option can be set in \fIkrb5.conf\fR.
+.IP "expose_account" 4
+.IX Item "expose_account"
+By default, the Kerberos \s-1PAM\s0 module password prompt is simply
+\&\*(L"Password:\*(R".  This avoids leaking any information about the system realm
+or account to principal conversions.  If this option is set, the string
+\&\*(L"for <principal>\*(R" is added before the colon, where <principal> is the
+user's principal.  This string is also added before the colon on prompts
+when changing the user's password.
+.Sp
+Enabling this option with ChallengeResponseAuthentication enabled in
+OpenSSH may cause problems for some ssh clients that only recognize
+\&\*(L"Password:\*(R" as a prompt.  This option is automatically disabled if
+\&\fIsearch_k5login\fR is enabled since the principal displayed would be
+inaccurate.
+.Sp
+This option can be set in \fIkrb5.conf\fR and is only applicable to the auth
+and password groups.
 .IP "forwardable" 4
 .IX Item "forwardable"
 Obtain forwardable tickets.  If set (to either true or false, although it
@@ -354,6 +402,16 @@ supported and will remain, but normally you want to use \fIminimum_uid\fR
 instead.
 .Sp
 This option can be set in \fIkrb5.conf\fR.
+.IP "keytab=<path>" 4
+.IX Item "keytab=<path>"
+Specifies the keytab to use when validating the user's credentials.  The
+default is the default system keytab (normally \fI/etc/krb5.keytab\fR), which
+is usually only readable by root.  Applications not running as root that
+use this \s-1PAM\s0 module for authentication may wish to point it to another
+keytab the application can read.
+.Sp
+This option can be set in \fIkrb5.conf\fR and is only applicable to the auth
+group.
 .IP "minimum_uid=<uid>" 4
 .IX Item "minimum_uid=<uid>"
 Do not do anything if the authenticated account name corresponds to a
@@ -378,6 +436,71 @@ call \fIpam_authenticate()\fR; other functions like \fIpam_setcred()\fR and
 \&\fIpam_start_session()\fR don't make sense with this option.
 .Sp
 This option is only applicable to the auth group.
+.IP "pkinit_anchors=<anchors>" 4
+.IX Item "pkinit_anchors=<anchors>"
+When doing \s-1PKINIT\s0 authentication, use <anchors> as the client trust
+anchors.  This is normally a reference to a file containing the trusted
+certificate authorities.  This option is only used if \fItry_pkinit\fR or
+\&\fIuse_pkinit\fR are set.
+.Sp
+This option can be set in \fIkrb5.conf\fR and is only applicable to the auth
+and password groups.
+.IP "pkinit_prompt" 4
+.IX Item "pkinit_prompt"
+Before attempting \s-1PKINIT\s0 authentication, prompt the user to insert a smart
+card.  You may want to set this option for programs such as
+\&\fBgnome-screensaver\fR that call \s-1PAM\s0 as soon as the mouse is touched and
+don't give the user an opportunity to enter the smart card first.  Any
+information entered at the first prompt is ignored.  If \fItry_pkinit\fR is
+set, a user who wishes to use a password instead can just press Enter and
+then enter their password as normal.  This option is only used if
+\&\fItry_pkinit\fR or \fIuse_pkinit\fR are set.
+.Sp
+This option can be set in \fIkrb5.conf\fR and is only applicable to the auth
+and password groups.
+.IP "pkinit_user=<userid>" 4
+.IX Item "pkinit_user=<userid>"
+When doing \s-1PKINIT\s0 authentication, use <userid> as the user \s-1ID\s0.  The value
+of this string is highly dependent on the type of \s-1PKINIT\s0 implementation
+you're using, but will generally be something like:
+.Sp
+.Vb 1
+\&    PKCS11:/usr/lib/pkcs11/lib/soft\-pkcs11.so
+.Ve
+.Sp
+to specify the module to use with a smart card.  It may also point to a
+user certificate or to other types of user IDs.  See the Kerberos library
+documentation for more details.  This option is only used if \fItry_pkinit\fR
+or \fIuse_pkinit\fR are set.
+.Sp
+This option can be set in \fIkrb5.conf\fR and is only applicable to the auth
+and password groups.
+.IP "preauth_opt=<option>" 4
+.IX Item "preauth_opt=<option>"
+Sets a preauth option (currently only applicable when built with \s-1MIT\s0
+Kerberos).  <option> is either a key/value pair with the key separated
+from the value by \f(CW\*(C`=\*(C'\fR or a boolean option (in which case it's turned
+on).  In \fIkrb5.conf\fR, multiple options should be separated by
+whitespace.  In the \s-1PAM\s0 configuration, this option can be given multiple
+times to set multiple options.  In either case, <option> may not contain
+whitespace.
+.Sp
+The primary use of this option, at least in the near future, will be to
+set options for the \s-1MIT\s0 Kerberos \s-1PKINIT\s0 support.  For the full list of
+possible options, see the \s-1PKINIT\s0 plugin documentation.  At the time of
+this writing, \f(CW\*(C`X509_user_identity\*(C'\fR is equivalent to \fIpkinit_user\fR and
+\&\f(CW\*(C`X509_anchors\*(C'\fR is equivalent to \fIpkinit_anchors\fR.  \f(CW\*(C`flag_DSA_PROTOCOL\*(C'\fR
+can only be set via this option.
+.Sp
+Any settings made with this option are applied after the \fIpkinit_anchors\fR
+and \fIpkinit_user\fR options, so if an equivalent setting is made via
+\&\fIpreauth_opt\fR, it will probably override the other setting.
+.Sp
+This option can be set in \fIkrb5.conf\fR and is only applicable to the auth
+and password groups.  Note that there is no way to remove a setting made
+in \fIkrb5.conf\fR using the \s-1PAM\s0 configuration, but options set in the \s-1PAM\s0
+configuration are applied after options set in \fIkrb5.conf\fR and therefore
+may override earlier settings.
 .IP "realm=<realm>" 4
 .IX Item "realm=<realm>"
 Obtain credentials in the specified realm rather than in the default realm
@@ -428,6 +551,15 @@ authentication.
 .Sp
 This option can be set in \fIkrb5.conf\fR and is only applicable to the auth
 group.
+.IP "ticket_lifetime=<lifetime>" 4
+.IX Item "ticket_lifetime=<lifetime>"
+Obtain tickets with a maximum lifetime of <lifetime>.  <lifetime> should
+be a Kerberos lifetime string such as \f(CW\*(C`2d4h10m\*(C'\fR or a time in minutes.  If
+set, this overrides the Kerberos library default set in the [libdefaults]
+section of \fIkrb5.conf\fR.
+.Sp
+This option can be set in \fIkrb5.conf\fR and is only applicable to the auth
+group.
 .IP "try_first_pass" 4
 .IX Item "try_first_pass"
 If the authentication module isn't the first on the stack, and a previous
@@ -439,6 +571,16 @@ module obtained the user's password.
 .Sp
 This option is only applicable to the auth and password groups.  For the
 password group, it applies to both the old and new passwords.
+.IP "try_pkinit" 4
+.IX Item "try_pkinit"
+Attempt \s-1PKINIT\s0 authentication before trying a regular password.  You will
+probably also need to set the \fIpkinit_user\fR configuration option.  If
+\&\s-1PKINIT\s0 fails, the \s-1PAM\s0 module will fall back on regular password
+authentication.  This option is currently only supported if pam\-krb5 was
+built against Heimdal 0.8rc1 or later or the \s-1MIT\s0 Kerberos \s-1PKINIT\s0 branch.
+.Sp
+This option can be set in \fIkrb5.conf\fR and is only applicable to the auth
+and password groups.
 .IP "use_authtok" 4
 .IX Item "use_authtok"
 Use the password obtained by a previous authentication module to
@@ -461,13 +603,23 @@ authentication with that password fails, fail without further prompting
 the user.
 .Sp
 This option is only applicable to the auth and password groups.
+.IP "use_pkinit" 4
+.IX Item "use_pkinit"
+Require \s-1PKINIT\s0 authentication.  You will probably also need to set the
+\&\fIpkinit_user\fR configuration option.  If \s-1PKINIT\s0 fails, authentication will
+fail.  This option is currently only supported if pam\-krb5 was built
+against Heimdal 0.8rc1 or later.
+.Sp
+This option can be set in \fIkrb5.conf\fR and is only applicable to the auth
+and password groups.
 .SH "ENVIRONMENT"
 .IX Header "ENVIRONMENT"
 .IP "\s-1KRB5CCNAME\s0" 4
 .IX Item "KRB5CCNAME"
 Set by \fIpam_setcred()\fR with the \s-1PAM_ESTABLISH_CRED\s0 option, and therefore
 also by \fIpam_open_session()\fR, to point to the new credential cache for the
-user.  See the \fIccache\fR and \fIccache_dir\fR options.
+user.  See the \fIccache\fR and \fIccache_dir\fR options.  By default, the cache
+name will be prefixed with \f(CW\*(C`FILE:\*(C'\fR to make the cache type unambiguous.
 .IP "\s-1PAM_KRB5CCNAME\s0" 4
 .IX Item "PAM_KRB5CCNAME"
 Set by \fIpam_authenticate()\fR to point to the temporary ticket cache used for
@@ -494,6 +646,36 @@ user\-visible.  \s-1RANDOM\s0 is a random six-character string.
 .IX Item "~/.k5login"
 File containing Kerberos principals that are allowed access to that
 account.
+.SH "CAVEATS"
+.IX Header "CAVEATS"
+The Kerberos library, via pam\-krb5, will prompt the user to change their
+password if their password is expired, but when using OpenSSH, this will
+only work when ChallengeResponseAuthentication is enabled.  Unless this
+option is enabled, OpenSSH doesn't pass \s-1PAM\s0 messages to the user and can
+only respond to a simple password prompt.
+.PP
+If you are using \s-1MIT\s0 Kerberos, be aware that users whose passwords are
+expired will not be prompted to change their password unless the \s-1KDC\s0
+configuration for your realm in [realms] in krb5.conf contains a
+master_kdc setting or, if using \s-1DNS\s0 \s-1SRV\s0 records, you have a \s-1DNS\s0 entry for
+_kerberos\-master as well as _kerberos.
+.PP
+Old versions of OpenSSH are known to call pam_authenticate followed by
+pam_setcred(\s-1PAM_REINITIALIZE_CRED\s0) without first calling pam_open_session,
+thereby requesting that an existing ticket cache be renewed (similar to
+what a screensaver would want) rather than requesting a new ticket cache
+be created.  Since this behavior is indistinguishable at the \s-1PAM\s0 level
+from a screensaver, pam\-krb5 when used with these old versions of OpenSSH
+will refresh the ticket cache of the OpenSSH daemon rather than setting up
+a new ticket cache for the user.  The resulting ticket cache will have the
+correct permissions (this is not a security concern), but will not be
+named correctly or referenced in the user's environment and will be
+overwritten by the next user login.  The best solution to this problem is
+to upgrade OpenSSH.  I'm not sure exactly when this problem was fixed, but
+at the very least OpenSSH 4.3 and later do not exhibit it.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 \&\fIkadmin\fR\|(8), \fIkdestroy\fR\|(1), \fIkrb5.conf\fR\|(5), \fIpam\fR\|(7), \fIpasswd\fR\|(1), \fIsyslog\fR\|(3)
+.PP
+The current version of this module is available from its web page at
+<http://www.eyrie.org/~eagle/software/pam\-krb5/>.

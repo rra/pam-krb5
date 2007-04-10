@@ -1,10 +1,9 @@
 /*
- * pam_krb5_pass.c
+ * api-password.c
  *
- * PAM password management functions for pam_krb5.
+ * Implements the PAM password group API (pam_sm_chauthtok).
  *
- * Handles prompting for a new password and changing passwords, including the
- * implementation of pam_sm_chauthtok.
+ * Handles prompting for a new password and changing passwords.
  */
 
 /* Get declarations for the password functions. */
@@ -21,43 +20,12 @@
 #include <syslog.h>
 #include <string.h>
 
-#include "pam_krb5.h"
+#include "internal.h"
 
+/* Solaris 8 has deficient PAM. */
 #ifndef PAM_AUTHTOK_RECOVER_ERR
 # define PAM_AUTHTOK_RECOVER_ERR PAM_AUTHTOK_ERR
 #endif
-
-
-/*
- * Utter an error message to the user that doesn't require a response.  If
- * quiet is set to true, return without doing anything.
- */
-static void
-krb_pass_utter(pam_handle_t *pamh, int quiet, const char *text)
-{
-    struct pam_message msg[1], *pmsg[1];
-    struct pam_response *resp;
-    struct pam_conv *conv;
-    int retval;
-
-    if (quiet)
-        return;
-
-    pmsg[0] = &msg[0];
-    msg[0].msg = text;
-    msg[0].msg_style = PAM_ERROR_MSG;
-    retval = pam_get_item(pamh, PAM_CONV, (void *) &conv);
-    if (retval == PAM_SUCCESS) {
-        resp = NULL;
-        retval = conv->conv(1, (const struct pam_message **) pmsg, &resp,
-                            conv->appdata_ptr);
-        if (resp) {
-            if (resp->resp)
-                free(resp->resp);
-            free(resp);
-        }
-    }
-}
 
 
 /*
@@ -65,7 +33,7 @@ krb_pass_utter(pam_handle_t *pamh, int quiet, const char *text)
  * it successfully.
  */
 static int
-get_new_password(struct context *ctx, struct pam_args *args, char **pass)
+get_new_password(struct pam_args *args, char **pass)
 {
     int pamret = PAM_AUTHTOK_ERR;
     char *pass2;
@@ -78,35 +46,33 @@ get_new_password(struct context *ctx, struct pam_args *args, char **pass)
      */
     *pass = NULL;
     if (args->try_first_pass || args->use_first_pass || args->use_authtok) {
-        pamret = pam_get_item(ctx->pamh, PAM_AUTHTOK, &tmp);
+        pamret = pam_get_item(args->pamh, PAM_AUTHTOK, &tmp);
         if (tmp != NULL)
             *pass = strdup((const char *) tmp);
     }
     if (args->use_authtok && pamret != PAM_SUCCESS) {
-        pamk5_debug_pam(ctx, args, "no stored password", pamret);
+        pamk5_debug_pam(args, "no stored password", pamret);
         pamret = PAM_AUTHTOK_ERR;
         goto done;
     }
 
     /* Prompt for the new password if necessary. */
     if (*pass == NULL) {
-        pamret = pamk5_prompt(ctx->pamh, "Enter new password: ",
-                              PAM_PROMPT_ECHO_OFF, pass);
+        pamret = pamk5_get_password(args, "Enter new", pass);
         if (pamret != PAM_SUCCESS) {
-            pamk5_debug_pam(ctx, args, "error getting new password", pamret);
+            pamk5_debug_pam(args, "error getting new password", pamret);
             pamret = PAM_AUTHTOK_ERR;
             goto done;
         }
-        pamret = pamk5_prompt(ctx->pamh, "Enter it again: ",
-                              PAM_PROMPT_ECHO_OFF, &pass2);
+        pamret = pamk5_get_password(args, "Retype new", &pass2);
         if (pamret != PAM_SUCCESS) {
-            pamk5_debug_pam(ctx, args, "error getting new password", pamret);
+            pamk5_debug_pam(args, "error getting new password", pamret);
             pamret = PAM_AUTHTOK_ERR;
             goto done;
         }
         if (strcmp(*pass, pass2) != 0) {
-            pamk5_debug(ctx, args, "new passwords don't match");
-            krb_pass_utter(ctx->pamh, args->quiet, "Passwords don't match");
+            pamk5_debug(args, "new passwords don't match");
+            pamk5_conv(args, "Passwords don't match", PAM_ERROR_MSG, NULL);
             memset(pass2, 0, strlen(pass2));
             free(pass2);
             pamret = PAM_AUTHTOK_ERR;
@@ -116,9 +82,9 @@ get_new_password(struct context *ctx, struct pam_args *args, char **pass)
         free(pass2);
 
         /* Save the new password for other modules. */
-        pamret = pam_set_item(ctx->pamh, PAM_AUTHTOK, *pass);
+        pamret = pam_set_item(args->pamh, PAM_AUTHTOK, *pass);
         if (pamret != PAM_SUCCESS) {
-            pamk5_debug_pam(ctx, args, "error storing password", pamret);
+            pamk5_debug_pam(args, "error storing password", pamret);
             pamret = PAM_AUTHTOK_ERR;
             goto done;
         }
@@ -134,47 +100,49 @@ done:
  * the new password, so do the work of actually changing the password.
  */
 static int
-password_change(struct context *ctx, struct pam_args *args, const char *pass)
+password_change(struct pam_args *args, const char *pass)
 {
+    struct context *ctx;
     int retval = PAM_SUCCESS;
     int result_code;
     krb5_data result_code_string, result_string;
+    const char *message;
 
     /* Sanity check. */
-    if (ctx->creds == NULL) {
+    if (args == NULL || args->ctx == NULL || args->ctx->creds == NULL) {
         retval = PAM_AUTHTOK_ERR;
         goto done;
     }
+    ctx = args->ctx;
 
     /* The actual change. */
-    retval = krb5_change_password(ctx->context, &ctx->creds->creds,
-                 (char *) pass, &result_code, &result_code_string,
-                 &result_string);
+    retval = krb5_change_password(ctx->context, ctx->creds, (char *) pass,
+                 &result_code, &result_code_string, &result_string);
 
     /* Everything from here on is just handling diagnostics and output. */
     if (retval != 0) {
-        pamk5_debug_krb5(ctx, args, "krb5_change_password", retval);
-        krb_pass_utter(ctx->pamh, args->quiet,
-                       pamk5_compat_get_err_text(ctx->context, retval));
+        pamk5_debug_krb5(args, "krb5_change_password", retval);
+        message = pamk5_compat_get_error(ctx->context, retval);
+        pamk5_conv(args, message, PAM_ERROR_MSG, NULL);
+        pamk5_compat_free_error(ctx->context, message);
         retval = PAM_AUTHTOK_ERR;
         goto done;
     }
     if (result_code != 0) {
         char *message;
 
-        pamk5_debug(ctx, args, "krb5_change_password: %s",
-                    result_code_string.data);
+        pamk5_debug(args, "krb5_change_password: %s", result_code_string.data);
         retval = PAM_AUTHTOK_ERR;
         message = malloc(result_string.length + result_code_string.length + 3);
         if (message == NULL)
-            pamk5_error(ctx, "malloc failure: %s", strerror(errno));
+            pamk5_error(args, "malloc failure: %s", strerror(errno));
         else {
             sprintf(message, "%.*s%s%.*s",
                     (int) result_code_string.length,
                     (char *) result_code_string.data,
                     result_string.length == 0 ? "" : ": ",
                     (int) result_string.length, (char *) result_string.data);
-            krb_pass_utter(ctx->pamh, args->quiet, message);
+            pamk5_conv(args, message, PAM_ERROR_MSG, NULL);
             free(message);
         }
     }
@@ -192,20 +160,19 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
     struct context *ctx = NULL;
     struct pam_args *args;
-    struct credlist *clist = NULL;
     int pamret = PAM_SUCCESS;
     int status;
     const char *tmpname;
     char *pass = NULL;
 
-    args = pamk5_args_parse(flags, argc, argv);
+    args = pamk5_args_parse(pamh, flags, argc, argv);
     if (args == NULL) {
-        pamk5_error(ctx, "cannot allocate memory: %s", strerror(errno));
+        pamk5_error(NULL, "cannot allocate memory: %s", strerror(errno));
         pamret = PAM_AUTHTOK_ERR;
         goto done;
     }
-    pamret = pamk5_context_fetch(pamh, &ctx);
-    ENTRY(ctx, args, flags);
+    pamret = pamk5_context_fetch(args);
+    ENTRY(args, flags);
 
     /* We only support password changes. */
     if (!(flags & PAM_UPDATE_AUTHTOK) && !(flags & PAM_PRELIM_CHECK)) {
@@ -219,37 +186,35 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
      */
     if (args->ignore_root || args->minimum_uid > 0) {
         status = pam_get_user(pamh, &tmpname, NULL);
-        if (status == PAM_SUCCESS && pamk5_should_ignore(ctx, args, tmpname)) {
+        if (status == PAM_SUCCESS && pamk5_should_ignore(args, tmpname)) {
             pamret = PAM_PERM_DENIED;
             goto done;
         }
     }
 
     /*
-     * pamret holds the result of pamk5_context_fetch from above.  If set to
-     * PAM_SUCCESS, we were able to find an existing context that we could
-     * use; otherwise, we're going into this fresh and need to create a new
-     * context.
+     * If we weren't able to find an existing context to use, we're going
+     * into this fresh and need to create a new context.
      */
-    if (pamret != PAM_SUCCESS) {
-        pamret = pamk5_context_new(pamh, args, &ctx);
+    if (args->ctx == NULL) {
+        pamret = pamk5_context_new(args);
         if (pamret != PAM_SUCCESS) {
-            pamk5_debug_pam(ctx, args, "creating context failed", pamret);
+            pamk5_debug_pam(args, "creating context failed", pamret);
             pamret = PAM_AUTHTOK_ERR;
             goto done;
         }
-        pamret = pam_set_data(pamh, "ctx", ctx, pamk5_context_destroy);
+        pamret = pam_set_data(pamh, "ctx", args->ctx, pamk5_context_destroy);
         if (pamret != PAM_SUCCESS) {
-            pamk5_debug_pam(ctx, args, "cannot set context data", pamret);
+            pamk5_debug_pam(args, "cannot set context data", pamret);
             pamret = PAM_AUTHTOK_ERR;
             goto done;
         }
     }
+    ctx = args->ctx;
 
     /* Authenticate to the password changing service using the old password. */
     if (ctx->creds == NULL) {
-        pamret = pamk5_password_auth(ctx, args, "kadmin/changepw",
-                                     &ctx->creds);
+        pamret = pamk5_password_auth(args, "kadmin/changepw", &ctx->creds);
         if (pamret != PAM_SUCCESS) {
             if (pamret == PAM_SERVICE_ERR || pamret == PAM_AUTH_ERR)
                 pamret = PAM_AUTHTOK_RECOVER_ERR;
@@ -264,17 +229,14 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
      * first check.
      */
     if (flags & PAM_UPDATE_AUTHTOK) {
-        pamret = get_new_password(ctx, args, &pass);
+        pamret = get_new_password(args, &pass);
         if (pamret != PAM_SUCCESS)
-            goto cleanup;
-        pamret = password_change(ctx, args, pass);
+            goto done;
+        pamret = password_change(args, pass);
     }
 
-cleanup:
-    pamk5_credlist_free(ctx, clist);
-
 done:
-    EXIT(ctx, args, pamret);
+    EXIT(args, pamret);
     if (pass != NULL) {
         memset(pass, 0, strlen(pass));
         free(pass);

@@ -24,9 +24,9 @@ LIBS		= -lpam @LIBS@
 INSTALL		= @INSTALL@
 INSTALL_DATA	= @INSTALL_DATA@
 
-SOURCES		= compat.c context.c credlist.c logging.c options.c \
-		  pam_krb5_acct.c pam_krb5_auth.c pam_krb5_pass.c \
-		  pam_krb5_sess.c prompting.c support.c
+SOURCES		= api-account.c api-auth.c api-password.c api-session.c \
+		  auth.c compat.c context.c logging.c options.c prompting.c \
+		  support.c
 OBJECTS		= $(SOURCES:.c=.o)
 
 all: pam_krb5.so $(srcdir)/pam_krb5.5
@@ -34,8 +34,6 @@ all: pam_krb5.so $(srcdir)/pam_krb5.5
 pam_krb5.so: $(OBJECTS)
 	$(CC) -o $@ $(LDFLAGS) $(OBJECTS) $(LIBS)
 	chmod 644 $@
-
-compat.o: compat_heimdal.c compat_mit.c
 
 $(srcdir)/pam_krb5.5: $(srcdir)/pam_krb5.pod
 	pod2man --section=5 --release=$(VERSION) --center='PAM Modules' \
@@ -45,7 +43,7 @@ install: pam_krb5.so $(srcdir)/pam_krb5.5
 	$(INSTALL) -d $(pamdir)
 	$(INSTALL) -d $(mandir)/man5
 	$(INSTALL_DATA) pam_krb5.so $(pamdir)/pam_krb5.so
-	$(INSTALL_DATA) pam_krb5.5 $(mandir)/man5/pam_krb5.5
+	$(INSTALL_DATA) $(srcdir)/pam_krb5.5 $(mandir)/man5/pam_krb5.5
 
 # This target only works when builddir == srcdir, at least for now.
 dist: pam_krb5.5
@@ -68,16 +66,16 @@ maintclean maintainer-clean: distclean
 	rm -f CHANGES config.h.in config.h.in~ configure pam_krb5.5
 	rm -f $(TARNAME).gz
 
-compat.o: compat.c config.h compat_mit.c compat_heimdal.c pam_krb5.h
-compat_heimdal.o: compat_heimdal.c config.h pam_krb5.h
-compat_mit.o: compat_mit.c config.h pam_krb5.h
-context.o: context.c config.h pam_krb5.h
-credlist.o: credlist.c config.h pam_krb5.h
-logging.o: logging.c config.h pam_krb5.h
-options.o: options.c config.h pam_krb5.h
-pam_krb5_acct.o: pam_krb5_acct.c config.h pam_krb5.h
-pam_krb5_auth.o: pam_krb5_auth.c config.h pam_krb5.h
-pam_krb5_pass.o: pam_krb5_pass.c config.h pam_krb5.h
-pam_krb5_sess.o: pam_krb5_sess.c config.h pam_krb5.h
-prompting.o: prompting.c config.h pam_krb5.h
-support.o: support.c config.h pam_krb5.h
+api-account.o: api-account.c config.h internal.h
+api-auth.o: api-auth.c config.h internal.h
+api-password.o: api-password.c config.h internal.h
+api-session.o: api-session.c config.h internal.h
+auth.o: auth.c config.h internal.h
+compat.o: compat.c config.h compat-mit.c compat-heimdal.c internal.h
+compat-heimdal.o: compat_heimdal.c config.h internal.h
+compat-mit.o: compat_mit.c config.h internal.h
+context.o: context.c config.h internal.h
+logging.o: logging.c config.h internal.h
+options.o: options.c config.h internal.h
+prompting.o: prompting.c config.h internal.h
+support.o: support.c config.h internal.h

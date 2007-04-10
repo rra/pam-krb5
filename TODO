@@ -1,16 +1,17 @@
                            pam-krb5 To-Do List
 
- * Integrate the patch for PKINIT support with the interfaces provided by
-   Heimdal.
+ * The PAM option parsing is repetitive code that involves counting the
+   lengths of strings.  It should be possible to replace most of it with
+   some carefully-chosen macros.
 
- * Support the remaining PAM options that the Sourceforge module supports.
-   The most interesting are banner, keytab, and ticket_lifetime.
+ * Add an option to prompt the user for a Kerberos principal to use for
+   authentication.
 
- * Support expose_account in the PAM configuration and, when set, use the
-   native Kerberos prompters that give more information about what account
-   the user is authenticating to.
+ * The PKINIT code for Heimdal involves too many #ifdefs right now for my
+   taste.  Find a way to restructure it to only wrap the main PKINIT
+   function for Heimdal.
 
- * Call krb5_aname_to_localname on the provided username (if search_k5login
-   is not enabled) and store the result back in PAM_USER.  This lets people
-   log in with a full principal name.  It's not clear how useful this is,
-   but there's no reason not to support it.
+ * All of the option parsing code does not deal clealy with failure to
+   allocate memory.  Generally, we just don't set the parameter.  This may
+   not always be safe, or may lead to unexpected behavior.  We should
+   always check memory allocation failures and abort PAM if we see any.

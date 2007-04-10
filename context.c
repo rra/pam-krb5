@@ -14,7 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "pam_krb5.h"
+#include "internal.h"
 
 /* Solaris doesn't have these. */
 #ifndef PAM_CONV_AGAIN
@@ -27,27 +27,25 @@
  * Kerberos context.  Set the default realm if one was configured.
  */
 int
-pamk5_context_new(pam_handle_t *pamh, struct pam_args *args,
-                  struct context **ctx)
+pamk5_context_new(struct pam_args *args)
 {
-    struct context *c;
+    struct context *ctx;
     int retval;
     const char *name;
 
-    c = calloc(1, sizeof(*c));
-    if (c == NULL) {
+    ctx = calloc(1, sizeof(struct context));
+    if (ctx == NULL) {
         retval = PAM_BUF_ERR;
         goto done;
     }
-    *ctx = c;
-    c->pamh = pamh;
-    c->creds = NULL;
+    ctx->creds = NULL;
+    args->ctx = ctx;
 
     /*
      * This will prompt for the username if it's not already set (generally it
      * will be).  Otherwise, grab the saved username.
      */
-    retval = pam_get_user(c->pamh, &name, NULL);
+    retval = pam_get_user(args->pamh, &name, NULL);
     if (retval != PAM_SUCCESS || name == NULL) {
         if (retval == PAM_CONV_AGAIN)
             retval = PAM_INCOMPLETE;
@@ -55,30 +53,28 @@ pamk5_context_new(pam_handle_t *pamh, struct pam_args *args,
             retval = PAM_SERVICE_ERR;
         goto done;
     }
-    c->name = strdup(name);
-    retval = krb5_init_context(&c->context);
+    ctx->name = strdup(name);
+    retval = krb5_init_context(&ctx->context);
     if (retval != 0) {
-        pamk5_error(c, "krb5_init_context: %s",
-                    pamk5_compat_get_err_text(c->context, retval));
+        pamk5_error_krb5(args, "krb5_init_context", retval);
         retval = PAM_SERVICE_ERR;
         goto done;
     }
 
     /* Set a default realm if one was configured. */
     if (args->realm != NULL) {
-        retval = krb5_set_default_realm(c->context, args->realm);
+        retval = krb5_set_default_realm(ctx->context, args->realm);
         if (retval != 0) {
-            pamk5_error(c, "cannot set default realm: %s",
-                        pamk5_compat_get_err_text(c->context, retval));
+            pamk5_error_krb5(args, "cannot set default realm", retval);
             retval = PAM_SERVICE_ERR;
             goto done;
         }
     }
 
 done:
-    if (c != NULL && retval != PAM_SUCCESS) {
-        pamk5_context_free(c);
-        *ctx = NULL;
+    if (ctx != NULL && retval != PAM_SUCCESS) {
+        pamk5_context_free(ctx);
+        args->ctx = NULL;
     }
     return retval;
 }
@@ -90,14 +86,14 @@ done:
  * and setcred, so failure shouldn't always be fatal.
  */
 int
-pamk5_context_fetch(pam_handle_t *pamh, struct context **ctx)
+pamk5_context_fetch(struct pam_args *args)
 {
     int pamret;
 
-    pamret = pam_get_data(pamh, "ctx", (void *) ctx);
+    pamret = pam_get_data(args->pamh, "ctx", (void *) &args->ctx);
     if (pamret != PAM_SUCCESS)
-        *ctx = NULL;
-    return (pamret == 0 && *ctx == NULL) ? PAM_SERVICE_ERR : pamret;
+        args->ctx = NULL;
+    return (pamret == 0 && args->ctx == NULL) ? PAM_SERVICE_ERR : pamret;
 }
 
 
@@ -122,8 +118,10 @@ pamk5_context_free(struct context *ctx)
             else
                 krb5_cc_destroy(ctx->context, ctx->cache);
         }
-        if (ctx->creds != NULL)
-            pamk5_credlist_free(ctx, ctx->creds);
+        if (ctx->creds != NULL) {
+            krb5_free_cred_contents(ctx->context, ctx->creds);
+            free(ctx->creds);
+        }
         krb5_free_context(ctx->context);
     }
     free(ctx);

@@ -1,5 +1,5 @@
 /*
- * compat_mit.c
+ * compat-mit.c
  *
  * Kerberos compatibility functions for MIT Kerberos.
  */
@@ -16,7 +16,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "pam_krb5.h"
+#include "internal.h"
 
 void
 pamk5_compat_free_data_contents(krb5_context c, krb5_data *data)
@@ -25,11 +25,40 @@ pamk5_compat_free_data_contents(krb5_context c, krb5_data *data)
 }
 
 
+#ifdef HAVE_KRB5_GET_ERROR_MESSAGE
 const char *
-pamk5_compat_get_err_text(krb5_context c, krb5_error_code code)
+pamk5_compat_get_error(krb5_context c, krb5_error_code code)
+{
+    const char *msg;
+
+    msg = krb5_get_error_message(c, code);
+    if (msg == NULL)
+        return "unknown error";
+    else
+        return msg;
+}
+#else /* !HAVE_KRB5_GET_ERROR_MESSAGE */
+const char *
+pamk5_compat_get_error(krb5_context c, krb5_error_code code)
 {
     return error_message(code);
 }
+#endif
+
+
+#ifdef HAVE_KRB5_FREE_ERROR_MESSAGE
+void
+pamk5_compat_free_error(krb5_context c, const char *msg)
+{
+    krb5_free_error_message(c, msg);
+}
+#else /* !HAVE_KRB5_FREE_ERROR_MESSAGE */
+void
+pamk5_compat_free_error(krb5_context c, const char *msg)
+{
+    return;
+}
+#endif /* !HAVE_KRB5_FREE_ERROR_MESSAGE */
 
 
 krb5_error_code

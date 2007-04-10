@@ -1,3 +1,24 @@
+libpam-krb5 (3.5-1) unstable; urgency=low
+
+  * New upstream release.
+    - Fix compilation errors with Heimdal.  (Closes: #413553)
+    - Document that ChallengeResponseAuthentication must be enabled in
+      sshd to prompt users to change expired passwords.  (Closes: #411816)
+    - Support specifying a keytab other than the system keytab to use to
+      verify passwords.  (Partly addresses #399002)
+    - New ticket_lifetime, banner, and expose_account config options.
+    - Honor PAM_SILENT where appropriate.
+    - Prefix the default cache type with FILE: to be explicit.
+    - If PAM_USER is set to a fully-qualified principal that the Kerberos
+      library can map to a local account name, reset PAM_USER to that
+      local account name after authentication.
+    - Return better PAM error codes for authentication failures.
+    - Fix various memory leaks and memory handling problems.
+    - Better error message handling with later Kerberos releases.
+    - Various improvements to debug logging.
+
+ --
+
 libpam-krb5 (2.6-1) unstable; urgency=low
 
   * New upstream release.
