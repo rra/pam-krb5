@@ -1,5 +1,9 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 3.6 (unreleased)
+
+    Support DESTDIR for make install.
+
 pam-krb5 3.5 (2007-04-10)
 
     Don't try to chown non-FILE ticket caches, which among other things
