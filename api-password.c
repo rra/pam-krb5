@@ -162,7 +162,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
     struct pam_args *args;
     int pamret = PAM_SUCCESS;
     int status;
-    const char *user;
+    PAM_CONST char *user;
     char *pass = NULL;
 
     args = pamk5_args_parse(pamh, flags, argc, argv);
