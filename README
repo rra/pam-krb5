@@ -90,11 +90,6 @@ COMPILING AND INSTALLING
       ./configure
       make
 
-  On Solaris, expect many warnings about type mismatches.  These warnings
-  should be harmless.  Linux and Solaris differ in which struct members
-  and function parameters are declared const and there is no simple way to
-  write code that compiles without warnings on both platforms.
-
   To install the module into /usr/local/lib/security and the man page into
   /usr/local/share/man/man5, run:
 

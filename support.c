@@ -25,7 +25,7 @@
  * them, false otherwise.
  */
 int
-pamk5_should_ignore(struct pam_args *args, const char *username)
+pamk5_should_ignore(struct pam_args *args, PAM_CONST char *username)
 {
     struct passwd *pwd;
 

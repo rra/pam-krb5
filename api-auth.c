@@ -388,13 +388,14 @@ static int
 create_session_context(struct pam_args *args)
 {
     struct context *ctx = NULL;
+    PAM_CONST char *user;
     const char *tmpname;
     int status, pamret;
 
     /* If we're going to ignore the user anyway, don't even bother. */
     if (args->ignore_root || args->minimum_uid > 0) {
-        pamret = pam_get_user(args->pamh, &tmpname, NULL);
-        if (pamret == PAM_SUCCESS && pamk5_should_ignore(args, tmpname)) {
+        pamret = pam_get_user(args->pamh, &user, NULL);
+        if (pamret == PAM_SUCCESS && pamk5_should_ignore(args, user)) {
             pamret = PAM_SUCCESS;
             goto fail;
         }

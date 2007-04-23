@@ -31,7 +31,7 @@ pamk5_context_new(struct pam_args *args)
 {
     struct context *ctx;
     int retval;
-    const char *name;
+    PAM_CONST char *name;
 
     ctx = calloc(1, sizeof(struct context));
     if (ctx == NULL) {

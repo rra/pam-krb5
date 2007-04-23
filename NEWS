@@ -2,6 +2,10 @@
 
 pam-krb5 3.6 (unreleased)
 
+    Try to determine whether the PAM headers use const in the prototypes
+    of such things as pam_get_item and adjust accordingly.  This should
+    address most compiler warnings on Solaris.  Thanks, Markus Moeller.
+
     Support DESTDIR for make install.
 
 pam-krb5 3.5 (2007-04-10)
