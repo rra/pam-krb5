@@ -2,6 +2,13 @@
 
 pam-krb5 3.6 (unreleased)
 
+    When the local user doesn't exist and search_k5login is enabled, fall
+    back to simple Kerberos authentication just as if the account existed
+    with no .k5login file.  This avoids trying to verify an all-zero
+    credentials structure, leading to non-expoloitable segfaults on x86_64
+    systems.  Be more careful in general about setting error codes in the
+    search_k5login implementation.
+
     Try to determine whether the PAM headers use const in the prototypes
     of such things as pam_get_item and adjust accordingly.  This should
     address most compiler warnings on Solaris.  Thanks, Markus Moeller.

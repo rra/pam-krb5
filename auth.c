@@ -139,7 +139,7 @@ k5login_password_auth(struct pam_args *args, krb5_creds *creds,
                       char *pass, int *retval)
 {
     struct context *ctx = args->ctx;
-    char *filename;
+    char *filename = NULL;
     char line[BUFSIZ];
     size_t len;
     FILE *k5login;
@@ -148,30 +148,23 @@ k5login_password_auth(struct pam_args *args, krb5_creds *creds,
     int k5_errno;
     krb5_principal princ;
 
-    /* Assume no Kerberos error. */
-    *retval = 0;
-
     /*
      * C sucks at string manipulation.  Generate the filename for the user's
-     * .k5login file.  This function always fails if the user isn't a local
-     * user.
+     * .k5login file.  If the user doesn't exist, the .k5login file doesn't
+     * exist, or the .k5login file cannot be read, fall back on the easy way
+     * and assume ctx->princ is already set properly.
      */
     pwd = getpwnam(ctx->name);
-    if (pwd == NULL)
-        return PAM_AUTH_ERR;
-    len = strlen(pwd->pw_dir) + strlen("/.k5login");
-    filename = malloc(len + 1);
-    if (filename == NULL)
-        return PAM_SERVICE_ERR;
-    strncpy(filename, pwd->pw_dir, len);
-    filename[len] = '\0';
-    strncat(filename, "/.k5login", len - strlen(pwd->pw_dir));
-
-    /*
-     * If there is no file, do this the easy way.  Assume ctx->princ is
-     * already set properly.
-     */
-    if (access(filename, R_OK) != 0) {
+    if (pwd != NULL) {
+        len = strlen(pwd->pw_dir) + strlen("/.k5login");
+        filename = malloc(len + 1);
+    }
+    if (filename != NULL) {
+        strncpy(filename, pwd->pw_dir, len);
+        filename[len] = '\0';
+        strncat(filename, "/.k5login", len - strlen(pwd->pw_dir));
+    }
+    if (pwd == NULL || filename == NULL || access(filename, R_OK) != 0) {
         *retval = krb5_get_init_creds_password(ctx->context, creds,
                      ctx->princ, pass, pamk5_prompter_krb5, args, 0,
                      service, opts);
@@ -180,22 +173,31 @@ k5login_password_auth(struct pam_args *args, krb5_creds *creds,
 
     /*
      * Make sure the ownership on .k5login is okay.  The user must own their
-     * own .k5login or it must be owned by root.
+     * own .k5login or it must be owned by root.  If that fails, set the
+     * Kerberos error code to errno.
      */
     k5login = fopen(filename, "r");
     free(filename);
-    if (k5login == NULL)
+    if (k5login == NULL) {
+        *retval = errno;
         return PAM_AUTH_ERR;
-    if (fstat(fileno(k5login), &st) != 0)
+    }
+    if (fstat(fileno(k5login), &st) != 0) {
+        *retval = errno;
         goto fail;
-    if (st.st_uid != 0 && (st.st_uid != pwd->pw_uid))
+    }
+    if (st.st_uid != 0 && (st.st_uid != pwd->pw_uid)) {
+        *retval = errno;
         goto fail;
+    }
 
     /*
      * Parse the .k5login file and attempt authentication for each principal.
      * Ignore any lines that are too long or that don't parse into a Kerberos
-     * principal.
+     * principal.  Assume an invalid password error if there are no valid
+     * lines in .k5login.
      */
+    *retval = KRB5KRB_AP_ERR_BAD_INTEGRITY;
     while (fgets(line, BUFSIZ, k5login) != NULL) {
         len = strlen(line);
         if (line[len - 1] != '\n') {
