@@ -40,19 +40,24 @@
 #include "internal.h"
 
 /*
- * Fill in ctx->princ from the value of ctx->name.
+ * Fill in ctx->princ from the value of ctx->name and then, if ctx->name
+ * contains an @-sign, canonicalize it to a local account name.  If the
+ * canonicalization fails, don't worry about it.  It may be that the
+ * application doesn't care.
  *
- * This is a separate function rather than just calling krb5_parse_name so
- * that we can work around a bug in MIT Kerberos versions prior to 1.4, which
- * store the realm in a static variable inside the library and don't notice
- * changes.  If no realm is specified and a realm is set in our arguments,
- * append the realm to force krb5_parse_name to do the right thing.
+ * We don't just calling krb5_parse_name so that we can work around a bug in
+ * MIT Kerberos versions prior to 1.4, which store the realm in a static
+ * variable inside the library and don't notice changes.  If no realm is
+ * specified and a realm is set in our arguments, append the realm to force
+ * krb5_parse_name to do the right thing.
  */
 static krb5_error_code
 parse_name(struct pam_args *args)
 {
     struct context *ctx = args->ctx;
+    krb5_context c = ctx->context;
     char *user = ctx->name;
+    char kuser[65] = "";        /* MAX_USERNAME == 65 (MIT Kerberos 1.4.1). */
     size_t length;
     krb5_error_code k5_errno;
 
@@ -63,9 +68,25 @@ parse_name(struct pam_args *args)
             return KRB5_CC_NOMEM;
         snprintf(user, length, "%s@%s", ctx->name, args->realm);
     }
-    k5_errno = krb5_parse_name(ctx->context, user, &ctx->princ);
+    k5_errno = krb5_parse_name(c, user, &ctx->princ);
     if (user != ctx->name)
         free(user);
+
+    /*
+     * Now that we have a principal to call krb5_aname_to_localname, we can
+     * canonicalize ctx->name to a local name.
+     */
+    if (k5_errno == 0 && strchr(ctx->name, '@') != NULL) {
+        if (krb5_aname_to_localname(c, ctx->princ, sizeof(kuser), kuser) != 0)
+            return 0;
+        user = strdup(kuser);
+        if (user == NULL) {
+            pamk5_error(args, "cannot allocate memory: %s", strerror(errno));
+            return 0;
+        }
+        free(ctx->name);
+        ctx->name = user;
+    }
     return k5_errno;
 }
 
