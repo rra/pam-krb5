@@ -9,6 +9,10 @@ pam-krb5 3.6 (unreleased)
     systems.  Be more careful in general about setting error codes in the
     search_k5login implementation.
 
+    Do username canonicalization immediately so that .k5login checking and
+    similar work uses the correct username but only change the PAM
+    username if authentication succeeds.
+
     Try to determine whether the PAM headers use const in the prototypes
     of such things as pam_get_item and adjust accordingly.  This should
     address most compiler warnings on Solaris.  Thanks, Markus Moeller.

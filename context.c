@@ -9,6 +9,7 @@
 
 #include "config.h"
 
+#include <errno.h>
 #include <security/pam_appl.h>
 #include <security/pam_modules.h>
 #include <stdlib.h>
@@ -21,6 +22,36 @@
 # define PAM_CONV_AGAIN 0
 # define PAM_INCOMPLETE PAM_SERVICE_ERR
 #endif
+
+/*
+ * If PAM_USER was a fully-qualified principal name, convert it to a local
+ * account name.  principal that they want to use and let the Kerberos library
+ * apply local mapping logic to convert this to an account name.
+ *
+ * If we fail, don't worry about it and just use PAM_USER.  It may be that the
+ * application doesn't care.
+ */
+static void
+canonicalize_name(struct pam_args *args)
+{
+    struct context *ctx = args->ctx;
+    krb5_context c = ctx->context;
+    char kuser[65] = "";        /* MAX_USERNAME == 65 (MIT Kerberos 1.4.1). */
+    char *user;
+
+    if (strchr(ctx->name, '@') != NULL) {
+        if (krb5_aname_to_localname(c, ctx->princ, sizeof(kuser), kuser) != 0)
+            return;
+        user = strdup(kuser);
+        if (user == NULL) {
+            pamk5_error(args, "cannot allocate memory: %s", strerror(errno));
+            return;
+        }
+        free(ctx->name);
+        ctx->name = user;
+    }
+}
+
 
 /*
  * Create a new context and populate it with the user from PAM and a new
@@ -60,6 +91,7 @@ pamk5_context_new(struct pam_args *args)
         retval = PAM_SERVICE_ERR;
         goto done;
     }
+    canonicalize_name(args);
 
     /* Set a default realm if one was configured. */
     if (args->realm != NULL) {
