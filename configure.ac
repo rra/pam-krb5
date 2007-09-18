@@ -21,14 +21,24 @@ fi
 dnl Try to add the compiler flags for position-independent code and try to
 dnl specify the binding so that any references within the PAM module are
 dnl resolved to the functions in that module in preference to any external
-dnl function.  Also, if and only if we're on Linux, make sure that all the
-dnl symbols in the module are resolved.
+dnl function.
+dnl
+dnl Also, if and only if we're on Linux, make sure that all the symbols in the
+dnl module are resolved and try to adjust for the 32-bit vs. 64-bit library
+dnl paths.
 dnl
 dnl More platforms could be handled here.  Contributions welcome.
 case "$host" in
-*-linux*)
+i[345]86-*-linux*)
     CFLAGS="-fPIC $CFLAGS"
     LDFLAGS="-shared -Wl,-z,defs -Wl,-Bsymbolic $LDFLAGS"
+    ;;
+x86_64-*-linux*)
+    CFLAGS="-fPIC $CFLAGS"
+    LDFLAGS="-shared -Wl,-z,defs -Wl,-Bsymbolic $LDFLAGS"
+    if test x"$libdir" = x'${exec_prefix}/lib' ; then
+        libdir='${exec_prefix}/lib64'
+    fi
     ;;
 *-solaris2*)
     if test "$GCC" = "yes" ; then

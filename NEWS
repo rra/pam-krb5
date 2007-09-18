@@ -29,6 +29,10 @@ pam-krb5 3.6 (unreleased)
     of such things as pam_get_item and adjust accordingly.  This should
     address most compiler warnings on Solaris.  Thanks, Markus Moeller.
 
+    Change lib to lib64 on x86_64 Linux to allow for the magical $ISA
+    parameter in Red Hat's PAM configuration.  Hopefully this won't cause
+    problems elsewhere.
+
     Support DESTDIR for make install.
 
 pam-krb5 3.5 (2007-04-10)

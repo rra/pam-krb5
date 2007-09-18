@@ -97,9 +97,11 @@ COMPILING AND INSTALLING
 
   You can change the installation locations with the --prefix, --mandir,
   and --libdir options to configure.  The module will be installed in a
-  subdirectory of $libdir named security.  Alternately, you can simply
-  copy pam_krb5.so to whatever directory you use for PAM modules.  On
-  Solaris, you will need to make the module executable.
+  subdirectory of $libdir named security and, on x86_64 Linux, $libdir
+  will be changed to lib64 to match the default PAM configuration.
+  Alternately, you can simply copy pam_krb5.so to whatever directory you
+  use for PAM modules.  On Solaris, you will need to make the module
+  executable.
 
   If your Kerberos libraries aren't installed in a location found by your
   compiler by default, use the --with-kerberos=PATH option to configure.
