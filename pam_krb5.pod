@@ -72,7 +72,7 @@ cannot be used with OpenSSH.  OpenSSH will reject usernames that don't
 match local accounts before this remapping can be done and will pass an
 invalid password to the PAM module.  Also be aware that several other
 common PAM modules, such as pam_securetty, expect to be able to look up
-the user with getpwnam() and cannot be called after pam_krb5 if this
+the user with getpwnam() and cannot be called before pam_krb5 if this
 feature is used.
 
 When pam_setcred() is called to initialize a new ticket cache, the
