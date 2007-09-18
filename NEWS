@@ -9,6 +9,12 @@ pam-krb5 3.6 (unreleased)
     systems.  Be more careful in general about setting error codes in the
     search_k5login implementation.
 
+    Explicitly clear the forwardable and proxiable options and don't ask
+    for renewable tickets when getting a ticket for the password changing
+    service.  Otherwise, system-wide defaults and PAM configuration will
+    apply to those tickets as well and the resulting ticket request may be
+    rejected based on KDC configuration.
+
     Do username canonicalization earlier so that .k5login checking and
     similar work uses the correct username but only change the PAM
     username if authentication succeeds.  Document that username

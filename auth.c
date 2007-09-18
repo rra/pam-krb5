@@ -96,20 +96,31 @@ parse_name(struct pam_args *args)
  * using the Heimdal call to set initial credential options if it's available.
  * This function is used both for regular password authentication and for
  * PKINIT.
+ *
+ * Takes a flag indicating whether we're getting tickets for a specific
+ * service.  If so, we don't try to get forwardable, renewable, or proxiable
+ * tickets.
  */
 static void
-set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts)
+set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
+                       int service)
 {
 #ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_DEFAULT_FLAGS
     krb5_get_init_creds_opt_set_default_flags(args->ctx->context, "pam",
                                               args->realm_data, opts);
 #endif
-    if (args->forwardable)
-        krb5_get_init_creds_opt_set_forwardable(opts, 1);
-    if (args->lifetime != 0)
-        krb5_get_init_creds_opt_set_tkt_life(opts, args->lifetime);
-    if (args->renew_lifetime != 0)
-        krb5_get_init_creds_opt_set_renew_life(opts, args->renew_lifetime);
+    if (!service) {
+        if (args->forwardable)
+            krb5_get_init_creds_opt_set_forwardable(opts, 1);
+        if (args->lifetime != 0)
+            krb5_get_init_creds_opt_set_tkt_life(opts, args->lifetime);
+        if (args->renew_lifetime != 0)
+            krb5_get_init_creds_opt_set_renew_life(opts, args->renew_lifetime);
+    } else {
+        krb5_get_init_creds_opt_set_forwardable(opts, 0);
+        krb5_get_init_creds_opt_set_proxiable(opts, 0);
+        krb5_get_init_creds_opt_set_renew_life(opts, 0);
+    }
 #ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PA
     if (args->try_pkinit) {
         if (args->pkinit_user != NULL)
@@ -318,7 +329,7 @@ pkinit_auth(struct pam_args *args, char *service, krb5_creds **creds)
     retval = krb5_get_init_creds_opt_alloc(ctx->context, &opts);
     if (retval != 0)
         return retval;
-    set_credential_options(args, opts);
+    set_credential_options(args, opts, service != NULL);
 #ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT_11_ARGS
     retval = krb5_get_init_creds_opt_set_pkinit(ctx->context, opts,
                   ctx->princ, args->pkinit_user, args->pkinit_anchors, NULL,
@@ -426,7 +437,7 @@ pamk5_password_auth(struct pam_args *args, char *service, krb5_creds **creds)
         pamk5_error_krb5(args, "cannot allocate credential options", retval);
         goto done;
     }
-    set_credential_options(args, opts);
+    set_credential_options(args, opts, service != NULL);
 
     /*
      * If try_first_pass or use_first_pass is set, grab the old password (if
