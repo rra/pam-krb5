@@ -397,6 +397,23 @@ in F<krb5.conf> using the PAM configuration, but options set in the PAM
 configuration are applied after options set in F<krb5.conf> and therefore
 may override earlier settings.
 
+=item prompt_principal
+
+Before prompting for the user's password (or using the previously entered
+password, if try_first_pass or use_first_pass are set), prompt the user
+for the Kerberos principal to use for authentication.  This allows the
+user to authenticate with a different principal than the one corresponding
+to the local username, provided that either a F<.k5login> file or local
+Kerberos principal to account mapping authorize that principal to access
+the local account.
+
+Be cautious when using this configuration option and don't use it with
+OpenSSH PasswordAuthentication, only ChallengeResponseAuthentication.
+Some PAM-enabled applications expect PAM modules to only prompt for
+passwords and may even blindly give the password to the first prompt, no
+matter what it is.  Such applications, in combination with this option,
+may expose the user's password in log messages and Kerberos requests.
+
 =item realm=<realm>
 
 Obtain credentials in the specified realm rather than in the default realm

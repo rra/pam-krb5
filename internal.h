@@ -49,6 +49,7 @@ struct pam_args {
     krb5_deltat lifetime;       /* Lifetime of credentials. */
     int minimum_uid;            /* Ignore users below this UID. */
     int no_ccache;              /* Don't create a ticket cache. */
+    int prompt_princ;           /* Prompt for the Kerberos principal. */
     char *realm;                /* Default realm. */
     krb5_deltat renew_lifetime; /* Renewable lifetime of credentials. */
     int retain;                 /* Don't destroy the cache on session end. */

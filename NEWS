@@ -21,6 +21,10 @@ pam-krb5 3.6 (unreleased)
     canonicalization won't work with unmodified OpenSSH and with several
     common PAM modules.
 
+    Add a prompt_principal option which, if set, causes the PAM module to
+    prompt the user for the Kerberos principal to use for authentication
+    before prompting for the password.
+
     Try to determine whether the PAM headers use const in the prototypes
     of such things as pam_get_item and adjust accordingly.  This should
     address most compiler warnings on Solaris.  Thanks, Markus Moeller.
