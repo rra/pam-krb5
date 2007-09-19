@@ -13,13 +13,15 @@ pam-krb5 3.6 (unreleased)
     for renewable tickets when getting a ticket for the password changing
     service.  Otherwise, system-wide defaults and PAM configuration will
     apply to those tickets as well and the resulting ticket request may be
-    rejected based on KDC configuration.
+    rejected based on KDC configuration.  Based on a patch by Sergio
+    Gelato.
 
     Do username canonicalization earlier so that .k5login checking and
     similar work uses the correct username but only change the PAM
     username if authentication succeeds.  Document that username
     canonicalization won't work with unmodified OpenSSH and with several
-    common PAM modules.
+    common PAM modules.  Thanks to R. Scott Bailey for the bug report and
+    analysis.
 
     Add a prompt_principal option which, if set, causes the PAM module to
     prompt the user for the Kerberos principal to use for authentication
