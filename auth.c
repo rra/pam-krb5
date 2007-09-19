@@ -40,32 +40,79 @@
 #include "internal.h"
 
 /*
- * Fill in ctx->princ from the value of ctx->name.
- *
- * This is a separate function rather than just calling krb5_parse_name so
- * that we can work around a bug in MIT Kerberos versions prior to 1.4, which
- * store the realm in a static variable inside the library and don't notice
- * changes.  If no realm is specified and a realm is set in our arguments,
- * append the realm to force krb5_parse_name to do the right thing.
+ * Fill in ctx->princ from the value of ctx->name or (if configured) from
+ * prompting.  If we don't prompt and ctx->name contains an @-sign,
+ * canonicalize it to a local account name.  If the canonicalization fails,
+ * don't worry about it.  It may be that the application doesn't care.
  */
 static krb5_error_code
 parse_name(struct pam_args *args)
 {
     struct context *ctx = args->ctx;
+    krb5_context c = ctx->context;
     char *user = ctx->name;
+    char *newuser;
+    char kuser[65] = "";        /* MAX_USERNAME == 65 (MIT Kerberos 1.4.1). */
     size_t length;
     krb5_error_code k5_errno;
+    int retval;
 
-    if (args->realm != NULL && strchr(ctx->name, '@') == NULL) {
-        length = strlen(ctx->name) + 1 + strlen(args->realm) + 1;
-        user = malloc(length);
-        if (user == NULL)
-            return KRB5_CC_NOMEM;
-        snprintf(user, length, "%s@%s", ctx->name, args->realm);
+    /*
+     * If configured to prompt for the principal, do that first.  Fall back on
+     * using the local username as normal if prompting fails or if the user
+     * just presses Enter.
+     */
+    if (args->prompt_princ) {
+        retval = pamk5_conv(args, "Principal: ", PAM_PROMPT_ECHO_ON, &user);
+        if (retval != PAM_SUCCESS)
+            pamk5_debug_pam(args, "error getting principal", retval);
+        if (*user == '\0') {
+            free(user);
+            user = ctx->name;
+        }
     }
-    k5_errno = krb5_parse_name(ctx->context, user, &ctx->princ);
+
+    /*
+     * We don't just call krb5_parse_name so that we can work around a bug in
+     * MIT Kerberos versions prior to 1.4, which store the realm in a static
+     * variable inside the library and don't notice changes.  If no realm is
+     * specified and a realm is set in our arguments, append the realm to
+     * force krb5_parse_name to do the right thing.
+     */
+    if (args->realm != NULL && strchr(user, '@') == NULL) {
+        length = strlen(user) + 1 + strlen(args->realm) + 1;
+        newuser = malloc(length);
+        if (newuser == NULL)
+            return KRB5_CC_NOMEM;
+        snprintf(newuser, length, "%s@%s", user, args->realm);
+        if (user != ctx->name)
+            free(user);
+        user = newuser;
+    }
+    k5_errno = krb5_parse_name(c, user, &ctx->princ);
     if (user != ctx->name)
         free(user);
+
+    /*
+     * Now that we have a principal to call krb5_aname_to_localname, we can
+     * canonicalize ctx->name to a local name.  We do this even if we were
+     * explicitly prompting for a principal, but we use ctx->name to generate
+     * the local username, not the principal name.  It's unlikely, and would
+     * be rather weird, if the user were to specify a principal name for the
+     * username and then enter a different username at the principal prompt,
+     * but this behavior seems to make the most sense.
+     */
+    if (k5_errno == 0 && strchr(ctx->name, '@') != NULL) {
+        if (krb5_aname_to_localname(c, ctx->princ, sizeof(kuser), kuser) != 0)
+            return 0;
+        user = strdup(kuser);
+        if (user == NULL) {
+            pamk5_error(args, "cannot allocate memory: %s", strerror(errno));
+            return 0;
+        }
+        free(ctx->name);
+        ctx->name = user;
+    }
     return k5_errno;
 }
 
@@ -75,20 +122,31 @@ parse_name(struct pam_args *args)
  * using the Heimdal call to set initial credential options if it's available.
  * This function is used both for regular password authentication and for
  * PKINIT.
+ *
+ * Takes a flag indicating whether we're getting tickets for a specific
+ * service.  If so, we don't try to get forwardable, renewable, or proxiable
+ * tickets.
  */
 static void
-set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts)
+set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
+                       int service)
 {
 #ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_DEFAULT_FLAGS
     krb5_get_init_creds_opt_set_default_flags(args->ctx->context, "pam",
                                               args->realm_data, opts);
 #endif
-    if (args->forwardable)
-        krb5_get_init_creds_opt_set_forwardable(opts, 1);
-    if (args->lifetime != 0)
-        krb5_get_init_creds_opt_set_tkt_life(opts, args->lifetime);
-    if (args->renew_lifetime != 0)
-        krb5_get_init_creds_opt_set_renew_life(opts, args->renew_lifetime);
+    if (!service) {
+        if (args->forwardable)
+            krb5_get_init_creds_opt_set_forwardable(opts, 1);
+        if (args->lifetime != 0)
+            krb5_get_init_creds_opt_set_tkt_life(opts, args->lifetime);
+        if (args->renew_lifetime != 0)
+            krb5_get_init_creds_opt_set_renew_life(opts, args->renew_lifetime);
+    } else {
+        krb5_get_init_creds_opt_set_forwardable(opts, 0);
+        krb5_get_init_creds_opt_set_proxiable(opts, 0);
+        krb5_get_init_creds_opt_set_renew_life(opts, 0);
+    }
 #ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PA
     if (args->try_pkinit) {
         if (args->pkinit_user != NULL)
@@ -139,7 +197,7 @@ k5login_password_auth(struct pam_args *args, krb5_creds *creds,
                       char *pass, int *retval)
 {
     struct context *ctx = args->ctx;
-    char *filename;
+    char *filename = NULL;
     char line[BUFSIZ];
     size_t len;
     FILE *k5login;
@@ -148,30 +206,23 @@ k5login_password_auth(struct pam_args *args, krb5_creds *creds,
     int k5_errno;
     krb5_principal princ;
 
-    /* Assume no Kerberos error. */
-    *retval = 0;
-
     /*
      * C sucks at string manipulation.  Generate the filename for the user's
-     * .k5login file.  This function always fails if the user isn't a local
-     * user.
+     * .k5login file.  If the user doesn't exist, the .k5login file doesn't
+     * exist, or the .k5login file cannot be read, fall back on the easy way
+     * and assume ctx->princ is already set properly.
      */
     pwd = getpwnam(ctx->name);
-    if (pwd == NULL)
-        return PAM_AUTH_ERR;
-    len = strlen(pwd->pw_dir) + strlen("/.k5login");
-    filename = malloc(len + 1);
-    if (filename == NULL)
-        return PAM_SERVICE_ERR;
-    strncpy(filename, pwd->pw_dir, len);
-    filename[len] = '\0';
-    strncat(filename, "/.k5login", len - strlen(pwd->pw_dir));
-
-    /*
-     * If there is no file, do this the easy way.  Assume ctx->princ is
-     * already set properly.
-     */
-    if (access(filename, R_OK) != 0) {
+    if (pwd != NULL) {
+        len = strlen(pwd->pw_dir) + strlen("/.k5login");
+        filename = malloc(len + 1);
+    }
+    if (filename != NULL) {
+        strncpy(filename, pwd->pw_dir, len);
+        filename[len] = '\0';
+        strncat(filename, "/.k5login", len - strlen(pwd->pw_dir));
+    }
+    if (pwd == NULL || filename == NULL || access(filename, R_OK) != 0) {
         *retval = krb5_get_init_creds_password(ctx->context, creds,
                      ctx->princ, pass, pamk5_prompter_krb5, args, 0,
                      service, opts);
@@ -180,22 +231,31 @@ k5login_password_auth(struct pam_args *args, krb5_creds *creds,
 
     /*
      * Make sure the ownership on .k5login is okay.  The user must own their
-     * own .k5login or it must be owned by root.
+     * own .k5login or it must be owned by root.  If that fails, set the
+     * Kerberos error code to errno.
      */
     k5login = fopen(filename, "r");
     free(filename);
-    if (k5login == NULL)
+    if (k5login == NULL) {
+        *retval = errno;
         return PAM_AUTH_ERR;
-    if (fstat(fileno(k5login), &st) != 0)
+    }
+    if (fstat(fileno(k5login), &st) != 0) {
+        *retval = errno;
         goto fail;
-    if (st.st_uid != 0 && (st.st_uid != pwd->pw_uid))
+    }
+    if (st.st_uid != 0 && (st.st_uid != pwd->pw_uid)) {
+        *retval = errno;
         goto fail;
+    }
 
     /*
      * Parse the .k5login file and attempt authentication for each principal.
      * Ignore any lines that are too long or that don't parse into a Kerberos
-     * principal.
+     * principal.  Assume an invalid password error if there are no valid
+     * lines in .k5login.
      */
+    *retval = KRB5KRB_AP_ERR_BAD_INTEGRITY;
     while (fgets(line, BUFSIZ, k5login) != NULL) {
         len = strlen(line);
         if (line[len - 1] != '\n') {
@@ -295,7 +355,7 @@ pkinit_auth(struct pam_args *args, char *service, krb5_creds **creds)
     retval = krb5_get_init_creds_opt_alloc(ctx->context, &opts);
     if (retval != 0)
         return retval;
-    set_credential_options(args, opts);
+    set_credential_options(args, opts, service != NULL);
 #ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT_11_ARGS
     retval = krb5_get_init_creds_opt_set_pkinit(ctx->context, opts,
                   ctx->princ, args->pkinit_user, args->pkinit_anchors, NULL,
@@ -403,7 +463,7 @@ pamk5_password_auth(struct pam_args *args, char *service, krb5_creds **creds)
         pamk5_error_krb5(args, "cannot allocate credential options", retval);
         goto done;
     }
-    set_credential_options(args, opts);
+    set_credential_options(args, opts, service != NULL);
 
     /*
      * If try_first_pass or use_first_pass is set, grab the old password (if

@@ -294,6 +294,7 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
         default_boolean(args, c, "pkinit_prompt", 0, &args->pkinit_prompt);
         default_string(args, c, "pkinit_user", NULL, &args->pkinit_user);
         default_string(args, c, "preauth_opt", NULL, &preauth_opt);
+        default_boolean(args, c, "prompt_principal", 0, &args->prompt_princ);
         default_time(args, c, "renew_lifetime", 0, &args->renew_lifetime);
         default_boolean(args, c, "retain_after_close", 0, &args->retain);
         default_boolean(args, c, "search_k5login", 0, &args->search_k5login);
@@ -371,7 +372,10 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
                     = strdup(&argv[i][strlen("preauth_opt")]);
                 args->preauth_opt_count++;
             }
-        } else if (strncmp(argv[i], "realm=", 6) == 0)
+        }
+        else if (strcmp(argv[i], "prompt_principal") == 0)
+            args->prompt_princ = 1;
+        else if (strncmp(argv[i], "realm=", 6) == 0)
             ; /* Handled above. */
         else if (strncmp(argv[i], "renew_lifetime=", 15) == 0) {
             const char *value;

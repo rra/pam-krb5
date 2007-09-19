@@ -1,4 +1,4 @@
-                               pam-krb5 3.5
+                               pam-krb5 3.6
                (PAM module for Kerberos v5 authentication)
 
                     Originally written by Frank Cusack
@@ -90,11 +90,6 @@ COMPILING AND INSTALLING
       ./configure
       make
 
-  On Solaris, expect many warnings about type mismatches.  These warnings
-  should be harmless.  Linux and Solaris differ in which struct members
-  and function parameters are declared const and there is no simple way to
-  write code that compiles without warnings on both platforms.
-
   To install the module into /usr/local/lib/security and the man page into
   /usr/local/share/man/man5, run:
 
@@ -102,9 +97,11 @@ COMPILING AND INSTALLING
 
   You can change the installation locations with the --prefix, --mandir,
   and --libdir options to configure.  The module will be installed in a
-  subdirectory of $libdir named security.  Alternately, you can simply
-  copy pam_krb5.so to whatever directory you use for PAM modules.  On
-  Solaris, you will need to make the module executable.
+  subdirectory of $libdir named security and, on x86_64 Linux, $libdir
+  will be changed to lib64 to match the default PAM configuration.
+  Alternately, you can simply copy pam_krb5.so to whatever directory you
+  use for PAM modules.  On Solaris, you will need to make the module
+  executable.
 
   If your Kerberos libraries aren't installed in a location found by your
   compiler by default, use the --with-kerberos=PATH option to configure.
