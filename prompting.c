@@ -122,7 +122,7 @@ pamk5_conv(struct pam_args *args, const char *message, int type,
     int pamret;
     struct pam_message msg;
     PAM_CONST struct pam_message *pmsg;
-    struct pam_response	*resp = NULL;
+    struct pam_response *resp = NULL;
     struct pam_conv *conv;
     int want_reply;
 
