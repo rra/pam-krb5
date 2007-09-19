@@ -1,6 +1,6 @@
                       User-Visible pam-krb5 Changes
 
-pam-krb5 3.6 (unreleased)
+pam-krb5 3.6 (2007-09-18)
 
     When the local user doesn't exist and search_k5login is enabled, fall
     back to simple Kerberos authentication just as if the account existed
