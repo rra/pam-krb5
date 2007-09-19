@@ -1,5 +1,9 @@
                            pam-krb5 To-Do List
 
+ * Add an option to specify the principal name to use when verifying
+   credentials, in support of the keytab option to use a different keytab
+   path.
+
  * The PAM option parsing is repetitive code that involves counting the
    lengths of strings.  It should be possible to replace most of it with
    some carefully-chosen macros.
