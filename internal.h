@@ -49,6 +49,7 @@ struct pam_args {
     krb5_deltat lifetime;       /* Lifetime of credentials. */
     int minimum_uid;            /* Ignore users below this UID. */
     int no_ccache;              /* Don't create a ticket cache. */
+    int prompt_princ;           /* Prompt for the Kerberos principal. */
     char *realm;                /* Default realm. */
     krb5_deltat renew_lifetime; /* Renewable lifetime of credentials. */
     int retain;                 /* Don't destroy the cache on session end. */
@@ -130,7 +131,7 @@ krb5_error_code pamk5_prompter_krb5(krb5_context, void *data,
 int pamk5_authorized(struct pam_args *);
 
 /* Returns true if we should ignore this user (root or low UID). */
-int pamk5_should_ignore(struct pam_args *, const char *);
+int pamk5_should_ignore(struct pam_args *, PAM_CONST char *);
 
 /*
  * Compatibility functions.  Depending on whether pam_krb5 is built with MIT

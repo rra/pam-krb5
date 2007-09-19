@@ -40,10 +40,11 @@ $(srcdir)/pam_krb5.5: $(srcdir)/pam_krb5.pod
 	    $(srcdir)/pam_krb5.pod > $@
 
 install: pam_krb5.so $(srcdir)/pam_krb5.5
-	$(INSTALL) -d $(pamdir)
-	$(INSTALL) -d $(mandir)/man5
-	$(INSTALL_DATA) pam_krb5.so $(pamdir)/pam_krb5.so
-	$(INSTALL_DATA) $(srcdir)/pam_krb5.5 $(mandir)/man5/pam_krb5.5
+	$(INSTALL) -d $(DESTDIR)$(pamdir)
+	$(INSTALL) -d $(DESTDIR)$(mandir)/man5
+	$(INSTALL_DATA) pam_krb5.so $(DESTDIR)$(pamdir)/pam_krb5.so
+	$(INSTALL_DATA) $(srcdir)/pam_krb5.5 \
+	    $(DESTDIR)$(mandir)/man5/pam_krb5.5
 
 # This target only works when builddir == srcdir, at least for now.
 dist: pam_krb5.5

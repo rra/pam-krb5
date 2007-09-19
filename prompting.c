@@ -121,7 +121,7 @@ pamk5_conv(struct pam_args *args, const char *message, int type,
 {
     int pamret;
     struct pam_message msg;
-    const struct pam_message *pmsg;
+    PAM_CONST struct pam_message *pmsg;
     struct pam_response	*resp = NULL;
     struct pam_conv *conv;
     int want_reply;
@@ -133,7 +133,7 @@ pamk5_conv(struct pam_args *args, const char *message, int type,
 	return pamret;
     pmsg = &msg;
     msg.msg_style = type;
-    msg.msg = message;
+    msg.msg = (PAM_CONST char *) message;
     pamret = conv->conv(1, &pmsg, &resp, conv->appdata_ptr);
     if (pamret != PAM_SUCCESS)
 	return pamret;
@@ -279,7 +279,7 @@ pamk5_prompter_krb5(krb5_context context, void *data, const char *name,
     }
 
     /* Call into the application conversation function. */
-    pamret = conv->conv(pam_prompts, (const struct pam_message **) msg,
+    pamret = conv->conv(pam_prompts, (PAM_CONST struct pam_message **) msg,
                         &resp, conv->appdata_ptr);
     if (pamret != 0) 
         goto cleanup;

@@ -1,3 +1,16 @@
+libpam-krb5 (3.6-1) unstable; urgency=low
+
+  * New upstream release.
+    - When search_k5login is enabled but the user doesn't exist locally,
+      fall back on standard Kerberos authentication instead of always
+      failing.  Fix other error handling issues with search_k5login.  This
+      fixes non-exploitable segfaults with unknown users.
+    - Clear ticket options when changing passwords.  (Closes: #440050)
+    - Fix and document username canonicalization.  (Closes: #437171)
+    - Add prompt_principal option.
+
+ -- Russ Allbery <rra@debian.org>  Tue, 18 Sep 2007 19:43:18 -0700
+
 libpam-krb5 (3.5-1) unstable; urgency=low
 
   * New upstream release.

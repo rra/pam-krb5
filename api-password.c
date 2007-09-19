@@ -37,7 +37,7 @@ get_new_password(struct pam_args *args, char **pass)
 {
     int pamret = PAM_AUTHTOK_ERR;
     char *pass2;
-    const void *tmp;
+    PAM_CONST void *tmp;
 
     /*
      * Try to use the password from a previous module, if so configured.  Note
@@ -162,7 +162,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
     struct pam_args *args;
     int pamret = PAM_SUCCESS;
     int status;
-    const char *tmpname;
+    PAM_CONST char *user;
     char *pass = NULL;
 
     args = pamk5_args_parse(pamh, flags, argc, argv);
@@ -185,8 +185,8 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
      * some other module.  Don't tromp on pamret here unless we're failing.
      */
     if (args->ignore_root || args->minimum_uid > 0) {
-        status = pam_get_user(pamh, &tmpname, NULL);
-        if (status == PAM_SUCCESS && pamk5_should_ignore(args, tmpname)) {
+        status = pam_get_user(pamh, &user, NULL);
+        if (status == PAM_SUCCESS && pamk5_should_ignore(args, user)) {
             pamret = PAM_PERM_DENIED;
             goto done;
         }

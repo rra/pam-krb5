@@ -1,5 +1,42 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 3.6 (2007-09-18)
+
+    When the local user doesn't exist and search_k5login is enabled, fall
+    back to simple Kerberos authentication just as if the account existed
+    with no .k5login file.  This avoids trying to verify an all-zero
+    credentials structure, leading to non-expoloitable segfaults on x86_64
+    systems.  Be more careful in general about setting error codes in the
+    search_k5login implementation.
+
+    Explicitly clear the forwardable and proxiable options and don't ask
+    for renewable tickets when getting a ticket for the password changing
+    service.  Otherwise, system-wide defaults and PAM configuration will
+    apply to those tickets as well and the resulting ticket request may be
+    rejected based on KDC configuration.  Based on a patch by Sergio
+    Gelato.
+
+    Do username canonicalization earlier so that .k5login checking and
+    similar work uses the correct username but only change the PAM
+    username if authentication succeeds.  Document that username
+    canonicalization won't work with unmodified OpenSSH and with several
+    common PAM modules.  Thanks to R. Scott Bailey for the bug report and
+    analysis.
+
+    Add a prompt_principal option which, if set, causes the PAM module to
+    prompt the user for the Kerberos principal to use for authentication
+    before prompting for the password.
+
+    Try to determine whether the PAM headers use const in the prototypes
+    of such things as pam_get_item and adjust accordingly.  This should
+    address most compiler warnings on Solaris.  Thanks, Markus Moeller.
+
+    Change lib to lib64 on x86_64 Linux to allow for the magical $ISA
+    parameter in Red Hat's PAM configuration.  Hopefully this won't cause
+    problems elsewhere.
+
+    Support DESTDIR for make install.
+
 pam-krb5 3.5 (2007-04-10)
 
     Don't try to chown non-FILE ticket caches, which among other things

@@ -1,15 +1,17 @@
 dnl Process this file with Autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([pam-krb5], [3.5], [rra@stanford.edu])
+AC_INIT([pam-krb5], [3.6], [rra@stanford.edu])
 
 m4_include([m4/krb5.m4])
+m4_include([m4/pam-const.m4])
 
 AC_PROG_CC
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
 AC_CANONICAL_HOST
 RRA_LIB_KRB5
+RRA_HEADER_PAM_CONST
 
 dnl Crank up the warnings if we're using GCC.
 if test "$GCC" = "yes" ; then
@@ -19,14 +21,24 @@ fi
 dnl Try to add the compiler flags for position-independent code and try to
 dnl specify the binding so that any references within the PAM module are
 dnl resolved to the functions in that module in preference to any external
-dnl function.  Also, if and only if we're on Linux, make sure that all the
-dnl symbols in the module are resolved.
+dnl function.
+dnl
+dnl Also, if and only if we're on Linux, make sure that all the symbols in the
+dnl module are resolved and try to adjust for the 32-bit vs. 64-bit library
+dnl paths.
 dnl
 dnl More platforms could be handled here.  Contributions welcome.
 case "$host" in
-*-linux*)
+i[345]86-*-linux*)
     CFLAGS="-fPIC $CFLAGS"
     LDFLAGS="-shared -Wl,-z,defs -Wl,-Bsymbolic $LDFLAGS"
+    ;;
+x86_64-*-linux*)
+    CFLAGS="-fPIC $CFLAGS"
+    LDFLAGS="-shared -Wl,-z,defs -Wl,-Bsymbolic $LDFLAGS"
+    if test x"$libdir" = x'${exec_prefix}/lib' ; then
+        libdir='${exec_prefix}/lib64'
+    fi
     ;;
 *-solaris2*)
     if test "$GCC" = "yes" ; then

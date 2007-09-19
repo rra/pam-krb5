@@ -1,5 +1,8 @@
                            pam-krb5 To-Do List
 
+ * Add an option to specify the principal to use for authentication
+   verification.
+
  * The PAM option parsing is repetitive code that involves counting the
    lengths of strings.  It should be possible to replace most of it with
    some carefully-chosen macros.
