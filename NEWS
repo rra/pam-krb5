@@ -1,6 +1,6 @@
                       User-Visible pam-krb5 Changes
 
-pam-krb5 3.7 (unreleased)
+pam-krb5 3.7 (2007-09-29)
 
     If given an explicit keytab path to use for credential verification,
     use the first principal found in that keytab as the principal for
