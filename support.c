@@ -34,7 +34,7 @@ pamk5_should_ignore(struct pam_args *args, PAM_CONST char *username)
         return 1;
     }
     if (args->minimum_uid > 0) {
-        pwd = getpwnam(username);
+        pwd = pamk5_compat_getpwnam(args, username);
         if (pwd != NULL && pwd->pw_uid < args->minimum_uid) {
             pamk5_debug(args, "ignoring low-UID user (%lu < %d)",
                         (unsigned long) pwd->pw_uid, args->minimum_uid);
@@ -88,7 +88,7 @@ pamk5_authorized(struct pam_args *args)
      * Otherwise, apply either krb5_aname_to_localname or krb5_kuserok
      * depending on the situation.
      */
-    pwd = getpwnam(ctx->name);
+    pwd = pamk5_compat_getpwnam(args, ctx->name);
     if (args->ignore_k5login || pwd == NULL) {
         if (krb5_aname_to_localname(c, ctx->princ, sizeof(kuser), kuser) != 0)
             return PAM_AUTH_ERR;

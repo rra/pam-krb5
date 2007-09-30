@@ -14,6 +14,9 @@
 #include <security/pam_modules.h>
 #include <stdarg.h>
 
+/* Forward declarations to avoid unnecessary includes. */
+struct passwd;
+
 /*
  * An authentication context, including all the data we want to preserve
  * across calls to the public entry points.  This context is stored in the PAM
@@ -139,6 +142,7 @@ int pamk5_should_ignore(struct pam_args *, PAM_CONST char *);
  * implementation will be provided.
  */
 void pamk5_compat_free_data_contents(krb5_context, krb5_data *);
+void pamk5_compat_free_keytab_contents(krb5_context, krb5_keytab_entry *);
 const char *pamk5_compat_get_error(krb5_context, krb5_error_code);
 void pamk5_compat_free_error(krb5_context, const char *);
 krb5_error_code pamk5_compat_opt_alloc(krb5_context,
@@ -146,6 +150,9 @@ krb5_error_code pamk5_compat_opt_alloc(krb5_context,
 void pamk5_compat_opt_free(krb5_context, krb5_get_init_creds_opt *);
 krb5_error_code pamk5_compat_set_realm(struct pam_args *, const char *);
 void pamk5_compat_free_realm(struct pam_args *);
+
+/* Calls pam_modutil_getpwnam if available, otherwise getpwnam. */
+struct passwd *pamk5_compat_getpwnam(struct pam_args *, const char *);
 
 /* Context management. */
 int pamk5_context_new(struct pam_args *);

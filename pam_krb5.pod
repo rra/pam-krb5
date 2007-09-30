@@ -299,7 +299,8 @@ Specifies the keytab to use when validating the user's credentials.  The
 default is the default system keytab (normally F</etc/krb5.keytab>), which
 is usually only readable by root.  Applications not running as root that
 use this PAM module for authentication may wish to point it to another
-keytab the application can read.
+keytab the application can read.  The first principal found in the keytab
+will be used as the principal for credential verification.
 
 This option can be set in F<krb5.conf> and is only applicable to the auth
 group.
@@ -325,8 +326,10 @@ be set in general, but is useful as part of the PAM configuration for a
 particular service that uses PAM for authentication but isn't creating
 user sessions and doesn't want the overhead of ever writing the user
 credentials to disk.  When using this option, the application should only
-call pam_authenticate(); other functions like pam_setcred() and
-pam_start_session() don't make sense with this option.
+call pam_authenticate(); other functions like pam_setcred(),
+pam_start_session(), and pam_acct_mgmt() don't make sense with this
+option.  Don't use this option if the application needs PAM account and
+session management calls.
 
 This option is only applicable to the auth group.
 

@@ -1,3 +1,56 @@
+  209 Russ Allbery	2007-09-29
+      Don't store PAM data unless we're saving a ticket cache.  All other
+      calls use it for is to find the ticket cache, so without a cache it's
+      pointless and means we run the risk of stomping on ourselves in
+      multithreaded programs.
+      
+      Still canonicalize the PAM user before returning when not saving a
+      ticket cache.
+      
+      Use pam_krb5 instead of ctx for our PAM data name to reduce the
+      chances of collision.
+
+  208 Russ Allbery	2007-09-29
+      Release 3.7.
+
+  207 Russ Allbery	2007-09-29
+      Don't link against the PAM library twice.
+
+  206 Russ Allbery	2007-09-29
+      Use pam_modutil_getpwnam instead of getpwnam if available for better
+      thread safety.
+
+  205 Russ Allbery	2007-09-29
+      If given an explicit keytab path to use for credential verification,
+      use the first principal found in that keytab as the principal for
+      verification rather than the library default (which is normally the
+      host/* principal for the local system and may not be found in that
+      keytab).
+
+  204 Russ Allbery	2007-09-29
+      Fix determination of linker flags on non-x86_64 Linux.  Always link
+      with -fPIC when using GCC, just in case.
+      
+      Add compilation options for Mac OS X and HP-UX (untested).
+
+  203 Russ Allbery	2007-09-29
+      When authenticating, don't store our context data until after
+      authentication has succeeded.  Otherwise, we may destroy the ticket
+      cache of a previous successful authentication.  This bug would only
+      affect configurations where pam_krb5 was run multiple times with
+      different settings, such as multiple realms.  Thanks to Dave Botsch
+      for the report.
+
+  202 Russ Allbery	2007-09-19
+      Add back in the to-do item for supporting setting the principal for
+      keytab verification.
+
+  201 Russ Allbery	2007-09-18
+      Remove duplicate entries of a feature fixed in the previous version.
+
+  200 Russ Allbery	2007-09-18
+      Remove a stray tab.
+
   199 Russ Allbery	2007-09-18
       Release 3.6.
 

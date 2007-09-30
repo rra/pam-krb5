@@ -1,3 +1,18 @@
+libpam-krb5 (3.7-1) unstable; urgency=low
+
+  * New upstream release.
+    - Read verification principal from keytab if given one explicitly.
+    - Don't store context data until after authentication has succeeded,
+      fixing behavior when stacking multiple invocations in different
+      realms.
+    - Use pam_modutil_getpwnam for better thread safety.
+    - Don't store PAM data unless saving a ticket cache.
+    - Restore safer linker flags, broken with the last release.
+  * Swap Sam and I as maintainer and uploaders, as I'm now the primary
+    maintainer.
+
+ -- Russ Allbery <rra@debian.org>  Sat, 29 Sep 2007 23:29:51 -0700
+
 libpam-krb5 (3.6-1) unstable; urgency=low
 
   * New upstream release.

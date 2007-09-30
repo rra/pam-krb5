@@ -1,7 +1,7 @@
 dnl Process this file with Autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([pam-krb5], [3.6], [rra@stanford.edu])
+AC_INIT([pam-krb5], [3.7], [rra@stanford.edu])
 
 m4_include([m4/krb5.m4])
 m4_include([m4/pam-const.m4])
@@ -11,7 +11,10 @@ AC_PROG_INSTALL
 AC_PROG_MAKE_SET
 AC_CANONICAL_HOST
 RRA_LIB_KRB5
+AC_SEARCH_LIBS([pam_set_data], [pam])
+AC_CHECK_FUNCS([pam_modutil_getpwnam])
 RRA_HEADER_PAM_CONST
+AC_CHECK_HEADERS([security/pam_modutil.h])
 
 dnl Crank up the warnings if we're using GCC.
 if test "$GCC" = "yes" ; then
@@ -29,30 +32,53 @@ dnl paths.
 dnl
 dnl More platforms could be handled here.  Contributions welcome.
 case "$host" in
-i[345]86-*-linux*)
-    CFLAGS="-fPIC $CFLAGS"
-    LDFLAGS="-shared -Wl,-z,defs -Wl,-Bsymbolic $LDFLAGS"
+*-darwin*)
+    if test "$GCC" = "yes" ; then
+        LD="$CC"
+        LDFLAGS="-bundle $LDFLAGS"
+    else
+        AC_MSG_ERROR([Only know compiler flags for gcc on this platform])
+    fi
+    ;;
+*-hpux*)
+    if test "$GCC" = "yes" ; then
+        CFLAGS="-fPIC $CFLAGS"
+        LD="$CC"
+        LDFLAGS="-fPIC -shared -Wl,-Bsymbolic $LDFLAGS"
+    else
+        CFLAGS="+z $CFLAGS"
+        LD="ld"
+        LDFLAGS="+vshlibunsats -b $LDFLAGS"
+    fi
     ;;
 x86_64-*-linux*)
     CFLAGS="-fPIC $CFLAGS"
-    LDFLAGS="-shared -Wl,-z,defs -Wl,-Bsymbolic $LDFLAGS"
+    LD="$CC"
+    LDFLAGS="-fPIC -shared -Wl,-z,defs -Wl,-Bsymbolic $LDFLAGS"
     if test x"$libdir" = x'${exec_prefix}/lib' ; then
         libdir='${exec_prefix}/lib64'
     fi
     ;;
+*-linux*)
+    CFLAGS="-fPIC $CFLAGS"
+    LD="$CC"
+    LDFLAGS="-fPIC -shared -Wl,-z,defs -Wl,-Bsymbolic $LDFLAGS"
+    ;;
 *-solaris2*)
     if test "$GCC" = "yes" ; then
         CFLAGS="-fPIC $CFLAGS"
-        LDFLAGS="-shared -Wl,-Bsymbolic $LDFLAGS"
+        LDFLAGS="-fPIC -shared -Wl,-Bsymbolic $LDFLAGS"
     else
         CFLAGS="-KPIC $CFLAGS"
         LDFLAGS="-G -xldscope=symbolic $LDFLAGS"
     fi
+    LD="$CC"
     ;;
 *)
     if test "$GCC" = "yes" ; then
         CFLAGS="-fPIC $CFLAGS"
-        LDFLAGS="-shared $LDFLAGS"
+        LD="$CC"
+        LDFLAGS="-fPIC -shared $LDFLAGS"
     else
         AC_MSG_ERROR([Only know compiler flags for gcc on this platform])
     fi

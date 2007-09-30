@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "PAM_KRB5 5"
-.TH PAM_KRB5 5 "2007-09-18" "3.6" "PAM Modules"
+.TH PAM_KRB5 5 "2007-09-29" "3.7" "PAM Modules"
 .SH "NAME"
 pam_krb5 \- Kerberos v5 PAM module
 .SH "SYNOPSIS"
@@ -414,7 +414,8 @@ Specifies the keytab to use when validating the user's credentials.  The
 default is the default system keytab (normally \fI/etc/krb5.keytab\fR), which
 is usually only readable by root.  Applications not running as root that
 use this \s-1PAM\s0 module for authentication may wish to point it to another
-keytab the application can read.
+keytab the application can read.  The first principal found in the keytab
+will be used as the principal for credential verification.
 .Sp
 This option can be set in \fIkrb5.conf\fR and is only applicable to the auth
 group.
@@ -438,8 +439,10 @@ be set in general, but is useful as part of the \s-1PAM\s0 configuration for a
 particular service that uses \s-1PAM\s0 for authentication but isn't creating
 user sessions and doesn't want the overhead of ever writing the user
 credentials to disk.  When using this option, the application should only
-call \fIpam_authenticate()\fR; other functions like \fIpam_setcred()\fR and
-\&\fIpam_start_session()\fR don't make sense with this option.
+call \fIpam_authenticate()\fR; other functions like \fIpam_setcred()\fR,
+\&\fIpam_start_session()\fR, and \fIpam_acct_mgmt()\fR don't make sense with this
+option.  Don't use this option if the application needs \s-1PAM\s0 account and
+session management calls.
 .Sp
 This option is only applicable to the auth group.
 .IP "pkinit_anchors=<anchors>" 4

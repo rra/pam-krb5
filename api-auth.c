@@ -200,9 +200,9 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     struct context *ctx = NULL;
     struct pam_args *args;
     krb5_creds *creds = NULL;
-    int pamret;
+    int pamret, ccfd;
     char cache_name[] = "/tmp/krb5cc_pam_XXXXXX";
-    int ccfd;
+    int set_context = 0;
 
     args = pamk5_args_parse(pamh, flags, argc, argv);
     if (args == NULL) {
@@ -215,14 +215,6 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     if (pamret != PAM_SUCCESS)
         goto done;
     ctx = args->ctx;
-
-    /* Do this first so pamk5_context_destroy magically cleans up for us. */
-    pamret = pam_set_data(pamh, "ctx", ctx, pamk5_context_destroy);
-    if (pamret != PAM_SUCCESS) {
-        pamk5_context_free(ctx);
-        pamret = PAM_SERVICE_ERR;
-        goto done;
-    }
 
     /* Check whether we should ignore this user. */
     if (pamk5_should_ignore(args, ctx->name)) {
@@ -242,9 +234,25 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
         goto done;
     }
 
-    /* Store the obtained credentials in a temporary cache. */
+    /* Reset PAM_USER in case we canonicalized. */
+    pamret = pam_set_item(args->pamh, PAM_USER, ctx->name);
+    if (pamret != PAM_SUCCESS)
+        pamk5_debug_pam(args, "cannot set PAM_USER", pamret);
+
+    /* Unless we're creating a ticket cache, we're done. */
     if (args->no_ccache)
         goto done;
+
+    /* Now that we know we're successful, we can store the context. */
+    pamret = pam_set_data(pamh, "pam_krb5", ctx, pamk5_context_destroy);
+    if (pamret != PAM_SUCCESS) {
+        pamk5_context_free(ctx);
+        pamret = PAM_SERVICE_ERR;
+        goto done;
+    }
+    set_context = 1;
+
+    /* Store the obtained credentials in a temporary cache. */
     ccfd = mkstemp(cache_name);
     if (ccfd < 0) {
         pamk5_error(args, "mkstemp(\"%s\") failed: %s", cache_name,
@@ -260,11 +268,6 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     if (pamret != PAM_SUCCESS)
         goto done;
 
-    /* Reset PAM_USER in case we canonicalized. */
-    pamret = pam_set_item(args->pamh, PAM_USER, ctx->name);
-    if (pamret != PAM_SUCCESS)
-        pamk5_debug_pam(args, "cannot set PAM_USER", pamret);
-
 done:
     if (creds != NULL) {
         krb5_free_cred_contents(ctx->context, creds);
@@ -274,10 +277,16 @@ done:
 
     /*
      * Clear the context on failure so that the account management module
-     * knows that we didn't authenticate with Kerberos.
+     * knows that we didn't authenticate with Kerberos.  Only clear the
+     * context if we set it.  Otherwise, we may be blowing away the context of
+     * a previous successful authentication.
      */
-    if (pamret != PAM_SUCCESS)
-        pam_set_data(pamh, "ctx", NULL, NULL);
+    if (pamret != PAM_SUCCESS) {
+        if (set_context)
+            pam_set_data(pamh, "pam_krb5", NULL, NULL);
+        else
+            pamk5_context_free(ctx);
+    }
     pamk5_args_free(args);
     return pamret;
 }
@@ -408,7 +417,7 @@ create_session_context(struct pam_args *args)
      * further calls to session or account management, which OpenSSH does keep
      * the context for.
      */
-    pamret = pam_set_data(args->pamh, "ctx", ctx, pamk5_context_destroy);
+    pamret = pam_set_data(args->pamh, "pam_krb5", ctx, pamk5_context_destroy);
     if (pamret != PAM_SUCCESS) {
         pamk5_debug_pam(args, "cannot set context data", pamret);
         goto fail;
@@ -456,7 +465,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
      * ticket cache as well.
      */
     if (flags & PAM_DELETE_CRED) {
-        pamret = pam_set_data(pamh, "ctx", NULL, NULL);
+        pamret = pam_set_data(pamh, "pam_krb5", NULL, NULL);
         args->ctx = NULL;
         goto done;
     }
@@ -510,7 +519,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
      * pam_authenticate, but for either pam_setcred (other than DELETE) or for
      * pam_open_session, the user must be a local account.
      */
-    pw = getpwnam(ctx->name);
+    pw = pamk5_compat_getpwnam(args, ctx->name);
     if (pw == NULL) {
         pamk5_debug(args, "getpwnam failed for %s", ctx->name);
         pamret = PAM_USER_UNKNOWN;

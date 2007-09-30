@@ -42,5 +42,5 @@ int
 pam_sm_close_session(pam_handle_t *pamh, int flags, int argc,
                      const char **argv)
 {
-    return pam_set_data(pamh, "ctx", NULL, NULL);
+    return pam_set_data(pamh, "pam_krb5", NULL, NULL);
 }

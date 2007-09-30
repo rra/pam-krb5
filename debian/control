@@ -1,8 +1,8 @@
 Source: libpam-krb5
 Section: net
 Priority: optional
-Maintainer: Sam Hartman <hartmans@debian.org>
-Uploaders: Russ Allbery <rra@debian.org>
+Maintainer: Russ Allbery <rra@debian.org>
+Uploaders: Sam Hartman <hartmans@debian.org>
 Standards-Version: 3.7.2
 Build-Depends: debhelper (>= 5), libkrb5-dev, comerr-dev, libpam0g-dev
 
