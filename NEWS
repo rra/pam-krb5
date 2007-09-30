@@ -2,6 +2,12 @@
 
 pam-krb5 3.7 (unreleased)
 
+    If given an explicit keytab path to use for credential verification,
+    use the first principal found in that keytab as the principal for
+    verification rather than the library default (which is normally the
+    host/* principal for the local system and may not be found in that
+    keytab).
+
     When authenticating, don't store our context data until after
     authentication has succeeded.  Otherwise, we may destroy the ticket
     cache of a previous successful authentication.  This bug would only

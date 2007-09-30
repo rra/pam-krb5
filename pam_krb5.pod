@@ -299,7 +299,8 @@ Specifies the keytab to use when validating the user's credentials.  The
 default is the default system keytab (normally F</etc/krb5.keytab>), which
 is usually only readable by root.  Applications not running as root that
 use this PAM module for authentication may wish to point it to another
-keytab the application can read.
+keytab the application can read.  The first principal found in the keytab
+will be used as the principal for credential verification.
 
 This option can be set in F<krb5.conf> and is only applicable to the auth
 group.

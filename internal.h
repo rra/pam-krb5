@@ -139,6 +139,7 @@ int pamk5_should_ignore(struct pam_args *, PAM_CONST char *);
  * implementation will be provided.
  */
 void pamk5_compat_free_data_contents(krb5_context, krb5_data *);
+void pamk5_compat_free_keytab_contents(krb5_context, krb5_keytab_entry *);
 const char *pamk5_compat_get_error(krb5_context, krb5_error_code);
 void pamk5_compat_free_error(krb5_context, const char *);
 krb5_error_code pamk5_compat_opt_alloc(krb5_context,
