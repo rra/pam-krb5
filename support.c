@@ -11,8 +11,13 @@
 
 #include <krb5.h>
 #include <pwd.h>
-#include <security/pam_appl.h>
-#include <security/pam_modules.h>
+#ifdef HAVE_SECURITY_PAM_APPL_H
+# include <security/pam_appl.h>
+# include <security/pam_modules.h>
+#elif HAVE_PAM_PAM_APPL_H
+# include <pam/pam_appl.h>
+# include <pam/pam_modules.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 
@@ -35,7 +40,7 @@ pamk5_should_ignore(struct pam_args *args, PAM_CONST char *username)
     }
     if (args->minimum_uid > 0) {
         pwd = pamk5_compat_getpwnam(args, username);
-        if (pwd != NULL && pwd->pw_uid < args->minimum_uid) {
+        if (pwd != NULL && pwd->pw_uid < (unsigned long) args->minimum_uid) {
             pamk5_debug(args, "ignoring low-UID user (%lu < %d)",
                         (unsigned long) pwd->pw_uid, args->minimum_uid);
             return 1;

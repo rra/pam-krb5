@@ -47,6 +47,12 @@
 /* Define to 1 if you have the `pam_modutil_getpwnam' function. */
 #undef HAVE_PAM_MODUTIL_GETPWNAM
 
+/* Define to 1 if you have the <pam/pam_appl.h> header file. */
+#undef HAVE_PAM_PAM_APPL_H
+
+/* Define to 1 if you have the <security/pam_appl.h> header file. */
+#undef HAVE_SECURITY_PAM_APPL_H
+
 /* Define to 1 if you have the <security/pam_modutil.h> header file. */
 #undef HAVE_SECURITY_PAM_MODUTIL_H
 

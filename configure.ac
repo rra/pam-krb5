@@ -1,7 +1,7 @@
 dnl Process this file with Autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([pam-krb5], [3.7], [rra@stanford.edu])
+AC_INIT([pam-krb5], [3.8], [rra@stanford.edu])
 
 m4_include([m4/krb5.m4])
 m4_include([m4/pam-const.m4])
@@ -15,6 +15,11 @@ AC_SEARCH_LIBS([pam_set_data], [pam])
 AC_CHECK_FUNCS([pam_modutil_getpwnam])
 RRA_HEADER_PAM_CONST
 AC_CHECK_HEADERS([security/pam_modutil.h])
+
+dnl Mac OS X calls its PAM headers something different than everyone else.
+AC_CHECK_HEADERS([security/pam_appl.h], ,
+    [AC_CHECK_HEADERS([pam/pam_appl.h], ,
+        [AC_MSG_ERROR([No PAM header files found])])])
 
 dnl Crank up the warnings if we're using GCC.
 if test "$GCC" = "yes" ; then
@@ -84,6 +89,7 @@ x86_64-*-linux*)
     fi
     ;;
 esac
+AC_SUBST([LD])
 
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_FILES([Makefile])

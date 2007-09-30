@@ -14,8 +14,13 @@
 #include <errno.h>
 #include <krb5.h>
 #include <pwd.h>
-#include <security/pam_appl.h>
-#include <security/pam_modules.h>
+#ifdef HAVE_SECURITY_PAM_APPL_H
+# include <security/pam_appl.h>
+# include <security/pam_modules.h>
+#elif HAVE_PAM_PAM_APPL_H
+# include <pam/pam_appl.h>
+# include <pam/pam_modules.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -131,6 +136,7 @@ static void
 set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
                        int service)
 {
+    krb5_get_init_creds_opt_init(opts);
 #ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_DEFAULT_FLAGS
     krb5_get_init_creds_opt_set_default_flags(args->ctx->context, "pam",
                                               args->realm_data, opts);
@@ -193,7 +199,7 @@ set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
  */
 static int
 k5login_password_auth(struct pam_args *args, krb5_creds *creds,
-                      krb5_get_init_creds_opt *opts, char *service,
+                      krb5_get_init_creds_opt *opts, const char *service,
                       char *pass, int *retval)
 {
     struct context *ctx = args->ctx;
@@ -225,7 +231,7 @@ k5login_password_auth(struct pam_args *args, krb5_creds *creds,
     if (pwd == NULL || filename == NULL || access(filename, R_OK) != 0) {
         *retval = krb5_get_init_creds_password(ctx->context, creds,
                      ctx->princ, pass, pamk5_prompter_krb5, args, 0,
-                     service, opts);
+                     (char *) service, opts);
         return (*retval == 0) ? PAM_SUCCESS : PAM_AUTH_ERR;
     }
 
@@ -274,7 +280,7 @@ k5login_password_auth(struct pam_args *args, krb5_creds *creds,
         /* Now, attempt to authenticate as that user. */
         *retval = krb5_get_init_creds_password(ctx->context, creds,
                      princ, pass, pamk5_prompter_krb5, args, 0,
-                     service, opts);
+                     (char *) service, opts);
 
         /*
          * If that worked, update ctx->princ and return success.  Otherwise,
@@ -459,7 +465,8 @@ verify_creds(struct pam_args *args, krb5_creds *creds)
  * instead of using PAM_AUTHTOK.
  */
 int
-pamk5_password_auth(struct pam_args *args, char *service, krb5_creds **creds)
+pamk5_password_auth(struct pam_args *args, const char *service,
+                    krb5_creds **creds)
 {
     struct context *ctx;
     krb5_get_init_creds_opt *opts = NULL;
@@ -578,7 +585,7 @@ pamk5_password_auth(struct pam_args *args, char *service, krb5_creds **creds)
         } else {
             retval = krb5_get_init_creds_password(ctx->context, *creds,
                           ctx->princ, pass, pamk5_prompter_krb5, args, 0,
-                          service, opts);
+                          (char *) service, opts);
             success = (retval == 0) ? PAM_SUCCESS : PAM_AUTH_ERR;
         }
         if (success == PAM_SUCCESS) {

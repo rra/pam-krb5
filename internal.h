@@ -10,12 +10,31 @@
 #include "config.h"
 
 #include <krb5.h>
-#include <security/pam_appl.h>
-#include <security/pam_modules.h>
+#ifdef HAVE_SECURITY_PAM_APPL_H
+# include <security/pam_appl.h>
+# include <security/pam_modules.h>
+#elif HAVE_PAM_PAM_APPL_H
+# include <pam/pam_appl.h>
+# include <pam/pam_modules.h>
+#endif
 #include <stdarg.h>
 
 /* Forward declarations to avoid unnecessary includes. */
 struct passwd;
+
+/*
+ *__attribute__ is available in gcc 2.5 and later, but only with gcc 2.7
+ * could you use the __format__ form of the attributes, which is what we use
+ * (to avoid confusion with other macros).
+ */
+#ifndef __attribute__
+# if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 7)
+#  define __attribute__(spec)   /* empty */
+# endif
+#endif
+
+/* Used for unused parameters to silence gcc warnings. */
+#define UNUSED  __attribute__((__unused__))
 
 /*
  * An authentication context, including all the data we want to preserve
@@ -109,7 +128,7 @@ void pamk5_args_free(struct pam_args *);
  * If possible, the initial credentials are verified by checking them against
  * the local system key.
  */
-int pamk5_password_auth(struct pam_args *, char *service, krb5_creds **);
+int pamk5_password_auth(struct pam_args *, const char *service, krb5_creds **);
 
 /*
  * Generic conversation function to display messages or get information from

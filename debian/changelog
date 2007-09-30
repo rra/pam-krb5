@@ -1,3 +1,11 @@
+libpam-krb5 (3.8-1) unstable; urgency=low
+
+  * New upstream release.
+    - Restore prompting for expired passwords.  (Closes: #444740)
+    - Correctly handle a negative minimum UID setting.
+
+ -- Russ Allbery <rra@debian.org>  Sun, 30 Sep 2007 11:52:41 -0700
+
 libpam-krb5 (3.7-1) unstable; urgency=low
 
   * New upstream release.

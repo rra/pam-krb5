@@ -406,7 +406,6 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
         else
             pamk5_error(NULL, "unknown option %s", argv[i]);
     }
-
     if (flags & PAM_SILENT)
         args->silent = 1;
 
@@ -424,6 +423,10 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
      */
     if (args->search_k5login)
         args->expose_account = 0;
+
+    /* UIDs are unsigned on some systems. */
+    if (args->minimum_uid < 0)
+        args->minimum_uid = 0;
 
     /*
      * Warn if PKINIT options were set and PKINIT isn't supported.  The MIT

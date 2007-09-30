@@ -19,14 +19,19 @@
 
 #include "config.h"
 
-#include <security/pam_appl.h>
-#include <security/pam_modules.h>
+#ifdef HAVE_SECURITY_PAM_APPL_H
+# include <security/pam_appl.h>
+# include <security/pam_modules.h>
+#elif HAVE_PAM_PAM_APPL_H
+# include <pam/pam_appl.h>
+# include <pam/pam_modules.h>
+#endif
 
 #include "internal.h"
 
 /* Store the user's credentials.  The flags are ignored. */
 int
-pam_sm_open_session(pam_handle_t *pamh, int flags, int argc,
+pam_sm_open_session(pam_handle_t *pamh, int flags UNUSED, int argc,
                     const char **argv)
 {
     return pam_sm_setcred(pamh, PAM_ESTABLISH_CRED, argc, argv);
@@ -39,8 +44,8 @@ pam_sm_open_session(pam_handle_t *pamh, int flags, int argc,
  * The flags are ignored.
  */
 int
-pam_sm_close_session(pam_handle_t *pamh, int flags, int argc,
-                     const char **argv)
+pam_sm_close_session(pam_handle_t *pamh, int flags UNUSED, int argc UNUSED,
+                     const char **argv UNUSED)
 {
     return pam_set_data(pamh, "pam_krb5", NULL, NULL);
 }

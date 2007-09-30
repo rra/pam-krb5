@@ -11,8 +11,13 @@
 
 #include <errno.h>
 #include <krb5.h>
-#include <security/pam_appl.h>
-#include <security/pam_modules.h>
+#ifdef HAVE_SECURITY_PAM_APPL_H
+# include <security/pam_appl.h>
+# include <security/pam_modules.h>
+#elif HAVE_PAM_PAM_APPL_H
+# include <pam/pam_appl.h>
+# include <pam/pam_modules.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -195,7 +200,7 @@ pamk5_conv(struct pam_args *args, const char *message, int type,
  * into the krb5_prompt structs to return to the Kerberos library.
  */
 krb5_error_code
-pamk5_prompter_krb5(krb5_context context, void *data, const char *name,
+pamk5_prompter_krb5(krb5_context context UNUSED, void *data, const char *name,
                     const char *banner, int num_prompts, krb5_prompt *prompts)
 {
     struct pam_args *args = data;
