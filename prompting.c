@@ -200,7 +200,7 @@ pamk5_conv(struct pam_args *args, const char *message, int type,
  * into the krb5_prompt structs to return to the Kerberos library.
  */
 krb5_error_code
-pamk5_prompter_krb5(krb5_context context, void *data, const char *name,
+pamk5_prompter_krb5(krb5_context context UNUSED, void *data, const char *name,
                     const char *banner, int num_prompts, krb5_prompt *prompts)
 {
     struct pam_args *args = data;

@@ -40,7 +40,7 @@ pamk5_should_ignore(struct pam_args *args, PAM_CONST char *username)
     }
     if (args->minimum_uid > 0) {
         pwd = pamk5_compat_getpwnam(args, username);
-        if (pwd != NULL && pwd->pw_uid < args->minimum_uid) {
+        if (pwd != NULL && pwd->pw_uid < (unsigned long) args->minimum_uid) {
             pamk5_debug(args, "ignoring low-UID user (%lu < %d)",
                         (unsigned long) pwd->pw_uid, args->minimum_uid);
             return 1;

@@ -140,7 +140,8 @@ pamk5_context_free(struct context *ctx)
  * pamk5_context_free.
  */
 void
-pamk5_context_destroy(pam_handle_t *pamh, void *data, int pam_end_status)
+pamk5_context_destroy(pam_handle_t *pamh UNUSED, void *data,
+                      int pam_end_status UNUSED)
 {
     struct context *ctx = (struct context *) data;
 

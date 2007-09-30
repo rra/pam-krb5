@@ -12,6 +12,10 @@ pam-krb5 3.8 (unreleased)
     Fix configure and Makefile glue so that Mac OS X and HP-UX have a
     chance of working (still untested).
 
+    Add a make warnings target with aggressive gcc warning options.  Treat
+    negative minimum UIDs as zero so that UID comparisons can always be
+    done unsigned.  Add casts and unused attributes as needed.
+
 pam-krb5 3.7 (2007-09-29)
 
     If given an explicit keytab path to use for credential verification,
