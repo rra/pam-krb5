@@ -200,9 +200,9 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     struct context *ctx = NULL;
     struct pam_args *args;
     krb5_creds *creds = NULL;
-    int pamret;
+    int pamret, ccfd;
     char cache_name[] = "/tmp/krb5cc_pam_XXXXXX";
-    int ccfd;
+    int set_context = 0;
 
     args = pamk5_args_parse(pamh, flags, argc, argv);
     if (args == NULL) {
@@ -215,14 +215,6 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     if (pamret != PAM_SUCCESS)
         goto done;
     ctx = args->ctx;
-
-    /* Do this first so pamk5_context_destroy magically cleans up for us. */
-    pamret = pam_set_data(pamh, "ctx", ctx, pamk5_context_destroy);
-    if (pamret != PAM_SUCCESS) {
-        pamk5_context_free(ctx);
-        pamret = PAM_SERVICE_ERR;
-        goto done;
-    }
 
     /* Check whether we should ignore this user. */
     if (pamk5_should_ignore(args, ctx->name)) {
@@ -241,6 +233,15 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
         pamk5_debug(args, "failed authorization check");
         goto done;
     }
+
+    /* Now that we know we're successful, we can store the context. */
+    pamret = pam_set_data(pamh, "ctx", ctx, pamk5_context_destroy);
+    if (pamret != PAM_SUCCESS) {
+        pamk5_context_free(ctx);
+        pamret = PAM_SERVICE_ERR;
+        goto done;
+    }
+    set_context = 1;
 
     /* Store the obtained credentials in a temporary cache. */
     if (args->no_ccache)
@@ -274,10 +275,16 @@ done:
 
     /*
      * Clear the context on failure so that the account management module
-     * knows that we didn't authenticate with Kerberos.
+     * knows that we didn't authenticate with Kerberos.  Only clear the
+     * context if we set it.  Otherwise, we may be blowing away the context of
+     * a previous successful authentication.
      */
-    if (pamret != PAM_SUCCESS)
-        pam_set_data(pamh, "ctx", NULL, NULL);
+    if (pamret != PAM_SUCCESS) {
+        if (set_context)
+            pam_set_data(pamh, "ctx", NULL, NULL);
+        else
+            pamk5_context_free(ctx);
+    }
     pamk5_args_free(args);
     return pamret;
 }

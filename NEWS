@@ -1,5 +1,14 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 3.7 (unreleased)
+
+    When authenticating, don't store our context data until after
+    authentication has succeeded.  Otherwise, we may destroy the ticket
+    cache of a previous successful authentication.  This bug would only
+    affect configurations where pam_krb5 was run multiple times with
+    different settings, such as multiple realms.  Thanks to Dave Botsch
+    for the report.
+
 pam-krb5 3.6 (2007-09-18)
 
     When the local user doesn't exist and search_k5login is enabled, fall
