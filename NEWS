@@ -18,10 +18,21 @@ pam-krb5 3.7 (2007-09-29)
     Use pam_modutil_getpwnam instead of getpwnam if available for better
     thread safety.
 
+    Don't store PAM data unless we're saving a ticket cache.  All other
+    calls use it for is to find the ticket cache, so without a cache it's
+    pointless and means we run the risk of stomping on ourselves in
+    multithreaded programs.
+
+    Still canonicalize the PAM user before returning when not saving a
+    ticket cache.
+
     Fix determination of linker flags on non-x86_64 Linux.  Always link
     with -fPIC when using GCC, just in case.
 
     Add compilation options for Mac OS X and HP-UX (untested).
+
+    Use pam_krb5 instead of ctx for our PAM data name to reduce the
+    chances of collision.
 
 pam-krb5 3.6 (2007-09-18)
 

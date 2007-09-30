@@ -326,8 +326,10 @@ be set in general, but is useful as part of the PAM configuration for a
 particular service that uses PAM for authentication but isn't creating
 user sessions and doesn't want the overhead of ever writing the user
 credentials to disk.  When using this option, the application should only
-call pam_authenticate(); other functions like pam_setcred() and
-pam_start_session() don't make sense with this option.
+call pam_authenticate(); other functions like pam_setcred(),
+pam_start_session(), and pam_acct_mgmt() don't make sense with this
+option.  Don't use this option if the application needs PAM account and
+session management calls.
 
 This option is only applicable to the auth group.
 

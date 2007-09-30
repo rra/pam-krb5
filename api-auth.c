@@ -234,8 +234,17 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
         goto done;
     }
 
+    /* Reset PAM_USER in case we canonicalized. */
+    pamret = pam_set_item(args->pamh, PAM_USER, ctx->name);
+    if (pamret != PAM_SUCCESS)
+        pamk5_debug_pam(args, "cannot set PAM_USER", pamret);
+
+    /* Unless we're creating a ticket cache, we're done. */
+    if (args->no_ccache)
+        goto done;
+
     /* Now that we know we're successful, we can store the context. */
-    pamret = pam_set_data(pamh, "ctx", ctx, pamk5_context_destroy);
+    pamret = pam_set_data(pamh, "pam_krb5", ctx, pamk5_context_destroy);
     if (pamret != PAM_SUCCESS) {
         pamk5_context_free(ctx);
         pamret = PAM_SERVICE_ERR;
@@ -244,8 +253,6 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     set_context = 1;
 
     /* Store the obtained credentials in a temporary cache. */
-    if (args->no_ccache)
-        goto done;
     ccfd = mkstemp(cache_name);
     if (ccfd < 0) {
         pamk5_error(args, "mkstemp(\"%s\") failed: %s", cache_name,
@@ -260,11 +267,6 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     pamret = set_krb5ccname(args, cache_name, "PAM_KRB5CCNAME");
     if (pamret != PAM_SUCCESS)
         goto done;
-
-    /* Reset PAM_USER in case we canonicalized. */
-    pamret = pam_set_item(args->pamh, PAM_USER, ctx->name);
-    if (pamret != PAM_SUCCESS)
-        pamk5_debug_pam(args, "cannot set PAM_USER", pamret);
 
 done:
     if (creds != NULL) {
@@ -281,7 +283,7 @@ done:
      */
     if (pamret != PAM_SUCCESS) {
         if (set_context)
-            pam_set_data(pamh, "ctx", NULL, NULL);
+            pam_set_data(pamh, "pam_krb5", NULL, NULL);
         else
             pamk5_context_free(ctx);
     }
@@ -415,7 +417,7 @@ create_session_context(struct pam_args *args)
      * further calls to session or account management, which OpenSSH does keep
      * the context for.
      */
-    pamret = pam_set_data(args->pamh, "ctx", ctx, pamk5_context_destroy);
+    pamret = pam_set_data(args->pamh, "pam_krb5", ctx, pamk5_context_destroy);
     if (pamret != PAM_SUCCESS) {
         pamk5_debug_pam(args, "cannot set context data", pamret);
         goto fail;
@@ -463,7 +465,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
      * ticket cache as well.
      */
     if (flags & PAM_DELETE_CRED) {
-        pamret = pam_set_data(pamh, "ctx", NULL, NULL);
+        pamret = pam_set_data(pamh, "pam_krb5", NULL, NULL);
         args->ctx = NULL;
         goto done;
     }

@@ -203,7 +203,8 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
             pamret = PAM_AUTHTOK_ERR;
             goto done;
         }
-        pamret = pam_set_data(pamh, "ctx", args->ctx, pamk5_context_destroy);
+        pamret = pam_set_data(pamh, "pam_krb5", args->ctx,
+                              pamk5_context_destroy);
         if (pamret != PAM_SUCCESS) {
             pamk5_debug_pam(args, "cannot set context data", pamret);
             pamret = PAM_AUTHTOK_ERR;
