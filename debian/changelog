@@ -8,8 +8,8 @@ libpam-krb5 (3.7-1) unstable; urgency=low
     - Use pam_modutil_getpwnam for better thread safety.
     - Don't store PAM data unless saving a ticket cache.
     - Restore safer linker flags, broken with the last release.
-  * Swap Sam and I as maintainer and uploaders, as I'm now the primary
-    maintainer.
+  * Swap Sam and I as maintainer and uploaders.  I'm now upstream and the
+    primary maintainer.
 
  -- Russ Allbery <rra@debian.org>  Sat, 29 Sep 2007 23:29:51 -0700
 

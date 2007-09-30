@@ -57,4 +57,4 @@ same name.  In this situation, you will probably also want to add the
 "search_k5login" option to the pam_krb5.so line in /etc/pam.d/common-auth;
 see the pam_krb5(5) man page for more information.
 
- -- Russ Allbery <rra@debian.org>, Fri, 11 Aug 2006 14:03:43
+ -- Russ Allbery <rra@debian.org>, Sat, 29 Sep 2007 23:34:24 -0700
