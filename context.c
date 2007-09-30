@@ -91,7 +91,7 @@ pamk5_context_fetch(struct pam_args *args)
 {
     int pamret;
 
-    pamret = pam_get_data(args->pamh, "ctx", (void *) &args->ctx);
+    pamret = pam_get_data(args->pamh, "pam_krb5", (void *) &args->ctx);
     if (pamret != PAM_SUCCESS)
         args->ctx = NULL;
     return (pamret == 0 && args->ctx == NULL) ? PAM_SERVICE_ERR : pamret;

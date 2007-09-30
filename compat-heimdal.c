@@ -20,6 +20,13 @@ pamk5_compat_free_data_contents(krb5_context c, krb5_data *data)
 }
 
 
+void
+pamk5_compat_free_keytab_contents(krb5_context c, krb5_keytab_entry *entry)
+{
+    krb5_kt_free_entry(c, entry);
+}
+
+
 #ifdef HAVE_KRB5_GET_ERROR_MESSAGE
 const char *
 pamk5_compat_get_error(krb5_context c, krb5_error_code code)

@@ -212,7 +212,7 @@ k5login_password_auth(struct pam_args *args, krb5_creds *creds,
      * exist, or the .k5login file cannot be read, fall back on the easy way
      * and assume ctx->princ is already set properly.
      */
-    pwd = getpwnam(ctx->name);
+    pwd = pamk5_compat_getpwnam(args, ctx->name);
     if (pwd != NULL) {
         len = strlen(pwd->pw_dir) + strlen("/.k5login");
         filename = malloc(len + 1);
@@ -385,6 +385,72 @@ done:
 
 
 /*
+ * Try to verify credentials by obtaining and checking a service ticket.  This
+ * is required to verify that no one is spoofing the KDC, but requires read
+ * access to a keytab with a valid key.  By default, the Kerberos library will
+ * silently succeed if no verification keys are available, but the user can
+ * change this by setting verify_ap_req_nofail in [libdefaults] in
+ * /etc/krb5.conf.
+ *
+ * The MIT Kerberos implementation of krb5_verify_init_creds hardwires the
+ * host key for the local system as the desired principal if no principal is
+ * given.  If we have an explicitly configured keytab, instead read that
+ * keytab, find the first principal in that keytab, and use that.
+ *
+ * Returns a Kerberos status code (0 for success).
+ */
+static krb5_error_code
+verify_creds(struct pam_args *args, krb5_creds *creds)
+{
+    krb5_verify_init_creds_opt opts;
+    krb5_keytab keytab = NULL;
+    krb5_kt_cursor cursor = NULL;
+    krb5_keytab_entry entry;
+    krb5_principal princ = NULL;
+    const char *message;
+    krb5_error_code retval;
+    krb5_context c = args->ctx->context;
+
+    memset(&entry, 0, sizeof(entry));
+    krb5_verify_init_creds_opt_init(&opts);
+    if (args->keytab) {
+        retval = krb5_kt_resolve(c, args->keytab, &keytab);
+        if (retval != 0) {
+            message = pamk5_compat_get_error(c, retval);
+            pamk5_error(args, "cannot open keytab %s: %s", args->keytab,
+                        message);
+            pamk5_compat_free_error(c, message);
+            keytab = NULL;
+        }
+        if (retval == 0)
+            retval = krb5_kt_start_seq_get(c, keytab, &cursor);
+        if (retval == 0)
+            retval = krb5_kt_next_entry(c, keytab, &entry, &cursor);
+        if (retval == 0)
+            retval = krb5_copy_principal(c, entry.principal, &princ);
+        if (retval != 0) {
+            message = pamk5_compat_get_error(c, retval);
+            pamk5_error(args, "error reading keytab %s: %s", args->keytab,
+                        message);
+            pamk5_compat_free_error(c, message);
+        }
+        if (entry.principal != NULL)
+            pamk5_compat_free_keytab_contents(c, &entry);
+        if (cursor != NULL)
+            krb5_kt_end_seq_get(c, keytab, &cursor);
+    }
+    retval = krb5_verify_init_creds(c, creds, princ, keytab, NULL, &opts);
+    if (retval != 0)
+        pamk5_error_krb5(args, "credential verification failed", retval);
+    if (princ != NULL)
+        krb5_free_principal(c, princ);
+    if (keytab != NULL)
+        krb5_kt_close(c, keytab);
+    return retval;
+}
+
+
+/*
  * Prompt the user for a password and authenticate the password with the KDC.
  * If correct, fill in creds with the obtained TGT or ticket.  service, if
  * non-NULL, specifies the service to get tickets for; the only interesting
@@ -397,11 +463,8 @@ pamk5_password_auth(struct pam_args *args, char *service, krb5_creds **creds)
 {
     struct context *ctx;
     krb5_get_init_creds_opt *opts = NULL;
-    krb5_verify_init_creds_opt verify_opts;
-    krb5_keytab keytab = NULL;
     int retval, retry, success;
     char *pass = NULL;
-    const char *message;
     int authtok = (service == NULL) ? PAM_AUTHTOK : PAM_OLDAUTHTOK;
 
     /* Sanity check and initialization. */
@@ -525,38 +588,19 @@ pamk5_password_auth(struct pam_args *args, char *service, krb5_creds **creds)
         }
         pass = NULL;
     } while (retry && retval == KRB5KRB_AP_ERR_BAD_INTEGRITY);
+    if (retval != 0)
+        pamk5_debug_krb5(args, "krb5_get_init_creds_password", retval);
 
 done:
     /*
      * If we think we succeeded, whether through the regular path or via
-     * PKINIT, try to verify the credentials by obtaining and checking a
-     * service ticket.  This is required to verify that no one is spoofing the
-     * KDC, but requires read access to a keytab with an appropriate key.  By
-     * default, the Kerberos library will silently succeed if no verification
-     * keys are available, but the user can change this by setting
-     * verify_ap_req_nofail in [libdefaults] in /etc/krb5.conf.
-     *
-     * Don't do this if we're authenticating for password changes (or any
-     * other case where we're not getting a TGT).  We can't get a service
-     * ticket from a kadmin/changepw ticket.
+     * PKINIT, try to verify the credentials.  Don't do this if we're
+     * authenticating for password changes (or any other case where we're not
+     * getting a TGT).  We can't get a service ticket from a kadmin/changepw
+     * ticket.
      */
-    if (retval == 0 && service == NULL) {
-        krb5_verify_init_creds_opt_init(&verify_opts);
-        if (args->keytab) {
-            retval = krb5_kt_resolve(ctx->context, args->keytab, &keytab);
-            if (retval != 0) {
-                message = pamk5_compat_get_error(ctx->context, retval);
-                pamk5_error(args, "cannot open keytab %s: %s", args->keytab,
-                            message);
-                pamk5_compat_free_error(ctx->context, message);
-                keytab = NULL;
-            }
-        }
-        retval = krb5_verify_init_creds(ctx->context, *creds, NULL, keytab,
-                                        NULL, &verify_opts);
-        if (retval != 0)
-            pamk5_error_krb5(args, "credential verification failed", retval);
-    }
+    if (retval == 0 && service == NULL)
+        retval = verify_creds(args, *creds);
 
     /*
      * If we failed, free any credentials we have sitting around and return
@@ -565,7 +609,6 @@ done:
     if (retval == 0)
         retval = PAM_SUCCESS;
     else {
-        pamk5_debug_krb5(args, "krb5_get_init_creds_password", retval);
         if (*creds != NULL) {
             krb5_free_cred_contents(ctx->context, *creds);
             free(*creds);

@@ -1,14 +1,8 @@
                            pam-krb5 To-Do List
 
- * Add an option to specify the principal to use for authentication
-   verification.
-
  * The PAM option parsing is repetitive code that involves counting the
    lengths of strings.  It should be possible to replace most of it with
    some carefully-chosen macros.
-
- * Add an option to prompt the user for a Kerberos principal to use for
-   authentication.
 
  * The PKINIT code for Heimdal involves too many #ifdefs right now for my
    taste.  Find a way to restructure it to only wrap the main PKINIT
@@ -18,3 +12,6 @@
    allocate memory.  Generally, we just don't set the parameter.  This may
    not always be safe, or may lead to unexpected behavior.  We should
    always check memory allocation failures and abort PAM if we see any.
+   Unfortunately, the profile library doesn't return errors on memory
+   allocation failure, which makes this mostly futile until there's a
+   better profile library API.
