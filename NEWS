@@ -15,6 +15,9 @@ pam-krb5 3.7 (unreleased)
     different settings, such as multiple realms.  Thanks to Dave Botsch
     for the report.
 
+    Use pam_modutil_getpwnam instead of getpwnam if available for better
+    thread safety.
+
     Fix determination of linker flags on non-x86_64 Linux.  Always link
     with -fPIC when using GCC, just in case.
 

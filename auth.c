@@ -212,7 +212,7 @@ k5login_password_auth(struct pam_args *args, krb5_creds *creds,
      * exist, or the .k5login file cannot be read, fall back on the easy way
      * and assume ctx->princ is already set properly.
      */
-    pwd = getpwnam(ctx->name);
+    pwd = pamk5_compat_getpwnam(args, ctx->name);
     if (pwd != NULL) {
         len = strlen(pwd->pw_dir) + strlen("/.k5login");
         filename = malloc(len + 1);

@@ -517,7 +517,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
      * pam_authenticate, but for either pam_setcred (other than DELETE) or for
      * pam_open_session, the user must be a local account.
      */
-    pw = getpwnam(ctx->name);
+    pw = pamk5_compat_getpwnam(args, ctx->name);
     if (pw == NULL) {
         pamk5_debug(args, "getpwnam failed for %s", ctx->name);
         pamret = PAM_USER_UNKNOWN;

@@ -11,7 +11,10 @@ AC_PROG_INSTALL
 AC_PROG_MAKE_SET
 AC_CANONICAL_HOST
 RRA_LIB_KRB5
+AC_SEARCH_LIBS([pam_set_data], [pam])
+AC_CHECK_FUNCS([pam_modutil_getpwnam])
 RRA_HEADER_PAM_CONST
+AC_CHECK_HEADERS([security/pam_modutil.h])
 
 dnl Crank up the warnings if we're using GCC.
 if test "$GCC" = "yes" ; then
