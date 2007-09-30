@@ -1,5 +1,21 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 3.8 (2007-09-30)
+
+    krb5_get_init_creds_opt_alloc doesn't initialize the returned
+    structure with the default flags in MIT Kerberos 1.6, which meant that
+    users with expired passwords were not being prompted to change their
+    password but just rejected.  Fixed by always calling _init before
+    setting the credential flags, regardless of the provenance of the opt
+    structure.  Thanks, Michael Richters.
+
+    Fix configure and Makefile glue so that Mac OS X and HP-UX have a
+    chance of working (still untested).
+
+    Add a make warnings target with aggressive gcc warning options.  Treat
+    negative minimum UIDs as zero so that UID comparisons can always be
+    done unsigned.  Add casts and unused attributes as needed.
+
 pam-krb5 3.7 (2007-09-29)
 
     If given an explicit keytab path to use for credential verification,

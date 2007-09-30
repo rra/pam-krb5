@@ -18,6 +18,7 @@ mandir		= @mandir@
 CC		= @CC@
 CFLAGS		= @CFLAGS@
 CPPFLAGS	= -I. -I$(srcdir) @CPPFLAGS@
+LD		= @LD@
 LDFLAGS		= @LDFLAGS@
 LIBS		= @LIBS@
 
@@ -32,7 +33,7 @@ OBJECTS		= $(SOURCES:.c=.o)
 all: pam_krb5.so $(srcdir)/pam_krb5.5
 
 pam_krb5.so: $(OBJECTS)
-	$(CC) -o $@ $(LDFLAGS) $(OBJECTS) $(LIBS)
+	$(LD) -o $@ $(LDFLAGS) $(OBJECTS) $(LIBS)
 	chmod 644 $@
 
 $(srcdir)/pam_krb5.5: $(srcdir)/pam_krb5.pod
@@ -45,6 +46,16 @@ install: pam_krb5.so $(srcdir)/pam_krb5.5
 	$(INSTALL_DATA) pam_krb5.so $(DESTDIR)$(pamdir)/pam_krb5.so
 	$(INSTALL_DATA) $(srcdir)/pam_krb5.5 \
 	    $(DESTDIR)$(mandir)/man5/pam_krb5.5
+
+# A set of flags for warnings.  Add -O because gcc won't find some warnings
+# without optimization turned on, and add -DDEBUG=1 so we'll also compile all
+# debugging code and test it.
+WARNINGS = -g -O -fPIC -DDEBUG=1 -Wall -W -Wendif-labels -Wpointer-arith \
+	-Wbad-function-cast -Wwrite-strings -Wstrict-prototypes \
+	-Wmissing-prototypes -Wnested-externs -Werror
+
+warnings:
+	$(MAKE) CFLAGS='$(WARNINGS)'
 
 # This target only works when builddir == srcdir, at least for now.
 dist: pam_krb5.5

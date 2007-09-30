@@ -53,7 +53,6 @@ pamk5_compat_opt_alloc(krb5_context c, krb5_get_init_creds_opt **opts)
     *opts = calloc(1, sizeof(krb5_get_init_creds_opt));
     if (opts == NULL)
         return ENOMEM;
-    krb5_get_init_creds_opt_init(*opts);
     return 0;
 }
 
