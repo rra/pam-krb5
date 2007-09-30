@@ -29,30 +29,53 @@ dnl paths.
 dnl
 dnl More platforms could be handled here.  Contributions welcome.
 case "$host" in
-i[345]86-*-linux*)
-    CFLAGS="-fPIC $CFLAGS"
-    LDFLAGS="-shared -Wl,-z,defs -Wl,-Bsymbolic $LDFLAGS"
+*-darwin*)
+    if test "$GCC" = "yes" ; then
+        LD="$CC"
+        LDFLAGS="-bundle $LDFLAGS"
+    else
+        AC_MSG_ERROR([Only know compiler flags for gcc on this platform])
+    fi
+    ;;
+*-hpux*)
+    if test "$GCC" = "yes" ; then
+        CFLAGS="-fPIC $CFLAGS"
+        LD="$CC"
+        LDFLAGS="-fPIC -shared -Wl,-Bsymbolic $LDFLAGS"
+    else
+        CFLAGS="+z $CFLAGS"
+        LD="ld"
+        LDFLAGS="+vshlibunsats -b $LDFLAGS"
+    fi
     ;;
 x86_64-*-linux*)
     CFLAGS="-fPIC $CFLAGS"
-    LDFLAGS="-shared -Wl,-z,defs -Wl,-Bsymbolic $LDFLAGS"
+    LD="$CC"
+    LDFLAGS="-fPIC -shared -Wl,-z,defs -Wl,-Bsymbolic $LDFLAGS"
     if test x"$libdir" = x'${exec_prefix}/lib' ; then
         libdir='${exec_prefix}/lib64'
     fi
     ;;
+*-linux*)
+    CFLAGS="-fPIC $CFLAGS"
+    LD="$CC"
+    LDFLAGS="-fPIC -shared -Wl,-z,defs -Wl,-Bsymbolic $LDFLAGS"
+    ;;
 *-solaris2*)
     if test "$GCC" = "yes" ; then
         CFLAGS="-fPIC $CFLAGS"
-        LDFLAGS="-shared -Wl,-Bsymbolic $LDFLAGS"
+        LDFLAGS="-fPIC -shared -Wl,-Bsymbolic $LDFLAGS"
     else
         CFLAGS="-KPIC $CFLAGS"
         LDFLAGS="-G -xldscope=symbolic $LDFLAGS"
     fi
+    LD="$CC"
     ;;
 *)
     if test "$GCC" = "yes" ; then
         CFLAGS="-fPIC $CFLAGS"
-        LDFLAGS="-shared $LDFLAGS"
+        LD="$CC"
+        LDFLAGS="-fPIC -shared $LDFLAGS"
     else
         AC_MSG_ERROR([Only know compiler flags for gcc on this platform])
     fi

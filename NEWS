@@ -9,6 +9,11 @@ pam-krb5 3.7 (unreleased)
     different settings, such as multiple realms.  Thanks to Dave Botsch
     for the report.
 
+    Fix determination of linker flags on non-x86_64 Linux.  Always link
+    with -fPIC when using GCC, just in case.
+
+    Add compilation options for Mac OS X and HP-UX (untested).
+
 pam-krb5 3.6 (2007-09-18)
 
     When the local user doesn't exist and search_k5login is enabled, fall
