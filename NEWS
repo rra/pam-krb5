@@ -1,6 +1,6 @@
                       User-Visible pam-krb5 Changes
 
-pam-krb5 3.8 (unreleased)
+pam-krb5 3.8 (2007-09-30)
 
     krb5_get_init_creds_opt_alloc doesn't initialize the returned
     structure with the default flags in MIT Kerberos 1.6, which meant that
