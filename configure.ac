@@ -16,6 +16,11 @@ AC_CHECK_FUNCS([pam_modutil_getpwnam])
 RRA_HEADER_PAM_CONST
 AC_CHECK_HEADERS([security/pam_modutil.h])
 
+dnl Mac OS X calls its PAM headers something different than everyone else.
+AC_CHECK_HEADERS([security/pam_appl.h], ,
+    [AC_CHECK_HEADERS([pam/pam_appl.h], ,
+        [AC_MSG_ERROR([No PAM header files found])])])
+
 dnl Crank up the warnings if we're using GCC.
 if test "$GCC" = "yes" ; then
     CFLAGS="-Wall $CFLAGS"
@@ -84,6 +89,7 @@ x86_64-*-linux*)
     fi
     ;;
 esac
+AC_SUBST([LD])
 
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_FILES([Makefile])

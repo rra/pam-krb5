@@ -1,5 +1,10 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 3.8 (unreleased)
+
+    Fix configure and Makefile glue so that Mac OS X and HP-UX have a
+    chance of working (still untested).
+
 pam-krb5 3.7 (2007-09-29)
 
     If given an explicit keytab path to use for credential verification,

@@ -19,8 +19,13 @@
 #include <krb5.h>
 #include <limits.h>
 #include <pwd.h>
-#include <security/pam_appl.h>
-#include <security/pam_modules.h>
+#ifdef HAVE_SECURITY_PAM_APPL_H
+# include <security/pam_appl.h>
+# include <security/pam_modules.h>
+#elif HAVE_PAM_PAM_APPL_H
+# include <pam/pam_appl.h>
+# include <pam/pam_modules.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

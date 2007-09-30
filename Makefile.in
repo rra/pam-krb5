@@ -18,6 +18,7 @@ mandir		= @mandir@
 CC		= @CC@
 CFLAGS		= @CFLAGS@
 CPPFLAGS	= -I. -I$(srcdir) @CPPFLAGS@
+LD		= @LD@
 LDFLAGS		= @LDFLAGS@
 LIBS		= @LIBS@
 
@@ -32,7 +33,7 @@ OBJECTS		= $(SOURCES:.c=.o)
 all: pam_krb5.so $(srcdir)/pam_krb5.5
 
 pam_krb5.so: $(OBJECTS)
-	$(CC) -o $@ $(LDFLAGS) $(OBJECTS) $(LIBS)
+	$(LD) -o $@ $(LDFLAGS) $(OBJECTS) $(LIBS)
 	chmod 644 $@
 
 $(srcdir)/pam_krb5.5: $(srcdir)/pam_krb5.pod
