@@ -2,6 +2,13 @@
 
 pam-krb5 3.8 (unreleased)
 
+    krb5_get_init_creds_opt_alloc doesn't initialize the returned
+    structure with the default flags in MIT Kerberos 1.6, which meant that
+    users with expired passwords were not being prompted to change their
+    password but just rejected.  Fixed by always calling _init before
+    setting the credential flags, regardless of the provenance of the opt
+    structure.  Thanks, Michael Richters.
+
     Fix configure and Makefile glue so that Mac OS X and HP-UX have a
     chance of working (still untested).
 

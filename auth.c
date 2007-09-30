@@ -136,6 +136,7 @@ static void
 set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
                        int service)
 {
+    krb5_get_init_creds_opt_init(opts);
 #ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_DEFAULT_FLAGS
     krb5_get_init_creds_opt_set_default_flags(args->ctx->context, "pam",
                                               args->realm_data, opts);
