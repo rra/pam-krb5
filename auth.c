@@ -549,7 +549,7 @@ pamk5_password_auth(struct pam_args *args, const char *service,
     retry = args->try_first_pass ? 1 : 0;
     if (args->try_first_pass || args->use_first_pass || args->use_authtok)
         retval = pam_get_item(args->pamh, authtok, (void *) &pass);
-    if (args->use_authtok && retval != PAM_SUCCESS) {
+    if (args->use_authtok && (retval != PAM_SUCCESS || pass == NULL)) {
         pamk5_debug_pam(args, "no stored password", retval);
         retval = PAM_SERVICE_ERR;
         goto done;

@@ -1,5 +1,12 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 3.9 (unreleased)
+
+    If use_authtok is set, fail even if we can retrieve the stored PAM
+    password if that password is set to NULL.  Apparently that can happen
+    in some cases, such as with pam_cracklib.  Thanks to Christian Holler
+    for the diagnosis and a patch.
+
 pam-krb5 3.8 (2007-09-30)
 
     krb5_get_init_creds_opt_alloc doesn't initialize the returned

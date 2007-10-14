@@ -55,7 +55,7 @@ get_new_password(struct pam_args *args, char **pass)
         if (tmp != NULL)
             *pass = strdup((const char *) tmp);
     }
-    if (args->use_authtok && pamret != PAM_SUCCESS) {
+    if (args->use_authtok && (pamret != PAM_SUCCESS || *pass == NULL)) {
         pamk5_debug_pam(args, "no stored password", pamret);
         pamret = PAM_AUTHTOK_ERR;
         goto done;
