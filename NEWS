@@ -7,6 +7,11 @@ pam-krb5 3.9 (unreleased)
     in some cases, such as with pam_cracklib.  Thanks to Christian Holler
     for the diagnosis and a patch.
 
+    Document the PAM limitation that causes the password PAM stack to
+    continue even if pam_krb5 is marked requisite and fails due to KDC
+    password strength restrictions or network failure.  Thanks, Christian
+    Holler and Tomas Mraz.
+
 pam-krb5 3.8 (2007-09-30)
 
     krb5_get_init_creds_opt_alloc doesn't initialize the returned
