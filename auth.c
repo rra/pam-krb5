@@ -632,6 +632,7 @@ done:
             retval = PAM_ACCT_EXPIRED;
             break;
         case KRB5_KDC_UNREACH:
+        case KRB5_REALM_CANT_RESOLVE:
             retval = PAM_AUTHINFO_UNAVAIL;
             break;
         default:
