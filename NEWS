@@ -16,6 +16,8 @@ pam-krb5 3.9 (unreleased)
     Return PAM_AUTHINFO_UNAVAIL instead of PAM_AUTH_ERR when unable to
     resolve the Kerberos realm.  Thanks, Frank Cornelissen.
 
+    Add a new debugging section to the README.
+
     Document the PAM limitation that causes the password PAM stack to
     continue even if pam_krb5 is marked requisite and fails due to KDC
     password strength restrictions or network failure.  Thanks, Christian
