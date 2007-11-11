@@ -7,6 +7,10 @@ pam-krb5 3.9 (unreleased)
     in some cases, such as with pam_cracklib.  Thanks to Christian Holler
     for the diagnosis and a patch.
 
+    Fix portability issues with Heimdal, versions of PAM that don't
+    provide pam_modutil_getpwnam, and compiler warnings when building
+    PKINIT support.  Thanks, Martin von Gagern.
+
     Return PAM_AUTHINFO_UNAVAIL instead of PAM_AUTH_ERR when unable to
     resolve the Kerberos realm.  Thanks, Frank Cornelissen.
 
