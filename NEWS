@@ -11,6 +11,8 @@ pam-krb5 3.9 (unreleased)
     provide pam_modutil_getpwnam, and compiler warnings when building
     PKINIT support.  Thanks, Martin von Gagern.
 
+    Fix parsing of the keytab PAM option.  Thanks, Markus Moeller.
+
     Return PAM_AUTHINFO_UNAVAIL instead of PAM_AUTH_ERR when unable to
     resolve the Kerberos realm.  Thanks, Frank Cornelissen.
 

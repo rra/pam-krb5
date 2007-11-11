@@ -345,7 +345,7 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
         else if (strncmp(argv[i], "keytab=", 7) == 0) {
             if (args->keytab != NULL)
                 free(args->keytab);
-            args->pkinit_anchors = strdup(&argv[i][strlen("keytab=")]);
+            args->keytab = strdup(&argv[i][strlen("keytab=")]);
         }
         else if (strncmp(argv[i], "minimum_uid=", 12) == 0)
             args->minimum_uid = atoi(&argv[i][strlen("minimum_uid=")]);
