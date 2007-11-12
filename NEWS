@@ -7,6 +7,16 @@ pam-krb5 3.9 (unreleased)
     in some cases, such as with pam_cracklib.  Thanks to Christian Holler
     for the diagnosis and a patch.
 
+    Add a new clear_on_fail option for the password group.  If set, when a
+    password change fails, set PAM_AUTHTOK to NULL so that subsequent
+    modules in the PAM stack with use_authtok set will also fail.  Just
+    returning failure doesn't abort the stack on the second pass when
+    actual password changes are made.  This is not the default since it
+    interferes with other desirable PAM configurations.  It's useful
+    primarily when using the PAM stack to synchronize passwords between
+    multiple environments.  Thanks to Christian Holler and Tomas Mraz for
+    the analysis.
+
     Fix portability issues with Heimdal, versions of PAM that don't
     provide pam_modutil_getpwnam, and compiler warnings when building
     PKINIT support.  Thanks, Martin von Gagern.
@@ -17,11 +27,6 @@ pam-krb5 3.9 (unreleased)
     resolve the Kerberos realm.  Thanks, Frank Cornelissen.
 
     Add a new debugging section to the README.
-
-    Document the PAM limitation that causes the password PAM stack to
-    continue even if pam_krb5 is marked requisite and fails due to KDC
-    password strength restrictions or network failure.  Thanks, Christian
-    Holler and Tomas Mraz.
 
 pam-krb5 3.8 (2007-09-30)
 

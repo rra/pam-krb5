@@ -62,6 +62,7 @@ struct pam_args {
     char *banner;               /* Addition to password changing prompts. */
     char *ccache;               /* Path to write ticket cache to. */
     char *ccache_dir;           /* Directory for ticket cache. */
+    int clear_on_fail;          /* Delete saved password on change failure. */
     int debug;                  /* Log debugging information. */
     int expose_account;         /* Display principal in password prompts. */
     int forwardable;            /* Obtain forwardable tickets. */

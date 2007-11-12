@@ -236,6 +236,38 @@ other than file as the default).
 This option can be set in F<krb5.conf> and is only applicable to the auth
 and session groups.
 
+=item clear_on_fail
+
+When changing passwords, PAM first does a preliminary check through the
+complete password stack, and then calls each module again to do the
+password change.  After that preliminary check, the order of module
+invocation is fixed.  This means that even if the Kerberos v5 password
+change fails (or if one of the other password changes in the stack fails),
+other password PAM modules in the stack will still be called even if the
+failing module is marked required or requisite.  When using multiple
+password PAM modules to synchronize passwords between multiple systems
+when they change, this behavior can cause unwanted differences between the
+environments.
+
+Setting this option provides a way to work around this behavior.  If this
+option is set and a Kerberos password change is attempted and fails (due
+to network errors or password strength checking on the KDC, for example),
+this module will clear the stored password in the PAM stack.  This will
+force any subsequent modules that have use_authtok set to fail so that
+those environments won't get out of sync with the password in Kerberos.
+The Kerberos v5 PAM module will not meddle with the stored password if it
+skips the user due to configuration such as minimum_uid.
+
+Unfortunately, setting this option interferes with other desirable PAM
+configurations, such as attempting to change the password in Kerberos
+first and falling back on the local Unix password database if that fails.
+It therefore isn't the default.  Turn it on (and list pam_krb5 first after
+pam_cracklib if used) when synchronizing passwords between multiple
+environments.
+
+This option can be set in F<krb5.conf> and is only applicable to the
+password group.
+
 =item debug
 
 Log more verbose trace and debugging information to syslog at LOG_DEBUG
@@ -600,14 +632,6 @@ expired will not be prompted to change their password unless the KDC
 configuration for your realm in [realms] in krb5.conf contains a
 master_kdc setting or, if using DNS SRV records, you have a DNS entry for
 _kerberos-master as well as _kerberos.
-
-Due to a limitation in PAM's handling of password changes, failure to
-change the password in Kerberos due to strength checking in the KDC or
-network failures during the password change will not stop the rest of the
-PAM password stack from running even if pam_krb5 is marked as requisite
-(or the equivalent using the Linux [] syntax).  Be aware of this if you
-are using multiple password modules in a stack to synchronize password
-changes in multiple environments.
 
 Old versions of OpenSSH are known to call pam_authenticate followed by
 pam_setcred(PAM_REINITIALIZE_CRED) without first calling pam_open_session,

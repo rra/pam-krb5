@@ -168,6 +168,22 @@ CONFIGURING
       password required   pam_unix.so nullok obscure min=4 max=8 md5
       password required   pam_krb5.so use_authtok minimum_uid=1000
 
+  If you have multiple environments that you want to synchronize and you
+  don't want password changes to continue if the Kerberos password change
+  fails, use the clear_on_fail option.  For example:
+
+      password required   pam_krb5.so clear_on_fail minimum_uid=1000
+      password required   pam_unix.so use_authtok obscure md5
+      password required   pam_smbpass.so use_authtok
+
+  In this case, if pam_krb5 cannot change the password (due to password
+  strength rules on the KDC, for example), it will clear the stored
+  password (because of the clear_on_fail option), and since pam_unix and
+  pam_smbpass are both configured with use_authtok, they will both fail.
+  clear_on_fail is not the default because it would interfere with the
+  more common pattern of falling back to local passwords if the user
+  doesn't exist in Kerberos.
+
   There are many, many other possibilities.  See the Linux PAM
   documentation for all the configuration options.
 
