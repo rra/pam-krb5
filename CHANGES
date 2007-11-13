@@ -1,3 +1,47 @@
+  222 Russ Allbery	2007-11-12
+      Release 3.9.
+
+  221 Russ Allbery	2007-11-11
+      Add a new clear_on_fail option for the password group.  If set, when a
+      password change fails, set PAM_AUTHTOK to NULL so that subsequent
+      modules in the PAM stack with use_authtok set will also fail.  Just
+      returning failure doesn't abort the stack on the second pass when
+      actual password changes are made.  This is not the default since it
+      interferes with other desirable PAM configurations.  It's useful
+      primarily when using the PAM stack to synchronize passwords between
+      multiple environments.  Thanks to Christian Holler and Tomas Mraz for
+      the analysis.
+      
+      Revert earlier documentation of the limitation of the password stack,
+      since this documentation supersedes it.
+
+  220 Russ Allbery	2007-11-10
+      Add a new debugging section to the README.
+
+  219 Russ Allbery	2007-11-10
+      Fix parsing of the keytab PAM option.  Thanks, Markus Moeller.
+
+  218 Russ Allbery	2007-11-10
+      Fix portability issues with Heimdal, versions of PAM that don't
+      provide pam_modutil_getpwnam, and compiler warnings when building
+      PKINIT support.  Thanks, Martin von Gagern.
+
+  217 Russ Allbery	2007-11-10
+      Return PAM_AUTHINFO_UNAVAIL instead of PAM_AUTH_ERR when unable to
+      resolve the Kerberos realm.  Thanks, Frank Cornelissen.
+
+  216 Russ Allbery	2007-10-14
+      Document the PAM limitation that causes the password PAM stack to
+      continue even if pam_krb5 is marked requisite and fails due to KDC
+      password strength restrictions or network failure.  Thanks, Christian
+      Holler and Tomas Mraz.
+
+  215 Russ Allbery	2007-10-14
+      If use_authtok is set, fail even if we can retrieve the stored PAM
+      password if that password is set to NULL.  Apparently that can happen
+      in some cases, such as with pam_cracklib.  Thanks to Christian Holler
+      for the diagnosis and a patch.
+
   214 Russ Allbery	2007-09-30
       Release 3.8.
 

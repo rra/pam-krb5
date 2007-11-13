@@ -283,6 +283,7 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
         default_string(args, c, "banner", "Kerberos", &args->banner);
         default_string(args, c, "ccache", NULL, &args->ccache);
         default_string(args, c, "ccache_dir", "FILE:/tmp", &args->ccache_dir);
+        default_boolean(args, c, "clear_on_fail", 0, &args->clear_on_fail);
         default_boolean(args, c, "debug", 0, &args->debug);
         default_boolean(args, c, "expose_account", 0, &args->expose_account);
         default_boolean(args, c, "forwardable", 0, &args->forwardable);
@@ -332,6 +333,8 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
                 free(args->ccache_dir);
             args->ccache_dir = strdup(&argv[i][strlen("ccache_dir=")]);
         }
+        else if (strcmp(argv[i], "clear_on_fail") == 0)
+            args->clear_on_fail = 1;
         else if (strcmp(argv[i], "debug") == 0)
             args->debug = 1;
         else if (strcmp(argv[i], "expose_account") == 0)
@@ -345,7 +348,7 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
         else if (strncmp(argv[i], "keytab=", 7) == 0) {
             if (args->keytab != NULL)
                 free(args->keytab);
-            args->pkinit_anchors = strdup(&argv[i][strlen("keytab=")]);
+            args->keytab = strdup(&argv[i][strlen("keytab=")]);
         }
         else if (strncmp(argv[i], "minimum_uid=", 12) == 0)
             args->minimum_uid = atoi(&argv[i][strlen("minimum_uid=")]);

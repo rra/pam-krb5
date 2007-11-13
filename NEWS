@@ -1,5 +1,33 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 3.9 (2007-11-12)
+
+    If use_authtok is set, fail even if we can retrieve the stored PAM
+    password if that password is set to NULL.  Apparently that can happen
+    in some cases, such as with pam_cracklib.  Thanks to Christian Holler
+    for the diagnosis and a patch.
+
+    Add a new clear_on_fail option for the password group.  If set, when a
+    password change fails, set PAM_AUTHTOK to NULL so that subsequent
+    modules in the PAM stack with use_authtok set will also fail.  Just
+    returning failure doesn't abort the stack on the second pass when
+    actual password changes are made.  This is not the default since it
+    interferes with other desirable PAM configurations.  It's useful
+    primarily when using the PAM stack to synchronize passwords between
+    multiple environments.  Thanks to Christian Holler and Tomas Mraz for
+    the analysis.
+
+    Fix portability issues with Heimdal, versions of PAM that don't
+    provide pam_modutil_getpwnam, and compiler warnings when building
+    PKINIT support.  Thanks, Martin von Gagern.
+
+    Fix parsing of the keytab PAM option.  Thanks, Markus Moeller.
+
+    Return PAM_AUTHINFO_UNAVAIL instead of PAM_AUTH_ERR when unable to
+    resolve the Kerberos realm.  Thanks, Frank Cornelissen.
+
+    Add a new debugging section to the README.
+
 pam-krb5 3.8 (2007-09-30)
 
     krb5_get_init_creds_opt_alloc doesn't initialize the returned

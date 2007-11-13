@@ -11,6 +11,9 @@
 
 #include <errno.h>
 #include <krb5.h>
+#ifndef HAVE_PAM_MODUTIL_GETPWNAM
+# include <pwd.h>
+#endif
 #ifdef HAVE_SECURITY_PAM_MODUTIL_H
 # include <security/pam_modutil.h>
 #endif

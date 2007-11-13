@@ -1,3 +1,16 @@
+libpam-krb5 (3.9-1) unstable; urgency=low
+
+  * New upstream release.
+    - If use_authtok is set, fail if we retrieve a NULL password, since
+      that's how pam_cracklib rejects passwords.  (Closes: #447306)
+    - Add clear_on_fail option to clear the password on failed password
+      change to force later password modules using use_authtok to fail.
+    - Fix parsing of the keytab PAM option.
+    - Return PAM_AUTHINFO_UNAVAIL when unable to resolve the realm.
+    - Additional debugging information in README.
+
+ -- Russ Allbery <rra@debian.org>  Mon, 12 Nov 2007 16:36:41 -0800
+
 libpam-krb5 (3.8-1) unstable; urgency=low
 
   * New upstream release.
