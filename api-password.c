@@ -55,7 +55,7 @@ get_new_password(struct pam_args *args, char **pass)
         if (tmp != NULL)
             *pass = strdup((const char *) tmp);
     }
-    if (args->use_authtok && pamret != PAM_SUCCESS) {
+    if (args->use_authtok && (pamret != PAM_SUCCESS || *pass == NULL)) {
         pamk5_debug_pam(args, "no stored password", pamret);
         pamret = PAM_AUTHTOK_ERR;
         goto done;
@@ -114,10 +114,8 @@ password_change(struct pam_args *args, const char *pass)
     const char *message;
 
     /* Sanity check. */
-    if (args == NULL || args->ctx == NULL || args->ctx->creds == NULL) {
-        retval = PAM_AUTHTOK_ERR;
-        goto done;
-    }
+    if (args == NULL || args->ctx == NULL || args->ctx->creds == NULL)
+        return PAM_AUTHTOK_ERR;
     ctx = args->ctx;
 
     /* The actual change. */
@@ -155,6 +153,17 @@ password_change(struct pam_args *args, const char *pass)
     krb5_free_data_contents(ctx->context, &result_code_string);
 
 done:
+    /*
+     * On failure, when clear_on_fail is set, we set the new password to NULL
+     * so that subsequent password change PAM modules configured with
+     * use_authtok will also fail.  Otherwise, since the order of the stack is
+     * fixed once the pre-check function runs, subsequent modules would
+     * continue even when we failed.
+     */
+    if (retval != PAM_SUCCESS && args->clear_on_fail) {
+        if (pam_set_item(args->pamh, PAM_AUTHTOK, NULL))
+            pamk5_error(args, "error clearing password");
+    }
     return retval;
 }
 

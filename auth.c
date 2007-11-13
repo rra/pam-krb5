@@ -322,7 +322,7 @@ fail:
  * krb5_error_code.  If successful, the credentials will be stored in creds.
  */
 static krb5_error_code
-pkinit_auth(struct pam_args *args, char *service, krb5_creds **creds)
+pkinit_auth(struct pam_args *args, const char *service, krb5_creds **creds)
 {
     struct context *ctx = args->ctx;
     krb5_get_init_creds_opt *opts = NULL;
@@ -376,7 +376,7 @@ pkinit_auth(struct pam_args *args, char *service, krb5_creds **creds)
 
     /* Finally, do the actual work and return the results. */
     retval = krb5_get_init_creds_password(ctx->context, *creds, ctx->princ,
-                 NULL, pamk5_prompter_krb5, args, 0, service, opts);
+                 NULL, pamk5_prompter_krb5, args, 0, (char *) service, opts);
 
 done:
     pamk5_compat_opt_free(ctx->context, opts);
@@ -410,7 +410,8 @@ verify_creds(struct pam_args *args, krb5_creds *creds)
 {
     krb5_verify_init_creds_opt opts;
     krb5_keytab keytab = NULL;
-    krb5_kt_cursor cursor = NULL;
+    krb5_kt_cursor cursor;
+    int cursor_valid = 0;
     krb5_keytab_entry entry;
     krb5_principal princ = NULL;
     const char *message;
@@ -428,8 +429,10 @@ verify_creds(struct pam_args *args, krb5_creds *creds)
             pamk5_compat_free_error(c, message);
             keytab = NULL;
         }
-        if (retval == 0)
+        if (retval == 0) {
             retval = krb5_kt_start_seq_get(c, keytab, &cursor);
+            cursor_valid = 1;
+        }
         if (retval == 0)
             retval = krb5_kt_next_entry(c, keytab, &entry, &cursor);
         if (retval == 0)
@@ -442,7 +445,7 @@ verify_creds(struct pam_args *args, krb5_creds *creds)
         }
         if (entry.principal != NULL)
             pamk5_compat_free_keytab_contents(c, &entry);
-        if (cursor != NULL)
+        if (cursor_valid)
             krb5_kt_end_seq_get(c, keytab, &cursor);
     }
     retval = krb5_verify_init_creds(c, creds, princ, keytab, NULL, &opts);
@@ -549,7 +552,7 @@ pamk5_password_auth(struct pam_args *args, const char *service,
     retry = args->try_first_pass ? 1 : 0;
     if (args->try_first_pass || args->use_first_pass || args->use_authtok)
         retval = pam_get_item(args->pamh, authtok, (void *) &pass);
-    if (args->use_authtok && retval != PAM_SUCCESS) {
+    if (args->use_authtok && (retval != PAM_SUCCESS || pass == NULL)) {
         pamk5_debug_pam(args, "no stored password", retval);
         retval = PAM_SERVICE_ERR;
         goto done;
@@ -632,6 +635,7 @@ done:
             retval = PAM_ACCT_EXPIRED;
             break;
         case KRB5_KDC_UNREACH:
+        case KRB5_REALM_CANT_RESOLVE:
             retval = PAM_AUTHINFO_UNAVAIL;
             break;
         default:

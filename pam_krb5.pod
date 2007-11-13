@@ -236,6 +236,38 @@ other than file as the default).
 This option can be set in F<krb5.conf> and is only applicable to the auth
 and session groups.
 
+=item clear_on_fail
+
+When changing passwords, PAM first does a preliminary check through the
+complete password stack, and then calls each module again to do the
+password change.  After that preliminary check, the order of module
+invocation is fixed.  This means that even if the Kerberos v5 password
+change fails (or if one of the other password changes in the stack fails),
+other password PAM modules in the stack will still be called even if the
+failing module is marked required or requisite.  When using multiple
+password PAM modules to synchronize passwords between multiple systems
+when they change, this behavior can cause unwanted differences between the
+environments.
+
+Setting this option provides a way to work around this behavior.  If this
+option is set and a Kerberos password change is attempted and fails (due
+to network errors or password strength checking on the KDC, for example),
+this module will clear the stored password in the PAM stack.  This will
+force any subsequent modules that have use_authtok set to fail so that
+those environments won't get out of sync with the password in Kerberos.
+The Kerberos v5 PAM module will not meddle with the stored password if it
+skips the user due to configuration such as minimum_uid.
+
+Unfortunately, setting this option interferes with other desirable PAM
+configurations, such as attempting to change the password in Kerberos
+first and falling back on the local Unix password database if that fails.
+It therefore isn't the default.  Turn it on (and list pam_krb5 first after
+pam_cracklib if used) when synchronizing passwords between multiple
+environments.
+
+This option can be set in F<krb5.conf> and is only applicable to the
+password group.
+
 =item debug
 
 Log more verbose trace and debugging information to syslog at LOG_DEBUG
@@ -609,11 +641,11 @@ be created.  Since this behavior is indistinguishable at the PAM level
 from a screensaver, pam-krb5 when used with these old versions of OpenSSH
 will refresh the ticket cache of the OpenSSH daemon rather than setting up
 a new ticket cache for the user.  The resulting ticket cache will have the
-correct permissions (this is not a security concern), but will not be
-named correctly or referenced in the user's environment and will be
-overwritten by the next user login.  The best solution to this problem is
-to upgrade OpenSSH.  I'm not sure exactly when this problem was fixed, but
-at the very least OpenSSH 4.3 and later do not exhibit it.
+correct permissions, but will not be named correctly or referenced in the
+user's environment and will be overwritten by the next user login.  The
+best solution to this problem is to upgrade OpenSSH.  I'm not sure exactly
+when this problem was fixed, but at the very least OpenSSH 4.3 and later
+do not exhibit it.
 
 =head1 SEE ALSO
 
