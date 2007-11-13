@@ -1,6 +1,6 @@
                       User-Visible pam-krb5 Changes
 
-pam-krb5 3.9 (unreleased)
+pam-krb5 3.9 (2007-11-12)
 
     If use_authtok is set, fail even if we can retrieve the stored PAM
     password if that password is set to NULL.  Apparently that can happen
