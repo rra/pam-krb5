@@ -8,8 +8,9 @@ libpam-krb5 (3.9-1) unstable; urgency=low
     - Fix parsing of the keytab PAM option.
     - Return PAM_AUTHINFO_UNAVAIL when unable to resolve the realm.
     - Additional debugging information in README.
+  * Add Homepage control field.
 
- -- Russ Allbery <rra@debian.org>  Mon, 12 Nov 2007 16:36:41 -0800
+ -- Russ Allbery <rra@debian.org>  Mon, 12 Nov 2007 16:37:21 -0800
 
 libpam-krb5 (3.8-1) unstable; urgency=low
 
