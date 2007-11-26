@@ -40,6 +40,15 @@ timeouts, and this way such authentication is never attempted for a root
 login.  On Debian systems, regular user accounts normally start at UID
 1000; you may need to change this for local policy.
 
+This configuration will still require that users be listed in /etc/shadow,
+since otherwise the pam_unix account module will fail.  Normally, accounts
+that should only use Kerberos authentication should be created with
+adduser --disabled-password.  If you don't want the accounts to be listed
+in /etc/shadow at all (if, for example, you're using some other source
+than files for your nsswitch configuration), you can mark the pam_krb5
+account module as sufficient rather than required so that pam_unix isn't
+run.  This will mean that you won't be able to disable accounts locally.
+
 If you regularly use ticket forwarding (such as with Kerberos rlogin or
 ssh with GSSAPI support), you may wish to add the "forwardable" option to
 the pam_krb5.so line in /etc/pam.d/common-auth or equivalently set
@@ -57,4 +66,4 @@ same name.  In this situation, you will probably also want to add the
 "search_k5login" option to the pam_krb5.so line in /etc/pam.d/common-auth;
 see the pam_krb5(5) man page for more information.
 
- -- Russ Allbery <rra@debian.org>, Sat, 29 Sep 2007 23:34:24 -0700
+ -- Russ Allbery <rra@debian.org>, Mon, 26 Nov 2007 00:09:24 -0800

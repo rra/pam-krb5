@@ -1,3 +1,12 @@
+libpam-krb5 (3.9-2) UNRELEASED; urgency=low
+
+  * Document in README.Debian that accounts must still exist in
+    /etc/shadow when following the standard configuration and suggest an
+    alternate configuration when that isn't appropriate.  Thanks, Raoul
+    Borenius.  (Closes: #452592)
+
+ -- Russ Allbery <rra@debian.org>  Mon, 26 Nov 2007 00:12:52 -0800
+
 libpam-krb5 (3.9-1) unstable; urgency=low
 
   * New upstream release.
