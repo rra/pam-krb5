@@ -2,6 +2,11 @@
 
 pam-krb5 3.10 (unreleased)
 
+    The workaround for krb5_get_init_creds_opt_alloc problems in MIT
+    Kerberos 1.6 broke PKINIT support with Heimdal.  Only apply that
+    workaround when building against the MIT Kerberos libraries.  Thanks
+    to Jaakko Pero for the detailed report.
+
     If no_ccache is set, always exit successfully from pam_setcred or
     pam_open_session, even if we couldn't retrieve module data.  Thanks,
     Markus Moeller.
