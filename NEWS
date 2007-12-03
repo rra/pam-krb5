@@ -1,5 +1,11 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 3.10 (unreleased)
+
+    If no_ccache is set, always exit successfully from pam_setcred or
+    pam_open_session, even if we couldn't retrieve module data.  Thanks,
+    Markus Moeller.
+
 pam-krb5 3.9 (2007-11-12)
 
     If use_authtok is set, fail even if we can retrieve the stored PAM

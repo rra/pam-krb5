@@ -476,8 +476,10 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
     }
 
     /* If configured not to create a cache, we have nothing to do. */
-    if (args->no_ccache)
+    if (args->no_ccache) {
+        pamret = PAM_SUCCESS;
         goto done;
+    }
 
     /*
      * Reinitialization requested, which means that rather than creating a new
