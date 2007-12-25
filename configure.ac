@@ -1,6 +1,6 @@
 dnl Process this file with Autoconf to produce a configure script.
 
-AC_PREREQ(2.57)
+AC_PREREQ([2.57])
 AC_INIT([pam-krb5], [3.9], [rra@stanford.edu])
 
 m4_include([m4/krb5.m4])
@@ -10,6 +10,7 @@ AC_PROG_CC
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
 AC_CANONICAL_HOST
+AC_AIX
 RRA_LIB_KRB5
 AC_SEARCH_LIBS([pam_set_data], [pam])
 AC_CHECK_FUNCS([pam_modutil_getpwnam])

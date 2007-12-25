@@ -14,6 +14,8 @@ pam-krb5 3.10 (unreleased)
     When keytab is set, properly handle failure to create a keytab cursor
     and don't assume that the cursor is valid.  Thanks, Markus Moeller.
 
+    Define _ALL_SOURCE on AIX to get prototypes for snprintf.
+
 pam-krb5 3.9 (2007-11-12)
 
     If use_authtok is set, fail even if we can retrieve the stored PAM
