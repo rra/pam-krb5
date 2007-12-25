@@ -11,6 +11,9 @@ pam-krb5 3.10 (unreleased)
     pam_open_session, even if we couldn't retrieve module data.  Thanks,
     Markus Moeller.
 
+    When keytab is set, properly handle failure to create a keytab cursor
+    and don't assume that the cursor is valid.  Thanks, Markus Moeller.
+
 pam-krb5 3.9 (2007-11-12)
 
     If use_authtok is set, fail even if we can retrieve the stored PAM

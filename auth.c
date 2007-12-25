@@ -438,12 +438,12 @@ verify_creds(struct pam_args *args, krb5_creds *creds)
             pamk5_compat_free_error(c, message);
             keytab = NULL;
         }
-        if (retval == 0) {
-            retval = krb5_kt_start_seq_get(c, keytab, &cursor);
-            cursor_valid = 1;
-        }
         if (retval == 0)
+            retval = krb5_kt_start_seq_get(c, keytab, &cursor);
+        if (retval == 0) {
+            cursor_valid = 1;
             retval = krb5_kt_next_entry(c, keytab, &entry, &cursor);
+        }
         if (retval == 0)
             retval = krb5_copy_principal(c, entry.principal, &princ);
         if (retval != 0) {
