@@ -103,7 +103,7 @@ COMPILING AND INSTALLING
   executable.
 
   If your Kerberos libraries aren't installed in a location found by your
-  compiler by default, use the --with-kerberos=PATH option to configure.
+  compiler by default, use the --with-krb5=PATH option to configure.
   The Kerberos libraries will then be expected in PATH/lib and the headers
   in PATH/include.
 

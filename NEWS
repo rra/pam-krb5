@@ -16,6 +16,11 @@ pam-krb5 3.10 (unreleased)
 
     Define _ALL_SOURCE on AIX to get prototypes for snprintf.
 
+    Add additional portability glue and Autoconf probes to support
+    building against the version of Kerberos bundled with AIX.  Support
+    for this should be considered alpha in this release.  Thanks to Markus
+    Moeller for the initial patch.
+
 pam-krb5 3.9 (2007-11-12)
 
     If use_authtok is set, fail even if we can retrieve the stored PAM
