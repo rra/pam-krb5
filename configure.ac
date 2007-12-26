@@ -2,6 +2,7 @@ dnl Process this file with Autoconf to produce a configure script.
 
 AC_PREREQ([2.57])
 AC_INIT([pam-krb5], [3.9], [rra@stanford.edu])
+AC_CONFIG_AUX_DIR([build-aux])
 
 m4_include([m4/krb5.m4])
 m4_include([m4/pam-const.m4])
