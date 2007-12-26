@@ -1,11 +1,14 @@
 /*
- * logging.c
- *
  * Logging functions for pam_krb5.
  *
  * Logs errors and debugging messages from pam_krb5 functions.  The debug
  * versions only log anything if debugging was enabled; the error versions
  * always log.
+ *
+ * Copyright 2005, 2006, 2007 Russ Allbery <rra@debian.org>
+ * Copyright 2005 Andres Salomon <dilinger@debian.org>
+ * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
+ * See LICENSE for licensing terms.
  */
 
 #include "config.h"

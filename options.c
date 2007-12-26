@@ -1,11 +1,14 @@
 /*
- * options.c
- *
  * Option handling for pam_krb5.
  *
  * Responsible for initializing the args struct that's passed to nearly all
  * internal functions.  Retrieves configuration information from krb5.conf and
  * parses the PAM configuration.
+ *
+ * Copyright 2005, 2006, 2007 Russ Allbery <rra@debian.org>
+ * Copyright 2005 Andres Salomon <dilinger@debian.org>
+ * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
+ * See LICENSE for licensing terms.
  */
 
 #include "config.h"

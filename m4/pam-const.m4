@@ -9,6 +9,10 @@ dnl Since this is just for compiler warnings, it's not horribly important if
 dnl we guess wrong.  This test is ugly, but it seems to work.
 dnl
 dnl Contributed by Markus Moeller.
+dnl
+dnl Copyright 2007 Russ Allbery <rra@debian.org>
+dnl Copyright 2007 Markus Moeller
+dnl See LICENSE for licensing terms.
 
 AC_DEFUN([RRA_HEADER_PAM_CONST],
 [AC_CACHE_CHECK([whether PAM prefers const], [rra_cv_header_pam_const],

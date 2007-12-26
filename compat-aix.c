@@ -1,6 +1,4 @@
 /*
- * compat-aix.c
- *
  * Kerberos compatibility functions for AIX's NAS libraries.
  *
  * AIX for some reason doesn't provide the krb5_appdefault_* functions, but
