@@ -1,5 +1,8 @@
-libpam-krb5 (3.9-2) UNRELEASED; urgency=low
+libpam-krb5 (3.10-1) UNRELEASED; urgency=low
 
+  * New upstream release.
+    - If no_ccache is set, don't fail if we can't find module data.
+    - Better error handling when reading keytabs.
   * Document in README.Debian that accounts must still exist in
     /etc/shadow when following the standard configuration and suggest an
     alternate configuration when that isn't appropriate.  Thanks, Raoul

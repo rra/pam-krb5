@@ -1,11 +1,11 @@
-                               pam-krb5 3.9
+                              pam-krb5 3.10
                (PAM module for Kerberos v5 authentication)
 
                     Originally written by Frank Cusack
      Modifications by Joel Kociolek, Andres Salomon, and Sam Hartman
               Maintained by Russ Allbery <rra@stanford.edu>
 
-  See the COPYRIGHT file, included in this distribution, for copyright and
+  See the LICENSE file, included in this distribution, for copyright and
   redistribution information.  See the HISTORY section below for the
   e-mail addresses of contributors and thanks to those who have provided
   help.
@@ -103,7 +103,7 @@ COMPILING AND INSTALLING
   executable.
 
   If your Kerberos libraries aren't installed in a location found by your
-  compiler by default, use the --with-kerberos=PATH option to configure.
+  compiler by default, use the --with-krb5=PATH option to configure.
   The Kerberos libraries will then be expected in PATH/lib and the headers
   in PATH/include.
 
@@ -379,3 +379,6 @@ HISTORY AND ACKNOWLEDGEMENTS
   Thanks to Douglas E. Engert for the initial implementation of PKINIT
   support.  I have since modified and reworked it extensively, so any bugs
   or compilation problems are my fault.
+
+  Thanks to Markus Moeller for lots of debugging and multiple patches and
+  suggestions for improved portability.

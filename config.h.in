@@ -9,11 +9,20 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
+/* Define to 1 if you have the <k5profile.h> header file. */
+#undef HAVE_K5PROFILE_H
+
+/* Define to 1 if you have the `krb5_appdefault_string' function. */
+#undef HAVE_KRB5_APPDEFAULT_STRING
+
 /* Define to 1 if you have the `krb5_free_error_message' function. */
 #undef HAVE_KRB5_FREE_ERROR_MESSAGE
 
 /* Define to 1 if you have the `krb5_get_error_message' function. */
 #undef HAVE_KRB5_GET_ERROR_MESSAGE
+
+/* Define to 1 if you have the `krb5_get_err_txt' function. */
+#undef HAVE_KRB5_GET_ERR_TXT
 
 /* Define to 1 if you have the `krb5_get_init_creds_opt_alloc' function. */
 #undef HAVE_KRB5_GET_INIT_CREDS_OPT_ALLOC
@@ -40,6 +49,12 @@
 
 /* Define if your Kerberos implementation is MIT. */
 #undef HAVE_KRB5_MIT
+
+/* Define to 1 if you have the `krb5_svc_get_msg' function. */
+#undef HAVE_KRB5_SVC_GET_MSG
+
+/* Define to 1 if you have the `krb5_verify_init_creds_opt_init' function. */
+#undef HAVE_KRB5_VERIFY_INIT_CREDS_OPT_INIT
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
@@ -97,3 +112,10 @@
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
+
+/* Define to 1 if on AIX 3.
+   System headers sometimes define this.
+   We just want to avoid a redefinition error message.  */
+#ifndef _ALL_SOURCE
+# undef _ALL_SOURCE
+#endif

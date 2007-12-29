@@ -1,12 +1,15 @@
 /*
- * auth.c
- *
  * Core authentication routines for pam_krb5.
  *
  * The actual authentication work is done here, either via password or via
  * PKINIT.  The only external interface is pamk5_password_auth, which calls
  * the appropriate internal functions.  This interface is used by both the
  * authentication and the password groups.
+ *
+ * Copyright 2005, 2006, 2007 Russ Allbery <rra@debian.org>
+ * Copyright 2005 Andres Salomon <dilinger@debian.org>
+ * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
+ * See LICENSE for licensing terms.
  */
 
 #include "config.h"
@@ -136,7 +139,16 @@ static void
 set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
                        int service)
 {
+#ifdef HAVE_KRB5_MIT
+    /* Work around a bug in MIT Kerberos where allocating the credential
+       structure with opt_alloc doesn't initialize it.  This workaround
+       will probably be removed eventually when the broken versions of 1.6
+       are obsolete.
+
+       We can't do this for Heimdal because it will destroy the private
+       structure in the allocated opt struct. */
     krb5_get_init_creds_opt_init(opts);
+#endif
 #ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_DEFAULT_FLAGS
     krb5_get_init_creds_opt_set_default_flags(args->ctx->context, "pam",
                                               args->realm_data, opts);
@@ -429,12 +441,12 @@ verify_creds(struct pam_args *args, krb5_creds *creds)
             pamk5_compat_free_error(c, message);
             keytab = NULL;
         }
-        if (retval == 0) {
-            retval = krb5_kt_start_seq_get(c, keytab, &cursor);
-            cursor_valid = 1;
-        }
         if (retval == 0)
+            retval = krb5_kt_start_seq_get(c, keytab, &cursor);
+        if (retval == 0) {
+            cursor_valid = 1;
             retval = krb5_kt_next_entry(c, keytab, &entry, &cursor);
+        }
         if (retval == 0)
             retval = krb5_copy_principal(c, entry.principal, &princ);
         if (retval != 0) {

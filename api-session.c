@@ -1,6 +1,4 @@
 /*
- * api-session.c
- *
  * Implements the PAM session group API (pam_sm_open_session and
  * pam_sm_close_session).
  *
@@ -11,6 +9,11 @@
  * These calls aren't logged since we don't bother doing option parsing here;
  * instead, we defer that for pam_sm_setcred or don't bother doing it at all
  * for pam_sm_close_session.
+ *
+ * Copyright 2005, 2006, 2007 Russ Allbery <rra@debian.org>
+ * Copyright 2005 Andres Salomon <dilinger@debian.org>
+ * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
+ * See LICENSE for licensing terms.
  */
 
 /* Get prototypes for both the authentication and session functions. */
