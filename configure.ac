@@ -6,7 +6,7 @@ dnl Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
 dnl See LICENSE for licensing terms.
 
 AC_PREREQ([2.61])
-AC_INIT([pam-krb5], [3.9], [rra@stanford.edu])
+AC_INIT([pam-krb5], [3.10], [rra@stanford.edu])
 AC_CONFIG_AUX_DIR([build-aux])
 
 m4_include([m4/krb5.m4])
