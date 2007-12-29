@@ -7,8 +7,9 @@ libpam-krb5 (3.10-1) UNRELEASED; urgency=low
     /etc/shadow when following the standard configuration and suggest an
     alternate configuration when that isn't appropriate.  Thanks, Raoul
     Borenius.  (Closes: #452592)
+  * Update standards version to 3.7.3 (no changes required).
 
- -- Russ Allbery <rra@debian.org>  Mon, 26 Nov 2007 00:12:52 -0800
+ -- Russ Allbery <rra@debian.org>  Fri, 28 Dec 2007 21:53:41 -0800
 
 libpam-krb5 (3.9-1) unstable; urgency=low
 
