@@ -1,7 +1,10 @@
 /*
- * internal.h
+ * Internal prototypes and structures for pam-krb5.
  *
- * Internal prototypes and structures for pam_krb5.
+ * Copyright 2005, 2006, 2007 Russ Allbery <rra@debian.org>
+ * Copyright 2005 Andres Salomon <dilinger@debian.org>
+ * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
+ * See LICENSE for licensing terms.
  */
 
 #ifndef INTERNAL_H

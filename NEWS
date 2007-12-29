@@ -1,5 +1,26 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 3.10 (2007-12-28)
+
+    The workaround for krb5_get_init_creds_opt_alloc problems in MIT
+    Kerberos 1.6 broke PKINIT support with Heimdal.  Only apply that
+    workaround when building against the MIT Kerberos libraries.  Thanks
+    to Jaakko Pero for the detailed report.
+
+    If no_ccache is set, always exit successfully from pam_setcred or
+    pam_open_session, even if we couldn't retrieve module data.  Thanks,
+    Markus Moeller.
+
+    When keytab is set, properly handle failure to create a keytab cursor
+    and don't assume that the cursor is valid.  Thanks, Markus Moeller.
+
+    Define _ALL_SOURCE on AIX to get prototypes for snprintf.
+
+    Add additional portability glue and Autoconf probes to support
+    building against the version of Kerberos bundled with AIX.  Support
+    for this should be considered alpha in this release.  Thanks to Markus
+    Moeller for the initial patch.
+
 pam-krb5 3.9 (2007-11-12)
 
     If use_authtok is set, fail even if we can retrieve the stored PAM

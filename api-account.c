@@ -1,11 +1,14 @@
 /*
- * api-account.c
- *
  * Implements the PAM account group API (pam_sm_acct_mgmt).
  *
  * We don't have much to do for account management, but we do recheck the
  * user's authorization against .k5login (or whatever equivalent we've been
  * configured for).
+ *
+ * Copyright 2005, 2006, 2007 Russ Allbery <rra@debian.org>
+ * Copyright 2005 Andres Salomon <dilinger@debian.org>
+ * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
+ * See LICENSE for licensing terms.
  */
 
 /* Get prototypes for the account management functions. */

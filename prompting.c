@@ -1,10 +1,13 @@
 /*
- * prompting.c
- *
  * Prompt users for information.
  *
  * Handles all interaction with the PAM conversation, either directly or
  * indirectly through the Kerberos libraries.
+ *
+ * Copyright 2005, 2006, 2007 Russ Allbery <rra@debian.org>
+ * Copyright 2005 Andres Salomon <dilinger@debian.org>
+ * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
+ * See LICENSE for licensing terms.
  */
 
 #include "config.h"

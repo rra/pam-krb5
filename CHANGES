@@ -1,3 +1,41 @@
+  231 Russ Allbery	2007-12-28
+      Release 3.10.
+
+  230 Russ Allbery	2007-12-25
+      Update build support files to the latest versions.
+
+  229 Russ Allbery	2007-12-25
+      Rename COPYRIGHT to LICENSE and switch to the more complete format that
+      I'm using for other packages.  Add explicit copyright headers to all
+      files and a reference to LICENSE for licensing information.
+
+  228 Russ Allbery	2007-12-25
+      Add additional portability glue and Autoconf probes to support
+      building against the version of Kerberos bundled with AIX.  Support
+      for this should be considered alpha in this release.  Thanks to Markus
+      Moeller for the initial patch.
+
+  227 Russ Allbery	2007-12-25
+      Move Autoconf supporting files into build-aux.
+
+  226 Russ Allbery	2007-12-25
+      Define _ALL_SOURCE on AIX to get prototypes for snprintf.
+
+  225 Russ Allbery	2007-12-25
+      When keytab is set, properly handle failure to create a keytab cursor
+      and don't assume that the cursor is valid.  Thanks, Markus Moeller.
+
+  224 Russ Allbery	2007-12-03
+      The workaround for krb5_get_init_creds_opt_alloc problems in MIT
+      Kerberos 1.6 broke PKINIT support with Heimdal.  Only apply that
+      workaround when building against the MIT Kerberos libraries.  Thanks
+      to Jaakko Pero for the detailed report.
+
+  223 Russ Allbery	2007-12-03
+      If no_ccache is set, always exit successfully from pam_setcred or
+      pam_open_session, even if we couldn't retrieve module data.  Thanks,
+      Markus Moeller.
+
   222 Russ Allbery	2007-11-12
       Release 3.9.
 

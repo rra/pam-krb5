@@ -1,9 +1,10 @@
 /*
- * api-password.c
- *
  * Implements the PAM password group API (pam_sm_chauthtok).
  *
- * Handles prompting for a new password and changing passwords.
+ * Copyright 2005, 2006, 2007 Russ Allbery <rra@debian.org>
+ * Copyright 2005 Andres Salomon <dilinger@debian.org>
+ * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
+ * See LICENSE for licensing terms.
  */
 
 /* Get declarations for the password functions. */
