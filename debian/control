@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Russ Allbery <rra@debian.org>
 Uploaders: Sam Hartman <hartmans@debian.org>
 Standards-Version: 3.7.3
-Build-Depends: debhelper (>= 5), libkrb5-dev, comerr-dev, libpam0g-dev
+Build-Depends: debhelper (>= 5), libkrb5-dev, libpam0g-dev
 Homepage: http://www.eyrie.org/~eagle/software/pam-krb5/
 
 Package: libpam-krb5

@@ -1,4 +1,4 @@
-libpam-krb5 (3.10-1) UNRELEASED; urgency=low
+libpam-krb5 (3.10-1) unstable; urgency=low
 
   * New upstream release.
     - If no_ccache is set, don't fail if we can't find module data.
@@ -7,9 +7,11 @@ libpam-krb5 (3.10-1) UNRELEASED; urgency=low
     /etc/shadow when following the standard configuration and suggest an
     alternate configuration when that isn't appropriate.  Thanks, Raoul
     Borenius.  (Closes: #452592)
+  * No longer build-depend on comerr-dev, since the module no longer links
+    to it directly.
   * Update standards version to 3.7.3 (no changes required).
 
- -- Russ Allbery <rra@debian.org>  Fri, 28 Dec 2007 21:53:41 -0800
+ -- Russ Allbery <rra@debian.org>  Fri, 28 Dec 2007 21:56:26 -0800
 
 libpam-krb5 (3.9-1) unstable; urgency=low
 
