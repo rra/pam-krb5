@@ -14,7 +14,7 @@ dnl current values first; and RRA_LIB_KRB5_RESTORE to restore those settings
 dnl to before the last RRA_LIB_KRB5_SWITCH.
 dnl
 dnl Written by Russ Allbery <rra@stanford.edu>
-dnl Copyright 2005, 2006, 2007
+dnl Copyright 2005, 2006, 2007, 2008
 dnl     Board of Trustees, Leland Stanford Jr. University
 dnl See LICENSE for licensing terms.
 
@@ -60,7 +60,8 @@ AC_DEFUN([_RRA_LIB_KRB5_REDUCED],
      [AC_CHECK_FUNCS([krb5_get_err_txt], ,
          [AC_CHECK_LIB([ksvc], [krb5_svc_get_msg],
              [KRB5_LIBS="$KRB5_LIBS -lksvc"
-              AC_DEFINE([HAVE_KRB5_SVC_GET_MSG], [1])],
+              AC_DEFINE([HAVE_KRB5_SVC_GET_MSG], [1])
+              AC_CHECK_HEADERS([ibm_svc/krb5_svc.h])],
              [AC_CHECK_LIB([com_err], [com_err],
                  [KRB5_LIBS="$KRB5_LIBS -lcom_err"],
                  [AC_MSG_ERROR([cannot find usable com_err library])])
@@ -74,6 +75,11 @@ AC_DEFUN([_RRA_LIB_KRB5_MANUAL],
  rra_krb5_extra=
  AC_SEARCH_LIBS([res_search], [resolv], [rra_krb5_extra=-lresolv],
     [AC_SEARCH_LIBS([__res_search], [resolv], [rra_krb5_extra=-lresolv])])
+ AC_SEARCH_LIBS([socket], [socket],
+    [rra_krb5_extra="-lsocket $rra_krb5_extra"],
+    [AC_CHECK_LIB([nsl], [socket],
+        [rra_krb5_extra="-lnsl -lsocket $rra_krb5_extra"], ,
+        [-lsocket $rra_krb5_extra])])
  AC_SEARCH_LIBS([crypt], [crypt], [rra_krb5_extra="-lcrypt $rra_krb5_extra"])
  AC_CHECK_LIB([krb5], [krb5_init_context],
     [KRB5_LIBS="-lkrb5 -lasn1 -lroken -lcrypto -lcom_err $rra_krb5_extra"],
@@ -103,7 +109,8 @@ AC_DEFUN([_RRA_LIB_KRB5_MANUAL],
  AC_CHECK_FUNCS([krb5_get_error_message],
      [AC_CHECK_FUNCS([krb5_free_error_message])],
      [AC_CHECK_FUNCS([krb5_get_err_txt], ,
-         [AC_CHECK_FUNCS([krb5_svc_get_msg], ,
+         [AC_CHECK_FUNCS([krb5_svc_get_msg],
+             [AC_CHECK_HEADERS([ibm_svc/krb5_svc.h])],
              [AC_CHECK_HEADERS([et/com_err.h])])])])
  RRA_LIB_KRB5_RESTORE])
 
@@ -145,7 +152,8 @@ AS_IF([test x"$rra_reduced_depends" = xtrue],
           AC_CHECK_FUNCS([krb5_get_error_message],
               [AC_CHECK_FUNCS([krb5_free_error_message])],
               [AC_CHECK_FUNCS([krb5_get_err_txt], ,
-                  [AC_CHECK_FUNCS([krb5_svc_get_msg], ,
+                  [AC_CHECK_FUNCS([krb5_svc_get_msg],
+                      [AC_CHECK_HEADERS([ibm_svc/krb5_svc.h])],
                       [AC_CHECK_HEADERS([et/com_err.h])])])])
           RRA_LIB_KRB5_RESTORE],
          [_RRA_LIB_KRB5_PATHS
