@@ -73,14 +73,17 @@ dnl have krb5-config or reduced dependencies.
 AC_DEFUN([_RRA_LIB_KRB5_MANUAL],
 [RRA_LIB_KRB5_SWITCH
  rra_krb5_extra=
+ LIBS=
  AC_SEARCH_LIBS([res_search], [resolv], [rra_krb5_extra=-lresolv],
     [AC_SEARCH_LIBS([__res_search], [resolv], [rra_krb5_extra=-lresolv])])
- AC_SEARCH_LIBS([socket], [socket],
-    [rra_krb5_extra="-lsocket $rra_krb5_extra"],
+ AC_SEARCH_LIBS([gethostbyname], [nsl])
+ AC_SEARCH_LIBS([socket], [socket], ,
     [AC_CHECK_LIB([nsl], [socket],
-        [rra_krb5_extra="-lnsl -lsocket $rra_krb5_extra"], ,
-        [-lsocket $rra_krb5_extra])])
- AC_SEARCH_LIBS([crypt], [crypt], [rra_krb5_extra="-lcrypt $rra_krb5_extra"])
+        [LIBS="-lnsl -lsocket $rra_krb5_extra"], ,
+            [-lsocket $rra_krb5_extra])])
+ AC_SEARCH_LIBS([crypt], [crypt])
+ rra_krb5_extra="$LIBS"
+ LIBS="$rra_krb5_save_LIBS"
  AC_CHECK_LIB([krb5], [krb5_init_context],
     [KRB5_LIBS="-lkrb5 -lasn1 -lroken -lcrypto -lcom_err $rra_krb5_extra"],
     [AC_CHECK_LIB([krb5support], [krb5int_getspecific],
@@ -127,7 +130,8 @@ AC_SUBST([KRB5_LIBS])
 AC_ARG_WITH([krb5],
     [AC_HELP_STRING([--with-krb5=DIR],
         [Location of Kerberos v5 headers and libraries])],
-    [AS_IF([test x"$withval" != xno], [rra_krb5_root="$withval"])])
+    [AS_IF([test x"$withval" != xyes && test x"$withval" != xno],
+        [rra_krb5_root="$withval"])])
 AS_IF([test x"$rra_reduced_depends" = xtrue],
     [_RRA_LIB_KRB5_PATHS
      _RRA_LIB_KRB5_REDUCED],
