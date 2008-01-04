@@ -74,13 +74,12 @@ AC_DEFUN([_RRA_LIB_KRB5_MANUAL],
 [RRA_LIB_KRB5_SWITCH
  rra_krb5_extra=
  LIBS=
- AC_SEARCH_LIBS([res_search], [resolv], [rra_krb5_extra=-lresolv],
-    [AC_SEARCH_LIBS([__res_search], [resolv], [rra_krb5_extra=-lresolv])])
+ AC_SEARCH_LIBS([res_search], [resolv], ,
+    [AC_SEARCH_LIBS([__res_search], [resolv])])
  AC_SEARCH_LIBS([gethostbyname], [nsl])
  AC_SEARCH_LIBS([socket], [socket], ,
-    [AC_CHECK_LIB([nsl], [socket],
-        [LIBS="-lnsl -lsocket $rra_krb5_extra"], ,
-            [-lsocket $rra_krb5_extra])])
+    [AC_CHECK_LIB([nsl], [socket], [LIBS="-lnsl -lsocket $LIBS"], ,
+        [-lsocket])])
  AC_SEARCH_LIBS([crypt], [crypt])
  rra_krb5_extra="$LIBS"
  LIBS="$rra_krb5_save_LIBS"
