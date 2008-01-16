@@ -15,3 +15,7 @@
    Unfortunately, the profile library doesn't return errors on memory
    allocation failure, which makes this mostly futile until there's a
    better profile library API.
+
+ * Document PKINIT configuration with MIT in krb5.conf.  It looks like the
+   library supports configuration in [realms] with similar names to the
+   PAM module configuration.
