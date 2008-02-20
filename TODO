@@ -19,3 +19,11 @@
  * Document PKINIT configuration with MIT in krb5.conf.  It looks like the
    library supports configuration in [realms] with similar names to the
    PAM module configuration.
+
+ * Support returning PAM_NEW_AUTHTOK_REQD from the account group and
+   success from the auth group (the supposed way that password changes
+   should work).
+
+ * Investigate whether PAM_IGNORE is now a valid return code for PAM
+   modules, since it would be useful for ignore_user, minimum_uid, and
+   for the account group when the user didn't use Kerberos.
