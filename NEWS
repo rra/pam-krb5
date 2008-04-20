@@ -8,6 +8,9 @@ pam-krb5 3.11 (unreleased)
     libraries (-lsocket and friends) before checking for Kerberos
     libraries in case shared library dependencies are broken.
 
+    Fix Autoconf syntax error when probing for libkrb5support.  Thanks,
+    Mike Garrison.
+
 pam-krb5 3.10 (2007-12-28)
 
     The workaround for krb5_get_init_creds_opt_alloc problems in MIT
