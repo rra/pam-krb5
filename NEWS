@@ -2,6 +2,11 @@
 
 pam-krb5 3.11 (unreleased)
 
+    Work around an apparent Heimdal bug when krb5_free_cred_contents is
+    called on an all-zero credential structure.  It's not clear what's
+    going on here and the Heimdal code looks correct, but avoiding the
+    call fixes the problem.
+
     Add an additional header check for AIX's bundled Kerberos.
 
     For Kerberos libraries without krb5-config, also check for networking

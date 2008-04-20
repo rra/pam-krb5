@@ -485,7 +485,7 @@ pamk5_password_auth(struct pam_args *args, const char *service,
 {
     struct context *ctx;
     krb5_get_init_creds_opt *opts = NULL;
-    int retval, retry, success;
+    int retval, retry, success, creds_valid;
     char *pass = NULL;
     int authtok = (service == NULL) ? PAM_AUTHTOK : PAM_OLDAUTHTOK;
 
@@ -543,6 +543,7 @@ pamk5_password_auth(struct pam_args *args, const char *service,
         pamk5_error(args, "cannot allocate memory: %s", strerror(errno));
         return PAM_SERVICE_ERR;
     }
+    creds_valid = 0;
     retval = pamk5_compat_opt_alloc(ctx->context, &opts);
     if (retval != 0) {
         pamk5_error_krb5(args, "cannot allocate credential options", retval);
@@ -612,6 +613,8 @@ pamk5_password_auth(struct pam_args *args, const char *service,
     } while (retry && retval == KRB5KRB_AP_ERR_BAD_INTEGRITY);
     if (retval != 0)
         pamk5_debug_krb5(args, "krb5_get_init_creds_password", retval);
+    else
+        creds_valid = 1;
 
 done:
     /*
@@ -632,7 +635,8 @@ done:
         retval = PAM_SUCCESS;
     else {
         if (*creds != NULL) {
-            krb5_free_cred_contents(ctx->context, *creds);
+            if (creds_valid)
+                krb5_free_cred_contents(ctx->context, *creds);
             free(*creds);
             *creds = NULL;
         }
