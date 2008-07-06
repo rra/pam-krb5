@@ -11,6 +11,14 @@ pam-krb5 3.11 (unreleased)
     PAM_IGNORE would arguably be more correct, but increases the risk of
     security holes through incorrect configuration.
 
+    Support correct password expiration handling according to the PAM
+    standard (returning success from pam_authenticate and an error from
+    pam_acct_mgmt and completing the authentication after pam_chauthotk).
+    This is not the default since it opens security holes with broken
+    applications that don't call pam_acct_mgmt or ignore its exit status.
+    To enable it, set the PAM option defer_pwchange for applications known
+    to make the correct PAM calls and check return codes.
+
     Work around an apparent Heimdal bug when krb5_free_cred_contents is
     called on an all-zero credential structure.  It's not clear what's
     going on here and the Heimdal code looks correct, but avoiding the

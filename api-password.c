@@ -231,13 +231,8 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
     /* Authenticate to the password changing service using the old password. */
     if (ctx->creds == NULL) {
         pamret = pamk5_password_auth(args, "kadmin/changepw", &ctx->creds);
-        if (pamret != PAM_SUCCESS) {
-            if (pamret == PAM_SERVICE_ERR || pamret == PAM_AUTH_ERR)
-                pamret = PAM_AUTHTOK_RECOVER_ERR;
-            if (pamret == PAM_AUTHINFO_UNAVAIL)
-                pamret = PAM_AUTHTOK_ERR;
+        if (pamret != PAM_SUCCESS)
             goto done;
-        }
     }
 
     /*
@@ -252,6 +247,12 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
     }
 
 done:
+    if (pamret != PAM_SUCCESS) {
+        if (pamret == PAM_SERVICE_ERR || pamret == PAM_AUTH_ERR)
+            pamret = PAM_AUTHTOK_RECOVER_ERR;
+        if (pamret == PAM_AUTHINFO_UNAVAIL)
+            pamret = PAM_AUTHTOK_ERR;
+    }
     EXIT(args, pamret);
     if (pass != NULL) {
         memset(pass, 0, strlen(pass));

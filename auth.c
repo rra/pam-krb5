@@ -150,6 +150,10 @@ set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
             krb5_get_init_creds_opt_set_tkt_life(opts, args->lifetime);
         if (args->renew_lifetime != 0)
             krb5_get_init_creds_opt_set_renew_life(opts, args->renew_lifetime);
+#ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_CHANGE_PASSWORD_PROMPT
+        krb5_get_init_creds_opt_set_change_password_prompt(opts,
+            args->defer_pwchange ? 0 : 1);
+#endif
     } else {
         krb5_get_init_creds_opt_set_forwardable(opts, 0);
         krb5_get_init_creds_opt_set_proxiable(opts, 0);
@@ -551,10 +555,18 @@ pamk5_password_auth(struct pam_args *args, const char *service,
      * const void **, gcc complains about type-punned pointers, even though
      * void and char shouldn't worry about that rule.  So cast it to a void *
      * to turn off type-checking entirely.
+     *
+     * Normally, for pam_authenticate we find the password in PAM_AUTHTOK and
+     * for pam_chauthtok we find it in PAM_OLDAUTHTOK.  However, if we're
+     * processing a password change due to expired credentials, the current
+     * password may be in PAM_AUTHTOK.
      */
     retry = args->try_first_pass ? 1 : 0;
     if (args->try_first_pass || args->use_first_pass || args->use_authtok)
         retval = pam_get_item(args->pamh, authtok, (void *) &pass);
+    if (service != NULL && ctx->expired)
+        if (retval != PAM_SUCCESS || pass == NULL)
+            retval = pam_get_item(args->pamh, PAM_OLDAUTHTOK, (void *) &pass);
     if (args->use_authtok && (retval != PAM_SUCCESS || pass == NULL)) {
         pamk5_debug_pam(args, "no stored password", retval);
         retval = PAM_SERVICE_ERR;

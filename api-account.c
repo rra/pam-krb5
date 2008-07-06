@@ -64,6 +64,13 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
         pamk5_debug(args, "skipping non-Kerberos login");
         goto done;
     }
+    ctx = args->ctx;
+
+    /* If the account was expired, here's where we actually fail. */
+    if (ctx->expired) {
+        pamret = PAM_NEW_AUTHTOK_REQD;
+        goto done;
+    }
 
     /*
      * Re-retrieve the user rather than trusting our context; it's conceivable
@@ -79,7 +86,6 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
         retval = PAM_AUTH_ERR;
         goto done;
     }
-    ctx = args->ctx;
     if (ctx->name != NULL)
         free(ctx->name);
     ctx->name = strdup(name);

@@ -50,6 +50,7 @@ struct context {
     krb5_context context;       /* Kerberos context. */
     krb5_ccache cache;          /* Active credential cache, if any. */
     krb5_principal princ;       /* Principal being authenticated. */
+    int expired;                /* If set, account was expired. */
     int dont_destroy_cache;     /* If set, don't destroy cache on shutdown. */
     int initialized;            /* If set, ticket cache initialized. */
     krb5_creds *creds;          /* Credentials for password changing. */
@@ -67,6 +68,7 @@ struct pam_args {
     char *ccache_dir;           /* Directory for ticket cache. */
     int clear_on_fail;          /* Delete saved password on change failure. */
     int debug;                  /* Log debugging information. */
+    int defer_pwchange;         /* Defer expired account fail to account. */
     int expose_account;         /* Display principal in password prompts. */
     int forwardable;            /* Obtain forwardable tickets. */
     int ignore_root;            /* Skip authentication for root. */

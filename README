@@ -228,6 +228,13 @@ CONFIGURING
   retain_after_close to the PAM configuration to avoid having the user's
   credentials deleted before they are logged in.
 
+  The Solaris Kerberos library reportedly does not support prompting for a
+  password change of an expired account during authentication.  Supporting
+  password change for expired accounts on Solaris with native Kerberos may
+  therefore require setting the defer_pwchange option for selected login
+  applications.  See the description and warnings about that option in the
+  pam_krb5 man page.
+
   Some configuration options may be put in the krb5.conf file used by your
   Kerberos libraries (usually /etc/krb5.conf or /usr/local/etc/krb5.conf)
   instead or in addition to the PAM configuration.  See the man page for
@@ -364,6 +371,15 @@ IMPLEMENTATION NOTES
   would allow anyone to log in as root without a password.  There doesn't
   appear to be a case where returning PAM_IGNORE instead would improve the
   module's behavior, but if you know of a case, please let me know.
+
+  By default, pam_authenticate intentionally does not follow the PAM
+  standard for handling expired accounts and instead returns failure from
+  pam_authenticate unless the Kerberos libraries are able to change the
+  account password during authentication.  Too many applications either do
+  not call pam_acct_mgmt or ignore its exit status.  The fully correct PAM
+  behavior (returning success from pam_authenticate and
+  PAM_NEW_AUTHTOK_REQD from pam_acct_mgmt) can be enabled with the
+  defer_pwchange option.
 
 HISTORY AND ACKNOWLEDGEMENTS
 

@@ -148,6 +148,8 @@ cache_init_from_cache(struct pam_args *args, const char *ccname,
     memset(&creds, 0, sizeof(creds));
     if (args == NULL || args->ctx == NULL || args->ctx->context == NULL)
         return PAM_SERVICE_ERR;
+    if (old == NULL)
+        return PAM_SERVICE_ERR;
     ctx = args->ctx;
     status = krb5_cc_start_seq_get(ctx->context, old, &cursor);
     if (status != 0) {
@@ -232,24 +234,29 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 
     /* Do the actual authentication. */
     pamret = pamk5_password_auth(args, NULL, &creds);
+    if (pamret == PAM_NEW_AUTHTOK_REQD && args->defer_pwchange) {
+        pamk5_debug(args, "expired account, deferring failure");
+        ctx->expired = 1;
+        pamret = PAM_SUCCESS;
+    }
     if (pamret != PAM_SUCCESS)
         goto done;
 
     /* Check .k5login. */
-    pamret = pamk5_authorized(args);
-    if (pamret != PAM_SUCCESS) {
-        pamk5_debug(args, "failed authorization check");
-        goto done;
+    if (!ctx->expired) {
+        pamret = pamk5_authorized(args);
+        if (pamret != PAM_SUCCESS) {
+            pamk5_debug(args, "failed authorization check");
+            goto done;
+        }
     }
 
     /* Reset PAM_USER in case we canonicalized. */
-    pamret = pam_set_item(args->pamh, PAM_USER, ctx->name);
-    if (pamret != PAM_SUCCESS)
-        pamk5_debug_pam(args, "cannot set PAM_USER", pamret);
-
-    /* Unless we're creating a ticket cache, we're done. */
-    if (args->no_ccache)
-        goto done;
+    if (!ctx->expired) {
+        pamret = pam_set_item(args->pamh, PAM_USER, ctx->name);
+        if (pamret != PAM_SUCCESS)
+            pamk5_debug_pam(args, "cannot set PAM_USER", pamret);
+    }
 
     /* Now that we know we're successful, we can store the context. */
     pamret = pam_set_data(pamh, "pam_krb5", ctx, pamk5_context_destroy);
@@ -259,6 +266,13 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
         goto done;
     }
     set_context = 1;
+
+    /*
+     * Unless we're creating a ticket cache or if we have an expired account,
+     * we're done.
+     */
+    if (args->no_ccache || ctx->expired)
+        goto done;
 
     /* Store the obtained credentials in a temporary cache. */
     ccfd = mkstemp(cache_name);

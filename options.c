@@ -288,6 +288,7 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
         default_string(args, c, "ccache_dir", "FILE:/tmp", &args->ccache_dir);
         default_boolean(args, c, "clear_on_fail", 0, &args->clear_on_fail);
         default_boolean(args, c, "debug", 0, &args->debug);
+        default_boolean(args, c, "defer_pwchange", 0, &args->defer_pwchange);
         default_boolean(args, c, "expose_account", 0, &args->expose_account);
         default_boolean(args, c, "forwardable", 0, &args->forwardable);
         default_boolean(args, c, "ignore_k5login", 0, &args->ignore_k5login);
@@ -340,6 +341,8 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
             args->clear_on_fail = 1;
         else if (strcmp(argv[i], "debug") == 0)
             args->debug = 1;
+        else if (strcmp(argv[i], "defer_pwchange") == 0)
+            args->defer_pwchange = 1;
         else if (strcmp(argv[i], "expose_account") == 0)
             args->expose_account = 1;
         else if (strcmp(argv[i], "forwardable") == 0)
