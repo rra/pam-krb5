@@ -6,7 +6,7 @@
  * the appropriate internal functions.  This interface is used by both the
  * authentication and the password groups.
  *
- * Copyright 2005, 2006, 2007 Russ Allbery <rra@debian.org>
+ * Copyright 2005, 2006, 2007, 2008 Russ Allbery <rra@debian.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  * See LICENSE for licensing terms.
@@ -293,7 +293,7 @@ k5login_password_auth(struct pam_args *args, krb5_creds *creds,
          * continue on to the next line.
          */
         if (*retval == 0) {
-            if (ctx->princ)
+            if (ctx->princ != NULL)
                 krb5_free_principal(ctx->context, ctx->princ);
             ctx->princ = princ;
             fclose(k5login);
@@ -489,10 +489,12 @@ pamk5_password_auth(struct pam_args *args, const char *service,
     ctx = args->ctx;
 
     /* Fill in the principal to authenticate as. */
-    retval = parse_name(args);
-    if (retval != 0) {
-        pamk5_debug_krb5(args, "krb5_parse_name", retval);
-        return PAM_SERVICE_ERR;
+    if (ctx->princ == NULL) {
+        retval = parse_name(args);
+        if (retval != 0) {
+            pamk5_debug_krb5(args, "krb5_parse_name", retval);
+            return PAM_SERVICE_ERR;
+        }
     }
 
     /* Log the principal we're attempting to authenticate as. */
@@ -555,18 +557,10 @@ pamk5_password_auth(struct pam_args *args, const char *service,
      * const void **, gcc complains about type-punned pointers, even though
      * void and char shouldn't worry about that rule.  So cast it to a void *
      * to turn off type-checking entirely.
-     *
-     * Normally, for pam_authenticate we find the password in PAM_AUTHTOK and
-     * for pam_chauthtok we find it in PAM_OLDAUTHTOK.  However, if we're
-     * processing a password change due to expired credentials, the current
-     * password may be in PAM_AUTHTOK.
      */
     retry = args->try_first_pass ? 1 : 0;
     if (args->try_first_pass || args->use_first_pass || args->use_authtok)
         retval = pam_get_item(args->pamh, authtok, (void *) &pass);
-    if (service != NULL && ctx->expired)
-        if (retval != PAM_SUCCESS || pass == NULL)
-            retval = pam_get_item(args->pamh, PAM_OLDAUTHTOK, (void *) &pass);
     if (args->use_authtok && (retval != PAM_SUCCESS || pass == NULL)) {
         pamk5_debug_pam(args, "no stored password", retval);
         retval = PAM_SERVICE_ERR;
