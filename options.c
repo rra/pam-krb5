@@ -424,6 +424,21 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
         args->banner = NULL;
     }
 
+    /* Sanity-check try_first_pass, use_first_pass, and use_authtok. */
+    if (args->use_authtok && args->try_first_pass) {
+        pamk5_error(NULL, "use_authtok set, ignoring try_first_pass");
+        args->try_first_pass = 0;
+        args->use_first_pass = 0;
+    }
+    if (args->use_authtok && args->use_first_pass) {
+        pamk5_error(NULL, "use_authtok set, ignoring use_first_pass");
+        args->use_first_pass = 0;
+    }
+    if (args->use_first_pass && args->try_first_pass) {
+        pamk5_error(NULL, "use_first_pass set, ignoring try_first_pass");
+        args->try_first_pass = 0;
+    }
+
     /*
      * Don't set expose_account if we're using search_k5login.  The user will
      * get a principal formed from the account into which they're logging in,

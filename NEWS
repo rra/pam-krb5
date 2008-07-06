@@ -24,6 +24,9 @@ pam-krb5 3.11 (unreleased)
     going on here and the Heimdal code looks correct, but avoiding the
     call fixes the problem.
 
+    Warn if more than one of use_authtok, use_first_pass, and
+    try_first_pass is set and use the strongest of the one set.
+
     Remove the workaround for versions of MIT Kerberos that didn't
     initialize a krb5_get_init_creds_opt structure on opt_alloc.  This bug
     was only present in early versions of 1.6; the correct fix is to
