@@ -27,3 +27,8 @@
  * Investigate whether PAM_IGNORE is now a valid return code for PAM
    modules, since it would be useful for ignore_user, minimum_uid, and
    for the account group when the user didn't use Kerberos.
+
+ * Support PAM_CHANGE_EXPIRED_AUTHTOK properly in pam_chauthtok.  This
+   will require prompting for the current password (if it's not already
+   available in the PAM data) and trying a regular authentication first to
+   see if the account is expired.
