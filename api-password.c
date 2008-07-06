@@ -229,7 +229,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
     ctx = args->ctx;
 
     /* Tell the user what's going on if we're handling an expiration. */
-    if (ctx->expired)
+    if (ctx->expired && ctx->creds == NULL)
         pamk5_conv(args, "Password expired.  You must change it now.",
                    PAM_TEXT_INFO, NULL);
 
