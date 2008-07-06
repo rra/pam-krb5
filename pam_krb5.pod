@@ -4,10 +4,10 @@ pam_krb5 - Kerberos v5 PAM module
 
 =head1 SYNOPSIS
 
-  auth            sufficient      pam_krb5.so ignore_root
-  session         optional        pam_krb5.so ignore_root
-  account         required        pam_krb5.so ignore_root
-  password        optional        pam_krb5.so ignore_root
+  auth            sufficient      pam_krb5.so minimum_uid=100
+  session         required        pam_krb5.so minimum_uid=100
+  account         required        pam_krb5.so minimum_uid=100
+  password        sufficient      pam_krb5.so minimum_uid=100
 
 =head1 DESCRIPTION
 
