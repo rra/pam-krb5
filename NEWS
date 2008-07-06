@@ -29,6 +29,10 @@ pam-krb5 3.11 (unreleased)
     Fix Autoconf syntax error when probing for libkrb5support.  Thanks,
     Mike Garrison.
 
+    Fix the probing of PAM headers for const on Mac OS X.  This will
+    suppress some harmless compiler warnings there.  Thanks, Markus
+    Moeller.
+
 pam-krb5 3.10 (2007-12-28)
 
     The workaround for krb5_get_init_creds_opt_alloc problems in MIT

@@ -21,16 +21,14 @@ AC_CANONICAL_HOST
 AC_AIX
 
 dnl Probe for the functionality of the PAM libraries and their include file
-dnl naming.
+dnl naming.  Mac OS X puts them in pam/* instead of security/*.
 AC_SEARCH_LIBS([pam_set_data], [pam])
 AC_CHECK_FUNCS([pam_modutil_getpwnam])
-RRA_HEADER_PAM_CONST
 AC_CHECK_HEADERS([security/pam_modutil.h])
-
-dnl Mac OS X calls its PAM headers something different than everyone else.
 AC_CHECK_HEADERS([security/pam_appl.h], ,
     [AC_CHECK_HEADERS([pam/pam_appl.h], ,
         [AC_MSG_ERROR([No PAM header files found])])])
+RRA_HEADER_PAM_CONST
 
 dnl Probe for the location and functionality of the Kerberos libraries.
 RRA_LIB_KRB5
