@@ -188,8 +188,6 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     if (pamret != PAM_SUCCESS)
         goto done;
     pamret = pamk5_set_krb5ccname(args, cache_name, "PAM_KRB5CCNAME");
-    if (pamret != PAM_SUCCESS)
-        goto done;
 
 done:
     if (creds != NULL) {
