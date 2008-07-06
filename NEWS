@@ -2,6 +2,15 @@
 
 pam-krb5 3.11 (unreleased)
 
+    pam_setcred, pam_open_session, and pam_acct_mgmt now return PAM_IGNORE
+    for ignored users or non-Kerberos logins rather than PAM_SUCCESS.
+    This return code tells the PAM library to continue as if the module
+    were not present in the configuration and allows sufficient to be
+    meaningful for pam-krb5 in account and session groups.
+    pam_authenticate continues to return failure for ignored users;
+    PAM_IGNORE would arguably be more correct, but increases the risk of
+    security holes through incorrect configuration.
+
     Work around an apparent Heimdal bug when krb5_free_cred_contents is
     called on an all-zero credential structure.  It's not clear what's
     going on here and the Heimdal code looks correct, but avoiding the

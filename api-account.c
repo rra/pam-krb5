@@ -53,14 +53,14 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
     ENTRY(args, flags);
 
     /*
-     * Succeed if the user did not use krb5 to login.  Yes, ideally we should
+     * Succeed if the user did not use krb5 to login.  Ideally, we should
      * probably fail and require that the user set up policy properly in their
      * PAM configuration, but it's not common for the user to do so and that's
      * not how other krb5 PAM modules work.  If we don't do this, root logins
      * with the system root password fail, which is a bad failure mode.
      */
     if (pamret != PAM_SUCCESS || args->ctx == NULL) {
-        pamret = PAM_SUCCESS;
+        pamret = PAM_IGNORE;
         pamk5_debug(args, "skipping non-Kerberos login");
         goto done;
     }

@@ -319,9 +319,10 @@ and account groups.
 Do not do anything if the username is C<root>.  The authentication and
 password calls will silently fail (allowing that status to be ignored via
 a control of C<optional> or C<sufficient>), and the account and session
-calls (including pam_setcred) will silently succeed.  This option is
-supported and will remain, but normally you want to use I<minimum_uid>
-instead.
+calls (including pam_setcred) will return PAM_IGNORE, telling the PAM
+library to proceed as if they weren't mentioned in the PAM configuration.
+This option is supported and will remain, but normally you want to use
+I<minimum_uid> instead.
 
 This option can be set in F<krb5.conf>.
 
@@ -344,10 +345,11 @@ local account and that local account has a UID lower than <uid>.  If both
 of those conditions are true, the authentication and password calls will
 silently fail (allowing that status to be ignored via a control of
 C<optional> or C<sufficient>), and the account and session calls
-(including pam_setcred) will silently succeed.  Using this option is
-highly recommended if you don't need to use Kerberos to authenticate
-password logins to the root account (which isn't recommended since
-Kerberos requires a network connection).
+(including pam_setcred) will return PAM_IGNORE, telling the PAM library to
+proceed as if they weren't mentioned in the PAM configuration.  Using this
+option is highly recommended if you don't need to use Kerberos to
+authenticate password logins to the root account (which isn't recommended
+since Kerberos requires a network connection).
 
 This option can be set in F<krb5.conf>.
 
@@ -632,6 +634,14 @@ expired will not be prompted to change their password unless the KDC
 configuration for your realm in [realms] in krb5.conf contains a
 master_kdc setting or, if using DNS SRV records, you have a DNS entry for
 _kerberos-master as well as _kerberos.
+
+pam_authenticate() returns failure when called for an ignored account,
+requiring the system administrator to use C<optional> or C<sufficient> to
+ignore the module and move on to the next module.  It's arguably more
+correct to return PAM_IGNORE, which causes the module to be ignored as if
+it weren't in the configuration, but this increases the risk of
+inadvertent security holes when listing pam-krb5 as the only
+authentication module.
 
 Old versions of OpenSSH are known to call pam_authenticate followed by
 pam_setcred(PAM_REINITIALIZE_CRED) without first calling pam_open_session,

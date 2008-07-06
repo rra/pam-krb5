@@ -354,6 +354,17 @@ IMPLEMENTATION NOTES
   Calling pam_acct_mgmt is optional; pam-krb5 doesn't do anything
   different when it's called in this case.
 
+  If pam_authenticate apparently didn't succeed, or if an account was
+  configured to be ignored via ignore_root or minimum_uid, pam_setcred
+  (and therefore pam_open_session) and pam_acct_mgmt return PAM_IGNORE,
+  which tells the PAM library to proceed as if that module wasn't listed
+  in the PAM configuration at all.  pam_authenticate, however, returns
+  failure in the ignored user case by default, since otherwise a
+  configuration using ignore_root with pam-krb5 as the only PAM module
+  would allow anyone to log in as root without a password.  There doesn't
+  appear to be a case where returning PAM_IGNORE instead would improve the
+  module's behavior, but if you know of a case, please let me know.
+
 HISTORY AND ACKNOWLEDGEMENTS
 
   Originally written by Frank Cusack <fcusack@fcusack.com>, with the
