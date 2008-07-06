@@ -7,6 +7,11 @@ pam-krb5 3.11 (unreleased)
     going on here and the Heimdal code looks correct, but avoiding the
     call fixes the problem.
 
+    Remove the workaround for versions of MIT Kerberos that didn't
+    initialize a krb5_get_init_creds_opt structure on opt_alloc.  This bug
+    was only present in early versions of 1.6; the correct fix is to
+    upgrade.
+
     Add an additional header check for AIX's bundled Kerberos.
 
     For Kerberos libraries without krb5-config, also check for networking

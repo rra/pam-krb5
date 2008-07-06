@@ -139,16 +139,6 @@ static void
 set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
                        int service)
 {
-#ifdef HAVE_KRB5_MIT
-    /* Work around a bug in MIT Kerberos where allocating the credential
-       structure with opt_alloc doesn't initialize it.  This workaround
-       will probably be removed eventually when the broken versions of 1.6
-       are obsolete.
-
-       We can't do this for Heimdal because it will destroy the private
-       structure in the allocated opt struct. */
-    krb5_get_init_creds_opt_init(opts);
-#endif
 #ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_DEFAULT_FLAGS
     krb5_get_init_creds_opt_set_default_flags(args->ctx->context, "pam",
                                               args->realm_data, opts);
