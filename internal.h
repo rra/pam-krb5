@@ -1,7 +1,7 @@
 /*
  * Internal prototypes and structures for pam-krb5.
  *
- * Copyright 2005, 2006, 2007 Russ Allbery <rra@debian.org>
+ * Copyright 2005, 2006, 2007, 2008 Russ Allbery <rra@debian.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  * See LICENSE for licensing terms.
@@ -161,6 +161,29 @@ int pamk5_authorized(struct pam_args *);
 /* Returns true if we should ignore this user (root or low UID). */
 int pamk5_should_ignore(struct pam_args *, PAM_CONST char *);
 
+/* Context management. */
+int pamk5_context_new(struct pam_args *);
+int pamk5_context_fetch(struct pam_args *);
+void pamk5_context_free(struct context *);
+void pamk5_context_destroy(pam_handle_t *, void *data, int pam_end_status);
+
+/* Get and set environment variables for the ticket cache. */
+const char *pamk5_get_krb5ccname(struct pam_args *, const char *key);
+int pamk5_set_krb5ccname(struct pam_args *, const char *, const char *key);
+
+/*
+ * Create a ticket cache file securely given a mkstemp template.  Modifies
+ * template in place to store the name of the created file.
+ */
+int pamk5_cache_mkstemp(struct pam_args *, char *template);
+
+/*
+ * Create a ticket cache and initialize it with the provided credentials,
+ * returning the new cache in the last argument
+ */
+int pamk5_cache_init(struct pam_args *, const char *ccname, krb5_creds *,
+                     krb5_ccache *);
+
 /*
  * Compatibility functions.  Depending on whether pam_krb5 is built with MIT
  * Kerberos or Heimdal, appropriate implementations for the Kerberos
@@ -178,12 +201,6 @@ void pamk5_compat_free_realm(struct pam_args *);
 
 /* Calls pam_modutil_getpwnam if available, otherwise getpwnam. */
 struct passwd *pamk5_compat_getpwnam(struct pam_args *, const char *);
-
-/* Context management. */
-int pamk5_context_new(struct pam_args *);
-int pamk5_context_fetch(struct pam_args *);
-void pamk5_context_free(struct context *);
-void pamk5_context_destroy(pam_handle_t *, void *data, int pam_end_status);
 
 /* Error reporting and debugging functions. */
 void pamk5_error(struct pam_args *, const char *, ...);

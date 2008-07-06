@@ -31,8 +31,8 @@ INSTALL		= @INSTALL@
 INSTALL_DATA	= @INSTALL_DATA@
 
 SOURCES		= api-account.c api-auth.c api-password.c api-session.c \
-		  auth.c compat.c context.c logging.c options.c prompting.c \
-		  support.c
+		  auth.c cache.c compat.c context.c logging.c options.c \
+		  prompting.c support.c
 OBJECTS		= $(SOURCES:.c=.o)
 
 all: pam_krb5.so $(srcdir)/pam_krb5.5
@@ -88,9 +88,11 @@ api-auth.o: api-auth.c config.h internal.h
 api-password.o: api-password.c config.h internal.h
 api-session.o: api-session.c config.h internal.h
 auth.o: auth.c config.h internal.h
-compat.o: compat.c config.h compat-mit.c compat-heimdal.c internal.h
-compat-heimdal.o: compat_heimdal.c config.h internal.h
-compat-mit.o: compat_mit.c config.h internal.h
+cache.o: cache.c config.h internal.h
+compat-aix.o: compat-aix.c config.h
+compat-heimdal.o: compat-heimdal.c config.h internal.h
+compat-mit.o: compat-mit.c config.h internal.h
+compat.o: compat.c config.h compat-mit.c internal.h
 context.o: context.c config.h internal.h
 logging.o: logging.c config.h internal.h
 options.o: options.c config.h internal.h
