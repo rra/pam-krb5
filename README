@@ -381,6 +381,38 @@ IMPLEMENTATION NOTES
   PAM_NEW_AUTHTOK_REQD from pam_acct_mgmt) can be enabled with the
   defer_pwchange option.
 
+  The defer_pwchange option is unfortunately somewhat tricky to implement.
+  In this case, the calling sequence is:
+
+      pam_authenticate
+      pam_acct_mgmt
+      pam_chauthtok
+      pam_setcred
+      pam_open_session
+
+  During the first pam_authenticate, we can't obtain credentials and
+  therefore a ticket cache since the password is expired.  But
+  pam_authenticate isn't called again after pam_chauthtok, so
+  pam_chauthtok has to create a ticket cache.  We however don't want it to
+  do this for the normal password change (passwd) case.
+
+  What we do is set a flag in our PAM data structure saying that we're
+  processing an expired password, and pam_chauthtok, if it sees that flag,
+  redoes the authentication with password prompting disabled after it
+  finishes changing the password.
+
+  Unfortunately, when handling password changes this way, pam_chauthtok
+  will always have to prompt the user for their current password again
+  even though they just typed it.  This is because the saved
+  authentication tokens are cleared after pam_authenticate returns, for
+  security reasons.  We could hack around this by saving the password in
+  our PAM data structure, but this would let the application gain access
+  to it (exactly what the clearing is intended to prevent) and breaks a
+  PAM library guarantee.  We could also work around this by having
+  pam_authenticate get the kadmin/changepw authenticator in the expired
+  password case and store it for pam_chauthtok, but it doesn't seem worth
+  the hassle.
+
 HISTORY AND ACKNOWLEDGEMENTS
 
   Originally written by Frank Cusack <fcusack@fcusack.com>, with the
