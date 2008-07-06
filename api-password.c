@@ -259,20 +259,13 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
      */
     if (pamret == PAM_SUCCESS && ctx->expired) {
         krb5_creds *creds = NULL;
-        char cache_name[] = "/tmp/krb5cc_pam_XXXXXX";
 
         pamk5_debug(args, "obtaining credentials with new password");
         args->use_authtok = 1;
         pamret = pamk5_password_auth(args, NULL, &creds);
         if (pamret != PAM_SUCCESS)
             goto done;
-        pamret = pamk5_cache_mkstemp(args, cache_name);
-        if (pamret != PAM_SUCCESS)
-            goto done;
-        pamret = pamk5_cache_init(args, cache_name, creds, &ctx->cache);
-        if (pamret != PAM_SUCCESS)
-            goto done;
-        pamret = pamk5_set_krb5ccname(args, cache_name, "PAM_KRB5CCNAME");
+        pamret = pamk5_cache_init_random(args, creds);
     }
 
 done:

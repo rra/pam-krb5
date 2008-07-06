@@ -185,6 +185,12 @@ int pamk5_cache_init(struct pam_args *, const char *ccname, krb5_creds *,
                      krb5_ccache *);
 
 /*
+ * Create a ticket cache with a random path, initialize it with the provided
+ * credentials, store it in the context, and put the path into PAM_KRB5CCNAME.
+ */
+int pamk5_cache_init_random(struct pam_args *, krb5_creds *);
+
+/*
  * Compatibility functions.  Depending on whether pam_krb5 is built with MIT
  * Kerberos or Heimdal, appropriate implementations for the Kerberos
  * implementation will be provided.

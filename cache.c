@@ -139,3 +139,27 @@ done:
         krb5_cc_destroy(ctx->context, *cache);
     return retval;
 }
+
+
+/*
+ * Initialize an internal ticket cache with a random name, store the given
+ * credentials in the cache, and store the cache in the context.  Put the path
+ * in PAM_KRB5CCNAME where it can be picked up later by pam_setcred.  Returns
+ * a PAM success or error code.
+ */
+int
+pamk5_cache_init_random(struct pam_args *args, krb5_creds *creds)
+{
+    char cache_name[] = "/tmp/krb5cc_pam_XXXXXX";
+    int pamret;
+
+    /* Store the obtained credentials in a temporary cache. */
+    pamret = pamk5_cache_mkstemp(args, cache_name);
+    if (pamret != PAM_SUCCESS)
+        return pamret;
+    pamret = pamk5_cache_init(args, cache_name, creds, &args->ctx->cache);
+    if (pamret != PAM_SUCCESS)
+        return pamret;
+    pamret = pamk5_set_krb5ccname(args, cache_name, "PAM_KRB5CCNAME");
+    return pamret;
+}

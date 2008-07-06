@@ -117,7 +117,6 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     struct pam_args *args;
     krb5_creds *creds = NULL;
     int pamret;
-    char cache_name[] = "/tmp/krb5cc_pam_XXXXXX";
     int set_context = 0;
 
     args = pamk5_args_parse(pamh, flags, argc, argv);
@@ -181,13 +180,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
         goto done;
 
     /* Store the obtained credentials in a temporary cache. */
-    pamret = pamk5_cache_mkstemp(args, cache_name);
-    if (pamret != PAM_SUCCESS)
-        goto done;
-    pamret = pamk5_cache_init(args, cache_name, creds, &ctx->cache);
-    if (pamret != PAM_SUCCESS)
-        goto done;
-    pamret = pamk5_set_krb5ccname(args, cache_name, "PAM_KRB5CCNAME");
+    pamret = pamk5_cache_init_random(args, creds);
 
 done:
     if (creds != NULL) {
