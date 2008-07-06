@@ -114,6 +114,11 @@ COMPILING AND INSTALLING
 
       ./configure KRB5_CONFIG=/path/to/krb5-config
 
+  To not use krb5-config and force library probing even if there is a
+  krb5-config script on your path, set KRB5_CONFIG to a nonexistent path:
+
+      ./configure KRB5_CONFIG=/nonexistent
+
   You can pass the --enable-reduced-depends flag to configure to try to
   minimize the shared library dependencies encoded in the binaries.  This
   omits from the link line all the libraries included solely because the

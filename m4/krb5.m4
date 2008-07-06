@@ -131,6 +131,19 @@ AC_DEFUN([_RRA_LIB_KRB5_MANUAL],
              [AC_CHECK_HEADERS([et/com_err.h])])])])
  RRA_LIB_KRB5_RESTORE])
 
+dnl Sanity-check the results of krb5-config and be sure we can really link a
+dnl Kerberos program.  The first option says whether to fail if Kerberos was
+dnl not found.  If we shouldn't fail, clear KRB5_CPPFLAGS and KRB5_LIBS so
+dnl that we know we don't have usable flags.
+AC_DEFUN([_RRA_LIB_KRB5_CHECK],
+[RRA_LIB_KRB5_SWITCH
+ AC_CHECK_FUNC([krb5_init_context], ,
+    [AS_IF([test x"$1" = xtrue],
+        [AC_MSG_FAILURE([krb5-config results fail for Kerberos v5])])
+     KRB5_CPPFLAGS=
+     KRB5_LIBS=])
+ RRA_LIB_KRB5_RESTORE])
+
 dnl The core of the library checking, shared between RRA_LIB_KRB5 and
 dnl RRA_LIB_KRB5_OPTIONAL.  The single argument, if "true", says to fail if
 dnl Kerberos could not be found.
@@ -140,11 +153,11 @@ AC_DEFUN([_RRA_LIB_KRB5_INTERNAL],
     [_RRA_LIB_KRB5_PATHS
      _RRA_LIB_KRB5_REDUCED([$1])],
     [AC_ARG_VAR([KRB5_CONFIG], [Path to krb5-config])
-     AS_IF([test x"$rra_krb5_root" != x],
+     AS_IF([test x"$rra_krb5_root" != x && test -z "$KRB5_CONFIG"],
          [AS_IF([test -x "${rra_krb5_root}/bin/krb5-config"],
              [KRB5_CONFIG="${rra_krb5_root}/bin/krb5-config"])],
          [AC_PATH_PROG([KRB5_CONFIG], [krb5-config])])
-     AS_IF([test x"$KRB5_CONFIG" != x],
+     AS_IF([test x"$KRB5_CONFIG" != x && test -x "$KRB5_CONFIG"],
          [AC_CACHE_CHECK([for krb5 support in krb5-config],
              [rra_cv_lib_krb5_config],
              [AS_IF(["$KRB5_CONFIG" | grep krb5 > /dev/null 2>&1],
@@ -156,6 +169,7 @@ AC_DEFUN([_RRA_LIB_KRB5_INTERNAL],
               [KRB5_CPPFLAGS=`"$KRB5_CONFIG" --cflags`
                KRB5_LIBS=`"$KRB5_CONFIG" --libs`])
           KRB5_CPPFLAGS=`echo "$KRB5_CPPFLAGS" | sed 's%-I/usr/include ?%%'`
+          _RRA_LIB_KRB5_CHECK([$1])
           RRA_LIB_KRB5_SWITCH
           AC_CHECK_FUNCS([krb5_get_error_message],
               [AC_CHECK_FUNCS([krb5_free_error_message])],
@@ -188,7 +202,7 @@ AC_DEFUN([RRA_LIB_KRB5],
         [Location of Kerberos v5 headers and libraries])],
     [AS_IF([test x"$withval" != xyes && test x"$withval" != xno],
         [rra_krb5_root="$withval"])])
- _RRA_LIB_KRB5_INTERNAL])
+ _RRA_LIB_KRB5_INTERNAL([true])])
 
 dnl The main macro for packages with optional Kerberos support.
 AC_DEFUN([RRA_LIB_KRB5_OPTIONAL],
