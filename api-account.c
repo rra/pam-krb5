@@ -5,7 +5,7 @@
  * user's authorization against .k5login (or whatever equivalent we've been
  * configured for).
  *
- * Copyright 2005, 2006, 2007 Russ Allbery <rra@debian.org>
+ * Copyright 2005, 2006, 2007, 2008 Russ Allbery <rra@debian.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  * See LICENSE for licensing terms.
