@@ -137,7 +137,23 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
         goto done;
     }
 
-    /* Do the actual authentication. */
+    /*
+     * Do the actual authentication.  Expiration, if we're handling this using
+     * the formally correct method, is handled specially: we set a flag in the
+     * context and return success.  That flag will later be checked by
+     * pam_sm_acct_mgmt.
+     *
+     * We need to set the context as PAM data in the expired case, but we
+     * don't want to set the PAM data until we've checked .k5login since if
+     * we've stacked multiple pam-krb5 invocations in different realms with
+     * optional, we don't want to override a previous successful
+     * authentication.
+     *
+     * This means that if authentication succeeds in one realm and is then
+     * expired in a later realm, the expiration in the latter realm wins.
+     * This isn't ideal, but avoiding that case is more complicated than it's
+     * worth.
+     */
     pamret = pamk5_password_auth(args, NULL, &creds);
     if (pamret == PAM_NEW_AUTHTOK_REQD && args->defer_pwchange) {
         pamk5_debug(args, "expired account, deferring failure");
@@ -156,7 +172,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
         }
     }
 
-    /* Reset PAM_USER in case we canonicalized. */
+    /* Reset PAM_USER in case we canonicalized, but ignore errors. */
     if (!ctx->expired) {
         pamret = pam_set_item(args->pamh, PAM_USER, ctx->name);
         if (pamret != PAM_SUCCESS)
@@ -174,13 +190,11 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 
     /*
      * If we have an expired account or if we're not creating a ticket cache,
-     * we're done.
+     * we're done.  Otherwise, store the obtained credentials in a temporary
+     * cache.
      */
     if (args->no_ccache || ctx->expired)
-        goto done;
-
-    /* Store the obtained credentials in a temporary cache. */
-    pamret = pamk5_cache_init_random(args, creds);
+        pamret = pamk5_cache_init_random(args, creds);
 
 done:
     if (creds != NULL) {
