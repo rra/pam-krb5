@@ -91,8 +91,10 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
         pamk5_conv(args, "Password expired.  You must change it now.",
                    PAM_TEXT_INFO, NULL);
 
-    /* Do the password change. */
+    /* Do the password change.  This may only get tickets. */
     pamret = pamk5_password_change(args, !(flags & PAM_UPDATE_AUTHTOK));
+    if (!(flags & PAM_UPDATE_AUTHTOK))
+        goto done;
 
     /*
      * If we were handling a password change for an expired password, now

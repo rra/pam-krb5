@@ -116,6 +116,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     struct context *ctx = NULL;
     struct pam_args *args;
     krb5_creds *creds = NULL;
+    char *pass = NULL;
     int pamret;
     int set_context = 0;
 
@@ -154,6 +155,13 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
      * expired in a later realm, the expiration in the latter realm wins.
      * This isn't ideal, but avoiding that case is more complicated than it's
      * worth.
+     *
+     * In the force_pwchange case, try to use the password the user just
+     * entered to authenticate to the password changing service, but don't
+     * throw an error if that doesn't work.  We have to move it from
+     * PAM_AUTHTOK to PAM_OLDAUTHTOK to be in the place where password
+     * changing expects, and have to unset PAM_AUTHTOK or we'll just change
+     * the password to the same thing it was.
      */
     pamret = pamk5_password_auth(args, NULL, &creds);
     if (pamret == PAM_NEW_AUTHTOK_REQD) {
@@ -162,10 +170,17 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
             ctx->expired = 1;
             pamret = PAM_SUCCESS;
         } else if (args->force_pwchange) {
+            pamk5_debug(args, "expired account, forcing password change");
             pamk5_conv(args, "Password expired.  You must change it now.",
                        PAM_TEXT_INFO, NULL);
+            pamret = pam_get_item(args->pamh, PAM_AUTHTOK, (void *) &pass);
+            if (pamret == PAM_SUCCESS && pass != NULL)
+                pam_set_item(args->pamh, PAM_OLDAUTHTOK, pass);
+            pam_set_item(args->pamh, PAM_AUTHTOK, NULL);
+            args->use_first_pass = 1;
             pamret = pamk5_password_change(args, 0);
             if (pamret == PAM_SUCCESS) {
+                pamk5_debug(args, "successfully changed expired password");
                 args->use_authtok = 1;
                 pamret = pamk5_password_auth(args, NULL, &creds);
             }
