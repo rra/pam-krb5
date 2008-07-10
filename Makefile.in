@@ -66,7 +66,6 @@ warnings:
 dist: pam_krb5.5
 	rm -rf $(TARDIR) $(TARNAME).gz
 	mkdir $(TARDIR)
-	bzr log --short > CHANGES
 	rsync -C --exclude /debian/ -a ./ $(TARDIR)/
 	cd $(TARDIR) && ./autogen
 	tar cf $(TARNAME) $(TARDIR)
@@ -96,5 +95,6 @@ compat.o: compat.c config.h compat-mit.c internal.h
 context.o: context.c config.h internal.h
 logging.o: logging.c config.h internal.h
 options.o: options.c config.h internal.h
+password.o: password.c config.h internal.h
 prompting.o: prompting.c config.h internal.h
 support.o: support.c config.h internal.h
