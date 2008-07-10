@@ -1,3 +1,25 @@
+libpam-krb5 (3.11-1) UNRELEASED; urgency=low
+
+  * New upstream release.
+    - setcred, open_session, and acct_mgmt now return PAM_IGNORE instead
+      of PAM_SUCCESS for ignored users or non-Kerberos logins.
+    - New defer_pwchange option for fully correct expired password
+      handling.  This is not the default because it will open security
+      holes in badly written applications.
+    - New force_pwchange option to force password change for expired
+      accounts during the authentication step even if the Kerberos library
+      doesn't support this.
+    - Warn if more than one of use_authtok, use_first_pass, and
+      try_first_pass are set and use the strongest.
+    - Remove workaround for older MIT Kerberos that improperly initialized
+      the credential option structure.  The workaround was causing
+      problems for PKINIT with the current libraries (which fix this bug).
+    - Set explicit hidden visibility for all local symbols and further
+      restrict the visible symbols with a version script, removing leaks
+      of symbols into the application namespace.
+
+ -- Russ Allbery <rra@debian.org>  Thu, 10 Jul 2008 16:34:41 -0700
+
 libpam-krb5 (3.10-1) unstable; urgency=low
 
   * New upstream release.
