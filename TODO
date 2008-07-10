@@ -23,6 +23,14 @@ PAM API:
  * Tighter verification that all of our flags are valid might be a good
    idea.
 
+Build System:
+
+ * It would be very nice to use Automake to match my other projects, but
+   getting the flags right for building a PAM module while fighting with
+   Libtool is unappealing.  Maybe it won't be that bad, or maybe I can
+   convince Automake to generate a shared object using the flags I figured
+   out without using Libtool.
+
 Code Cleanup:
 
  * The PAM option parsing is repetitive code that involves counting the
