@@ -17,6 +17,8 @@ libpam-krb5 (3.11-1) UNRELEASED; urgency=low
     - Set explicit hidden visibility for all local symbols and further
       restrict the visible symbols with a version script, removing leaks
       of symbols into the application namespace.
+  * Rewrite and expand debian/copyright based on the upstream LICENSE
+    file.
 
  -- Russ Allbery <rra@debian.org>  Thu, 10 Jul 2008 16:34:41 -0700
 
