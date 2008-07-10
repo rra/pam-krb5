@@ -448,3 +448,12 @@ HISTORY AND ACKNOWLEDGEMENTS
 
   Thanks to Markus Moeller for lots of debugging and multiple patches and
   suggestions for improved portability.
+
+SOURCE REPOSITORY
+
+  pam-krb5 is maintained using Git.  You can access the current source by
+  pointing a Git client at:
+
+      http://archives.eyrie.org/software/git/pam-krb5.git
+
+  No gitweb interface is available (yet).
