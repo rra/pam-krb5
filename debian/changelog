@@ -19,6 +19,7 @@ libpam-krb5 (3.11-1) UNRELEASED; urgency=low
       of symbols into the application namespace.
   * Rewrite and expand debian/copyright based on the upstream LICENSE
     file.
+  * Add Vcs-Git and Vcs-Browser control fields.
 
  -- Russ Allbery <rra@debian.org>  Thu, 10 Jul 2008 16:34:41 -0700
 

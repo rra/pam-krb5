@@ -6,6 +6,8 @@ Uploaders: Sam Hartman <hartmans@debian.org>
 Standards-Version: 3.7.3
 Build-Depends: debhelper (>= 5), libkrb5-dev, libpam0g-dev
 Homepage: http://www.eyrie.org/~eagle/software/pam-krb5/
+Vcs-Git: git://git.debian.org/git/pkg-k5-afs/pam-krb5.git
+Vcs-Browser: http://git.debian.org/?p=pkg-k5-afs/pam-krb5.git
 
 Package: libpam-krb5
 Architecture: any
