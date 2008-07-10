@@ -62,10 +62,14 @@ dnl resolved to the functions in that module in preference to any external
 dnl function.
 dnl
 dnl Also, if and only if we're on Linux, make sure that all the symbols in the
-dnl module are resolved and try to adjust for the 32-bit vs. 64-bit library
-dnl paths.
+dnl module are resolved, try to adjust for the 32-bit vs. 64-bit library
+dnl paths, and use a version script to be sure that we hide internal
+dnl functions.  The version script could also be used on Solaris and probably
+dnl other ELF platforms, but the option is only valid with the GNU ld and I
+dnl don't know how to probe for that.
 dnl
 dnl More platforms could be handled here.  Contributions welcome.
+MAP="-Wl,--version-script=pam_krb5.map"
 case "$host" in
 *-darwin*)
     if test "$GCC" = "yes" ; then
@@ -89,7 +93,7 @@ case "$host" in
 x86_64-*-linux*)
     CFLAGS="-fPIC $CFLAGS"
     LD="$CC"
-    LDFLAGS="-fPIC -shared -Wl,-z,defs -Wl,-Bsymbolic $LDFLAGS"
+    LDFLAGS="-fPIC -shared -Wl,-z,defs -Wl,-Bsymbolic $MAP $LDFLAGS"
     if test x"$libdir" = x'${exec_prefix}/lib' ; then
         libdir='${exec_prefix}/lib64'
     fi
@@ -97,7 +101,7 @@ x86_64-*-linux*)
 *-linux*)
     CFLAGS="-fPIC $CFLAGS"
     LD="$CC"
-    LDFLAGS="-fPIC -shared -Wl,-z,defs -Wl,-Bsymbolic $LDFLAGS"
+    LDFLAGS="-fPIC -shared -Wl,-z,defs -Wl,-Bsymbolic $MAP $LDFLAGS"
     ;;
 *-solaris2*)
     if test "$GCC" = "yes" ; then

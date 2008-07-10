@@ -56,6 +56,12 @@ pam-krb5 3.11 (unreleased)
     Fix Autoconf syntax error when probing for libkrb5support.  Thanks,
     Mike Garrison.
 
+    Set an explicit visibility of hidden for all internal functions at
+    compile time if gcc is used to permit better optimization.  Hide all
+    functions except the official interfaces using a version script on
+    Linux.  This protects against leaking symbols into the application
+    namespace and provides some mild optimization benefit.
+
     Fix the probing of PAM headers for const on Mac OS X.  This will
     suppress some harmless compiler warnings there.  Thanks, Markus
     Moeller.
