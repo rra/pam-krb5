@@ -17,6 +17,8 @@ libpam-krb5 (3.11-1) UNRELEASED; urgency=low
     - Set explicit hidden visibility for all local symbols and further
       restrict the visible symbols with a version script, removing leaks
       of symbols into the application namespace.
+  * Install NEWS as the upstream changelog.  Upstream no longer includes a
+    detailed CHANGES file.
   * Rewrite and expand debian/copyright based on the upstream LICENSE
     file.
   * Add Vcs-Git and Vcs-Browser control fields.
