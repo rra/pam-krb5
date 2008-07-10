@@ -204,7 +204,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
      * we're done.  Otherwise, store the obtained credentials in a temporary
      * cache.
      */
-    if (args->no_ccache || ctx->expired)
+    if (!args->no_ccache && !ctx->expired)
         pamret = pamk5_cache_init_random(args, creds);
 
 done:
