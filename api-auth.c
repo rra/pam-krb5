@@ -139,12 +139,13 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 
     /*
      * Do the actual authentication.  Expiration, if we're handling this using
-     * the formally correct method, is handled specially: we set a flag in the
-     * context and return success.  That flag will later be checked by
-     * pam_sm_acct_mgmt.
+     * the formally correct method (defer_pwchange), is handled specially: we
+     * set a flag in the context and return success.  That flag will later be
+     * checked by pam_sm_acct_mgmt.  If we're not handling it in the formally
+     * correct method, we try to do the password change directly now.
      *
-     * We need to set the context as PAM data in the expired case, but we
-     * don't want to set the PAM data until we've checked .k5login since if
+     * We need to set the context as PAM data in the defer_pwchange case, but
+     * we don't want to set the PAM data until we've checked .k5login since if
      * we've stacked multiple pam-krb5 invocations in different realms with
      * optional, we don't want to override a previous successful
      * authentication.
@@ -155,10 +156,20 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
      * worth.
      */
     pamret = pamk5_password_auth(args, NULL, &creds);
-    if (pamret == PAM_NEW_AUTHTOK_REQD && args->defer_pwchange) {
-        pamk5_debug(args, "expired account, deferring failure");
-        ctx->expired = 1;
-        pamret = PAM_SUCCESS;
+    if (pamret == PAM_NEW_AUTHTOK_REQD) {
+        if (args->defer_pwchange) {
+            pamk5_debug(args, "expired account, deferring failure");
+            ctx->expired = 1;
+            pamret = PAM_SUCCESS;
+        } else if (args->force_pwchange) {
+            pamk5_conv(args, "Password expired.  You must change it now.",
+                       PAM_TEXT_INFO, NULL);
+            pamret = pamk5_password_change(args, 0);
+            if (pamret == PAM_SUCCESS) {
+                args->use_authtok = 1;
+                pamret = pamk5_password_auth(args, NULL, &creds);
+            }
+        }
     }
     if (pamret != PAM_SUCCESS)
         goto done;

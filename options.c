@@ -290,6 +290,7 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
         default_boolean(args, c, "debug", 0, &args->debug);
         default_boolean(args, c, "defer_pwchange", 0, &args->defer_pwchange);
         default_boolean(args, c, "expose_account", 0, &args->expose_account);
+        default_boolean(args, c, "force_pwchange", 0, &args->force_pwchange);
         default_boolean(args, c, "forwardable", 0, &args->forwardable);
         default_boolean(args, c, "ignore_k5login", 0, &args->ignore_k5login);
         default_boolean(args, c, "ignore_root", 0, &args->ignore_root);
@@ -345,6 +346,8 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
             args->defer_pwchange = 1;
         else if (strcmp(argv[i], "expose_account") == 0)
             args->expose_account = 1;
+        else if (strcmp(argv[i], "force_pwchange") == 0)
+            args->force_pwchange = 1;
         else if (strcmp(argv[i], "forwardable") == 0)
             args->forwardable = 1;
         else if (strcmp(argv[i], "ignore_k5login") == 0)

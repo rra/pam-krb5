@@ -19,6 +19,13 @@ pam-krb5 3.11 (unreleased)
     To enable it, set the PAM option defer_pwchange for applications known
     to make the correct PAM calls and check return codes.
 
+    Add a new option to attempt change of expired passwords during
+    pam_authenticate if Kerberos authentication returns a password expired
+    error.  Normally, the Kerberos library will do this for you, but some
+    Kerberos libraries (notably Solaris) disable that code.  This option
+    allows simulation of the normal Kerberos library behavior on those
+    platforms.
+
     Work around an apparent Heimdal bug when krb5_free_cred_contents is
     called on an all-zero credential structure.  It's not clear what's
     going on here and the Heimdal code looks correct, but avoiding the

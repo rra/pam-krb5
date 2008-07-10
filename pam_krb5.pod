@@ -322,6 +322,21 @@ inaccurate.
 This option can be set in F<krb5.conf> and is only applicable to the auth
 and password groups.
 
+=item force_pwchange
+
+If this option is set and authentication fails with a Kerberos error
+indicating the user's password is expired, attempt to immediately change
+their password during the authenticate step.  Under normal circumstances,
+this is unnecessary.  Most Kerberos libraries will do this for you, and
+setting this option will prompt the user twice to change their password if
+the first attempt (done by the Kerberos library) fails.  However, some
+system Kerberos libraries (such as Solaris's) have password change
+prompting disabled in the Kerberos library; on those systems, you can set
+this option to simulate the normal library behavior.
+
+This option can be set in F<krb5.conf> and is only applicable to the auth
+group.
+
 =item forwardable
 
 Obtain forwardable tickets.  If set (to either true or false, although it

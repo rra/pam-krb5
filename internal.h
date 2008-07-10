@@ -70,6 +70,7 @@ struct pam_args {
     int debug;                  /* Log debugging information. */
     int defer_pwchange;         /* Defer expired account fail to account. */
     int expose_account;         /* Display principal in password prompts. */
+    int force_pwchange;         /* Change expired passwords in auth. */
     int forwardable;            /* Obtain forwardable tickets. */
     int ignore_root;            /* Skip authentication for root. */
     int ignore_k5login;         /* Don't check .k5login files. */
@@ -135,6 +136,13 @@ void pamk5_args_free(struct pam_args *);
  * the local system key.
  */
 int pamk5_password_auth(struct pam_args *, const char *service, krb5_creds **);
+
+/*
+ * Change the user's password.  Prompts for the current password as needed and
+ * the new password.  If the second argument is true, only obtains the
+ * necessary credentials without changing anything.
+ */
+int pamk5_password_change(struct pam_args *, int only_auth);
 
 /*
  * Generic conversation function to display messages or get information from
