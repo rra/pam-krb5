@@ -1,8 +1,37 @@
                            pam-krb5 To-Do List
 
+PAM API:
+
+ * Support PAM_CHANGE_EXPIRED_AUTHTOK properly in pam_chauthtok.  This
+   will require prompting for the current password (if it's not already
+   available in the PAM data) and trying a regular authentication first to
+   see if the account is expired.
+
+ * Fix error logging levels to comply with the Linux PAM recommendations.
+   Currently, all errors are logged at LOG_ERR level.  Corrupt local
+   configuration (so failure of krb5_init_context) should be logged at
+   LOG_ALERT, malloc failures and other system resource failures should be
+   logged at LOG_CRIT, and authentication failures should be logged at
+   LOG_NOTICE.
+
+ * pam-krb5 currently will still prompt the user for a password if
+   use_first_pass is set but no auth token has been saved; use_authtok is
+   required to force failure in this case.  This contradicts the Linux-PAM
+   Module Writers' Guide, which requires use_first_pass in the auth group
+   to work the way that use_authtok does now.
+
+ * Tighter verification that all of our flags are valid might be a good
+   idea.
+
+Code Cleanup:
+
  * The PAM option parsing is repetitive code that involves counting the
    lengths of strings.  It should be possible to replace most of it with
    some carefully-chosen macros.
+
+ * The PAM option parsing code could do a binary search on a table of
+   option strings rather than checking each one in turn, although the
+   performance and cleanliness gain may not be worth the effort.
 
  * The PKINIT code for Heimdal involves too many #ifdefs right now for my
    taste.  Find a way to restructure it to only wrap the main PKINIT
@@ -16,11 +45,28 @@
    allocation failure, which makes this mostly futile until there's a
    better profile library API.
 
+ * The current handling of error return codes is a mess.  We need to find
+   a way to return a rich set of error codes from the underlying functions
+   and then map error codes appropriately in the interface functions.
+   Helpful for this would be improved documentation of what error codes
+   are permitted and where.
+
+ * Add portability glue for a missing or broken snprintf and use snprintf
+   everywhere sprintf is currently used.  A portable replacement for
+   mkstemp is probably also a good idea.
+
+Documentation:
+
  * Document PKINIT configuration with MIT in krb5.conf.  It looks like the
    library supports configuration in [realms] with similar names to the
    PAM module configuration.
 
- * Support PAM_CHANGE_EXPIRED_AUTHTOK properly in pam_chauthtok.  This
-   will require prompting for the current password (if it's not already
-   available in the PAM data) and trying a regular authentication first to
-   see if the account is expired.
+ * Reorganize the man page to group options into categories.  The number
+   of options right now is intimidating and confusing and makes it hard to
+   find relevant options.  PAM API behavior, prompting behavior, PKINIT,
+   and ticket flags might be useful option groups.
+
+Tests:
+
+ * Add support for running an automated test suite using a user-configured
+   test account with a known password.
