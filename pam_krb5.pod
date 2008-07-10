@@ -4,10 +4,10 @@ pam_krb5 - Kerberos v5 PAM module
 
 =head1 SYNOPSIS
 
-  auth            sufficient      pam_krb5.so ignore_root
-  session         optional        pam_krb5.so ignore_root
-  account         required        pam_krb5.so ignore_root
-  password        optional        pam_krb5.so ignore_root
+  auth            sufficient      pam_krb5.so minimum_uid=100
+  session         required        pam_krb5.so minimum_uid=100
+  account         required        pam_krb5.so minimum_uid=100
+  password        sufficient      pam_krb5.so minimum_uid=100
 
 =head1 DESCRIPTION
 
@@ -276,6 +276,34 @@ interfaces (except pam_close_session).
 
 This option can be set in F<krb5.conf>.
 
+=item defer_pwchange
+
+By default, pam-krb5 lets the Kerberos library handle prompting for a
+password change if an account's password is expired during the auth
+group.  If this fails, pam_authenticate() returns an error.
+
+According to the PAM standard, this is not the correct way to handle
+expired passwords.  Instead, pam_authenticate() should return success
+without attempting a password change, and then pam_acct_mgmt() should
+return PAM_NEW_AUTHTOK_REQD, at which point the calling application is
+responsible for either rejecting the authentication or calling
+pam_chauthtok().  However, following the standard requires that all
+applications call pam_acct_mgmt() and check its return status; otherwise,
+expired accounts may be able to successfully authenticate.  Many
+applications do not do this.
+
+If this option is set, pam-krb5 uses the fully correct PAM mechanism for
+handling expired accounts instead of failing in pam_authenticate().  Due
+to the security risk of widespread broken applications, be very careful
+about enabling this option.  It should normally only be turned on to solve
+a specific problem (such as using Solaris Kerberos libraries that don't
+support prompting for password changes during authentication), and then
+only for specific applications known to call pam_acct_mgmt() and check its
+return status properly.
+
+This option can be set in F<krb5.conf> and is only applicable to the auth
+group.
+
 =item expose_account
 
 By default, the Kerberos PAM module password prompt is simply
@@ -293,6 +321,21 @@ inaccurate.
 
 This option can be set in F<krb5.conf> and is only applicable to the auth
 and password groups.
+
+=item force_pwchange
+
+If this option is set and authentication fails with a Kerberos error
+indicating the user's password is expired, attempt to immediately change
+their password during the authenticate step.  Under normal circumstances,
+this is unnecessary.  Most Kerberos libraries will do this for you, and
+setting this option will prompt the user twice to change their password if
+the first attempt (done by the Kerberos library) fails.  However, some
+system Kerberos libraries (such as Solaris's) have password change
+prompting disabled in the Kerberos library; on those systems, you can set
+this option to simulate the normal library behavior.
+
+This option can be set in F<krb5.conf> and is only applicable to the auth
+group.
 
 =item forwardable
 
@@ -319,9 +362,10 @@ and account groups.
 Do not do anything if the username is C<root>.  The authentication and
 password calls will silently fail (allowing that status to be ignored via
 a control of C<optional> or C<sufficient>), and the account and session
-calls (including pam_setcred) will silently succeed.  This option is
-supported and will remain, but normally you want to use I<minimum_uid>
-instead.
+calls (including pam_setcred) will return PAM_IGNORE, telling the PAM
+library to proceed as if they weren't mentioned in the PAM configuration.
+This option is supported and will remain, but normally you want to use
+I<minimum_uid> instead.
 
 This option can be set in F<krb5.conf>.
 
@@ -344,10 +388,11 @@ local account and that local account has a UID lower than <uid>.  If both
 of those conditions are true, the authentication and password calls will
 silently fail (allowing that status to be ignored via a control of
 C<optional> or C<sufficient>), and the account and session calls
-(including pam_setcred) will silently succeed.  Using this option is
-highly recommended if you don't need to use Kerberos to authenticate
-password logins to the root account (which isn't recommended since
-Kerberos requires a network connection).
+(including pam_setcred) will return PAM_IGNORE, telling the PAM library to
+proceed as if they weren't mentioned in the PAM configuration.  Using this
+option is highly recommended if you don't need to use Kerberos to
+authenticate password logins to the root account (which isn't recommended
+since Kerberos requires a network connection).
 
 This option can be set in F<krb5.conf>.
 
@@ -632,6 +677,14 @@ expired will not be prompted to change their password unless the KDC
 configuration for your realm in [realms] in krb5.conf contains a
 master_kdc setting or, if using DNS SRV records, you have a DNS entry for
 _kerberos-master as well as _kerberos.
+
+pam_authenticate() returns failure when called for an ignored account,
+requiring the system administrator to use C<optional> or C<sufficient> to
+ignore the module and move on to the next module.  It's arguably more
+correct to return PAM_IGNORE, which causes the module to be ignored as if
+it weren't in the configuration, but this increases the risk of
+inadvertent security holes when listing pam-krb5 as the only
+authentication module.
 
 Old versions of OpenSSH are known to call pam_authenticate followed by
 pam_setcred(PAM_REINITIALIZE_CRED) without first calling pam_open_session,

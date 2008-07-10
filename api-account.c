@@ -5,7 +5,7 @@
  * user's authorization against .k5login (or whatever equivalent we've been
  * configured for).
  *
- * Copyright 2005, 2006, 2007 Russ Allbery <rra@debian.org>
+ * Copyright 2005, 2006, 2007, 2008 Russ Allbery <rra@debian.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  * See LICENSE for licensing terms.
@@ -53,15 +53,22 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
     ENTRY(args, flags);
 
     /*
-     * Succeed if the user did not use krb5 to login.  Yes, ideally we should
+     * Succeed if the user did not use krb5 to login.  Ideally, we should
      * probably fail and require that the user set up policy properly in their
      * PAM configuration, but it's not common for the user to do so and that's
      * not how other krb5 PAM modules work.  If we don't do this, root logins
      * with the system root password fail, which is a bad failure mode.
      */
     if (pamret != PAM_SUCCESS || args->ctx == NULL) {
-        pamret = PAM_SUCCESS;
+        pamret = PAM_IGNORE;
         pamk5_debug(args, "skipping non-Kerberos login");
+        goto done;
+    }
+    ctx = args->ctx;
+
+    /* If the account was expired, here's where we actually fail. */
+    if (ctx->expired) {
+        pamret = PAM_NEW_AUTHTOK_REQD;
         goto done;
     }
 
@@ -79,7 +86,6 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
         retval = PAM_AUTH_ERR;
         goto done;
     }
-    ctx = args->ctx;
     if (ctx->name != NULL)
         free(ctx->name);
     ctx->name = strdup(name);

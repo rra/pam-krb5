@@ -1,12 +1,12 @@
 dnl Process this file with Autoconf to produce a configure script.
 dnl
-dnl Copyright 2005, 2006, 2007 Russ Allbery <rra@debian.org>
+dnl Copyright 2005, 2006, 2007, 2008 Russ Allbery <rra@debian.org>
 dnl Copyright 2005 Andres Salomon <dilinger@debian.org>
 dnl Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
 dnl See LICENSE for licensing terms.
 
 AC_PREREQ([2.61])
-AC_INIT([pam-krb5], [3.10], [rra@stanford.edu])
+AC_INIT([pam-krb5], [3.11], [rra@stanford.edu])
 AC_CONFIG_AUX_DIR([build-aux])
 
 m4_include([m4/krb5.m4])
@@ -21,16 +21,14 @@ AC_CANONICAL_HOST
 AC_AIX
 
 dnl Probe for the functionality of the PAM libraries and their include file
-dnl naming.
+dnl naming.  Mac OS X puts them in pam/* instead of security/*.
 AC_SEARCH_LIBS([pam_set_data], [pam])
 AC_CHECK_FUNCS([pam_modutil_getpwnam])
-RRA_HEADER_PAM_CONST
 AC_CHECK_HEADERS([security/pam_modutil.h])
-
-dnl Mac OS X calls its PAM headers something different than everyone else.
 AC_CHECK_HEADERS([security/pam_appl.h], ,
     [AC_CHECK_HEADERS([pam/pam_appl.h], ,
         [AC_MSG_ERROR([No PAM header files found])])])
+RRA_HEADER_PAM_CONST
 
 dnl Probe for the location and functionality of the Kerberos libraries.
 RRA_LIB_KRB5
@@ -44,6 +42,7 @@ AC_CHECK_MEMBER([krb5_creds.session],
     [#include <krb5.h>])
 AC_CHECK_FUNCS([krb5_appdefault_string \
     krb5_get_init_creds_opt_alloc \
+    krb5_get_init_creds_opt_set_change_password_prompt \
     krb5_get_init_creds_opt_set_default_flags \
     krb5_get_init_creds_opt_set_pa \
     krb5_verify_init_creds_opt_init])
@@ -63,10 +62,14 @@ dnl resolved to the functions in that module in preference to any external
 dnl function.
 dnl
 dnl Also, if and only if we're on Linux, make sure that all the symbols in the
-dnl module are resolved and try to adjust for the 32-bit vs. 64-bit library
-dnl paths.
+dnl module are resolved, try to adjust for the 32-bit vs. 64-bit library
+dnl paths, and use a version script to be sure that we hide internal
+dnl functions.  The version script could also be used on Solaris and probably
+dnl other ELF platforms, but the option is only valid with the GNU ld and I
+dnl don't know how to probe for that.
 dnl
 dnl More platforms could be handled here.  Contributions welcome.
+MAP="-Wl,--version-script=pam_krb5.map"
 case "$host" in
 *-darwin*)
     if test "$GCC" = "yes" ; then
@@ -90,7 +93,7 @@ case "$host" in
 x86_64-*-linux*)
     CFLAGS="-fPIC $CFLAGS"
     LD="$CC"
-    LDFLAGS="-fPIC -shared -Wl,-z,defs -Wl,-Bsymbolic $LDFLAGS"
+    LDFLAGS="-fPIC -shared -Wl,-z,defs -Wl,-Bsymbolic $MAP $LDFLAGS"
     if test x"$libdir" = x'${exec_prefix}/lib' ; then
         libdir='${exec_prefix}/lib64'
     fi
@@ -98,7 +101,7 @@ x86_64-*-linux*)
 *-linux*)
     CFLAGS="-fPIC $CFLAGS"
     LD="$CC"
-    LDFLAGS="-fPIC -shared -Wl,-z,defs -Wl,-Bsymbolic $LDFLAGS"
+    LDFLAGS="-fPIC -shared -Wl,-z,defs -Wl,-Bsymbolic $MAP $LDFLAGS"
     ;;
 *-solaris2*)
     if test "$GCC" = "yes" ; then

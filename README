@@ -1,4 +1,4 @@
-                              pam-krb5 3.10
+                              pam-krb5 3.11
                (PAM module for Kerberos v5 authentication)
 
                     Originally written by Frank Cusack
@@ -53,10 +53,11 @@ DESCRIPTION
 
 REQUIREMENTS
 
-  Either MIT Kerberos or Heimdal are supported.  The Makefile will require
-  some modifications to build with Heimdal.  The MIT Kerberos support is
-  better tested.  MIT Keberos 1.3 or later may be required; this module
-  has not been tested with earlier versions.
+  Either MIT Kerberos (or Kerberos implementations based on it) or Heimdal
+  are supported.  The Makefile will require some modifications to build
+  with Heimdal.  The MIT Kerberos support is better tested.  MIT Keberos
+  1.3 or later may be required; this module has not been tested with
+  earlier versions.
 
   For PKINIT support, Heimdal 0.8rc1 or later is required.  MIT Kerberos
   PKINIT support was developed against the MIT PKINIT branch and may
@@ -64,6 +65,7 @@ REQUIREMENTS
 
   This module should work on Linux and Solaris (and build with either gcc
   or the Sun C compiler), but has been far more heavily tested on Linux.
+  There is alpha-quality support for the AIX NAS Kerberos implementation.
   Other PAM implementations will probably require some porting, although
   untested build system support is present for Mac OS X and HP-UX.
 
@@ -111,6 +113,11 @@ COMPILING AND INSTALLING
   KRB5_CONFIG environment variable or pass it to configure like:
 
       ./configure KRB5_CONFIG=/path/to/krb5-config
+
+  To not use krb5-config and force library probing even if there is a
+  krb5-config script on your path, set KRB5_CONFIG to a nonexistent path:
+
+      ./configure KRB5_CONFIG=/nonexistent
 
   You can pass the --enable-reduced-depends flag to configure to try to
   minimize the shared library dependencies encoded in the binaries.  This
@@ -220,6 +227,13 @@ CONFIGURING
   (at least on Solaris 8 and 9), you will probably also need to add
   retain_after_close to the PAM configuration to avoid having the user's
   credentials deleted before they are logged in.
+
+  The Solaris Kerberos library reportedly does not support prompting for a
+  password change of an expired account during authentication.  Supporting
+  password change for expired accounts on Solaris with native Kerberos may
+  therefore require setting the defer_pwchange option for selected login
+  applications.  See the description and warnings about that option in the
+  pam_krb5 man page.
 
   Some configuration options may be put in the krb5.conf file used by your
   Kerberos libraries (usually /etc/krb5.conf or /usr/local/etc/krb5.conf)
@@ -346,6 +360,58 @@ IMPLEMENTATION NOTES
   refreshing a ticket cache, the application should *not* open a session.
   Calling pam_acct_mgmt is optional; pam-krb5 doesn't do anything
   different when it's called in this case.
+
+  If pam_authenticate apparently didn't succeed, or if an account was
+  configured to be ignored via ignore_root or minimum_uid, pam_setcred
+  (and therefore pam_open_session) and pam_acct_mgmt return PAM_IGNORE,
+  which tells the PAM library to proceed as if that module wasn't listed
+  in the PAM configuration at all.  pam_authenticate, however, returns
+  failure in the ignored user case by default, since otherwise a
+  configuration using ignore_root with pam-krb5 as the only PAM module
+  would allow anyone to log in as root without a password.  There doesn't
+  appear to be a case where returning PAM_IGNORE instead would improve the
+  module's behavior, but if you know of a case, please let me know.
+
+  By default, pam_authenticate intentionally does not follow the PAM
+  standard for handling expired accounts and instead returns failure from
+  pam_authenticate unless the Kerberos libraries are able to change the
+  account password during authentication.  Too many applications either do
+  not call pam_acct_mgmt or ignore its exit status.  The fully correct PAM
+  behavior (returning success from pam_authenticate and
+  PAM_NEW_AUTHTOK_REQD from pam_acct_mgmt) can be enabled with the
+  defer_pwchange option.
+
+  The defer_pwchange option is unfortunately somewhat tricky to implement.
+  In this case, the calling sequence is:
+
+      pam_authenticate
+      pam_acct_mgmt
+      pam_chauthtok
+      pam_setcred
+      pam_open_session
+
+  During the first pam_authenticate, we can't obtain credentials and
+  therefore a ticket cache since the password is expired.  But
+  pam_authenticate isn't called again after pam_chauthtok, so
+  pam_chauthtok has to create a ticket cache.  We however don't want it to
+  do this for the normal password change (passwd) case.
+
+  What we do is set a flag in our PAM data structure saying that we're
+  processing an expired password, and pam_chauthtok, if it sees that flag,
+  redoes the authentication with password prompting disabled after it
+  finishes changing the password.
+
+  Unfortunately, when handling password changes this way, pam_chauthtok
+  will always have to prompt the user for their current password again
+  even though they just typed it.  This is because the saved
+  authentication tokens are cleared after pam_authenticate returns, for
+  security reasons.  We could hack around this by saving the password in
+  our PAM data structure, but this would let the application gain access
+  to it (exactly what the clearing is intended to prevent) and breaks a
+  PAM library guarantee.  We could also work around this by having
+  pam_authenticate get the kadmin/changepw authenticator in the expired
+  password case and store it for pam_chauthtok, but it doesn't seem worth
+  the hassle.
 
 HISTORY AND ACKNOWLEDGEMENTS
 
