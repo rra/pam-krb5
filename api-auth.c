@@ -6,7 +6,7 @@
  * can also refresh an existing ticket cache or destroy a ticket cache,
  * depending on the flags passed in.
  *
- * Copyright 2005, 2006, 2007 Russ Allbery <rra@debian.org>
+ * Copyright 2005, 2006, 2007, 2008 Russ Allbery <rra@debian.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  * See LICENSE for licensing terms.
@@ -33,102 +33,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#include <unistd.h>
 
 #include "internal.h"
-
-/*
- * Get the name of a cache, given the name of the environment variable that
- * should be set to indicate which cache to use.  This function handles both
- * getting the final cache name (KRB5CCNAME) and the temporary cache name
- * (PAM_KRB5CCNAME).
- */
-static const char *
-get_krb5ccname(struct pam_args *args, const char *key)
-{
-    const char *name;
-
-    /* When refreshing a cache, we need to try the regular environment. */
-    name = pam_getenv(args->pamh, key);
-    if (name == NULL)
-        name = getenv(key);
-    return name;
-}
-
-
-/*
- * Put the ticket cache information into the environment.  Takes the path and
- * the environment variable to set, since this is used both for the permanent
- * cache (KRB5CCNAME) and the temporary cache (PAM_KRB5CCNAME).
- */
-static int
-set_krb5ccname(struct pam_args *args, const char *name, const char *key)
-{
-    char *env_name = NULL;
-    int pamret;
-
-    env_name = malloc(strlen(key) + 1 + strlen(name) + 1);
-    if (env_name == NULL) {
-        pamk5_error(args, "malloc failure: %s", strerror(errno));
-        pamret = PAM_BUF_ERR;
-        goto done;
-    }
-    sprintf(env_name, "%s=%s", key, name);
-    pamret = pam_putenv(args->pamh, env_name);
-    if (pamret != PAM_SUCCESS) {
-        pamk5_error(args, "pam_putenv: %s", pam_strerror(args->pamh, pamret));
-        pamret = PAM_SERVICE_ERR;
-        goto done;
-    }
-    pamret = PAM_SUCCESS;
-
-done:
-    if (env_name != NULL)
-        free(env_name);
-    return pamret;
-}
-
-
-/*
- * Given a cache name and the initial credentials, initialize the cache, store
- * the credentials in that cache, and return a pointer to the new cache in the
- * cache argument.  Returns a PAM success or error code.
- */
-static int
-cache_init(struct pam_args *args, const char *ccname, krb5_creds *creds,
-           krb5_ccache *cache)
-{
-    struct context *ctx;
-    int retval;
-
-    if (args == NULL || args->ctx == NULL || args->ctx->context == NULL)
-        return PAM_SERVICE_ERR;
-    ctx = args->ctx;
-    retval = krb5_cc_resolve(ctx->context, ccname, cache);
-    if (retval != 0) {
-        pamk5_debug_krb5(args, "krb5_cc_resolve", retval);
-        retval = PAM_SERVICE_ERR;
-        goto done;
-    }
-    retval = krb5_cc_initialize(ctx->context, *cache, ctx->princ);
-    if (retval != 0) {
-        pamk5_debug_krb5(args, "krb5_cc_initialize", retval);
-        retval = PAM_SERVICE_ERR;
-        goto done;
-    }
-    retval = krb5_cc_store_cred(ctx->context, *cache, creds);
-    if (retval != 0) {
-        pamk5_debug_krb5(args, "krb5_cc_store_cred", retval);
-        retval = PAM_SERVICE_ERR;
-        goto done;
-    }
-
-done:
-    if (retval != PAM_SUCCESS && *cache != NULL)
-        krb5_cc_destroy(ctx->context, *cache);
-    return retval;
-}
-
 
 /*
  * Given a cache name and an existing cache, initialize a new cache, store the
@@ -148,6 +54,8 @@ cache_init_from_cache(struct pam_args *args, const char *ccname,
     memset(&creds, 0, sizeof(creds));
     if (args == NULL || args->ctx == NULL || args->ctx->context == NULL)
         return PAM_SERVICE_ERR;
+    if (old == NULL)
+        return PAM_SERVICE_ERR;
     ctx = args->ctx;
     status = krb5_cc_start_seq_get(ctx->context, old, &cursor);
     if (status != 0) {
@@ -160,7 +68,7 @@ cache_init_from_cache(struct pam_args *args, const char *ccname,
         pamret = PAM_SERVICE_ERR;
         goto done;
     }
-    pamret = cache_init(args, ccname, &creds, cache);
+    pamret = pamk5_cache_init(args, ccname, &creds, cache);
     if (pamret != PAM_SUCCESS) {
         krb5_free_cred_contents(ctx->context, &creds);
         pamret = PAM_SERVICE_ERR;
@@ -208,8 +116,8 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     struct context *ctx = NULL;
     struct pam_args *args;
     krb5_creds *creds = NULL;
-    int pamret, ccfd;
-    char cache_name[] = "/tmp/krb5cc_pam_XXXXXX";
+    char *pass = NULL;
+    int pamret;
     int set_context = 0;
 
     args = pamk5_args_parse(pamh, flags, argc, argv);
@@ -230,26 +138,72 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
         goto done;
     }
 
-    /* Do the actual authentication. */
+    /*
+     * Do the actual authentication.  Expiration, if we're handling this using
+     * the formally correct method (defer_pwchange), is handled specially: we
+     * set a flag in the context and return success.  That flag will later be
+     * checked by pam_sm_acct_mgmt.  If we're not handling it in the formally
+     * correct method, we try to do the password change directly now.
+     *
+     * We need to set the context as PAM data in the defer_pwchange case, but
+     * we don't want to set the PAM data until we've checked .k5login since if
+     * we've stacked multiple pam-krb5 invocations in different realms with
+     * optional, we don't want to override a previous successful
+     * authentication.
+     *
+     * This means that if authentication succeeds in one realm and is then
+     * expired in a later realm, the expiration in the latter realm wins.
+     * This isn't ideal, but avoiding that case is more complicated than it's
+     * worth.
+     *
+     * In the force_pwchange case, try to use the password the user just
+     * entered to authenticate to the password changing service, but don't
+     * throw an error if that doesn't work.  We have to move it from
+     * PAM_AUTHTOK to PAM_OLDAUTHTOK to be in the place where password
+     * changing expects, and have to unset PAM_AUTHTOK or we'll just change
+     * the password to the same thing it was.
+     */
     pamret = pamk5_password_auth(args, NULL, &creds);
+    if (pamret == PAM_NEW_AUTHTOK_REQD) {
+        if (args->defer_pwchange) {
+            pamk5_debug(args, "expired account, deferring failure");
+            ctx->expired = 1;
+            pamret = PAM_SUCCESS;
+        } else if (args->force_pwchange) {
+            pamk5_debug(args, "expired account, forcing password change");
+            pamk5_conv(args, "Password expired.  You must change it now.",
+                       PAM_TEXT_INFO, NULL);
+            pamret = pam_get_item(args->pamh, PAM_AUTHTOK, (void *) &pass);
+            if (pamret == PAM_SUCCESS && pass != NULL)
+                pam_set_item(args->pamh, PAM_OLDAUTHTOK, pass);
+            pam_set_item(args->pamh, PAM_AUTHTOK, NULL);
+            args->use_first_pass = 1;
+            pamret = pamk5_password_change(args, 0);
+            if (pamret == PAM_SUCCESS) {
+                pamk5_debug(args, "successfully changed expired password");
+                args->use_authtok = 1;
+                pamret = pamk5_password_auth(args, NULL, &creds);
+            }
+        }
+    }
     if (pamret != PAM_SUCCESS)
         goto done;
 
     /* Check .k5login. */
-    pamret = pamk5_authorized(args);
-    if (pamret != PAM_SUCCESS) {
-        pamk5_debug(args, "failed authorization check");
-        goto done;
+    if (!ctx->expired) {
+        pamret = pamk5_authorized(args);
+        if (pamret != PAM_SUCCESS) {
+            pamk5_debug(args, "failed authorization check");
+            goto done;
+        }
     }
 
-    /* Reset PAM_USER in case we canonicalized. */
-    pamret = pam_set_item(args->pamh, PAM_USER, ctx->name);
-    if (pamret != PAM_SUCCESS)
-        pamk5_debug_pam(args, "cannot set PAM_USER", pamret);
-
-    /* Unless we're creating a ticket cache, we're done. */
-    if (args->no_ccache)
-        goto done;
+    /* Reset PAM_USER in case we canonicalized, but ignore errors. */
+    if (!ctx->expired) {
+        pamret = pam_set_item(args->pamh, PAM_USER, ctx->name);
+        if (pamret != PAM_SUCCESS)
+            pamk5_debug_pam(args, "cannot set PAM_USER", pamret);
+    }
 
     /* Now that we know we're successful, we can store the context. */
     pamret = pam_set_data(pamh, "pam_krb5", ctx, pamk5_context_destroy);
@@ -260,21 +214,13 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     }
     set_context = 1;
 
-    /* Store the obtained credentials in a temporary cache. */
-    ccfd = mkstemp(cache_name);
-    if (ccfd < 0) {
-        pamk5_error(args, "mkstemp(\"%s\") failed: %s", cache_name,
-                    strerror(errno));
-        pamret = PAM_SERVICE_ERR;
-        goto done;
-    }
-    close(ccfd);
-    pamret = cache_init(args, cache_name, creds, &ctx->cache);
-    if (pamret != PAM_SUCCESS)
-        goto done;
-    pamret = set_krb5ccname(args, cache_name, "PAM_KRB5CCNAME");
-    if (pamret != PAM_SUCCESS)
-        goto done;
+    /*
+     * If we have an expired account or if we're not creating a ticket cache,
+     * we're done.  Otherwise, store the obtained credentials in a temporary
+     * cache.
+     */
+    if (!args->no_ccache && !ctx->expired)
+        pamret = pamk5_cache_init_random(args, creds);
 
 done:
     if (creds != NULL) {
@@ -370,7 +316,9 @@ build_ccache_name(struct pam_args *args, uid_t uid)
 
 /*
  * Create a new context for a session if we've lost the context created during
- * authentication (such as when running under OpenSSH).
+ * authentication (such as when running under OpenSSH).  Return PAM_IGNORE if
+ * we're ignoring this user or if apparently our pam_authenticate never
+ * succeeded.
  */
 static int
 create_session_context(struct pam_args *args)
@@ -384,7 +332,7 @@ create_session_context(struct pam_args *args)
     if (args->ignore_root || args->minimum_uid > 0) {
         pamret = pam_get_user(args->pamh, &user, NULL);
         if (pamret == PAM_SUCCESS && pamk5_should_ignore(args, user)) {
-            pamret = PAM_SUCCESS;
+            pamret = PAM_IGNORE;
             goto fail;
         }
     }
@@ -400,11 +348,11 @@ create_session_context(struct pam_args *args)
         goto fail;
     }
     ctx = args->ctx;
-    tmpname = get_krb5ccname(args, "PAM_KRB5CCNAME");
+    tmpname = pamk5_get_krb5ccname(args, "PAM_KRB5CCNAME");
     if (tmpname == NULL) {
         pamk5_debug(args, "unable to get PAM_KRB5CCNAME, assuming"
                     " non-Kerberos login");
-        pamret = PAM_SUCCESS;
+        pamret = PAM_IGNORE;
         goto fail;
     }
     pamk5_debug(args, "found initial ticket cache at %s", tmpname);
@@ -542,7 +490,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
     if (reinit) {
         const char *name, *k5name;
 
-        name = get_krb5ccname(args, "KRB5CCNAME");
+        name = pamk5_get_krb5ccname(args, "KRB5CCNAME");
         if (name == NULL)
             name = krb5_cc_default_name(ctx->context);
         if (name == NULL) {
@@ -587,7 +535,6 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
          */
         ctx->dont_destroy_cache = 1;
     } else {
-        int ccache_fd;
         char *cache_name_tmp;
         size_t len;
 
@@ -602,13 +549,9 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
                 cache_name_tmp = cache_name + strlen("FILE:");
             else
                 cache_name_tmp = cache_name;
-            ccache_fd = mkstemp(cache_name_tmp);
-            if (ccache_fd == -1) {
-                pamk5_error(args, "mkstemp failure: %s", strerror(errno));
-                pamret = PAM_SERVICE_ERR;
+            pamret = pamk5_cache_mkstemp(args, cache_name_tmp);
+            if (pamret != PAM_SUCCESS)
                 goto done;
-            }
-            close(ccache_fd);
         }
         pamk5_debug(args, "initializing ticket cache %s", cache_name);
     }
@@ -631,7 +574,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
         pamret = PAM_SERVICE_ERR;       
         goto done;
     }
-    pamret = set_krb5ccname(args, cache_name, "KRB5CCNAME");
+    pamret = pamk5_set_krb5ccname(args, cache_name, "KRB5CCNAME");
     if (pamret != PAM_SUCCESS)
         goto done;
 

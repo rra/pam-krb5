@@ -5,7 +5,7 @@
  * internal functions.  Retrieves configuration information from krb5.conf and
  * parses the PAM configuration.
  *
- * Copyright 2005, 2006, 2007 Russ Allbery <rra@debian.org>
+ * Copyright 2005, 2006, 2007, 2008 Russ Allbery <rra@debian.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  * See LICENSE for licensing terms.
@@ -288,7 +288,9 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
         default_string(args, c, "ccache_dir", "FILE:/tmp", &args->ccache_dir);
         default_boolean(args, c, "clear_on_fail", 0, &args->clear_on_fail);
         default_boolean(args, c, "debug", 0, &args->debug);
+        default_boolean(args, c, "defer_pwchange", 0, &args->defer_pwchange);
         default_boolean(args, c, "expose_account", 0, &args->expose_account);
+        default_boolean(args, c, "force_pwchange", 0, &args->force_pwchange);
         default_boolean(args, c, "forwardable", 0, &args->forwardable);
         default_boolean(args, c, "ignore_k5login", 0, &args->ignore_k5login);
         default_boolean(args, c, "ignore_root", 0, &args->ignore_root);
@@ -340,8 +342,12 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
             args->clear_on_fail = 1;
         else if (strcmp(argv[i], "debug") == 0)
             args->debug = 1;
+        else if (strcmp(argv[i], "defer_pwchange") == 0)
+            args->defer_pwchange = 1;
         else if (strcmp(argv[i], "expose_account") == 0)
             args->expose_account = 1;
+        else if (strcmp(argv[i], "force_pwchange") == 0)
+            args->force_pwchange = 1;
         else if (strcmp(argv[i], "forwardable") == 0)
             args->forwardable = 1;
         else if (strcmp(argv[i], "ignore_k5login") == 0)
@@ -419,6 +425,21 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
     if (args->banner != NULL && args->banner[0] == '\0') {
         free(args->banner);
         args->banner = NULL;
+    }
+
+    /* Sanity-check try_first_pass, use_first_pass, and use_authtok. */
+    if (args->use_authtok && args->try_first_pass) {
+        pamk5_error(NULL, "use_authtok set, ignoring try_first_pass");
+        args->try_first_pass = 0;
+        args->use_first_pass = 0;
+    }
+    if (args->use_authtok && args->use_first_pass) {
+        pamk5_error(NULL, "use_authtok set, ignoring use_first_pass");
+        args->use_first_pass = 0;
+    }
+    if (args->use_first_pass && args->try_first_pass) {
+        pamk5_error(NULL, "use_first_pass set, ignoring try_first_pass");
+        args->try_first_pass = 0;
     }
 
     /*

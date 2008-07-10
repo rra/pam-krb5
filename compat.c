@@ -97,15 +97,15 @@ pamk5_compat_get_error(krb5_context ctx, krb5_error_code code)
 {
     const char *msg = NULL;
 
-# if defined(HAVE_KRB5_GET_ERROR_MESSAGE)
+#if defined(HAVE_KRB5_GET_ERROR_MESSAGE)
     msg = krb5_get_error_message(ctx, code);
-# elif defined(HAVE_KRB5_GET_ERR_TEXT)
+#elif defined(HAVE_KRB5_GET_ERR_TEXT)
     msg = krb5_get_err_text(ctx, code);
-# elif defined(HAVE_KRB5_SVC_GET_MSG)
+#elif defined(HAVE_KRB5_SVC_GET_MSG)
     krb5_svc_get_msg(code, &msg);
-# else
+#else
     msg = error_message(code);
-# endif
+#endif
     if (msg == NULL)
         return error_unknown;
     else
@@ -122,11 +122,11 @@ pamk5_compat_free_error(krb5_context ctx, const char *msg)
 {
     if (msg == error_unknown)
         return;
-# if defined(HAVE_KRB5_FREE_ERROR_MESSAGE)
+#if defined(HAVE_KRB5_FREE_ERROR_MESSAGE)
     krb5_free_error_message(ctx, msg);
-# elif defined(HAVE_KRB5_SVC_GET_MSG)
+#elif defined(HAVE_KRB5_SVC_GET_MSG)
     krb5_free_string((char *) msg);
-# endif
+#endif
 }
 
 

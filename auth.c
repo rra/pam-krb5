@@ -6,7 +6,7 @@
  * the appropriate internal functions.  This interface is used by both the
  * authentication and the password groups.
  *
- * Copyright 2005, 2006, 2007 Russ Allbery <rra@debian.org>
+ * Copyright 2005, 2006, 2007, 2008 Russ Allbery <rra@debian.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  * See LICENSE for licensing terms.
@@ -139,16 +139,6 @@ static void
 set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
                        int service)
 {
-#ifdef HAVE_KRB5_MIT
-    /* Work around a bug in MIT Kerberos where allocating the credential
-       structure with opt_alloc doesn't initialize it.  This workaround
-       will probably be removed eventually when the broken versions of 1.6
-       are obsolete.
-
-       We can't do this for Heimdal because it will destroy the private
-       structure in the allocated opt struct. */
-    krb5_get_init_creds_opt_init(opts);
-#endif
 #ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_DEFAULT_FLAGS
     krb5_get_init_creds_opt_set_default_flags(args->ctx->context, "pam",
                                               args->realm_data, opts);
@@ -160,6 +150,10 @@ set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
             krb5_get_init_creds_opt_set_tkt_life(opts, args->lifetime);
         if (args->renew_lifetime != 0)
             krb5_get_init_creds_opt_set_renew_life(opts, args->renew_lifetime);
+#ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_CHANGE_PASSWORD_PROMPT
+        krb5_get_init_creds_opt_set_change_password_prompt(opts,
+            args->defer_pwchange ? 0 : 1);
+#endif
     } else {
         krb5_get_init_creds_opt_set_forwardable(opts, 0);
         krb5_get_init_creds_opt_set_proxiable(opts, 0);
@@ -299,7 +293,7 @@ k5login_password_auth(struct pam_args *args, krb5_creds *creds,
          * continue on to the next line.
          */
         if (*retval == 0) {
-            if (ctx->princ)
+            if (ctx->princ != NULL)
                 krb5_free_principal(ctx->context, ctx->princ);
             ctx->princ = princ;
             fclose(k5login);
@@ -485,7 +479,7 @@ pamk5_password_auth(struct pam_args *args, const char *service,
 {
     struct context *ctx;
     krb5_get_init_creds_opt *opts = NULL;
-    int retval, retry, success;
+    int retval, retry, success, creds_valid;
     char *pass = NULL;
     int authtok = (service == NULL) ? PAM_AUTHTOK : PAM_OLDAUTHTOK;
 
@@ -495,10 +489,12 @@ pamk5_password_auth(struct pam_args *args, const char *service,
     ctx = args->ctx;
 
     /* Fill in the principal to authenticate as. */
-    retval = parse_name(args);
-    if (retval != 0) {
-        pamk5_debug_krb5(args, "krb5_parse_name", retval);
-        return PAM_SERVICE_ERR;
+    if (ctx->princ == NULL) {
+        retval = parse_name(args);
+        if (retval != 0) {
+            pamk5_debug_krb5(args, "krb5_parse_name", retval);
+            return PAM_SERVICE_ERR;
+        }
     }
 
     /* Log the principal we're attempting to authenticate as. */
@@ -543,6 +539,7 @@ pamk5_password_auth(struct pam_args *args, const char *service,
         pamk5_error(args, "cannot allocate memory: %s", strerror(errno));
         return PAM_SERVICE_ERR;
     }
+    creds_valid = 0;
     retval = pamk5_compat_opt_alloc(ctx->context, &opts);
     if (retval != 0) {
         pamk5_error_krb5(args, "cannot allocate credential options", retval);
@@ -612,6 +609,8 @@ pamk5_password_auth(struct pam_args *args, const char *service,
     } while (retry && retval == KRB5KRB_AP_ERR_BAD_INTEGRITY);
     if (retval != 0)
         pamk5_debug_krb5(args, "krb5_get_init_creds_password", retval);
+    else
+        creds_valid = 1;
 
 done:
     /*
@@ -632,7 +631,8 @@ done:
         retval = PAM_SUCCESS;
     else {
         if (*creds != NULL) {
-            krb5_free_cred_contents(ctx->context, *creds);
+            if (creds_valid)
+                krb5_free_cred_contents(ctx->context, *creds);
             free(*creds);
             *creds = NULL;
         }
