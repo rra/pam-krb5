@@ -1,4 +1,4 @@
-libpam-krb5 (3.11-1) UNRELEASED; urgency=low
+libpam-krb5 (3.11-1) unstable; urgency=low
 
   * New upstream release.
     - setcred, open_session, and acct_mgmt now return PAM_IGNORE instead
@@ -24,7 +24,7 @@ libpam-krb5 (3.11-1) UNRELEASED; urgency=low
   * Add Vcs-Git and Vcs-Browser control fields.
   * Update standards version to 3.8.0 (no changes required).
   
- -- Russ Allbery <rra@debian.org>  Thu, 10 Jul 2008 16:34:41 -0700
+ -- Russ Allbery <rra@debian.org>  Thu, 10 Jul 2008 17:07:15 -0700
 
 libpam-krb5 (3.10-1) unstable; urgency=low
 
