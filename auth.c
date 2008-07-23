@@ -522,6 +522,7 @@ pamk5_password_auth(struct pam_args *args, const char *service,
         retval = pkinit_auth(args, service, creds);
         if (retval == 0)
             goto done;
+        pamk5_debug_krb5(args, "pkinit failed", retval);
         if (retval != HX509_PKCS11_NO_TOKEN && retval != HX509_PKCS11_NO_SLOT)
             goto done;
         if (retval != 0 && args->use_pkinit)
