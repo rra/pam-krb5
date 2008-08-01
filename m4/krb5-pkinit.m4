@@ -7,6 +7,7 @@ dnl     RRA_FUNC_KRB5_GET_INIT_CREDS_OPT_FREE_ARGS
 dnl     RRA_FUNC_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT_ARGS
 dnl
 dnl Copyright 2007 Russ Allbery <rra@stanford.edu>
+dnl
 dnl See LICENSE for licensing terms.
 
 dnl Check whether krb5_get_init_creds_opt_free takes one argument or two.

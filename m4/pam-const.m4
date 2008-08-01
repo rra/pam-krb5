@@ -12,6 +12,7 @@ dnl Contributed by Markus Moeller.
 dnl
 dnl Copyright 2007 Russ Allbery <rra@debian.org>
 dnl Copyright 2007, 2008 Markus Moeller
+dnl
 dnl See LICENSE for licensing terms.
 
 dnl Source used by RRA_HEADER_PAM_CONST.
