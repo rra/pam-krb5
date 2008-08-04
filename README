@@ -434,11 +434,11 @@ HOMEPAGE AND SOURCE REPOSITORY
   pam-krb5 is maintained using Git.  You can access the current source by
   cloning the repository at:
 
-      git://git.eyrie.org/kerberos/kstart.git
+      git://git.eyrie.org/kerberos/pam-krb5.git
 
   or view the repository via the web at:
 
-      http://git.eyrie.org/?p=kerberos/kstart.git
+      http://git.eyrie.org/?p=kerberos/pam-krb5.git
 
 HISTORY AND ACKNOWLEDGEMENTS
 
