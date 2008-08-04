@@ -159,6 +159,10 @@ CONFIGURING
   Kerberos principals that happen to match system accounts accidentally
   getting access to those accounts.
 
+  Be sure to include the module in the session group as well as the auth
+  group.  Without the session entry, the user's ticket cache will not be
+  created properly for ssh logins (among possibly others).
+
   If your users should normally all use Kerberos passwords exclusively,
   putting something like:
 

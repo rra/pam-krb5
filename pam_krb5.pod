@@ -666,6 +666,10 @@ account.
 
 =head1 CAVEATS
 
+Be sure to list this module in the session group as well as the auth group
+when using it for interactive logins.  Otherwise, some applications (such
+as OpenSSH) will not set up the user's ticket cache correctly.
+
 The Kerberos library, via pam-krb5, will prompt the user to change their
 password if their password is expired, but when using OpenSSH, this will
 only work when ChallengeResponseAuthentication is enabled.  Unless this
