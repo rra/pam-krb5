@@ -235,9 +235,9 @@ CONFIGURING
   The Solaris Kerberos library reportedly does not support prompting for a
   password change of an expired account during authentication.  Supporting
   password change for expired accounts on Solaris with native Kerberos may
-  therefore require setting the defer_pwchange option for selected login
-  applications.  See the description and warnings about that option in the
-  pam_krb5 man page.
+  therefore require setting the defer_pwchange or force_pwchange option
+  for selected login applications.  See the description and warnings about
+  that option in the pam_krb5 man page.
 
   Some configuration options may be put in the krb5.conf file used by your
   Kerberos libraries (usually /etc/krb5.conf or /usr/local/etc/krb5.conf)
