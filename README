@@ -422,7 +422,7 @@ IMPLEMENTATION NOTES
   password case and store it for pam_chauthtok, but it doesn't seem worth
   the hassle.
 
-HOMEPAGE SOURCE REPOSITORY
+HOMEPAGE AND SOURCE REPOSITORY
 
   The pam-krb5 web page at:
 
