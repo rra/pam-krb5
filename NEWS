@@ -5,6 +5,14 @@ pam-krb5 3.12 (unreleased)
     Log all syslog messages to LOG_AUTHPRIV, or LOG_AUTH if the system
     doesn't define LOG_AUTHPRIV.  Thanks, Mark Painter.
 
+    Document that pam-krb5 must be listed in the session group as well as
+    the auth group for interactive logins or OpenSSH won't set up the
+    user's credential cache properly.
+
+    Document adding ignore=ignore to complex [] action configuration for
+    the session and account groups since the module now returns PAM_IGNORE
+    instead of PAM_SUCCESS for accounts that didn't use Kerberos.
+
 pam-krb5 3.11 (2008-07-10)
 
     pam_setcred, pam_open_session, and pam_acct_mgmt now return PAM_IGNORE
