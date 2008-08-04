@@ -120,8 +120,9 @@ kadmin(8) instead.)
 =back
 
 Both the account and session management calls of the Kerberos v5 PAM
-module will silently return success if called in the context of a PAM
-session for a user who did not authenticate with Kerberos.
+module will return PAM_IGNORE if called in the context of a PAM session
+for a user who did not authenticate with Kerberos (a return code of
+C<ignore> in the Linux PAM configuration language).
 
 Note that this module assumes the network is available in order to do a
 Kerberos authentication, and if the network is not available, some

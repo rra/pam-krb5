@@ -195,6 +195,11 @@ CONFIGURING
   more common pattern of falling back to local passwords if the user
   doesn't exist in Kerberos.
 
+  If you use a more complex configuration with the Linux PAM [] syntax for
+  the session and account groups, note that pam_krb5 returns a status of
+  ignore, not success, if the user didn't log on with Kerberos.  You may
+  need to handle that explicitly with ignore=ignore in your action list.
+
   There are many, many other possibilities.  See the Linux PAM
   documentation for all the configuration options.
 
