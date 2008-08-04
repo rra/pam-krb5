@@ -1,5 +1,10 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 3.12 (unreleased)
+
+    Log all syslog messages to LOG_AUTHPRIV, or LOG_AUTH if the system
+    doesn't define LOG_AUTHPRIV.  Thanks, Mark Painter.
+
 pam-krb5 3.11 (2008-07-10)
 
     pam_setcred, pam_open_session, and pam_acct_mgmt now return PAM_IGNORE
