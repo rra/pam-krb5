@@ -2,6 +2,13 @@
 
 pam-krb5 3.12 (unreleased)
 
+    Add alt_auth_map configuration option, which allows mapping of
+    usernames to alternative Kerberos principals, useful primarily for
+    using particular instances for access to a given PAM-authenticated
+    service.  Also added force_alt_auth and only_alt_auth options to
+    control when alternative Kerberos principals are used.  Patch from
+    Booker Bense.
+
     Log all syslog messages to LOG_AUTHPRIV, or LOG_AUTH if the system
     doesn't define LOG_AUTHPRIV.  Thanks, Mark Painter.
 

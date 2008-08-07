@@ -284,6 +284,7 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
             krb5_get_default_realm(c, &args->realm);
         if (args->realm != NULL)
             pamk5_compat_set_realm(args, args->realm);
+        default_string(args, c, "alt_auth_map", NULL, &args->alt_auth_map);
         default_string(args, c, "banner", "Kerberos", &args->banner);
         default_string(args, c, "ccache", NULL, &args->ccache);
         default_string(args, c, "ccache_dir", "FILE:/tmp", &args->ccache_dir);
@@ -291,12 +292,14 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
         default_boolean(args, c, "debug", 0, &args->debug);
         default_boolean(args, c, "defer_pwchange", 0, &args->defer_pwchange);
         default_boolean(args, c, "expose_account", 0, &args->expose_account);
+        default_boolean(args, c, "force_alt_auth", 0, &args->force_alt_auth);
         default_boolean(args, c, "force_pwchange", 0, &args->force_pwchange);
         default_boolean(args, c, "forwardable", 0, &args->forwardable);
         default_boolean(args, c, "ignore_k5login", 0, &args->ignore_k5login);
         default_boolean(args, c, "ignore_root", 0, &args->ignore_root);
         default_string(args, c, "keytab", NULL, &args->keytab);
         default_number(args, c, "minimum_uid", 0, &args->minimum_uid);
+        default_boolean(args, c, "only_alt_auth", 0, &args->only_alt_auth);
         default_string(args, c, "pkinit_anchors", NULL, &args->pkinit_anchors);
         default_boolean(args, c, "pkinit_prompt", 0, &args->pkinit_prompt);
         default_string(args, c, "pkinit_user", NULL, &args->pkinit_user);
@@ -324,7 +327,12 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
      * sense in krb5.conf.
      */
     for (i = 0; i < argc; i++) {
-        if (strncmp(argv[i], "banner=", 7) == 0) {
+        if (strncmp(argv[i], "alt_auth_map=", 12) == 0) {
+            if (args->banner != NULL)
+                free(args->alt_auth_map);
+            args->alt_auth_map = strdup(&argv[i][strlen("alt_auth_map=")]);
+        }
+        else if(strncmp(argv[i], "banner=", 7) == 0) {
             if (args->banner != NULL)
                 free(args->banner);
             args->banner = strdup(&argv[i][strlen("banner=")]);
@@ -349,6 +357,8 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
             args->expose_account = 1;
         else if (strcmp(argv[i], "force_pwchange") == 0)
             args->force_pwchange = 1;
+        else if (strcmp(argv[i], "force_alt_auth") == 0)
+            args->force_alt_auth = 1;
         else if (strcmp(argv[i], "forwardable") == 0)
             args->forwardable = 1;
         else if (strcmp(argv[i], "ignore_k5login") == 0)
@@ -364,6 +374,8 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
             args->minimum_uid = atoi(&argv[i][strlen("minimum_uid=")]);
         else if (strcmp(argv[i], "no_ccache") == 0)
             args->no_ccache = 1;
+        else if (strcmp(argv[i], "only_alt_auth") == 0)
+            args->only_alt_auth = 1;
         else if (strncmp(argv[i], "pkinit_anchors=", 15) == 0) {
             if (args->pkinit_anchors != NULL)
                 free(args->pkinit_anchors);

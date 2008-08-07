@@ -98,6 +98,11 @@ struct pam_args {
     char **preauth_opt;         /* Preauth options. */
     int preauth_opt_count;      /* Number of preauth options set. */
 
+    /* Options for use of alternate identities */
+    char *alt_auth_map;         /* An sprintf pattern to map principals. */
+    int force_alt_auth;         /* Alt principal must be used if it exists. */
+    int only_alt_auth;          /* Alt principal must be used. */
+
     /*
      * The default realm, used mostly in option parsing but also for
      * initializing krb5_get_init_creds_opt.  Unfortunately, the storage type
@@ -173,6 +178,10 @@ krb5_error_code pamk5_prompter_krb5(krb5_context, void *data,
 /* Check the user with krb5_kuserok or the configured equivalent. */
 int pamk5_authorized(struct pam_args *)
     __attribute__((__visibility__("hidden")));
+
+/* Map username to principal using alt_auth_map. */
+int pamk5_map_principal(struct pam_args *args, const char *, char **)
+    __attribute__((__visibility__("hidden")));;
 
 /* Returns true if we should ignore this user (root or low UID). */
 int pamk5_should_ignore(struct pam_args *, PAM_CONST char *)

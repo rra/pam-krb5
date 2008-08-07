@@ -475,3 +475,6 @@ HISTORY AND ACKNOWLEDGEMENTS
 
   Thanks to Markus Moeller for lots of debugging and multiple patches and
   suggestions for improved portability.
+
+  Thanks to Booker Bense for the implementation of the alt_auth_map
+  option.

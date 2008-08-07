@@ -195,14 +195,16 @@ set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
 
 
 /*
- * Used to support trying each principal in the .k5login file.  Read through
- * each line that parses correctly as a principal and use the provided
- * password to try to authenticate as that user.  If at any point we succeed,
- * fill out creds, set princ to the successful principal in the context, and
- * return PAM_SUCCESS.  Otherwise, return PAM_AUTH_ERR for a general
- * authentication error or PAM_SERVICE_ERR for a system error.  If
- * PAM_AUTH_ERR is returned, retval will be filled in with the Kerberos error
- * if available, 0 otherwise.
+ * Authenticate by trying each principal in the .k5login file.
+ *
+ * Read through each line that parses correctly as a principal and use the
+ * provided password to try to authenticate as that user.  If at any point we
+ * succeed, fill out creds, set princ to the successful principal in the
+ * context, and return PAM_SUCCESS.  Otherwise, return PAM_AUTH_ERR for a
+ * general authentication error or PAM_SERVICE_ERR for a system error.
+ *
+ * If PAM_AUTH_ERR is returned, retval will be filled in with the Kerberos
+ * error if available, 0 otherwise.
  */
 static int
 k5login_password_auth(struct pam_args *args, krb5_creds *creds,
@@ -306,6 +308,67 @@ k5login_password_auth(struct pam_args *args, krb5_creds *creds,
 fail:
     fclose(k5login);
     return PAM_AUTH_ERR;
+}
+
+/*
+ * Authenticate using an alternative principal mapping.
+ *
+ * Create a principal based on the principal mapping and the user, and use the
+ * provided password to try to authenticate as that user.  If we succeed, fill
+ * out creds, set princ to the successful principal in the context, and return
+ * PAM_SUCCESS.  Otherwise, return PAM_AUTH_ERR for a general authentication
+ * error or PAM_SERVICE_ERR for a system error.
+ *
+ * If PAM_AUTH_ERR is returned, retval will be filled in with the Kerberos
+ * error if available, 0 otherwise.
+ */
+static int
+alt_password_auth(struct pam_args *args, krb5_creds *creds,
+                  krb5_get_init_creds_opt *opts, const char *service,
+                  char *pass, int *retval)
+{
+    struct context *ctx = args->ctx;
+    char *kuser;
+    krb5_principal princ;
+    int ret, k5_errno;
+
+    ret = pamk5_map_principal(args, ctx->name, &kuser);
+    if (ret != PAM_SUCCESS)
+        return ret;
+    k5_errno = krb5_parse_name(ctx->context, kuser, &princ);
+    if (k5_errno != 0) {
+        *retval = k5_errno;
+        free(kuser);
+        return PAM_AUTH_ERR;
+    }
+    free(kuser);
+
+    /* Log the principal we're attempting to authenticate as. */
+    if (args->debug) {
+        char *principal;
+
+        k5_errno = krb5_unparse_name(ctx->context, princ, &principal);
+        if (k5_errno != 0)
+            pamk5_debug_krb5(args, "krb5_unparse_name", k5_errno);
+        else {
+            pamk5_debug(args, "mapping %s to %s", ctx->name, principal);
+            free(principal);
+        }
+    }
+
+    /* Now, attempt to authenticate as that user. */
+    *retval = krb5_get_init_creds_password(ctx->context, creds, princ, pass,
+                 pamk5_prompter_krb5, args, 0, (char *) service, opts);
+    if (*retval != 0) {
+        pamk5_debug_krb5(args, "alternate authentication failed", *retval);
+        return PAM_AUTH_ERR;
+    } else {
+        pamk5_debug(args, "alternate authentication successful");
+        if (ctx->princ != NULL)
+            krb5_free_principal(ctx->context, ctx->princ);
+        ctx->princ = princ;
+        return PAM_SUCCESS;
+    }
 }
 
 
@@ -480,8 +543,11 @@ pamk5_password_auth(struct pam_args *args, const char *service,
 {
     struct context *ctx;
     krb5_get_init_creds_opt *opts = NULL;
-    int retval, retry, success;
+    int retval, retry;
+    int success = PAM_AUTH_ERR;
     int creds_valid = 0;
+    int do_alt = 1;
+    int do_only_alt = 0;
     char *pass = NULL;
     int authtok = (service == NULL) ? PAM_AUTHTOK : PAM_OLDAUTHTOK;
 
@@ -592,21 +658,55 @@ pamk5_password_auth(struct pam_args *args, const char *service,
             pam_get_item(args->pamh, authtok, (void *) &pass);
         }
 
-        /* Get a TGT */
-        if (args->search_k5login) {
-            success = k5login_password_auth(args, *creds, opts, service,
-                          pass, &retval);
-        } else {
-            retval = krb5_get_init_creds_password(ctx->context, *creds,
-                          ctx->princ, pass, pamk5_prompter_krb5, args, 0,
-                          (char *) service, opts);
-            success = (retval == 0) ? PAM_SUCCESS : PAM_AUTH_ERR;
+        /*
+         * Get a TGT.  First, try authenticating as the alternate password if
+         * one were configured.  If that fails or wasn't configured, continue
+         * on to trying search_k5login or a regular authentication unless
+         * configuration indicates that regular authentication should not be
+         * attempted.
+         */
+        if (args->alt_auth_map != NULL && do_alt) {
+            success = alt_password_auth(args, *creds, opts, service, pass,
+                          &retval);
+            if (success == PAM_SUCCESS)
+                break;
+
+            /*
+             * If principal doesn't exist and alternate authentication is
+             * required (only_alt_auth), bail, since we'll never succeed.  If
+             * force_alt_auth is set, skip attempting normal authentication
+             * iff the alternate principal exists.
+             */
+            if (args->only_alt_auth) {
+                if (retval == KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN)
+                    goto done;
+                else
+                    do_only_alt = 1;
+            } else if (args->force_alt_auth) {
+                if (retval == KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN)
+                    do_alt = 0;
+                else
+                    do_only_alt = 1;
+            }
         }
-        if (success == PAM_SUCCESS) {
-            if (retval != 0)
-                goto done;
+        if (!do_only_alt) {
+            if (args->search_k5login) {
+                success = k5login_password_auth(args, *creds, opts, service,
+                              pass, &retval);
+            } else {
+                retval = krb5_get_init_creds_password(ctx->context, *creds,
+                              ctx->princ, pass, pamk5_prompter_krb5, args, 0,
+                              (char *) service, opts);
+                success = (retval == 0) ? PAM_SUCCESS : PAM_AUTH_ERR;
+            }
+        }
+
+        /*
+         * If we succeeded, we're done.  Otherwise, clear the password and
+         * then see if we should try again after prompting for a password.
+         */
+        if (success == PAM_SUCCESS)
             break;
-        }
         pass = NULL;
     } while (retry && retval == KRB5KRB_AP_ERR_BAD_INTEGRITY);
     if (retval != 0)
