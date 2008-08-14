@@ -1,3 +1,10 @@
+libpam-krb5 (3.11-2) unstable; urgency=low
+
+  * Fix double-free of the cache data structure if cache creation fails
+    while opening a session or setting credentials.  (LP: #257826)
+
+ -- Russ Allbery <rra@debian.org>  Wed, 13 Aug 2008 23:36:54 -0700
+
 libpam-krb5 (3.11-1) unstable; urgency=low
 
   * New upstream release.
