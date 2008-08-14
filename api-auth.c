@@ -51,6 +51,7 @@ cache_init_from_cache(struct pam_args *args, const char *ccname,
     int pamret;
     krb5_error_code status;
 
+    *cache = NULL;
     memset(&creds, 0, sizeof(creds));
     if (args == NULL || args->ctx == NULL || args->ctx->context == NULL)
         return PAM_SERVICE_ERR;
@@ -93,8 +94,10 @@ cache_init_from_cache(struct pam_args *args, const char *ccname,
 
 done:
     krb5_cc_end_seq_get(ctx->context, ctx->cache, &cursor);
-    if (pamret != PAM_SUCCESS && *cache != NULL)
+    if (pamret != PAM_SUCCESS && *cache != NULL) {
         krb5_cc_destroy(ctx->context, *cache);
+        *cache = NULL;
+    }
     return pamret;
 }
 
