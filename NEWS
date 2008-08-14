@@ -9,6 +9,9 @@ pam-krb5 3.12 (unreleased)
     control when alternative Kerberos principals are used.  Patch from
     Booker Bense.
 
+    Fix double-free of the ticket cache structure if creation of the
+    ticket cache in the session module fails.  Thanks, Jens Jorgensen.
+
     Log all syslog messages to LOG_AUTHPRIV, or LOG_AUTH if the system
     doesn't define LOG_AUTHPRIV.  Thanks, Mark Painter.
 
