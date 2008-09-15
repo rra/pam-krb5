@@ -278,6 +278,7 @@ void pamk5_debug_krb5(struct pam_args *, const char *, int)
     pamk5_debug((args), "%s: entry (0x%x)", __func__, (flags))
 #define EXIT(args, pamret) \
     pamk5_debug((args), "%s: exit (%s)", __func__, \
-                ((pamret) == PAM_SUCCESS) ? "success" : "failure")
+                ((pamret) == PAM_SUCCESS) ? "success" \
+                : (((pamret) == PAM_IGNORE) ? "ignore" : "failure"))
 
 #endif /* !INTERNAL_H */
