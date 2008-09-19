@@ -250,17 +250,20 @@ k5login_password_auth(struct pam_args *args, krb5_creds *creds,
      * Kerberos error code to errno.
      */
     k5login = fopen(filename, "r");
-    free(filename);
     if (k5login == NULL) {
         *retval = errno;
+        free(filename);
         return PAM_AUTH_ERR;
     }
+    free(filename);
     if (fstat(fileno(k5login), &st) != 0) {
         *retval = errno;
         goto fail;
     }
     if (st.st_uid != 0 && (st.st_uid != pwd->pw_uid)) {
-        *retval = errno;
+        *retval = EACCES;
+        pamk5_error(args, "unsafe .k5login ownership (saw %lu, expected %lu)",
+                    (unsigned long) st.st_uid, (unsigned long) pwd->pw_uid);
         goto fail;
     }
 
@@ -703,10 +706,14 @@ pamk5_password_auth(struct pam_args *args, const char *service,
 
         /*
          * If we succeeded, we're done.  Otherwise, clear the password and
-         * then see if we should try again after prompting for a password.
+         * then see if we should try again after prompting for a password.  If
+         * we failed, make sure retval is not 0 out of paranoia, since later
+         * on all we care about is retval.
          */
         if (success == PAM_SUCCESS)
             break;
+        else if (retval == 0)
+            retval = PAM_SERVICE_ERR;
         pass = NULL;
     } while (retry && retval == KRB5KRB_AP_ERR_BAD_INTEGRITY);
     if (retval != 0)

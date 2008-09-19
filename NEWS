@@ -9,6 +9,10 @@ pam-krb5 3.12 (unreleased)
     control when alternative Kerberos principals are used.  Patch from
     Booker Bense.
 
+    Fix incorrect error handling for bad .k5login ownership when
+    search_k5login is set, leading to a NULL pointer dereference and a
+    segfault.  Thanks, Andrew Deason.
+
     Fix double-free of the ticket cache structure if creation of the
     ticket cache in the session module fails.  Thanks, Jens Jorgensen.
 
