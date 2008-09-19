@@ -1,3 +1,10 @@
+libpam-krb5 (3.11-3) unstable; urgency=low
+
+  * Fix segfault after detection of unsafe .k5login ownership when
+    search_k5login is set.  Thanks, Andrew Deason.  (Closes: #499479)
+
+ -- Russ Allbery <rra@debian.org>  Thu, 18 Sep 2008 20:45:43 -0700
+
 libpam-krb5 (3.11-2) unstable; urgency=low
 
   * Fix double-free of the cache data structure if cache creation fails
