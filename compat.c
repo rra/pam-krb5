@@ -126,7 +126,7 @@ pamk5_compat_free_error(krb5_context ctx, const char *msg)
 #if defined(HAVE_KRB5_FREE_ERROR_MESSAGE)
     krb5_free_error_message(ctx, msg);
 #elif defined(HAVE_KRB5_SVC_GET_MSG)
-    krb5_free_string((char *) msg);
+    krb5_free_string(ctx, (char *) msg);
 #endif
 }
 

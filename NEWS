@@ -19,6 +19,8 @@ pam-krb5 3.12 (unreleased)
     Log all syslog messages to LOG_AUTHPRIV, or LOG_AUTH if the system
     doesn't define LOG_AUTHPRIV.  Thanks, Mark Painter.
 
+    Fix portability to AIX's bundled Kerberos.  Thanks, Markus Moeller.
+
     When debugging is enabled, log an exit status of PAM_IGNORE as ignore
     rather than failure.
 
