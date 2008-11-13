@@ -58,12 +58,13 @@ static krb5_error_code appdefault_get(krb5_context context, const char *appname,
 
         /*
          * PAM: The magic values are internal, so a magic check for the
-         * context struct was removed here.
+         * context struct was removed here.  context->profile was changed
+         * to krb5_get_profile.
          */
 	    if (!context) 
 	    return KV5M_CONTEXT;
 
-	    profile = context->profile;
+	    krb5_get_profile(context, &profile);
 	    
 	/*
 	 * Try number one:

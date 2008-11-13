@@ -1,4 +1,4 @@
-                              pam-krb5 3.11
+                              pam-krb5 3.12
                (PAM module for Kerberos v5 authentication)
 
                     Originally written by Frank Cusack
@@ -159,6 +159,10 @@ CONFIGURING
   Kerberos principals that happen to match system accounts accidentally
   getting access to those accounts.
 
+  Be sure to include the module in the session group as well as the auth
+  group.  Without the session entry, the user's ticket cache will not be
+  created properly for ssh logins (among possibly others).
+
   If your users should normally all use Kerberos passwords exclusively,
   putting something like:
 
@@ -190,6 +194,11 @@ CONFIGURING
   clear_on_fail is not the default because it would interfere with the
   more common pattern of falling back to local passwords if the user
   doesn't exist in Kerberos.
+
+  If you use a more complex configuration with the Linux PAM [] syntax for
+  the session and account groups, note that pam_krb5 returns a status of
+  ignore, not success, if the user didn't log on with Kerberos.  You may
+  need to handle that explicitly with ignore=ignore in your action list.
 
   There are many, many other possibilities.  See the Linux PAM
   documentation for all the configuration options.
@@ -231,9 +240,9 @@ CONFIGURING
   The Solaris Kerberos library reportedly does not support prompting for a
   password change of an expired account during authentication.  Supporting
   password change for expired accounts on Solaris with native Kerberos may
-  therefore require setting the defer_pwchange option for selected login
-  applications.  See the description and warnings about that option in the
-  pam_krb5 man page.
+  therefore require setting the defer_pwchange or force_pwchange option
+  for selected login applications.  See the description and warnings about
+  that option in the pam_krb5 man page.
 
   Some configuration options may be put in the krb5.conf file used by your
   Kerberos libraries (usually /etc/krb5.conf or /usr/local/etc/krb5.conf)
@@ -413,6 +422,24 @@ IMPLEMENTATION NOTES
   password case and store it for pam_chauthtok, but it doesn't seem worth
   the hassle.
 
+HOMEPAGE AND SOURCE REPOSITORY
+
+  The pam-krb5 web page at:
+
+      http://www.eyrie.org/~eagle/software/pam-krb5/
+
+  will always have the current version of this package, the current
+  documentation, and pointers to any additional resources.
+
+  pam-krb5 is maintained using Git.  You can access the current source by
+  cloning the repository at:
+
+      git://git.eyrie.org/kerberos/pam-krb5.git
+
+  or view the repository via the web at:
+
+      http://git.eyrie.org/?p=kerberos/pam-krb5.git
+
 HISTORY AND ACKNOWLEDGEMENTS
 
   Originally written by Frank Cusack <fcusack@fcusack.com>, with the
@@ -449,11 +476,5 @@ HISTORY AND ACKNOWLEDGEMENTS
   Thanks to Markus Moeller for lots of debugging and multiple patches and
   suggestions for improved portability.
 
-SOURCE REPOSITORY
-
-  pam-krb5 is maintained using Git.  You can access the current source by
-  pointing a Git client at:
-
-      http://archives.eyrie.org/software/git/pam-krb5.git
-
-  No gitweb interface is available (yet).
+  Thanks to Booker Bense for the implementation of the alt_auth_map
+  option.

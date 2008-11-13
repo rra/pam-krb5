@@ -9,6 +9,7 @@
  * Copyright 2005, 2006, 2007, 2008 Russ Allbery <rra@debian.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
+ *
  * See LICENSE for licensing terms.
  */
 
@@ -192,7 +193,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     if (pamret != PAM_SUCCESS)
         goto done;
 
-    /* Check .k5login. */
+    /* Check .k5login and alt_auth_map. */
     if (!ctx->expired) {
         pamret = pamk5_authorized(args);
         if (pamret != PAM_SUCCESS) {

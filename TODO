@@ -74,6 +74,10 @@ Documentation:
    find relevant options.  PAM API behavior, prompting behavior, PKINIT,
    and ticket flags might be useful option groups.
 
+ * Note the version number when options were added.  It helps people
+   looking at the documentation on-line and writing portable
+   configurations.
+
 Tests:
 
  * Add support for running an automated test suite using a user-configured

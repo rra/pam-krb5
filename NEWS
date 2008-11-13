@@ -1,5 +1,37 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 3.12 (2008-11-13)
+
+    Add alt_auth_map configuration option, which allows mapping of
+    usernames to alternative Kerberos principals, useful primarily for
+    using particular instances for access to a given PAM-authenticated
+    service.  Also added force_alt_auth and only_alt_auth options to
+    control when alternative Kerberos principals are used.  Patch from
+    Booker Bense.
+
+    Fix incorrect error handling for bad .k5login ownership when
+    search_k5login is set, leading to a NULL pointer dereference and a
+    segfault.  Thanks, Andrew Deason.
+
+    Fix double-free of the ticket cache structure if creation of the
+    ticket cache in the session module fails.  Thanks, Jens Jorgensen.
+
+    Log all syslog messages to LOG_AUTHPRIV, or LOG_AUTH if the system
+    doesn't define LOG_AUTHPRIV.  Thanks, Mark Painter.
+
+    Fix portability to AIX's bundled Kerberos.  Thanks, Markus Moeller.
+
+    When debugging is enabled, log an exit status of PAM_IGNORE as ignore
+    rather than failure.
+
+    Document that pam-krb5 must be listed in the session group as well as
+    the auth group for interactive logins or OpenSSH won't set up the
+    user's credential cache properly.
+
+    Document adding ignore=ignore to complex [] action configuration for
+    the session and account groups since the module now returns PAM_IGNORE
+    instead of PAM_SUCCESS for accounts that didn't use Kerberos.
+
 pam-krb5 3.11 (2008-07-10)
 
     pam_setcred, pam_open_session, and pam_acct_mgmt now return PAM_IGNORE
