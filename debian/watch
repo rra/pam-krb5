@@ -1,4 +1,2 @@
-# watch -- Rules for uscan to find new upstream versions.
-
 version=3
 http://archives.eyrie.org/software/kerberos/pam-krb5-(.*)\.tar\.gz
