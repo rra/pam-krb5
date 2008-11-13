@@ -21,7 +21,7 @@ In /etc/pam.d/common-account:
     account  required  pam_krb5.so minimum_uid=1000
     account  required  pam_unix.so
 
-(Note that the account function of pam_krb5.so will always succeed if the
+(Note that the account function of pam_krb5.so will return ignore if the
 user didn't log in via Kerberos, so this is will still allow access via a
 local password.  It will ensure that, if the user did log in via Kerberos,
 their Kerberos authentication is checked against ~/.k5login if present.)
@@ -33,9 +33,9 @@ Finally, in /etc/pam.d/common-password:
 
 Note the minimum_uid=1000 on all of these lines.  This is optional, but
 normally sites do not create a single root@example.com Kerberos principal
-and use it for authentication to root accounts and normally you don't want
-to allow Kerberos authentication to system accounts.  In addition, trying
-to do Kerberos authentication when the network is down may cause delays or
+and use it for authentication to root accounts, and normally you don't
+want to allow Kerberos authentication to system accounts.  Also, trying to
+do Kerberos authentication when the network is down may cause delays or
 timeouts, and this way such authentication is never attempted for a root
 login.  On Debian systems, regular user accounts normally start at UID
 1000; you may need to change this for local policy.
@@ -66,4 +66,4 @@ same name.  In this situation, you will probably also want to add the
 "search_k5login" option to the pam_krb5.so line in /etc/pam.d/common-auth;
 see the pam_krb5(5) man page for more information.
 
- -- Russ Allbery <rra@debian.org>, Mon, 26 Nov 2007 00:09:24 -0800
+ -- Russ Allbery <rra@debian.org>, Thu, 13 Nov 2008 10:29:10 -0800
