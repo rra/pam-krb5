@@ -1,71 +1,15 @@
 #!/usr/bin/make -f
-# Sample debian/rules that uses debhelper.
-# GNU copyright 1997 to 1999 by Joey Hess.
-
-# Uncomment this to turn on verbose mode.
-#export DH_VERBOSE=1
-
-# Tell Autoconf the correct system types.
-DEB_HOST_ARCH      ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
-DEB_HOST_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
-DEB_BUILD_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
-ifeq ($(DEB_BUILD_GNU_TYPE),$(DEB_HOST_GNU_TYPE))
-    SYSTEM = --build $(DEB_HOST_GNU_TYPE)
-else
-    SYSTEM = --build $(DEB_BUILD_GNU_TYPE) --host $(DEB_HOST_GNU_TYPE)
-endif
-
-CFLAGS = -g
-ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
-    CFLAGS += -O0
-else
-    CFLAGS += -O2
-endif
-
-config.status: configure
-	dh_testdir
-	CFLAGS="$(CFLAGS)" ./configure $(SYSTEM) --prefix=/usr \
-	    --mandir=\$${prefix}/share/man --enable-reduced-depends
 
 build: build-arch build-indep
 build-arch: build-stamp
 build-indep:
-build-stamp: config.status
-	dh_testdir
-	$(MAKE)
-	touch build-stamp
+build-stamp:
+	dh build --before configure
+	dh_auto_configure -- --enable-reduced-depends --libdir=/lib
+	dh build --after configure
+	touch $@
 
-clean:
-	dh_testdir
-	dh_testroot
-	rm -f build-stamp
-	[ ! -f Makefile ] || $(MAKE) distclean
-	dh_clean
+%:
+	dh $@
 
-install: build-stamp
-	dh_testdir
-	dh_testroot
-	dh_clean
-	dh_installdirs
-	install -m 644 pam_krb5.so $(CURDIR)/debian/libpam-krb5/lib/security
-
-binary: binary-arch binary-indep
-binary-indep:
-binary-arch: build-stamp install
-	dh_testdir
-	dh_testroot
-	dh_installchangelogs NEWS
-	dh_installdocs
-	dh_installman pam_krb5.5
-	dh_link
-	dh_strip
-	dh_compress
-	dh_fixperms
-	dh_installdeb
-	dh_shlibdeps
-	dh_gencontrol
-	dh_md5sums
-	dh_builddeb
-
-.PHONY: binary binary-arch binary-indep build build-arch build-indep clean
-.PHONY: install
+.PHONY: build build-arch build-indep
