@@ -7,6 +7,7 @@ libpam-krb5 (3.12-1) UNRELEASED; urgency=low
     - Correctly log an exit status of ignore during debugging.
     - Document ssh session requirement.  (Closes: #492039)
     - Document ignore handling with [] actions.  (Closes: #492379)
+  * Remove NEWS.Debian, only of interest in upgrades from sarge.
 
  -- Russ Allbery <rra@debian.org>  Thu, 13 Nov 2008 10:25:36 -0800
 
