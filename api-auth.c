@@ -9,6 +9,7 @@
  * Copyright 2005, 2006, 2007, 2008 Russ Allbery <rra@debian.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
+ *
  * See LICENSE for licensing terms.
  */
 
@@ -51,6 +52,7 @@ cache_init_from_cache(struct pam_args *args, const char *ccname,
     int pamret;
     krb5_error_code status;
 
+    *cache = NULL;
     memset(&creds, 0, sizeof(creds));
     if (args == NULL || args->ctx == NULL || args->ctx->context == NULL)
         return PAM_SERVICE_ERR;
@@ -93,8 +95,10 @@ cache_init_from_cache(struct pam_args *args, const char *ccname,
 
 done:
     krb5_cc_end_seq_get(ctx->context, ctx->cache, &cursor);
-    if (pamret != PAM_SUCCESS && *cache != NULL)
+    if (pamret != PAM_SUCCESS && *cache != NULL) {
         krb5_cc_destroy(ctx->context, *cache);
+        *cache = NULL;
+    }
     return pamret;
 }
 
@@ -189,7 +193,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     if (pamret != PAM_SUCCESS)
         goto done;
 
-    /* Check .k5login. */
+    /* Check .k5login and alt_auth_map. */
     if (!ctx->expired) {
         pamret = pamk5_authorized(args);
         if (pamret != PAM_SUCCESS) {

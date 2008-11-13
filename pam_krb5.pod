@@ -120,8 +120,9 @@ kadmin(8) instead.)
 =back
 
 Both the account and session management calls of the Kerberos v5 PAM
-module will silently return success if called in the context of a PAM
-session for a user who did not authenticate with Kerberos.
+module will return PAM_IGNORE if called in the context of a PAM session
+for a user who did not authenticate with Kerberos (a return code of
+C<ignore> in the Linux PAM configuration language).
 
 Note that this module assumes the network is available in order to do a
 Kerberos authentication, and if the network is not available, some
@@ -188,6 +189,31 @@ syntax, there's no way to turn off a boolean option in the PAM
 configuration that was turned on in F<krb5.conf>.
 
 =over 4
+
+=item alt_auth_map=<format>
+
+This functions similarly to the I<search_k5login> option.  The <format>
+argument is used as the authentication Kerberos principal, with any C<%s>
+in <format> replaced with the username.  If the username contains an C<@>,
+only the part of the username before the realm is used to replace C<%s>
+and the realm is appended to the result.  There is no quote removal.
+
+If this option is present, the default behavior is to try this alternate
+principal first and then fall back to the standard behavior if it fails.
+The primary usage is to allow alternative principals to be used for
+authentication in programs like B<sudo>.  Most examples will look like:
+
+    alt_auth_map=%s/root
+
+which attempts authentication as the root instance of the username first
+and then falls back to the regular username (but see I<force_alt_auth> and
+I<only_alt_auth>).
+
+This option can be set in F<krb5.conf>, although normally it doesn't make
+sense to do that; normally it is used in the PAM options of configuration
+for specific programs.  It is only applicable to the auth and account
+groups.  If this option is set for the auth group, be sure to set it for
+the account group as well or account authorization may fail.
 
 =item banner=<banner>
 
@@ -322,6 +348,17 @@ inaccurate.
 This option can be set in F<krb5.conf> and is only applicable to the auth
 and password groups.
 
+=item force_alt_auth
+
+This option is used with I<alt_auth_map> and forces authentication as the
+mapped principal if that principal exists in the KDC.  Only if the KDC
+returns principal unknown does the Kerberos PAM module fall back to normal
+authentication.  This can be used to force authentication with an
+alternate instance.  If I<alt_auth_map> is not set, it has no effect.
+
+This option can be set in F<krb5.conf> and is only applicable to the auth
+group.
+
 =item force_pwchange
 
 If this option is set and authentication fails with a Kerberos error
@@ -409,6 +446,17 @@ option.  Don't use this option if the application needs PAM account and
 session management calls.
 
 This option is only applicable to the auth group.
+
+=item only_alt_auth
+
+This option is used with I<alt_auth_map> and forces the use of the mapped
+principal for authentication.  It disables fallback to normal
+authentication in all cases and overrides I<search_k5login> and
+I<force_alt_auth>.  If I<alt_auth_map> is not set, it has no effect and
+the standard authentication behavior is used.
+
+This option can be set in F<krb5.conf> and is only applicable to the auth
+group.
 
 =item pkinit_anchors=<anchors>
 
@@ -665,6 +713,10 @@ account.
 =back
 
 =head1 CAVEATS
+
+Be sure to list this module in the session group as well as the auth group
+when using it for interactive logins.  Otherwise, some applications (such
+as OpenSSH) will not set up the user's ticket cache correctly.
 
 The Kerberos library, via pam-krb5, will prompt the user to change their
 password if their password is expired, but when using OpenSSH, this will

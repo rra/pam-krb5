@@ -8,6 +8,7 @@
  * Copyright 2005, 2006, 2007 Russ Allbery <rra@debian.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
+ *
  * See LICENSE for licensing terms.
  */
 
@@ -27,6 +28,10 @@
 
 #include "internal.h"
 
+#ifndef LOG_AUTHPRIV
+# define LOG_AUTHPRIV LOG_AUTH
+#endif
+
 /*
  * Basic error logging.  Log a message with LOG_ERR priority.
  */
@@ -42,7 +47,7 @@ pamk5_error(struct pam_args *pargs, const char *fmt, ...)
     va_end(args);
     if (pargs != NULL && pargs->ctx != NULL && pargs->ctx->name != NULL)
         name = pargs->ctx->name;
-    syslog(LOG_ERR, "(pam_krb5): %s: %s", name, msg);
+    syslog(LOG_ERR | LOG_AUTHPRIV, "(pam_krb5): %s: %s", name, msg);
 }
 
 
@@ -85,7 +90,7 @@ pamk5_debug(struct pam_args *pargs, const char *fmt, ...)
     va_end(args);
     if (pargs != NULL && pargs->ctx != NULL && pargs->ctx->name != NULL)
         name = pargs->ctx->name;
-    syslog(LOG_DEBUG, "(pam_krb5): %s: %s", name, msg);
+    syslog(LOG_DEBUG | LOG_AUTHPRIV, "(pam_krb5): %s: %s", name, msg);
 }
 
 
