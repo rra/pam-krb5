@@ -1,4 +1,4 @@
-libpam-krb5 (3.12-1) UNRELEASED; urgency=low
+libpam-krb5 (3.12-1) experimental; urgency=low
 
   * New upstream release.
     - New alt_auth_map, force_alt_auth, and only_alt_auth options to map
@@ -12,7 +12,7 @@ libpam-krb5 (3.12-1) UNRELEASED; urgency=low
     - Let the upstream Makefile do the installation.
   * Remove NEWS.Debian, only of interest in upgrades from sarge.
 
- -- Russ Allbery <rra@debian.org>  Thu, 13 Nov 2008 10:25:36 -0800
+ -- Russ Allbery <rra@debian.org>  Thu, 13 Nov 2008 10:56:30 -0800
 
 libpam-krb5 (3.11-3) unstable; urgency=low
 
