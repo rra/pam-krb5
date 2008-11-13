@@ -59,15 +59,17 @@ REQUIREMENTS
   1.3 or later may be required; this module has not been tested with
   earlier versions.
 
-  For PKINIT support, Heimdal 0.8rc1 or later is required.  MIT Kerberos
-  PKINIT support was developed against the MIT PKINIT branch and may
-  require additional changes once that code is in a regular release.
+  For PKINIT support, Heimdal 0.8rc1 or later or MIT Kerberos 1.6.3 or
+  later are required.  Earlier MIT Kerberos 1.6 releases have a bug in
+  their handling of PKINIT options.
 
   This module should work on Linux and Solaris (and build with either gcc
   or the Sun C compiler), but has been far more heavily tested on Linux.
-  There is alpha-quality support for the AIX NAS Kerberos implementation.
+  There is beta-quality support for the AIX NAS Kerberos implementation.
   Other PAM implementations will probably require some porting, although
-  untested build system support is present for Mac OS X and HP-UX.
+  untested build system support is present for Mac OS X and HP-UX.  I
+  personally can only test on Linux and rely on others to report problems
+  on other operating systems.
 
   Old versions of OpenSSH are known to call pam_authenticate followed by
   pam_setcred(PAM_REINITIALIZE_CRED) without first calling
