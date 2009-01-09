@@ -1,0 +1,9 @@
+#!/bin/sh
+
+set -e
+
+if [ "$1" = "remove" ] || [ "$1" = "deconfigure" ] ; then
+    pam-auth-update --package --remove krb5
+fi
+
+#DEBHELPER#

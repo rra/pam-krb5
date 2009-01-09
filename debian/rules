@@ -9,7 +9,19 @@ build-stamp:
 	dh build --after configure
 	touch $@
 
+install: install-stamp
+	dh install --until dh_prep
+	install -m 644 debian/pam-auth-update \
+	    libpam-krb5/usr/share/pam-configs/krb5
+	dh install --remaining
+	touch $@
+
+binary: binary-arch binary-indep
+binary-indep:
+binary-arch: install-stamp
+	dh $@
+
 %:
 	dh $@
 
-.PHONY: build build-arch build-indep
+.PHONY: binary binary-arch binary-indep build build-arch build-indep install
