@@ -71,10 +71,10 @@ dnl don't know how to probe for that.
 dnl
 dnl More platforms could be handled here.  Contributions welcome.
 MAP='-Wl,--version-script=${srcdir}/pam_krb5.map'
+LD="$CC"
 case "$host" in
 *-darwin*)
     if test "$GCC" = "yes" ; then
-        LD="$CC"
         LDFLAGS="-bundle $LDFLAGS"
     else
         AC_MSG_ERROR([Only know compiler flags for gcc on this platform])
@@ -83,7 +83,6 @@ case "$host" in
 *-hpux*)
     if test "$GCC" = "yes" ; then
         CFLAGS="-fPIC $CFLAGS"
-        LD="$CC"
         LDFLAGS="-fPIC -shared -Wl,-Bsymbolic $LDFLAGS"
     else
         CFLAGS="+z $CFLAGS"
@@ -91,18 +90,26 @@ case "$host" in
         LDFLAGS="+vshlibunsats -b $LDFLAGS"
     fi
     ;;
-x86_64-*-linux*)
-    CFLAGS="-fPIC $CFLAGS"
-    LD="$CC"
-    LDFLAGS="-fPIC -shared -Wl,-z,defs -Wl,-Bsymbolic $MAP $LDFLAGS"
-    if test x"$libdir" = x'${exec_prefix}/lib' ; then
-        libdir='${exec_prefix}/lib64'
-    fi
-    ;;
 *-linux*)
     CFLAGS="-fPIC $CFLAGS"
-    LD="$CC"
     LDFLAGS="-fPIC -shared -Wl,-z,defs -Wl,-Bsymbolic $MAP $LDFLAGS"
+dnl Some hacks, borrowed from Linux-PAM, pam_login et.al.
+    test "${prefix}" = "NONE" && prefix="/usr"
+    if test "${prefix}" = '/usr'; then
+dnl If we use /usr as prefix, use /lib or /lib64 for libraries
+        if test "${libdir}" = '${exec_prefix}/lib'; then
+            case "`uname -m`" in
+                x86_64|ppc64|s390x|sparc64)
+                    libdir='/lib64' ;;
+                *)
+                    libdir='/lib' ;;
+            esac
+        fi
+dnl If we use /usr as prefix, use /usr/share/man for manual pages
+        if test "${mandir}" = '${prefix}/man'; then
+            mandir='${prefix}/share/man'
+        fi
+    fi
     ;;
 *-solaris2*)
     if test "$GCC" = "yes" ; then
@@ -112,12 +119,10 @@ x86_64-*-linux*)
         CFLAGS="-KPIC $CFLAGS"
         LDFLAGS="-G -xldscope=symbolic $LDFLAGS"
     fi
-    LD="$CC"
     ;;
 *)
     if test "$GCC" = "yes" ; then
         CFLAGS="-fPIC $CFLAGS"
-        LD="$CC"
         LDFLAGS="-fPIC -shared $LDFLAGS"
     else
         AC_MSG_ERROR([Only know compiler flags for gcc on this platform])
