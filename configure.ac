@@ -70,7 +70,7 @@ dnl other ELF platforms, but the option is only valid with the GNU ld and I
 dnl don't know how to probe for that.
 dnl
 dnl More platforms could be handled here.  Contributions welcome.
-MAP="-Wl,--version-script=pam_krb5.map"
+MAP='-Wl,--version-script=${srcdir}/pam_krb5.map'
 case "$host" in
 *-darwin*)
     if test "$GCC" = "yes" ; then
