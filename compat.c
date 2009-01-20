@@ -60,7 +60,7 @@ static const char error_unknown[] = "unknown error";
  * was added to support PKINIT and other more complex options.
  */
 krb5_error_code
-pamk5_compat_opt_alloc(krb5_context c, krb5_get_init_creds_opt **opts)
+pamk5_compat_opt_alloc(krb5_context c UNUSED, krb5_get_init_creds_opt **opts)
 {
 #ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_ALLOC
     return krb5_get_init_creds_opt_alloc(c, opts);
@@ -73,7 +73,7 @@ pamk5_compat_opt_alloc(krb5_context c, krb5_get_init_creds_opt **opts)
 }
 
 void
-pamk5_compat_opt_free(krb5_context c, krb5_get_init_creds_opt *opts)
+pamk5_compat_opt_free(krb5_context c UNUSED, krb5_get_init_creds_opt *opts)
 {
 #ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_ALLOC
 # ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_FREE_2_ARGS
@@ -94,7 +94,7 @@ pamk5_compat_opt_free(krb5_context c, krb5_get_init_creds_opt *opts)
  * fixed message.
  */
 const char *
-pamk5_compat_get_error(krb5_context ctx, krb5_error_code code)
+pamk5_compat_get_error(krb5_context ctx UNUSED, krb5_error_code code)
 {
     const char *msg = NULL;
 
@@ -137,7 +137,7 @@ pamk5_compat_free_error(krb5_context ctx, const char *msg)
  * for getpwnam_r and use it, but I haven't written that routine.)
  */
 struct passwd *
-pamk5_compat_getpwnam(struct pam_args *args, const char *user)
+pamk5_compat_getpwnam(struct pam_args *args UNUSED, const char *user)
 {
 #ifdef HAVE_PAM_MODUTIL_GETPWNAM
     return pam_modutil_getpwnam(args->pamh, user);
