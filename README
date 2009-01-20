@@ -98,10 +98,13 @@ COMPILING AND INSTALLING
 
       make install
 
-  You can change the installation locations with the --prefix, --mandir,
-  and --libdir options to configure.  The module will be installed in a
-  subdirectory of $libdir named security and, on x86_64 Linux, $libdir
-  will be changed to lib64 to match the default PAM configuration.
+  The module will be installed in a subdirectory of $libdir named security
+  and, on 64-bit versions of Linux, $libdir will be changed to lib64 to
+  match the default PAM configuration.  You can change the installation
+  locations with the --prefix, --mandir, and --libdir options to
+  configure.  On Linux, specify --prefix=/usr to install the man page into
+  /usr/share/man and the PAM module in /lib/security or /lib64/security.
+
   Alternately, you can simply copy pam_krb5.so to whatever directory you
   use for PAM modules.  On Solaris, you will need to make the module
   executable.

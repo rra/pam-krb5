@@ -1,5 +1,16 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 3.13 (unreleased)
+
+    If a prefix of /usr is requested at configure time, install the PAM
+    module into /lib/security or /lib64/security on Linux, matching the
+    standard Linux-PAM module location.  Use lib64 instead of lib on
+    64-bit SPARC, PowerPC, and S390 Linux as well as x86_64.  Patch from
+    Peter Breitenlohner.
+
+    Fix a build problem when builddir != srcdir introduced in 3.11.  Patch
+    from Peter Breitenlohner.
+
 pam-krb5 3.12 (2008-11-13)
 
     Add alt_auth_map configuration option, which allows mapping of
