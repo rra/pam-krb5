@@ -64,10 +64,11 @@ dnl function.
 dnl
 dnl Also, if and only if we're on Linux, make sure that all the symbols in the
 dnl module are resolved, try to adjust for the 32-bit vs. 64-bit library
-dnl paths, and use a version script to be sure that we hide internal
-dnl functions.  The version script could also be used on Solaris and probably
-dnl other ELF platforms, but the option is only valid with the GNU ld and I
-dnl don't know how to probe for that.
+dnl paths, install into /lib or /lib64 instead of /usr/lib or /usr/lib64 if
+dnl the prefix is /usr, and use a version script to be sure that we hide
+dnl internal functions.  The version script could also be used on Solaris and
+dnl probably other ELF platforms, but the option is only valid with the GNU ld
+dnl and I don't know how to probe for that.
 dnl
 dnl More platforms could be handled here.  Contributions welcome.
 MAP='-Wl,--version-script=${srcdir}/pam_krb5.map'
@@ -93,21 +94,16 @@ case "$host" in
 *-linux*)
     CFLAGS="-fPIC $CFLAGS"
     LDFLAGS="-fPIC -shared -Wl,-z,defs -Wl,-Bsymbolic $MAP $LDFLAGS"
-dnl Some hacks, borrowed from Linux-PAM, pam_login et.al.
-    test "${prefix}" = "NONE" && prefix="/usr"
-    if test "${prefix}" = '/usr'; then
-dnl If we use /usr as prefix, use /lib or /lib64 for libraries
+    if test "${prefix}" = "/usr"; then
         if test "${libdir}" = '${exec_prefix}/lib'; then
-            case "`uname -m`" in
-                x86_64|ppc64|s390x|sparc64)
-                    libdir='/lib64' ;;
-                *)
-                    libdir='/lib' ;;
+            case "$host" in
+            x86_64-*|powerpc64-*|s390x-*|sparc64-*)
+                libdir="/lib64"
+                ;;
+            *)
+                libdir="/lib"
+                ;;
             esac
-        fi
-dnl If we use /usr as prefix, use /usr/share/man for manual pages
-        if test "${mandir}" = '${prefix}/man'; then
-            mandir='${prefix}/share/man'
         fi
     fi
     ;;
