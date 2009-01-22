@@ -110,9 +110,12 @@ COMPILING AND INSTALLING
   executable.
 
   If your Kerberos libraries aren't installed in a location found by your
-  compiler by default, use the --with-krb5=PATH option to configure.
-  The Kerberos libraries will then be expected in PATH/lib and the headers
-  in PATH/include.
+  compiler by default, use the --with-krb5=PATH option to configure.  The
+  Kerberos libraries will then be expected in PATH/lib and the headers in
+  PATH/include.  You can also individually set the paths to the library
+  directory and the include directory with --with-krb5-lib and
+  --with-krb5-include respectively.  You may need to do this if Autoconf
+  can't figure out whether to use lib, lib32, or lib64 on your platform.
 
   To specify a particular krb5-config script to use, either set the
   KRB5_CONFIG environment variable or pass it to configure like:
