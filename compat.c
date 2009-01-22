@@ -6,7 +6,7 @@
  * MIT, and to provide compatibility versions of functions not found in some
  * PAM libraries.
  *
- * Copyright 2005, 2006, 2007 Russ Allbery <rra@debian.org>
+ * Copyright 2005, 2006, 2007, 2009 Russ Allbery <rra@debian.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  *
@@ -26,12 +26,14 @@
 #include <stdlib.h>
 
 #if !defined(HAVE_KRB5_GET_ERROR_MESSAGE) && !defined(HAVE_KRB5_GET_ERR_TEXT)
-# if defined(HAVE_IBM_SVC_KRB5_SVC_H)
-#  include <ibm_svc/krb5_svc.h>
-# elif defined(HAVE_ET_COM_ERR_H)
-#  include <et/com_err.h>
-# else
-#  include <com_err.h>
+# if !defined(HAVE_KRB5_GET_ERROR_STRING)
+#  if defined(HAVE_IBM_SVC_KRB5_SVC_H)
+#   include <ibm_svc/krb5_svc.h>
+#  elif defined(HAVE_ET_COM_ERR_H)
+#   include <et/com_err.h>
+#  else
+#   include <com_err.h>
+#  endif
 # endif
 #endif
 
@@ -92,14 +94,20 @@ pamk5_compat_opt_free(krb5_context c UNUSED, krb5_get_init_creds_opt *opts)
  * Kerberos interface if available since it will provide context-specific
  * error information, whereas the error_message() call will only provide a
  * fixed message.
+ *
+ * This function should be called immediately after the corresponding error,
+ * without any intervening Kerberos calls.  Otherwise, the correct error
+ * message may not be returned.
  */
 const char *
-pamk5_compat_get_error(krb5_context ctx UNUSED, krb5_error_code code)
+pamk5_compat_get_error(krb5_context ctx UNUSED, krb5_error_code code UNUSED)
 {
     const char *msg = NULL;
 
 #if defined(HAVE_KRB5_GET_ERROR_MESSAGE)
     msg = krb5_get_error_message(ctx, code);
+#elif defined(HAVE_KRB5_GET_ERROR_STRING)
+    msg = krb5_get_error_string(ctx);
 #elif defined(HAVE_KRB5_GET_ERR_TEXT)
     msg = krb5_get_err_text(ctx, code);
 #elif defined(HAVE_KRB5_SVC_GET_MSG)
@@ -117,6 +125,10 @@ pamk5_compat_get_error(krb5_context ctx UNUSED, krb5_error_code code)
 /*
  * Free an error string if necessary.  If we returned a static string, make
  * sure we don't free it.
+ *
+ * This code assumes that the set of implementations that have
+ * krb5_free_error_message is a subset of those with krb5_get_error_message.
+ * If this assumption ever breaks, we may call the wrong free function.
  */
 void
 pamk5_compat_free_error(krb5_context ctx, const char *msg)
@@ -125,6 +137,8 @@ pamk5_compat_free_error(krb5_context ctx, const char *msg)
         return;
 #if defined(HAVE_KRB5_FREE_ERROR_MESSAGE)
     krb5_free_error_message(ctx, msg);
+#elif defined(HAVE_KRB5_GET_ERROR_STRING)
+    msg = krb5_free_error_string(ctx, (char *) msg);
 #elif defined(HAVE_KRB5_SVC_GET_MSG)
     krb5_free_string(ctx, (char *) msg);
 #endif

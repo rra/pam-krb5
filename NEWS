@@ -11,6 +11,17 @@ pam-krb5 3.13 (unreleased)
     Fix a build problem when builddir != srcdir introduced in 3.11.  Patch
     from Peter Breitenlohner.
 
+    Add support for the old Heimdal krb5_get_error_string interface.
+    Thanks, Chaskiel Grundman.
+
+    Add --with-krb5-include and --with-krb5-lib configure options to allow
+    more specific setting of paths if necessary.
+
+    If krb5-config isn't available, attempt to determine if the library
+    directory for the Kerberos libraries is lib32 or lib64 instead of lib
+    and set LDFLAGS accordingly.  Based on an idea from the CMU Autoconf
+    macros.
+
 pam-krb5 3.12 (2008-11-13)
 
     Add alt_auth_map configuration option, which allows mapping of
