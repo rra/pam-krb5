@@ -9,8 +9,14 @@
 #include <krb5.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "pam_krb5.h"
+
+/* Heimdal doesn't need krb5_init_secure_context. */
+#if HAVE_KRB5_HEIMDAL
+# define krb5_init_secure_context(c) krb5_init_context(c)
+#endif
 
 /*
  * Allocate a new struct pam_args and initialize its data members.
@@ -158,7 +164,10 @@ pamk5_args_parse(int flags, int argc, const char **argv)
      * proceed; we'll die soon enough later and this way we'll die after we
      * know whether to debug things.
      */
-    retval = krb5_init_context(&c);
+    if (getuid() != geteuid() || getgid() != getegid())
+        retval = krb5_init_secure_context(&c);
+    else
+        retval = krb5_init_context(&c);
     if (retval != 0)
         c = NULL;
     if (c != NULL) {
