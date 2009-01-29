@@ -517,10 +517,12 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
          * maximally safe, but it would prevent use of the module for
          * authentication with programs such as Solaris su.  Failure to
          * reinitialize the cache is normally not a serious problem, just a
-         * missing feature.  We therefore silently fail by exiting with
+         * missing feature.  We therefore log an error and exit with
          * PAM_SUCCESS for the setuid case.
          */
         if (pamk5_compat_issetugid()) {
+            pamk5_error(args, "credential reinitialization in a setuid"
+                        " context ignored");
             pamret = PAM_SUCCESS;
             goto done;
         }

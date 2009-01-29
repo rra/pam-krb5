@@ -14,16 +14,16 @@ pam-krb5 3.13 (unreleased)
 
     SECURITY: Disable pam_setcred(PAM_REINITIALIZE_CREDS) for setuid
     applications.  If pam_krb5 detects this call in a setuid context, it
-    now returns success without doing anything.  Solaris su calls
-    pam_setcred with that option rather than PAM_ESTABLISH_CREDS after
-    authentication and without wiping the environment, leading previous
-    versions of pam_krb5 to trust the KRB5CCNAME environment variable for
-    the ticket cache location.  This permitted an attacker to use previous
-    versions of pam_krb5 to overwrite arbitrary files with Kerberos
-    credential caches that were left owned by the attacker.  Setuid screen
-    lock programs may also be affected.  Discovered by Derek Chan and
-    reported by Steven Luo.  Thanks to Sam Hartman and Jeffrey Hutzelman
-    for additional analysis.
+    now logs an error and returns success without doing anything.  Solaris
+    su calls pam_setcred with that option rather than PAM_ESTABLISH_CREDS
+    after authentication and without wiping the environment, leading
+    previous versions of pam_krb5 to trust the KRB5CCNAME environment
+    variable for the ticket cache location.  This permitted an attacker to
+    use previous versions of pam_krb5 to overwrite arbitrary files with
+    Kerberos credential caches that were left owned by the attacker.
+    Setuid screen lock programs may also be affected.  Discovered by Derek
+    Chan and reported by Steven Luo.  Thanks to Sam Hartman and Jeffrey
+    Hutzelman for additional analysis.
 
     If a prefix of /usr is requested at configure time, install the PAM
     module into /lib/security or /lib64/security on Linux, matching the
