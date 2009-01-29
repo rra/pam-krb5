@@ -276,7 +276,10 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
      * proceed; we'll die soon enough later and this way we'll die after we
      * know whether to debug things.
      */
-    retval = krb5_init_context(&c);
+    if (pamk5_compat_issetugid())
+        retval = pamk5_compat_secure_context(&c);
+    else
+        retval = krb5_init_context(&c);
     if (retval != 0)
         c = NULL;
     if (c != NULL) {

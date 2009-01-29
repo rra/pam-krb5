@@ -66,7 +66,10 @@ pamk5_context_new(struct pam_args *args)
         goto done;
     }
     ctx->name = strdup(name);
-    retval = krb5_init_context(&ctx->context);
+    if (pamk5_compat_issetugid())
+        retval = pamk5_compat_secure_context(&ctx->context);
+    else
+        retval = krb5_init_context(&ctx->context);
     if (retval != 0) {
         pamk5_error_krb5(args, "krb5_init_context", retval);
         retval = PAM_SERVICE_ERR;

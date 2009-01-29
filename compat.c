@@ -24,6 +24,7 @@
 # include <security/pam_modutil.h>
 #endif
 #include <stdlib.h>
+#include <unistd.h>
 
 #if !defined(HAVE_KRB5_GET_ERROR_MESSAGE) && !defined(HAVE_KRB5_GET_ERR_TEXT)
 # if !defined(HAVE_KRB5_GET_ERROR_STRING)
@@ -146,6 +147,39 @@ pamk5_compat_free_error(krb5_context ctx, const char *msg)
 
 
 /*
+ * AIX's NAS Kerberos implementation mysteriously provides the struct and the
+ * krb5_verify_init_creds function but not this function.
+ */
+#ifndef HAVE_KRB5_VERIFY_INIT_CREDS_OPT_INIT
+void
+krb5_verify_init_creds_opt_init(krb5_verify_init_creds_opt *opt)
+{
+    opt->flags = 0;
+    opt->ap_req_nofail = 0;
+}
+#endif
+
+
+/*
+ * MIT provides a krb5_init_secure_context that ignores all the environment
+ * variables that may otherwise influence context creation.  We call that
+ * function if we detect that we're setuid.  Heimdal doesn't have this
+ * function, but instead automatically ignores the environment variables if it
+ * detects we're setuid.  This means that we should be able to fall back
+ * safely to krb5_init_context if krb5_init_secure_context isn't available.
+ */
+krb5_error_code
+pamk5_compat_secure_context(krb5_context *ctx)
+{
+#ifdef HAVE_KRB5_INIT_SECURE_CONTEXT
+    return krb5_init_secure_context(ctx);
+#else
+    return krb5_init_context(ctx);
+#endif
+}
+
+
+/*
  * Linux PAM provides a thread-safe version of getpwnam that we want to use if
  * available.  If it's not, fall back on getpwnam.  (Ideally, we should check
  * for getpwnam_r and use it, but I haven't written that routine.)
@@ -162,14 +196,19 @@ pamk5_compat_getpwnam(struct pam_args *args UNUSED, const char *user)
 
 
 /*
- * AIX's NAS Kerberos implementation mysteriously provides the struct and the
- * krb5_verify_init_creds function but not this function.
+ * Call the Solaris issetugid function if available.  If not, check whether
+ * the real and effective UIDs and GIDs match.
  */
-#ifndef HAVE_KRB5_VERIFY_INIT_CREDS_OPT_INIT
-void
-krb5_verify_init_creds_opt_init(krb5_verify_init_creds_opt *opt)
+int
+pamk5_compat_issetugid(void)
 {
-    opt->flags = 0;
-    opt->ap_req_nofail = 0;
-}
+#ifdef HAVE_ISSETUGID
+    return issetugid();
+#else
+    if (getuid() != geteuid())
+        return 1;
+    if (getgid() != getegid())
+        return 1;
+    return 0;
 #endif
+}

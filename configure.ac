@@ -21,6 +21,10 @@ AC_PROG_MAKE_SET
 AC_CANONICAL_HOST
 AC_AIX
 
+dnl Check for the Solaris issetugid function, which is nicer than comparing
+dnl real and effective UIDs and GIDs.
+AC_CHECK_FUNCS([issetugid])
+
 dnl Probe for the functionality of the PAM libraries and their include file
 dnl naming.  Mac OS X puts them in pam/* instead of security/*.
 AC_SEARCH_LIBS([pam_set_data], [pam])
@@ -46,6 +50,7 @@ AC_CHECK_FUNCS([krb5_appdefault_string \
     krb5_get_init_creds_opt_set_change_password_prompt \
     krb5_get_init_creds_opt_set_default_flags \
     krb5_get_init_creds_opt_set_pa \
+    krb5_init_secure_context \
     krb5_verify_init_creds_opt_init])
 AC_CHECK_FUNCS([krb5_get_init_creds_opt_set_pkinit],
     [RRA_FUNC_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT_ARGS])

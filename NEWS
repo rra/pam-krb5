@@ -2,6 +2,29 @@
 
 pam-krb5 3.13 (unreleased)
 
+    SECURITY: When built against MIT Kerberos, if pam_krb5 is called in a
+    setuid context (effective UID or GID doesn't match the real UID or
+    GID), use krb5_init_secure_context instead of krb5_init_context.  This
+    ignores environment variable settings for the local Kerberos
+    configuration and keytab.  Previous versions could allow a local
+    attacker to point a setuid program that used PAM authentication at a
+    different Kerberos configuration under the attacker's control,
+    possibly resulting in privilege escalation.  Heimdal handles this
+    logic within the Kerberos libraries and therefore was not affected.
+
+    SECURITY: Disable pam_setcred(PAM_REINITIALIZE_CREDS) for setuid
+    applications.  If pam_krb5 detects this call in a setuid context, it
+    now returns success without doing anything.  Solaris su calls
+    pam_setcred with that option rather than PAM_ESTABLISH_CREDS after
+    authentication and without wiping the environment, leading previous
+    versions of pam_krb5 to trust the KRB5CCNAME environment variable for
+    the ticket cache location.  This permitted an attacker to use previous
+    versions of pam_krb5 to overwrite arbitrary files with Kerberos
+    credential caches that were left owned by the attacker.  Setuid screen
+    lock programs may also be affected.  Discovered by Derek Chan and
+    reported by Steven Luo.  Thanks to Sam Hartman and Jeffrey Hutzelman
+    for additional analysis.
+
     If a prefix of /usr is requested at configure time, install the PAM
     module into /lib/security or /lib64/security on Linux, matching the
     standard Linux-PAM module location.  Use lib64 instead of lib on
