@@ -22,6 +22,7 @@
 #endif
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "internal.h"
 
@@ -29,6 +30,11 @@
 #ifndef PAM_CONV_AGAIN
 # define PAM_CONV_AGAIN 0
 # define PAM_INCOMPLETE PAM_SERVICE_ERR
+#endif
+
+/* Heimdal doesn't need krb5_init_secure_context. */
+#if HAVE_KRB5_HEIMDAL
+# define krb5_init_secure_context(c) krb5_init_context(c)
 #endif
 
 /*
@@ -65,7 +71,10 @@ pamk5_context_new(struct pam_args *args)
         goto done;
     }
     ctx->name = strdup(name);
-    retval = krb5_init_context(&ctx->context);
+    if (getuid() != geteuid() || getgid() != getegid())
+        retval = krb5_init_secure_context(&ctx->context);
+    else
+        retval = krb5_init_context(&ctx->context);
     if (retval != 0) {
         pamk5_error_krb5(args, "krb5_init_context", retval);
         retval = PAM_SERVICE_ERR;

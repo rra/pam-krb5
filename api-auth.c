@@ -493,6 +493,37 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
     if (reinit) {
         const char *name, *k5name;
 
+        /*
+         * Solaris su calls pam_setcred as root with PAM_REINITIALIZE_CREDS,
+         * preserving the user-supplied environment.  An xlock program may
+         * also do this if it's setuid root and doesn't drop credentials
+         * before calling pam_setcred.
+         *
+         * There isn't any safe way of reinitializing the exiting ticket cache
+         * for the user if we're setuid without calling setreuid().  Calling
+         * setreuid() is possible, but if the calling application is threaded,
+         * it will change credentials for the whole application, with possibly
+         * bizarre and unintended (and insecure) results.  Trying to verify
+         * ownership of the existing ticket cache before using it fails under
+         * various race conditions (for example, having one of the elements of
+         * the path be a symlink and changing the target of that symlink
+         * between our check and the call to krb5_cc_resolve.  Without calling
+         * setreuid(), we run the risk of replacing a file owned by another
+         * user with a credential cache.
+         *
+         * We could fail with an error in the setuid case, which would be
+         * maximally safe, but it would prevent use of the module for
+         * authentication with programs such as Solaris su.  Failure to
+         * reinitialize the cache is normally not a serious problem, just a
+         * missing feature.  We therefore log an error and exit with
+         * PAM_SUCCESS for the setuid case.
+         */
+        if (getuid() != geteuid() || getgid() != getegid()) {
+            pamk5_error(args, "credential reinitialization in a setuid"
+                        " context ignored");
+            pamret = PAM_SUCCESS;
+            goto done;
+        }
         name = pamk5_get_krb5ccname(args, "KRB5CCNAME");
         if (name == NULL)
             name = krb5_cc_default_name(ctx->context);
