@@ -492,8 +492,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
     /* Get the cache name.  If reinitializing, this is our existing cache. */
     if (reinit) {
-        const char *name = NULL;
-        const char *k5name;
+        const char *name, *k5name;
 
         /*
          * Solaris su calls pam_setcred as root with PAM_REINITIALIZE_CREDS,
