@@ -13,6 +13,7 @@ AC_CONFIG_AUX_DIR([build-aux])
 m4_include([m4/krb5.m4])
 m4_include([m4/krb5-pkinit.m4])
 m4_include([m4/lib-depends.m4])
+m4_include([m4/lib-pathname.m4])
 m4_include([m4/pam-const.m4])
 
 AC_PROG_CC
