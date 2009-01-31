@@ -508,9 +508,9 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
          * ownership of the existing ticket cache before using it fails under
          * various race conditions (for example, having one of the elements of
          * the path be a symlink and changing the target of that symlink
-         * between our check and the call to krb5_cc_resolve.  Without calling
-         * setreuid(), we run the risk of replacing a file owned by another
-         * user with a credential cache.
+         * between our check and the call to krb5_cc_resolve).  Without
+         * calling setreuid(), we run the risk of replacing a file owned by
+         * another user with a credential cache.
          *
          * We could fail with an error in the setuid case, which would be
          * maximally safe, but it would prevent use of the module for
