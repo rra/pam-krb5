@@ -6,7 +6,7 @@
  * MIT, and to provide compatibility versions of functions not found in some
  * PAM libraries.
  *
- * Copyright 2005, 2006, 2007 Russ Allbery <rra@debian.org>
+ * Copyright 2005, 2006, 2007, 2009 Russ Allbery <rra@debian.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  *
@@ -24,14 +24,17 @@
 # include <security/pam_modutil.h>
 #endif
 #include <stdlib.h>
+#include <unistd.h>
 
 #if !defined(HAVE_KRB5_GET_ERROR_MESSAGE) && !defined(HAVE_KRB5_GET_ERR_TEXT)
-# if defined(HAVE_IBM_SVC_KRB5_SVC_H)
-#  include <ibm_svc/krb5_svc.h>
-# elif defined(HAVE_ET_COM_ERR_H)
-#  include <et/com_err.h>
-# else
-#  include <com_err.h>
+# if !defined(HAVE_KRB5_GET_ERROR_STRING)
+#  if defined(HAVE_IBM_SVC_KRB5_SVC_H)
+#   include <ibm_svc/krb5_svc.h>
+#  elif defined(HAVE_ET_COM_ERR_H)
+#   include <et/com_err.h>
+#  else
+#   include <com_err.h>
+#  endif
 # endif
 #endif
 
@@ -60,7 +63,7 @@ static const char error_unknown[] = "unknown error";
  * was added to support PKINIT and other more complex options.
  */
 krb5_error_code
-pamk5_compat_opt_alloc(krb5_context c, krb5_get_init_creds_opt **opts)
+pamk5_compat_opt_alloc(krb5_context c UNUSED, krb5_get_init_creds_opt **opts)
 {
 #ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_ALLOC
     return krb5_get_init_creds_opt_alloc(c, opts);
@@ -73,7 +76,7 @@ pamk5_compat_opt_alloc(krb5_context c, krb5_get_init_creds_opt **opts)
 }
 
 void
-pamk5_compat_opt_free(krb5_context c, krb5_get_init_creds_opt *opts)
+pamk5_compat_opt_free(krb5_context c UNUSED, krb5_get_init_creds_opt *opts)
 {
 #ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_ALLOC
 # ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_FREE_2_ARGS
@@ -92,14 +95,20 @@ pamk5_compat_opt_free(krb5_context c, krb5_get_init_creds_opt *opts)
  * Kerberos interface if available since it will provide context-specific
  * error information, whereas the error_message() call will only provide a
  * fixed message.
+ *
+ * This function should be called immediately after the corresponding error,
+ * without any intervening Kerberos calls.  Otherwise, the correct error
+ * message may not be returned.
  */
 const char *
-pamk5_compat_get_error(krb5_context ctx, krb5_error_code code)
+pamk5_compat_get_error(krb5_context ctx UNUSED, krb5_error_code code UNUSED)
 {
     const char *msg = NULL;
 
 #if defined(HAVE_KRB5_GET_ERROR_MESSAGE)
     msg = krb5_get_error_message(ctx, code);
+#elif defined(HAVE_KRB5_GET_ERROR_STRING)
+    msg = krb5_get_error_string(ctx);
 #elif defined(HAVE_KRB5_GET_ERR_TEXT)
     msg = krb5_get_err_text(ctx, code);
 #elif defined(HAVE_KRB5_SVC_GET_MSG)
@@ -117,6 +126,10 @@ pamk5_compat_get_error(krb5_context ctx, krb5_error_code code)
 /*
  * Free an error string if necessary.  If we returned a static string, make
  * sure we don't free it.
+ *
+ * This code assumes that the set of implementations that have
+ * krb5_free_error_message is a subset of those with krb5_get_error_message.
+ * If this assumption ever breaks, we may call the wrong free function.
  */
 void
 pamk5_compat_free_error(krb5_context ctx, const char *msg)
@@ -125,24 +138,10 @@ pamk5_compat_free_error(krb5_context ctx, const char *msg)
         return;
 #if defined(HAVE_KRB5_FREE_ERROR_MESSAGE)
     krb5_free_error_message(ctx, msg);
+#elif defined(HAVE_KRB5_GET_ERROR_STRING)
+    msg = krb5_free_error_string(ctx, (char *) msg);
 #elif defined(HAVE_KRB5_SVC_GET_MSG)
     krb5_free_string(ctx, (char *) msg);
-#endif
-}
-
-
-/*
- * Linux PAM provides a thread-safe version of getpwnam that we want to use if
- * available.  If it's not, fall back on getpwnam.  (Ideally, we should check
- * for getpwnam_r and use it, but I haven't written that routine.)
- */
-struct passwd *
-pamk5_compat_getpwnam(struct pam_args *args, const char *user)
-{
-#ifdef HAVE_PAM_MODUTIL_GETPWNAM
-    return pam_modutil_getpwnam(args->pamh, user);
-#else
-    return getpwnam(user);
 #endif
 }
 
@@ -159,3 +158,57 @@ krb5_verify_init_creds_opt_init(krb5_verify_init_creds_opt *opt)
     opt->ap_req_nofail = 0;
 }
 #endif
+
+
+/*
+ * MIT provides a krb5_init_secure_context that ignores all the environment
+ * variables that may otherwise influence context creation.  We call that
+ * function if we detect that we're setuid.  Heimdal doesn't have this
+ * function, but instead automatically ignores the environment variables if it
+ * detects we're setuid.  This means that we should be able to fall back
+ * safely to krb5_init_context if krb5_init_secure_context isn't available.
+ */
+krb5_error_code
+pamk5_compat_secure_context(krb5_context *ctx)
+{
+#ifdef HAVE_KRB5_INIT_SECURE_CONTEXT
+    return krb5_init_secure_context(ctx);
+#else
+    return krb5_init_context(ctx);
+#endif
+}
+
+
+/*
+ * Linux PAM provides a thread-safe version of getpwnam that we want to use if
+ * available.  If it's not, fall back on getpwnam.  (Ideally, we should check
+ * for getpwnam_r and use it, but I haven't written that routine.)
+ */
+struct passwd *
+pamk5_compat_getpwnam(struct pam_args *args UNUSED, const char *user)
+{
+#ifdef HAVE_PAM_MODUTIL_GETPWNAM
+    return pam_modutil_getpwnam(args->pamh, user);
+#else
+    return getpwnam(user);
+#endif
+}
+
+
+/*
+ * Call the Solaris issetugid function if available.  If not, check whether
+ * the real and effective UIDs and GIDs match.
+ */
+int
+pamk5_compat_issetugid(void)
+{
+#ifdef HAVE_ISSETUGID
+    return issetugid();
+#else
+    if (getuid() != geteuid())
+        return 1;
+    if (getgid() != getegid())
+        return 1;
+    return 0;
+#endif
+}

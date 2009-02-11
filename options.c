@@ -5,7 +5,7 @@
  * internal functions.  Retrieves configuration information from krb5.conf and
  * parses the PAM configuration.
  *
- * Copyright 2005, 2006, 2007, 2008 Russ Allbery <rra@debian.org>
+ * Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@debian.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  *
@@ -276,7 +276,10 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
      * proceed; we'll die soon enough later and this way we'll die after we
      * know whether to debug things.
      */
-    retval = krb5_init_context(&c);
+    if (pamk5_compat_issetugid())
+        retval = pamk5_compat_secure_context(&c);
+    else
+        retval = krb5_init_context(&c);
     if (retval != 0)
         c = NULL;
     if (c != NULL) {

@@ -18,7 +18,7 @@
 #include "internal.h"
 
 void
-pamk5_compat_free_data_contents(krb5_context c, krb5_data *data)
+pamk5_compat_free_data_contents(krb5_context c UNUSED, krb5_data *data)
 {
     krb5_data_free(data);
 }
