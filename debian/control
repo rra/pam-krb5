@@ -11,7 +11,7 @@ Vcs-Browser: http://git.debian.org/?p=pkg-k5-afs/pam-krb5.git
 
 Package: libpam-krb5
 Architecture: any
-Depends: ${shlibs:Depends}, krb5-config
+Depends: ${shlibs:Depends}, ${misc:Depends}, krb5-config
 Conflicts: libpam-heimdal
 Description: PAM module for MIT Kerberos
  A Kerberos v5 PAM module build against the MIT Kerberos libraries.  It
