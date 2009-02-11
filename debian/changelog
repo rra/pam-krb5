@@ -1,4 +1,4 @@
-libpam-krb5 (3.13-1) experimental; urgency=low
+libpam-krb5 (3.13-1) experimental; urgency=high
 
   * New upstream release.
     - SECURITY (CVE-2009-0360): If invoked in a setuid context, ignore
