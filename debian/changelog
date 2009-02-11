@@ -12,6 +12,8 @@ libpam-krb5 (3.13-1) experimental; urgency=high
       environment variable, but in a setuid context, this may allow
       overwriting arbitrary files.
   * Add ${misc:Depends} to the package dependencies.
+  * Improve wording for the GPL pointer.  The package may be distributed
+    under any version of the GPL.
 
  -- Russ Allbery <rra@debian.org>  Wed, 11 Feb 2009 10:47:51 -0800
 
