@@ -132,7 +132,8 @@ change_password(struct pam_args *args, const char *pass)
     if (result_code != 0) {
         char *message;
 
-        pamk5_debug(args, "krb5_change_password: %s", result_code_string.data);
+        pamk5_debug(args, "krb5_change_password: %s",
+                    (char *) result_code_string.data);
         retval = PAM_AUTHTOK_ERR;
         message = malloc(result_string.length + result_code_string.length + 3);
         if (message == NULL)

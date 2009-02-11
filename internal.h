@@ -247,6 +247,12 @@ krb5_error_code pamk5_compat_set_realm(struct pam_args *, const char *)
     __attribute__((__visibility__("hidden")));
 void pamk5_compat_free_realm(struct pam_args *)
     __attribute__((__visibility__("hidden")));
+krb5_error_code pamk5_compat_secure_context(krb5_context *)
+    __attribute__((__visibility__("hidden")));
+
+/* Calls issetugid if available, otherwise checks effective IDs. */
+int pamk5_compat_issetugid(void)
+    __attribute__((__visibility__("hidden")));
 
 /* Calls pam_modutil_getpwnam if available, otherwise getpwnam. */
 struct passwd *pamk5_compat_getpwnam(struct pam_args *, const char *)

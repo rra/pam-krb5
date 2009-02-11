@@ -4,7 +4,7 @@
  * The context structure is the internal state maintained by the pam-krb5
  * module between calls to the various public interfaces.
  *
- * Copyright 2005, 2006, 2007, 2008 Russ Allbery <rra@debian.org>
+ * Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@debian.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  *
@@ -66,7 +66,10 @@ pamk5_context_new(struct pam_args *args)
         goto done;
     }
     ctx->name = strdup(name);
-    retval = krb5_init_context(&ctx->context);
+    if (pamk5_compat_issetugid())
+        retval = pamk5_compat_secure_context(&ctx->context);
+    else
+        retval = krb5_init_context(&ctx->context);
     if (retval != 0) {
         pamk5_error_krb5(args, "krb5_init_context", retval);
         retval = PAM_SERVICE_ERR;

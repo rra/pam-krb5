@@ -1,18 +1,19 @@
 dnl Process this file with Autoconf to produce a configure script.
 dnl
-dnl Copyright 2005, 2006, 2007, 2008 Russ Allbery <rra@debian.org>
+dnl Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@debian.org>
 dnl Copyright 2005 Andres Salomon <dilinger@debian.org>
 dnl Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
 dnl
 dnl See LICENSE for licensing terms.
 
 AC_PREREQ([2.61])
-AC_INIT([pam-krb5], [3.12], [rra@stanford.edu])
+AC_INIT([pam-krb5], [3.13], [rra@stanford.edu])
 AC_CONFIG_AUX_DIR([build-aux])
 
 m4_include([m4/krb5.m4])
 m4_include([m4/krb5-pkinit.m4])
 m4_include([m4/lib-depends.m4])
+m4_include([m4/lib-pathname.m4])
 m4_include([m4/pam-const.m4])
 
 AC_PROG_CC
@@ -20,6 +21,10 @@ AC_PROG_INSTALL
 AC_PROG_MAKE_SET
 AC_CANONICAL_HOST
 AC_AIX
+
+dnl Check for the Solaris issetugid function, which is nicer than comparing
+dnl real and effective UIDs and GIDs.
+AC_CHECK_FUNCS([issetugid])
 
 dnl Probe for the functionality of the PAM libraries and their include file
 dnl naming.  Mac OS X puts them in pam/* instead of security/*.
@@ -46,6 +51,7 @@ AC_CHECK_FUNCS([krb5_appdefault_string \
     krb5_get_init_creds_opt_set_change_password_prompt \
     krb5_get_init_creds_opt_set_default_flags \
     krb5_get_init_creds_opt_set_pa \
+    krb5_init_secure_context \
     krb5_verify_init_creds_opt_init])
 AC_CHECK_FUNCS([krb5_get_init_creds_opt_set_pkinit],
     [RRA_FUNC_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT_ARGS])
@@ -64,17 +70,18 @@ dnl function.
 dnl
 dnl Also, if and only if we're on Linux, make sure that all the symbols in the
 dnl module are resolved, try to adjust for the 32-bit vs. 64-bit library
-dnl paths, and use a version script to be sure that we hide internal
-dnl functions.  The version script could also be used on Solaris and probably
-dnl other ELF platforms, but the option is only valid with the GNU ld and I
-dnl don't know how to probe for that.
+dnl paths, install into /lib or /lib64 instead of /usr/lib or /usr/lib64 if
+dnl the prefix is /usr, and use a version script to be sure that we hide
+dnl internal functions.  The version script could also be used on Solaris and
+dnl probably other ELF platforms, but the option is only valid with the GNU ld
+dnl and I don't know how to probe for that.
 dnl
 dnl More platforms could be handled here.  Contributions welcome.
-MAP="-Wl,--version-script=pam_krb5.map"
+MAP='-Wl,--version-script=${srcdir}/pam_krb5.map'
+LD="$CC"
 case "$host" in
 *-darwin*)
     if test "$GCC" = "yes" ; then
-        LD="$CC"
         LDFLAGS="-bundle $LDFLAGS"
     else
         AC_MSG_ERROR([Only know compiler flags for gcc on this platform])
@@ -83,7 +90,6 @@ case "$host" in
 *-hpux*)
     if test "$GCC" = "yes" ; then
         CFLAGS="-fPIC $CFLAGS"
-        LD="$CC"
         LDFLAGS="-fPIC -shared -Wl,-Bsymbolic $LDFLAGS"
     else
         CFLAGS="+z $CFLAGS"
@@ -91,18 +97,21 @@ case "$host" in
         LDFLAGS="+vshlibunsats -b $LDFLAGS"
     fi
     ;;
-x86_64-*-linux*)
-    CFLAGS="-fPIC $CFLAGS"
-    LD="$CC"
-    LDFLAGS="-fPIC -shared -Wl,-z,defs -Wl,-Bsymbolic $MAP $LDFLAGS"
-    if test x"$libdir" = x'${exec_prefix}/lib' ; then
-        libdir='${exec_prefix}/lib64'
-    fi
-    ;;
 *-linux*)
     CFLAGS="-fPIC $CFLAGS"
-    LD="$CC"
     LDFLAGS="-fPIC -shared -Wl,-z,defs -Wl,-Bsymbolic $MAP $LDFLAGS"
+    if test "${prefix}" = "/usr"; then
+        if test "${libdir}" = '${exec_prefix}/lib'; then
+            case "$host" in
+            x86_64-*|powerpc64-*|s390x-*|sparc64-*)
+                libdir="/lib64"
+                ;;
+            *)
+                libdir="/lib"
+                ;;
+            esac
+        fi
+    fi
     ;;
 *-solaris2*)
     if test "$GCC" = "yes" ; then
@@ -112,12 +121,10 @@ x86_64-*-linux*)
         CFLAGS="-KPIC $CFLAGS"
         LDFLAGS="-G -xldscope=symbolic $LDFLAGS"
     fi
-    LD="$CC"
     ;;
 *)
     if test "$GCC" = "yes" ; then
         CFLAGS="-fPIC $CFLAGS"
-        LD="$CC"
         LDFLAGS="-fPIC -shared $LDFLAGS"
     else
         AC_MSG_ERROR([Only know compiler flags for gcc on this platform])
