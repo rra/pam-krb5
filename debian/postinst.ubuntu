@@ -1,0 +1,8 @@
+#!/bin/sh
+
+set -e
+
+# Not ready for Debian yet -- waiting for libpam-runtime (>= 1.0.1-4ubuntu1).
+pam-auth-update --package
+
+#DEBHELPER#

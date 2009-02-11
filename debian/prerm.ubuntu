@@ -12,6 +12,8 @@ set -e
 # or disabled), which we don't want to do on deconfigure.
 #
 # This may need to change later as pam-auth-update evolves.
+
+# Not ready for Debian yet -- waiting for libpam-runtime (>= 1.0.1-4ubuntu1).
 if [ "$1" = "remove" ] ; then
     pam-auth-update --package --remove krb5
 fi

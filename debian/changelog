@@ -11,8 +11,6 @@ libpam-krb5 (3.13-1) experimental; urgency=low
       Kerberos ticket cache and therefore trusts the KRB5CCNAME
       environment variable, but in a setuid context, this may allow
       overwriting arbitrary files.
-  * Enable pam_krb5 on installation using pam-auth-update.  Based on a
-    patch from Steve Langasek.  (LP #275169)
 
  -- Russ Allbery <rra@debian.org>  Wed, 11 Feb 2009 10:47:51 -0800
 
