@@ -12,8 +12,9 @@ build-stamp:
 install: install-stamp
 install-stamp:
 	dh install --until dh_prep
-	install -m 644 debian/pam-auth-update \
-	    libpam-krb5/usr/share/pam-configs/krb5
+# Waiting for newer libpam-runtime.
+#	install -m 644 debian/pam-auth-update \
+#	    libpam-krb5/usr/share/pam-configs/krb5
 	dh install --remaining
 	touch $@
 
