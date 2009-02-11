@@ -1,13 +1,13 @@
 dnl Process this file with Autoconf to produce a configure script.
 dnl
-dnl Copyright 2005, 2006, 2007, 2008 Russ Allbery <rra@debian.org>
+dnl Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@debian.org>
 dnl Copyright 2005 Andres Salomon <dilinger@debian.org>
 dnl Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
 dnl
 dnl See LICENSE for licensing terms.
 
 AC_PREREQ([2.61])
-AC_INIT([pam-krb5], [3.12], [rra@stanford.edu])
+AC_INIT([pam-krb5], [3.13], [rra@stanford.edu])
 AC_CONFIG_AUX_DIR([build-aux])
 
 m4_include([m4/krb5.m4])

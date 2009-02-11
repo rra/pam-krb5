@@ -1,6 +1,6 @@
                       User-Visible pam-krb5 Changes
 
-pam-krb5 3.13 (unreleased)
+pam-krb5 3.13 (2009-02-11)
 
     SECURITY: When built against MIT Kerberos, if pam_krb5 is called in a
     setuid context (effective UID or GID doesn't match the real UID or
