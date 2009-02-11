@@ -1,9 +1,20 @@
-libpam-krb5 (3.12-2) UNRELEASED; urgency=low
+libpam-krb5 (3.13-1) experimental; urgency=low
 
+  * New upstream release.
+    - SECURITY (CVE-2009-0360): If invoked in a setuid context, ignore
+      user environment variables that specify the local keytab and
+      Kerberos configuration.  Protects against a privilege escalation
+      vulnerability.
+    - SECURITY (CVE-2009-0361): Protect against applications calling
+      pam_setcred with PAM_REINITIALIZE_CREDS as root in a setuid
+      context.  This API call is designed to reinitialize an existing
+      Kerberos ticket cache and therefore trusts the KRB5CCNAME
+      environment variable, but in a setuid context, this may allow
+      overwriting arbitrary files.
   * Enable pam_krb5 on installation using pam-auth-update.  Based on a
     patch from Steve Langasek.  (LP #275169)
 
- -- Russ Allbery <rra@debian.org>  Thu, 08 Jan 2009 21:11:53 -0800
+ -- Russ Allbery <rra@debian.org>  Wed, 11 Feb 2009 10:47:51 -0800
 
 libpam-krb5 (3.12-1) experimental; urgency=low
 
