@@ -61,7 +61,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
     if (args->ignore_root || args->minimum_uid > 0) {
         status = pam_get_user(pamh, &user, NULL);
         if (status == PAM_SUCCESS && pamk5_should_ignore(args, user)) {
-            pamret = PAM_PERM_DENIED;
+            pamret = PAM_IGNORE;
             goto done;
         }
     }
