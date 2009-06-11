@@ -1,5 +1,5 @@
 Source: libpam-krb5
-Section: net
+Section: admin
 Priority: optional
 Maintainer: Russ Allbery <rra@debian.org>
 Uploaders: Sam Hartman <hartmans@debian.org>
