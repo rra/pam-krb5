@@ -3,7 +3,7 @@ libpam-krb5 (3.13-3) UNRELEASED; urgency=low
   * Enable pam-auth-update support.  libpam-krb5 will now automatically
     configure pam_krb5 in the PAM common-* configuration unless it has
     been edited by the local administrator.  Thanks to Steve Langasek for
-    the implementation.
+    the implementation.  (Closes: #520793)
   * Rewrite debian/rules to use overrides and depend on debhelper 7.0.50.
   * Update standards version to 3.8.1 (no changes required).
 
