@@ -12,7 +12,7 @@ Account:
 	required			pam_krb5.so minimum_uid=1000
 Password-Type: Primary
 Password:
-	requisite			pam_krb5.so use_authtok try_first_pass minimum_uid=1000
+	requisite			pam_krb5.so minimum_uid=1000 use_authtok
 Password-Initial:
 	requisite			pam_krb5.so minimum_uid=1000
 Session-Type: Additional

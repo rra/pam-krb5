@@ -1,30 +1,15 @@
 #!/usr/bin/make -f
 
-build: build-arch build-indep
-build-arch: build-stamp
-build-indep:
-build-stamp:
-	dh build --before configure
-	dh_auto_configure -- --enable-reduced-depends --libdir=/lib
-	dh build --after configure
-	touch $@
-
-install: install-stamp
-install-stamp:
-	dh install --until dh_prep
-# Waiting for newer libpam-runtime.
-#	install -m 644 debian/pam-auth-update \
-#	    libpam-krb5/usr/share/pam-configs/krb5
-	dh_installchangelogs NEWS
-	dh install --remaining
-	touch $@
-
-binary: binary-arch binary-indep
-binary-indep:
-binary-arch: install-stamp
-	dh $@
-
 %:
 	dh $@
 
-.PHONY: binary binary-arch binary-indep build build-arch build-indep install
+override_dh_auto_configure:
+	dh_auto_configure -- --enable-reduced-depends --libdir=/lib
+
+override_dh_auto_install:
+	dh_auto_install
+	install -m 644 debian/pam-auth-update \
+	    libpam-krb5/usr/share/pam-configs/krb5
+
+override_dh_installchangelogs:
+	dh_installchangelogs NEWS
