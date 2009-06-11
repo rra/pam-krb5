@@ -8,6 +8,7 @@ override_dh_auto_configure:
 
 override_dh_auto_install:
 	dh_auto_install
+	install -d libpam-krb5/usr/share/pam-configs
 	install -m 644 debian/pam-auth-update \
 	    libpam-krb5/usr/share/pam-configs/krb5
 
