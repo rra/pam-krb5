@@ -1,3 +1,11 @@
+libpam-krb5 (3.13-4) unstable; urgency=low
+
+  * Return PAM_IGNORE for ignored users in pam_chauthtok instead of
+    PAM_PERM_DENIED.  This change is necessary for the pam-auth-update
+    configuration to work properly.  Thanks, Steve Langasek.
+
+ -- Russ Allbery <rra@debian.org>  Thu, 11 Jun 2009 14:38:10 -0700
+
 libpam-krb5 (3.13-3) unstable; urgency=low
 
   * Enable pam-auth-update support.  libpam-krb5 will now automatically
