@@ -1,12 +1,5 @@
                       User-Visible pam-krb5 Changes
 
-pam-krb5 3.14 (unreleased)
-
-    Return PAM_IGNORE instead of PAM_PERM_DENIED from pam_chauthtok for
-    ignored users.  This allows making the Kerberos PAM module mandatory
-    for password changes and still falling back to other PAM modules for
-    ignored users.  Thanks, Steve Langasek.
-
 pam-krb5 3.13 (2009-02-11)
 
     SECURITY: When built against MIT Kerberos, if pam_krb5 is called in a
