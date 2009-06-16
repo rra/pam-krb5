@@ -627,7 +627,7 @@ Attempt PKINIT authentication before trying a regular password.  You will
 probably also need to set the I<pkinit_user> configuration option.  If
 PKINIT fails, the PAM module will fall back on regular password
 authentication.  This option is currently only supported if pam-krb5 was
-built against Heimdal 0.8rc1 or later or the MIT Kerberos PKINIT branch.
+built against Heimdal 0.8rc1 or later or MIT Kerberos 1.6.3 or later.
 
 This option can be set in F<krb5.conf> and is only applicable to the auth
 and password groups.
