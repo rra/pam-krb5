@@ -741,6 +741,11 @@ it weren't in the configuration, but this increases the risk of
 inadvertent security holes when listing pam-krb5 as the only
 authentication module.
 
+This module treats the empty password as an authentication failure
+rather than attempting to use that password to avoid unwanted prompting
+behavior in the Kerberos libraries.  If you have a Kerberos principal that
+intentionally has an empty password, it won't work with this module.
+
 Old versions of OpenSSH are known to call pam_authenticate followed by
 pam_setcred(PAM_REINITIALIZE_CRED) without first calling pam_open_session,
 thereby requesting that an existing ticket cache be renewed (similar to

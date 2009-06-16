@@ -7,6 +7,15 @@ pam-krb5 3.14 (unreleased)
     for password changes and still falling back to other PAM modules for
     ignored users.  Thanks, Steve Langasek.
 
+    Always treat the empty password as an authentication failure rather
+    than passing it to the Kerberos libraries.  The Kerberos libraries
+    may treat it as equivalent to no password and prompt for a password
+    without our knowledge, leading to the user authenticating with a
+    different password than the one stored in the PAM stack.  This could
+    cause unexpected problems with some PAM configurations.  It's safer
+    to make the assumption that the empty password is always invalid and
+    reject it outside of the Kerberos libraries.  Thanks, Sanjay Sha.
+
 pam-krb5 3.13 (2009-02-11)
 
     SECURITY: When built against MIT Kerberos, if pam_krb5 is called in a
