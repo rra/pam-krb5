@@ -33,6 +33,10 @@
  * Get the name of a cache.  Takes the name of the environment variable that
  * should be set to indicate which cache to use, either the permanent cache
  * (KRB5CCNAME) or the temporary cache (PAM_KRB5CCNAME).
+ *
+ * Treat an empty environment variable setting the same as if the variable
+ * was not set, since on FreeBSD we can't delete the environment variable,
+ * only set it to an empty value.
  */
 const char *
 pamk5_get_krb5ccname(struct pam_args *args, const char *key)
@@ -41,9 +45,12 @@ pamk5_get_krb5ccname(struct pam_args *args, const char *key)
 
     /* When refreshing a cache, we need to try the regular environment. */
     name = pam_getenv(args->pamh, key);
-    if (name == NULL)
+    if (name == NULL || *name == '\0')
         name = getenv(key);
-    return name;
+    if (name == NULL || *name == '\0')
+        return NULL;
+    else
+        return name;
 }
 
 

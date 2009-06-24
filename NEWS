@@ -16,6 +16,10 @@ pam-krb5 3.14 (unreleased)
     to make the assumption that the empty password is always invalid and
     reject it outside of the Kerberos libraries.  Thanks, Sanjay Sha.
 
+    Work around a deficiency in pam_putenv on FreeBSD 7.2 that doesn't
+    allow deleting environment variables, only setting them to empty
+    values.  Thanks, Andrew Elble.
+
 pam-krb5 3.13 (2009-02-11)
 
     SECURITY: When built against MIT Kerberos, if pam_krb5 is called in a
