@@ -143,8 +143,10 @@ pamk5_cache_init(struct pam_args *args, const char *ccname, krb5_creds *creds,
     }
 
 done:
-    if (retval != PAM_SUCCESS && *cache != NULL)
+    if (retval != PAM_SUCCESS && *cache != NULL) {
         krb5_cc_destroy(ctx->context, *cache);
+        *cache = NULL;
+    }
     return retval;
 }
 

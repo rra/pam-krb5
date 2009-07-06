@@ -16,6 +16,12 @@ pam-krb5 3.14 (unreleased)
     to make the assumption that the empty password is always invalid and
     reject it outside of the Kerberos libraries.  Thanks, Sanjay Sha.
 
+    Fix error handling if ticket cache initialization fails.
+    Authentication will still fail, but this avoids a segfault from a
+    double-free of the ticket cache structure.  The most common cause of
+    this problem was having the attempt to initialize the ticket cache
+    be blocked by AppArmor.  Thanks to Alex Mauer for the report.
+
     Work around a deficiency in pam_putenv on FreeBSD 7.2 that doesn't
     allow deleting environment variables, only setting them to empty
     values.  Thanks, Andrew Elble.
