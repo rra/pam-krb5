@@ -22,6 +22,9 @@ pam-krb5 3.14 (unreleased)
     this problem was having the attempt to initialize the ticket cache
     be blocked by AppArmor.  Thanks to Alex Mauer for the report.
 
+    Call krb5_free_error_string correctly, fixing a portability issue
+    when building against Heimdal.  Thanks, Andrew Drake.
+
     Work around a deficiency in pam_putenv on FreeBSD 7.2 that doesn't
     allow deleting environment variables, only setting them to empty
     values.  Thanks, Andrew Elble.
