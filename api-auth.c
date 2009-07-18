@@ -617,9 +617,16 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
      * If we had a temporary ticket cache, delete the environment variable so
      * that we won't get confused and think we still have a temporary ticket
      * cache when called again.
+     *
+     * FreeBSD PAM, at least as of 7.2, doesn't support deleting environment
+     * variables using the syntax supported by Solaris and Linux.  Work
+     * around that by setting the variable to an empty value if deleting it
+     * fails.
      */
     if (pam_getenv(pamh, "PAM_KRB5CCNAME") != NULL) {
         pamret = pam_putenv(pamh, "PAM_KRB5CCNAME");
+        if (pamret != PAM_SUCCESS)
+            pamret = pam_putenv(pamh, "PAM_KRB5CCNAME=");
         if (pamret != PAM_SUCCESS)
             goto done;
     }

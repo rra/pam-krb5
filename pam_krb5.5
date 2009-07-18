@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "PAM_KRB5 5"
-.TH PAM_KRB5 5 "2009-02-11" "3.13" "PAM Modules"
+.TH PAM_KRB5 5 "2009-07-18" "3.14" "PAM Modules"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -134,10 +134,10 @@ pam_krb5 \- Kerberos v5 PAM module
 .SH "SYNOPSIS"
 .IX Header "SYNOPSIS"
 .Vb 4
-\&  auth            sufficient      pam_krb5.so minimum_uid=100
-\&  session         required        pam_krb5.so minimum_uid=100
-\&  account         required        pam_krb5.so minimum_uid=100
-\&  password        sufficient      pam_krb5.so minimum_uid=100
+\&  auth            sufficient      pam_krb5.so minimum_uid=1000
+\&  session         required        pam_krb5.so minimum_uid=1000
+\&  account         required        pam_krb5.so minimum_uid=1000
+\&  password        sufficient      pam_krb5.so minimum_uid=1000
 .Ve
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
@@ -280,14 +280,14 @@ that option in the [appdefaults] section.  The Kerberos v5 \s-1PAM\s0 module wil
 look for options either at the top level of the [appdefaults] section or
 in a subsection named \f(CW\*(C`pam\*(C'\fR, inside or outside a section for the realm.
 For example, the following fragment of a \fIkrb5.conf\fR file would set
-\&\fIforwardable\fR to true, \fIminimum_uid\fR to 100, and set \fIignore_k5login\fR
+\&\fIforwardable\fR to true, \fIminimum_uid\fR to 1000, and set \fIignore_k5login\fR
 only if the realm is \s-1EXAMPLE\s0.COM.
 .PP
 .Vb 8
 \&    [appdefaults]
 \&        forwardable = true
 \&        pam = {
-\&            minimum_uid = 100
+\&            minimum_uid = 1000
 \&            EXAMPLE.COM = {
 \&                ignore_k5login = true
 \&            }
@@ -536,10 +536,13 @@ of those conditions are true, the authentication and password calls will
 silently fail (allowing that status to be ignored via a control of
 \&\f(CW\*(C`optional\*(C'\fR or \f(CW\*(C`sufficient\*(C'\fR), and the account and session calls
 (including pam_setcred) will return \s-1PAM_IGNORE\s0, telling the \s-1PAM\s0 library to
-proceed as if they weren't mentioned in the \s-1PAM\s0 configuration.  Using this
-option is highly recommended if you don't need to use Kerberos to
-authenticate password logins to the root account (which isn't recommended
-since Kerberos requires a network connection).
+proceed as if they weren't mentioned in the \s-1PAM\s0 configuration.
+.Sp
+Using this option is highly recommended if you don't need to use Kerberos
+to authenticate password logins to the root account (which isn't
+recommended since Kerberos requires a network connection).  It provides
+some defense in depth against user principals that happen to match a
+system account incorrectly authenticating as that system account.
 .Sp
 This option can be set in \fIkrb5.conf\fR.
 .IP "no_ccache" 4
@@ -722,7 +725,7 @@ Attempt \s-1PKINIT\s0 authentication before trying a regular password.  You will
 probably also need to set the \fIpkinit_user\fR configuration option.  If
 \&\s-1PKINIT\s0 fails, the \s-1PAM\s0 module will fall back on regular password
 authentication.  This option is currently only supported if pam\-krb5 was
-built against Heimdal 0.8rc1 or later or the \s-1MIT\s0 Kerberos \s-1PKINIT\s0 branch.
+built against Heimdal 0.8rc1 or later or \s-1MIT\s0 Kerberos 1.6.3 or later.
 .Sp
 This option can be set in \fIkrb5.conf\fR and is only applicable to the auth
 and password groups.
@@ -816,6 +819,11 @@ correct to return \s-1PAM_IGNORE\s0, which causes the module to be ignored as if
 it weren't in the configuration, but this increases the risk of
 inadvertent security holes when listing pam\-krb5 as the only
 authentication module.
+.PP
+This module treats the empty password as an authentication failure
+rather than attempting to use that password to avoid unwanted prompting
+behavior in the Kerberos libraries.  If you have a Kerberos principal that
+intentionally has an empty password, it won't work with this module.
 .PP
 Old versions of OpenSSH are known to call pam_authenticate followed by
 pam_setcred(\s-1PAM_REINITIALIZE_CRED\s0) without first calling pam_open_session,
