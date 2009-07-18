@@ -4,10 +4,10 @@ pam_krb5 - Kerberos v5 PAM module
 
 =head1 SYNOPSIS
 
-  auth            sufficient      pam_krb5.so minimum_uid=100
-  session         required        pam_krb5.so minimum_uid=100
-  account         required        pam_krb5.so minimum_uid=100
-  password        sufficient      pam_krb5.so minimum_uid=100
+  auth            sufficient      pam_krb5.so minimum_uid=1000
+  session         required        pam_krb5.so minimum_uid=1000
+  account         required        pam_krb5.so minimum_uid=1000
+  password        sufficient      pam_krb5.so minimum_uid=1000
 
 =head1 DESCRIPTION
 
@@ -159,13 +159,13 @@ that option in the [appdefaults] section.  The Kerberos v5 PAM module will
 look for options either at the top level of the [appdefaults] section or
 in a subsection named C<pam>, inside or outside a section for the realm.
 For example, the following fragment of a F<krb5.conf> file would set
-I<forwardable> to true, I<minimum_uid> to 100, and set I<ignore_k5login>
+I<forwardable> to true, I<minimum_uid> to 1000, and set I<ignore_k5login>
 only if the realm is EXAMPLE.COM.
 
     [appdefaults]
         forwardable = true
         pam = {
-            minimum_uid = 100
+            minimum_uid = 1000
             EXAMPLE.COM = {
                 ignore_k5login = true
             }
@@ -426,10 +426,13 @@ of those conditions are true, the authentication and password calls will
 silently fail (allowing that status to be ignored via a control of
 C<optional> or C<sufficient>), and the account and session calls
 (including pam_setcred) will return PAM_IGNORE, telling the PAM library to
-proceed as if they weren't mentioned in the PAM configuration.  Using this
-option is highly recommended if you don't need to use Kerberos to
-authenticate password logins to the root account (which isn't recommended
-since Kerberos requires a network connection).
+proceed as if they weren't mentioned in the PAM configuration.
+
+Using this option is highly recommended if you don't need to use Kerberos
+to authenticate password logins to the root account (which isn't
+recommended since Kerberos requires a network connection).  It provides
+some defense in depth against user principals that happen to match a
+system account incorrectly authenticating as that system account.
 
 This option can be set in F<krb5.conf>.
 
@@ -624,7 +627,7 @@ Attempt PKINIT authentication before trying a regular password.  You will
 probably also need to set the I<pkinit_user> configuration option.  If
 PKINIT fails, the PAM module will fall back on regular password
 authentication.  This option is currently only supported if pam-krb5 was
-built against Heimdal 0.8rc1 or later or the MIT Kerberos PKINIT branch.
+built against Heimdal 0.8rc1 or later or MIT Kerberos 1.6.3 or later.
 
 This option can be set in F<krb5.conf> and is only applicable to the auth
 and password groups.
@@ -737,6 +740,11 @@ correct to return PAM_IGNORE, which causes the module to be ignored as if
 it weren't in the configuration, but this increases the risk of
 inadvertent security holes when listing pam-krb5 as the only
 authentication module.
+
+This module treats the empty password as an authentication failure
+rather than attempting to use that password to avoid unwanted prompting
+behavior in the Kerberos libraries.  If you have a Kerberos principal that
+intentionally has an empty password, it won't work with this module.
 
 Old versions of OpenSSH are known to call pam_authenticate followed by
 pam_setcred(PAM_REINITIALIZE_CRED) without first calling pam_open_session,

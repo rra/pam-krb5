@@ -1,5 +1,34 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 3.14 (2009-07-18)
+
+    Return PAM_IGNORE instead of PAM_PERM_DENIED from pam_chauthtok for
+    ignored users.  This allows making the Kerberos PAM module mandatory
+    for password changes and still falling back to other PAM modules for
+    ignored users.  Thanks, Steve Langasek.
+
+    Always treat the empty password as an authentication failure rather
+    than passing it to the Kerberos libraries.  The Kerberos libraries
+    may treat it as equivalent to no password and prompt for a password
+    without our knowledge, leading to the user authenticating with a
+    different password than the one stored in the PAM stack.  This could
+    cause unexpected problems with some PAM configurations.  It's safer
+    to make the assumption that the empty password is always invalid and
+    reject it outside of the Kerberos libraries.  Thanks, Sanjay Sha.
+
+    Fix error handling if ticket cache initialization fails.
+    Authentication will still fail, but this avoids a segfault from a
+    double-free of the ticket cache structure.  The most common cause of
+    this problem was having the attempt to initialize the ticket cache
+    be blocked by AppArmor.  Thanks to Alex Mauer for the report.
+
+    Call krb5_free_error_string correctly, fixing a portability issue
+    when building against Heimdal.  Thanks, Andrew Drake.
+
+    Work around a deficiency in pam_putenv on FreeBSD 7.2 that doesn't
+    allow deleting environment variables, only setting them to empty
+    values.  Thanks, Andrew Elble.
+
 pam-krb5 3.13 (2009-02-11)
 
     SECURITY: When built against MIT Kerberos, if pam_krb5 is called in a

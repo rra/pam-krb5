@@ -623,6 +623,11 @@ pamk5_password_auth(struct pam_args *args, const char *service,
      * set) instead of prompting.  If try_first_pass is set, and the old
      * password doesn't work, prompt for the password (loop).
      *
+     * The empty password has to be handled separately, since the Kerberos
+     * libraries may treat it as equivalent to no password and prompt when
+     * we don't want them to.  We make the assumption here that the empty
+     * password is always invalid and is an authentication failure.
+     *
      * pass is a char * so &pass is a char **, which due to the stupid C type
      * rules isn't convertable to a const void **.  If we cast directly to a
      * const void **, gcc complains about type-punned pointers, even though
@@ -632,13 +637,18 @@ pamk5_password_auth(struct pam_args *args, const char *service,
     retry = args->try_first_pass ? 1 : 0;
     if (args->try_first_pass || args->use_first_pass || args->use_authtok)
         retval = pam_get_item(args->pamh, authtok, (void *) &pass);
+    if ((args->use_first_pass || args->use_authtok) && *pass == '\0') {
+        pamk5_debug(args, "rejecting empty password");
+        retval = PAM_AUTH_ERR;
+        goto done;
+    }
     if (args->use_authtok && (retval != PAM_SUCCESS || pass == NULL)) {
         pamk5_debug_pam(args, "no stored password", retval);
         retval = PAM_SERVICE_ERR;
         goto done;
     }
     do {
-        if (pass == NULL) {
+        if (pass == NULL || *pass == '\0') {
             const char *prompt = (service == NULL) ? NULL : "Current";
 
             retry = 0;
@@ -646,6 +656,11 @@ pamk5_password_auth(struct pam_args *args, const char *service,
             if (retval != PAM_SUCCESS) {
                 pamk5_debug_pam(args, "error getting password", retval);
                 retval = PAM_SERVICE_ERR;
+                goto done;
+            }
+            if (*pass == '\0') {
+                pamk5_debug(args, "rejecting empty password");
+                retval = PAM_AUTH_ERR;
                 goto done;
             }
 
