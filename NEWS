@@ -1,6 +1,6 @@
                       User-Visible pam-krb5 Changes
 
-pam-krb5 3.14 (unreleased)
+pam-krb5 3.14 (2009-07-18)
 
     Return PAM_IGNORE instead of PAM_PERM_DENIED from pam_chauthtok for
     ignored users.  This allows making the Kerberos PAM module mandatory
