@@ -1,4 +1,4 @@
-libpam-krb5 (3.14-1) UNRELEASED; urgency=low
+libpam-krb5 (3.14-1) unstable; urgency=low
 
   * New upstream release.
     - Always treat an empty password as an authentication failure rather
@@ -9,7 +9,7 @@ libpam-krb5 (3.14-1) UNRELEASED; urgency=low
     - Fix error handling if ticket cache creation fails.  (LP: #395938)]
   * Mention the PAM autoconfiguration support in README.Debian.
 
- -- Russ Allbery <rra@debian.org>  Sat, 18 Jul 2009 15:42:18 -0700
+ -- Russ Allbery <rra@debian.org>  Sat, 18 Jul 2009 15:56:45 -0700
 
 libpam-krb5 (3.13-5) unstable; urgency=medium
 
