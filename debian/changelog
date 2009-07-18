@@ -6,7 +6,8 @@ libpam-krb5 (3.14-1) UNRELEASED; urgency=low
       password and prompt without our knowledge.  This prompting could
       lead to authenticating with a password unknown to the PAM stack,
       which could cause unexpected problems in some PAM configurations.
-    - Fix error handling if ticket cache creation fails.  (LP: #395938)
+    - Fix error handling if ticket cache creation fails.  (LP: #395938)]
+  * Mention the PAM autoconfiguration support in README.Debian.
 
  -- Russ Allbery <rra@debian.org>  Sat, 18 Jul 2009 15:42:18 -0700
 
