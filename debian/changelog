@@ -5,6 +5,7 @@ libpam-krb5 (3.13-5) unstable; urgency=medium
     pam-auth-update is available.  While it was introduced in Ubuntu at
     1.0.1-4ubuntu1, Debian didn't introduce it until 1.0.1-6.  Thanks,
     Steve Langasek.  (Closes: #537416)
+  * Update standards version to 3.8.2 (no changes required).
 
  -- Russ Allbery <rra@debian.org>  Sat, 18 Jul 2009 00:02:42 -0700
 
