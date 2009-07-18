@@ -6,9 +6,10 @@ dnl Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
 dnl
 dnl See LICENSE for licensing terms.
 
-AC_PREREQ([2.61])
+AC_PREREQ([2.63])
 AC_INIT([pam-krb5], [3.13], [rra@stanford.edu])
 AC_CONFIG_AUX_DIR([build-aux])
+AC_CONFIG_MACRO_DIR([m4])
 
 m4_include([m4/krb5.m4])
 m4_include([m4/krb5-pkinit.m4])
@@ -17,10 +18,10 @@ m4_include([m4/lib-pathname.m4])
 m4_include([m4/pam-const.m4])
 
 AC_PROG_CC
+AC_USE_SYSTEM_EXTENSIONS
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
 AC_CANONICAL_HOST
-AC_AIX
 
 dnl Check for the Solaris issetugid function, which is nicer than comparing
 dnl real and effective UIDs and GIDs.
@@ -59,9 +60,7 @@ AC_CHECK_FUNC([krb5_get_init_creds_opt_free],
     [RRA_FUNC_KRB5_GET_INIT_CREDS_OPT_FREE_ARGS])
 
 dnl Crank up the warnings if we're using GCC.
-if test "$GCC" = "yes" ; then
-    CFLAGS="-Wall $CFLAGS"
-fi
+AS_IF([test x"$GCC" = x"yes"], [CFLAGS="-Wall $CFLAGS"])
 
 dnl Try to add the compiler flags for position-independent code and try to
 dnl specify the binding so that any references within the PAM module are
@@ -79,58 +78,42 @@ dnl
 dnl More platforms could be handled here.  Contributions welcome.
 MAP='-Wl,--version-script=${srcdir}/pam_krb5.map'
 LD="$CC"
-case "$host" in
-*-darwin*)
-    if test "$GCC" = "yes" ; then
-        LDFLAGS="-bundle $LDFLAGS"
-    else
-        AC_MSG_ERROR([Only know compiler flags for gcc on this platform])
-    fi
-    ;;
-*-hpux*)
-    if test "$GCC" = "yes" ; then
-        CFLAGS="-fPIC $CFLAGS"
-        LDFLAGS="-fPIC -shared -Wl,-Bsymbolic $LDFLAGS"
-    else
-        CFLAGS="+z $CFLAGS"
-        LD="ld"
-        LDFLAGS="+vshlibunsats -b $LDFLAGS"
-    fi
-    ;;
-*-linux*)
-    CFLAGS="-fPIC $CFLAGS"
-    LDFLAGS="-fPIC -shared -Wl,-z,defs -Wl,-Bsymbolic $MAP $LDFLAGS"
-    if test "${prefix}" = "/usr"; then
-        if test "${libdir}" = '${exec_prefix}/lib'; then
-            case "$host" in
-            x86_64-*|powerpc64-*|s390x-*|sparc64-*)
-                libdir="/lib64"
-                ;;
-            *)
-                libdir="/lib"
-                ;;
-            esac
-        fi
-    fi
-    ;;
-*-solaris2*)
-    if test "$GCC" = "yes" ; then
-        CFLAGS="-fPIC $CFLAGS"
-        LDFLAGS="-fPIC -shared -Wl,-Bsymbolic $LDFLAGS"
-    else
-        CFLAGS="-KPIC $CFLAGS"
-        LDFLAGS="-G -xldscope=symbolic $LDFLAGS"
-    fi
-    ;;
-*)
-    if test "$GCC" = "yes" ; then
-        CFLAGS="-fPIC $CFLAGS"
-        LDFLAGS="-fPIC -shared $LDFLAGS"
-    else
-        AC_MSG_ERROR([Only know compiler flags for gcc on this platform])
-    fi
-    ;;
-esac
+AS_CASE([$host],
+    [*-darwin*],
+    [AS_IF([test x"$GCC" = x"yes"],
+        [LDFLAGS="-bundle $LDFLAGS"],
+        [AC_MSG_ERROR([Only know compiler flags for gcc on this platform])])],
+
+    [*-hpux*],
+    [AS_IF([test x"$GCC" = x"yes"],
+        [CFLAGS="-fPIC $CFLAGS"
+         LDFLAGS="-fPIC -shared -Wl,-Bsymbolic $LDFLAGS"],
+        [CFLAGS="+z $CFLAGS"
+         LD="ld"
+         LDFLAGS="+vshlibunsats -b $LDFLAGS"])],
+
+    [*-linux*],
+    [CFLAGS="-fPIC $CFLAGS"
+     LDFLAGS="-fPIC -shared -Wl,-z,defs -Wl,-Bsymbolic $MAP $LDFLAGS"
+     AS_IF([test x"${prefix}" = x"/usr"],
+        [AS_IF([test x"${libdir}" = x'${exec_prefix}/lib'],
+            [AS_CASE(["$host"],
+                [x86_64-*|powerpc64-*|s390x-*|sparc64-*], [libdir="/lib64"],
+                [*], [libdir="/lib"])])])],
+
+    [*-solaris2*],
+    [AS_IF([test x"$GCC" = x"yes"],
+        [CFLAGS="-fPIC $CFLAGS"
+         LDFLAGS="-fPIC -shared -Wl,-Bsymbolic $LDFLAGS"],
+        [CFLAGS="-KPIC $CFLAGS"
+         LDFLAGS="-G -xldscope=symbolic $LDFLAGS"])],
+
+    [*],
+    [AS_IF([test x"$GCC" = x"yes"],
+        [CFLAGS="-fPIC $CFLAGS"
+         LDFLAGS="-fPIC -shared $LDFLAGS"],
+        [AC_MSG_ERROR([Only know compiler flags for gcc on this platform])])])
+
 AC_SUBST([LD])
 
 AC_CONFIG_HEADER([config.h])
