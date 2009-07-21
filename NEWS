@@ -1,5 +1,11 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 3.15 (2009-07-21)
+
+    Fix a segfault (null pointer dereference) if pam-krb5 is configured
+    with use_first_pass or use_authtok and there is no password stored in
+    the PAM stack.  Thanks to Jonathan Guthrie for the bug report.
+
 pam-krb5 3.14 (2009-07-18)
 
     Return PAM_IGNORE instead of PAM_PERM_DENIED from pam_chauthtok for
