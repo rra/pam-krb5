@@ -1,3 +1,12 @@
+libpam-krb5 (3.15-1) UNRELEASED; urgency=low
+
+  * New upstream release.
+    - Fix a segfault if pam-krb5 is configured with use_first_pass or
+      use_authtok and there is no stored password.  Thanks, Jonathan
+      Guthrie. (Closes: #537729)
+
+ -- Russ Allbery <rra@debian.org>  Tue, 21 Jul 2009 09:24:03 -0700
+
 libpam-krb5 (3.14-1) unstable; urgency=low
 
   * New upstream release.
