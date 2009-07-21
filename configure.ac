@@ -7,7 +7,7 @@ dnl
 dnl See LICENSE for licensing terms.
 
 AC_PREREQ([2.63])
-AC_INIT([pam-krb5], [3.14], [rra@stanford.edu])
+AC_INIT([pam-krb5], [3.15], [rra@stanford.edu])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
 
