@@ -746,6 +746,11 @@ rather than attempting to use that password to avoid unwanted prompting
 behavior in the Kerberos libraries.  If you have a Kerberos principal that
 intentionally has an empty password, it won't work with this module.
 
+This module will not refresh an existing ticket cache if called with an
+effective UID or GID different than the real UID or GID, since refreshing
+an existing ticket cache requires trusting the KRB5CCNAME environment
+variable and the environment should not be trusted in a setuid context.
+
 Old versions of OpenSSH are known to call pam_authenticate followed by
 pam_setcred(PAM_REINITIALIZE_CRED) without first calling pam_open_session,
 thereby requesting that an existing ticket cache be renewed (similar to
