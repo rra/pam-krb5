@@ -175,7 +175,7 @@ CONFIGURING
   putting something like:
 
       password sufficient pam_krb5.so minimum_uid=1000
-      password required   pam_unix.so nullok obscure min=4 max=8 md5
+      password required   pam_unix.so try_first_pass obscure md5
 
   in /etc/pam.d/common-password will change users' passwords in Kerberos
   by default and then only fall back on Unix if that doesn't work.  (You
@@ -184,7 +184,7 @@ CONFIGURING
   passwords and change them both at the same time, you can do something
   like:
 
-      password required   pam_unix.so nullok obscure min=4 max=8 md5
+      password required   pam_unix.so obscure md5
       password required   pam_krb5.so use_authtok minimum_uid=1000
 
   If you have multiple environments that you want to synchronize and you
