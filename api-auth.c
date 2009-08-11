@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 #include "internal.h"
 
@@ -518,8 +519,19 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
          * reinitialize the cache is normally not a serious problem, just a
          * missing feature.  We therefore log an error and exit with
          * PAM_SUCCESS for the setuid case.
+         *
+         * We do not use pamk5_compat_issetugid here since it always returns
+         * true if setuid was was involved anywhere in the process of running
+         * the binary.  This would prevent a setuid screensaver that drops
+         * permissions from refreshing a credential cache.  The issetugid
+         * behavior is safer, since the environment should ideally not be
+         * trusted even if the binary completely changed users away from the
+         * original user, but in that case the binary needs to take some
+         * responsibility for either sanitizing the environment or being
+         * certain that the calling user is permitted to act as the target
+         * user.
          */
-        if (pamk5_compat_issetugid()) {
+        if (getuid() != geteuid() || getgid() != getegid()) {
             pamk5_error(args, "credential reinitialization in a setuid"
                         " context ignored");
             pamret = PAM_SUCCESS;

@@ -1,5 +1,19 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 3.16 (unreleased)
+
+    Do not use issetugid on Solaris to determine when to avoid refreshing
+    the ticket cache named in KRB5CCNAME during pam_setcred.  Instead,
+    compare effective and real UID and GID and permit KRB5CCNAME to be
+    trusted if they match.  This allows setuid screensavers on Solaris to
+    refresh ticket caches and makes behavior on Solaris match other
+    platforms.  Using issetugid is arguably safer since it protects
+    programs that switch users via setuid to a user other than the calling
+    user but still should not trust the original environment, but such
+    programs are rare in the PAM context and should not be calling
+    pam_setcred anyway unless the calling user is permitted to generally
+    act as the target user.  Thanks, William Yang.
+
 pam-krb5 3.15 (2009-07-21)
 
     Fix a segfault (null pointer dereference) if pam-krb5 is configured
