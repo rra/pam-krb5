@@ -36,6 +36,13 @@ pam-krb5 3.16 (unreleased)
     in the authentication group and log a diagnostic, but this will be
     removed in the future.
 
+    Stop returning PAM_IGNORE from pam_setcred if the user is ignored or
+    didn't log in via Kerberos and instead return PAM_USER_UNKNOWN.  This
+    works around a bug in older versions of the Linux PAM library where
+    returning PAM_IGNORE would cause pam_setcred to fail even if other
+    modules succeeded.  Since pam_authenticate never returned PAM_IGNORE,
+    this change should not cause any differences in behavior.
+
     Do not use issetugid on Solaris to determine when to avoid refreshing
     the ticket cache named in KRB5CCNAME during pam_setcred.  Instead,
     compare effective and real UID and GID and permit KRB5CCNAME to be

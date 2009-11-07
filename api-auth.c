@@ -330,9 +330,12 @@ build_ccache_name(struct pam_args *args, uid_t uid)
 
 /*
  * Create a new context for a session if we've lost the context created during
- * authentication (such as when running under OpenSSH).  Return PAM_IGNORE if
- * we're ignoring this user or if apparently our pam_authenticate never
- * succeeded.
+ * authentication (such as when running under OpenSSH).
+ *
+ * Return PAM_USER_UNKNOWN if we're ignoring this user or if apparently our
+ * pam_authenticate never succeeded.  We do not return PAM_IGNORE here since
+ * returning PAM_IGNORE in pam_setcred after failing in pam_authenticate
+ * confuses older Linux PAM libraries (such as 0.99.6.2 shipped with RHEL 5).
  */
 static int
 create_session_context(struct pam_args *args)
@@ -346,7 +349,7 @@ create_session_context(struct pam_args *args)
     if (args->ignore_root || args->minimum_uid > 0) {
         pamret = pam_get_user(args->pamh, &user, NULL);
         if (pamret == PAM_SUCCESS && pamk5_should_ignore(args, user)) {
-            pamret = PAM_IGNORE;
+            pamret = PAM_USER_UNKNOWN;
             goto fail;
         }
     }
@@ -366,7 +369,7 @@ create_session_context(struct pam_args *args)
     if (tmpname == NULL) {
         pamk5_debug(args, "unable to get PAM_KRB5CCNAME, assuming"
                     " non-Kerberos login");
-        pamret = PAM_IGNORE;
+        pamret = PAM_USER_UNKNOWN;
         goto fail;
     }
     pamk5_debug(args, "found initial ticket cache at %s", tmpname);
