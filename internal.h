@@ -1,7 +1,7 @@
 /*
  * Internal prototypes and structures for pam-krb5.
  *
- * Copyright 2005, 2006, 2007, 2008 Russ Allbery <rra@debian.org>
+ * Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@debian.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  * See LICENSE for licensing terms.
@@ -127,14 +127,15 @@ struct pam_args {
     struct context *ctx;        /* Pointer to our authentication context. */
 };
 
+/* Default to a hidden visibility for all internal functions. */
+#pragma GCC visibility push(hidden)
+
 /* Parse the PAM flags, arguments, and krb5.conf and fill out pam_args. */
 struct pam_args *pamk5_args_parse(pam_handle_t *pamh, int flags, int argc,
-                                  const char **argv)
-    __attribute__((__visibility__("hidden")));
+                                  const char **argv);
 
 /* Free the pam_args struct when we're done. */
-void pamk5_args_free(struct pam_args *)
-    __attribute__((__visibility__("hidden")));
+void pamk5_args_free(struct pam_args *);
 
 /*
  * Authenticate the user.  Prompts for the password as needed and obtains
@@ -143,140 +144,110 @@ void pamk5_args_free(struct pam_args *)
  * If possible, the initial credentials are verified by checking them against
  * the local system key.
  */
-int pamk5_password_auth(struct pam_args *, const char *service, krb5_creds **)
-    __attribute__((__visibility__("hidden")));
+int pamk5_password_auth(struct pam_args *, const char *service,
+                        krb5_creds **);
 
 /*
  * Create or refresh the user's ticket cache.  This is the underlying function
  * beneath pam_sm_setcred and pam_sm_open_session.
  */
-int pamk5_setcred(struct pam_args *, int refresh)
-    __attribute__((__visibility__("hidden")));
+int pamk5_setcred(struct pam_args *, int refresh);
 
 /*
  * Change the user's password.  Prompts for the current password as needed and
  * the new password.  If the second argument is true, only obtains the
  * necessary credentials without changing anything.
  */
-int pamk5_password_change(struct pam_args *, int only_auth)
-    __attribute__((__visibility__("hidden")));
+int pamk5_password_change(struct pam_args *, int only_auth);
 
 /*
  * Generic conversation function to display messages or get information from
  * the user.  Takes the message, the message type, and a place to put the
  * result of a prompt.
  */
-int pamk5_conv(struct pam_args *, const char *, int, char **)
-    __attribute__((__visibility__("hidden")));
+int pamk5_conv(struct pam_args *, const char *, int, char **);
 
 /*
  * Function specifically for getting a password.  Takes a prefix (if non-NULL,
  * args->banner will also be prepended) and a pointer into which to store the
  * password.  The password must be freed by the caller.
  */
-int pamk5_get_password(struct pam_args *, const char *, char **)
-    __attribute__((__visibility__("hidden")));
+int pamk5_get_password(struct pam_args *, const char *, char **);
 
 /* Prompting function for the Kerberos libraries. */
 krb5_error_code pamk5_prompter_krb5(krb5_context, void *data,
                                     const char *name, const char *banner,
-                                    int, krb5_prompt *)
-    __attribute__((__visibility__("hidden")));
+                                    int, krb5_prompt *);
 
 /* Check the user with krb5_kuserok or the configured equivalent. */
-int pamk5_authorized(struct pam_args *)
-    __attribute__((__visibility__("hidden")));
+int pamk5_authorized(struct pam_args *);
 
 /* Map username to principal using alt_auth_map. */
-int pamk5_map_principal(struct pam_args *args, const char *, char **)
-    __attribute__((__visibility__("hidden")));;
+int pamk5_map_principal(struct pam_args *args, const char *, char **);
 
 /* Returns true if we should ignore this user (root or low UID). */
-int pamk5_should_ignore(struct pam_args *, PAM_CONST char *)
-    __attribute__((__visibility__("hidden")));
+int pamk5_should_ignore(struct pam_args *, PAM_CONST char *);
 
 /* Context management. */
-int pamk5_context_new(struct pam_args *)
-    __attribute__((__visibility__("hidden")));
-int pamk5_context_fetch(struct pam_args *)
-    __attribute__((__visibility__("hidden")));
-void pamk5_context_free(struct context *)
-    __attribute__((__visibility__("hidden")));
-void pamk5_context_destroy(pam_handle_t *, void *data, int pam_end_status)
-    __attribute__((__visibility__("hidden")));
+int pamk5_context_new(struct pam_args *);
+int pamk5_context_fetch(struct pam_args *);
+void pamk5_context_free(struct context *);
+void pamk5_context_destroy(pam_handle_t *, void *data, int pam_end_status);
 
 /* Get and set environment variables for the ticket cache. */
-const char *pamk5_get_krb5ccname(struct pam_args *, const char *key)
-    __attribute__((__visibility__("hidden")));
-int pamk5_set_krb5ccname(struct pam_args *, const char *, const char *key)
-    __attribute__((__visibility__("hidden")));
+const char *pamk5_get_krb5ccname(struct pam_args *, const char *key);
+int pamk5_set_krb5ccname(struct pam_args *, const char *, const char *key);
 
 /*
  * Create a ticket cache file securely given a mkstemp template.  Modifies
  * template in place to store the name of the created file.
  */
-int pamk5_cache_mkstemp(struct pam_args *, char *template)
-    __attribute__((__visibility__("hidden")));
+int pamk5_cache_mkstemp(struct pam_args *, char *template);
 
 /*
  * Create a ticket cache and initialize it with the provided credentials,
  * returning the new cache in the last argument
  */
 int pamk5_cache_init(struct pam_args *, const char *ccname, krb5_creds *,
-                     krb5_ccache *)
-    __attribute__((__visibility__("hidden")));
+                     krb5_ccache *);
 
 /*
  * Create a ticket cache with a random path, initialize it with the provided
  * credentials, store it in the context, and put the path into PAM_KRB5CCNAME.
  */
-int pamk5_cache_init_random(struct pam_args *, krb5_creds *)
-    __attribute__((__visibility__("hidden")));
+int pamk5_cache_init_random(struct pam_args *, krb5_creds *);
 
 /*
  * Compatibility functions.  Depending on whether pam_krb5 is built with MIT
  * Kerberos or Heimdal, appropriate implementations for the Kerberos
  * implementation will be provided.
  */
-void pamk5_compat_free_data_contents(krb5_context, krb5_data *)
-    __attribute__((__visibility__("hidden")));
-void pamk5_compat_free_keytab_contents(krb5_context, krb5_keytab_entry *)
-    __attribute__((__visibility__("hidden")));
-const char *pamk5_compat_get_error(krb5_context, krb5_error_code)
-    __attribute__((__visibility__("hidden")));
-void pamk5_compat_free_error(krb5_context, const char *)
-    __attribute__((__visibility__("hidden")));
+void pamk5_compat_free_data_contents(krb5_context, krb5_data *);
+void pamk5_compat_free_keytab_contents(krb5_context, krb5_keytab_entry *);
+const char *pamk5_compat_get_error(krb5_context, krb5_error_code);
+void pamk5_compat_free_error(krb5_context, const char *);
 krb5_error_code pamk5_compat_opt_alloc(krb5_context,
-                                       krb5_get_init_creds_opt **)
-    __attribute__((__visibility__("hidden")));
-void pamk5_compat_opt_free(krb5_context, krb5_get_init_creds_opt *)
-    __attribute__((__visibility__("hidden")));
-krb5_error_code pamk5_compat_set_realm(struct pam_args *, const char *)
-    __attribute__((__visibility__("hidden")));
-void pamk5_compat_free_realm(struct pam_args *)
-    __attribute__((__visibility__("hidden")));
-krb5_error_code pamk5_compat_secure_context(krb5_context *)
-    __attribute__((__visibility__("hidden")));
+                                       krb5_get_init_creds_opt **);
+void pamk5_compat_opt_free(krb5_context, krb5_get_init_creds_opt *);
+krb5_error_code pamk5_compat_set_realm(struct pam_args *, const char *);
+void pamk5_compat_free_realm(struct pam_args *);
+krb5_error_code pamk5_compat_secure_context(krb5_context *);
 
 /* Calls issetugid if available, otherwise checks effective IDs. */
-int pamk5_compat_issetugid(void)
-    __attribute__((__visibility__("hidden")));
+int pamk5_compat_issetugid(void);
 
 /* Calls pam_modutil_getpwnam if available, otherwise getpwnam. */
-struct passwd *pamk5_compat_getpwnam(struct pam_args *, const char *)
-    __attribute__((__visibility__("hidden")));
+struct passwd *pamk5_compat_getpwnam(struct pam_args *, const char *);
 
 /* Error reporting and debugging functions. */
-void pamk5_error(struct pam_args *, const char *, ...)
-    __attribute__((__format__(printf, 2, 3), __visibility__("hidden")));
-void pamk5_error_krb5(struct pam_args *, const char *, int)
-    __attribute__((__visibility__("hidden")));
-void pamk5_debug(struct pam_args *, const char *, ...)
-    __attribute__((__format__(printf, 2, 3), __visibility__("hidden")));
-void pamk5_debug_pam(struct pam_args *, const char *, int)
-    __attribute__((__visibility__("hidden")));
-void pamk5_debug_krb5(struct pam_args *, const char *, int)
-    __attribute__((__visibility__("hidden")));
+void pamk5_error(struct pam_args *, const char *, ...);
+void pamk5_error_krb5(struct pam_args *, const char *, int);
+void pamk5_debug(struct pam_args *, const char *, ...);
+void pamk5_debug_pam(struct pam_args *, const char *, int);
+void pamk5_debug_krb5(struct pam_args *, const char *, int);
+
+/* Undo default visibility change. */
+#pragma GCC visibility pop
 
 /* __func__ is C99, but not provided by all implementations. */
 #if __STDC_VERSION__ < 199901L
