@@ -16,6 +16,7 @@
 
 #include <errno.h>
 #include <krb5.h>
+#include <pwd.h>
 #ifdef HAVE_SECURITY_PAM_APPL_H
 # include <security/pam_appl.h>
 # include <security/pam_modules.h>
@@ -23,7 +24,6 @@
 # include <pam/pam_appl.h>
 # include <pam/pam_modules.h>
 #endif
-#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
