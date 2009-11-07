@@ -33,7 +33,7 @@ INSTALL_DATA	= @INSTALL_DATA@
 
 SOURCES		= api-account.c api-auth.c api-password.c api-session.c \
 		  auth.c cache.c compat.c context.c logging.c options.c \
-		  password.c prompting.c support.c
+		  password.c prompting.c setcred.c support.c
 OBJECTS		= $(SOURCES:.c=.o)
 
 all: pam_krb5.so $(srcdir)/pam_krb5.5

@@ -147,6 +147,13 @@ int pamk5_password_auth(struct pam_args *, const char *service, krb5_creds **)
     __attribute__((__visibility__("hidden")));
 
 /*
+ * Create or refresh the user's ticket cache.  This is the underlying function
+ * beneath pam_sm_setcred and pam_sm_open_session.
+ */
+int pamk5_setcred(struct pam_args *, int refresh)
+    __attribute__((__visibility__("hidden")));
+
+/*
  * Change the user's password.  Prompts for the current password as needed and
  * the new password.  If the second argument is true, only obtains the
  * necessary credentials without changing anything.

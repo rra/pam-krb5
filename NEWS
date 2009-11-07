@@ -55,6 +55,11 @@ pam-krb5 3.16 (unreleased)
     pam_setcred anyway unless the calling user is permitted to generally
     act as the target user.  Thanks, William Yang.
 
+    Do the same logging in pam_sm_open_session and pam_sm_close_session as
+    we do with the other functions.  This will mean pam_sm_open_session
+    calls will be logged as pam_sm_open_session, not as pam_sm_setcred as
+    before.
+
 pam-krb5 3.15 (2009-07-21)
 
     Fix a segfault (null pointer dereference) if pam-krb5 is configured
