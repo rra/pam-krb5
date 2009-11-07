@@ -42,21 +42,16 @@ get_new_password(struct pam_args *args, char **pass)
     char *pass2;
     PAM_CONST void *tmp;
 
-    /*
-     * Try to use the password from a previous module, if so configured.  Note
-     * that try_first_pass and use_first_pass are equivalent for the new
-     * password; we don't reprompt even if the password was rejected.
-     */
+    /* Use the password from a previous module, if so configured. */
     *pass = NULL;
-    if (args->try_first_pass || args->use_first_pass || args->use_authtok) {
+    if (args->use_authtok) {
         pamret = pam_get_item(args->pamh, PAM_AUTHTOK, &tmp);
-        if (tmp != NULL)
-            *pass = strdup((const char *) tmp);
-    }
-    if (args->use_authtok && (pamret != PAM_SUCCESS || *pass == NULL)) {
-        pamk5_debug_pam(args, "no stored password", pamret);
-        pamret = PAM_AUTHTOK_ERR;
-        goto done;
+        if (tmp == NULL) {
+            pamk5_debug_pam(args, "no stored password", pamret);
+            pamret = PAM_AUTHTOK_ERR;
+            goto done;
+        }
+        *pass = strdup((const char *) tmp);
     }
 
     /* Prompt for the new password if necessary. */
@@ -183,7 +178,9 @@ pamk5_password_change(struct pam_args *args, int only_auth)
     int pamret = PAM_SUCCESS;
     char *pass = NULL;
 
-    /* Authenticate to the password changing service using the old password. */
+    /*
+     * Authenticate to the password changing service using the old password.
+     */
     if (ctx->creds == NULL) {
         pamret = pamk5_password_auth(args, "kadmin/changepw", &ctx->creds);
         if (pamret == PAM_SERVICE_ERR || pamret == PAM_AUTH_ERR)

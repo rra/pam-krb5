@@ -359,6 +359,18 @@ alternate instance.  If I<alt_auth_map> is not set, it has no effect.
 This option can be set in F<krb5.conf> and is only applicable to the auth
 group.
 
+=item force_first_pass
+
+Use the password obtained by a previous authentication or password module
+to authenticate the user without prompting the user again.  If no previous
+module obtained the user's password, fail without prompting the user.
+Also see I<try_first_pass> and I<use_first_pass> for weaker versions of
+this option.
+
+This option is only applicable to the auth and password groups.  For the
+password group, it applies only to the old password.  See I<use_authtok>
+for a similar setting for the new password.
+
 =item force_pwchange
 
 If this option is set and authentication fails with a Kerberos error
@@ -531,12 +543,12 @@ may override earlier settings.
 =item prompt_principal
 
 Before prompting for the user's password (or using the previously entered
-password, if try_first_pass or use_first_pass are set), prompt the user
-for the Kerberos principal to use for authentication.  This allows the
-user to authenticate with a different principal than the one corresponding
-to the local username, provided that either a F<.k5login> file or local
-Kerberos principal to account mapping authorize that principal to access
-the local account.
+password, if I<try_first_pass>, I<use_first_pass>, or I<force_first_pass>
+are set), prompt the user for the Kerberos principal to use for
+authentication.  This allows the user to authenticate with a different
+principal than the one corresponding to the local username, provided that
+either a F<.k5login> file or local Kerberos principal to account mapping
+authorize that principal to access the local account.
 
 Be cautious when using this configuration option and don't use it with
 OpenSSH PasswordAuthentication, only ChallengeResponseAuthentication.
@@ -616,10 +628,11 @@ module obtained the user's password, use that password to authenticate the
 user without prompting them again.  If that authentication fails, fall
 back on prompting the user for their password.  This option has no effect
 if the authentication module is first in the stack or if no previous
-module obtained the user's password.
+module obtained the user's password.  Also see I<use_first_pass> and
+I<force_first_pass> for stronger versions of this option.
 
 This option is only applicable to the auth and password groups.  For the
-password group, it applies to both the old and new passwords.
+password group, it applies only to the old password.
 
 =item try_pkinit
 
@@ -634,27 +647,27 @@ and password groups.
 
 =item use_authtok
 
-Use the password obtained by a previous authentication module to
-authenticate the user and any password obtained by a previous password
-module for the new password when changing passwords.  If these passwords
-aren't available, fail.  Never prompt the user for a password under any
-circumstances.  This can be used to require passwords be checked by
-another, prior module, such as B<pam_cracklib>.
+Use the new password obtained by a previous password module when changing
+passwords rather than prompting for the new password.  If the new password
+isn't available, fail.  This can be used to require passwords be checked
+by another, prior module, such as B<pam_cracklib>.
 
-This option is only applicable to the auth and password groups.
+This option is only applicable to the password group.
 
 =item use_first_pass
 
 Use the password obtained by a previous authentication module to
-authenticate the user, and the password obtained by a previous password
-module as the new password when changing passwords, without prompting the
-user again again.  If no previous module obtained the user's password for
-either an authentication or password change, fall back on prompting the
-user.  If a previous module did obtain the user's password but
-authentication with that password fails, fail without further prompting
-the user.
+authenticate the user without prompting the user again.  If no previous
+module obtained the user's password for either an authentication or
+password change, fall back on prompting the user.  If a previous module
+did obtain the user's password but authentication with that password
+fails, fail without further prompting the user.  Also see
+I<try_first_pass> and I<force_first_pass> for other versions of this
+option.
 
-This option is only applicable to the auth and password groups.
+This option is only applicable to the auth and password groups.  For the
+password group, it applies only to the old password.  See I<use_authtok>
+for a similar setting for the new password.
 
 =item use_pkinit
 

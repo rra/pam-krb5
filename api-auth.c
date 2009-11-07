@@ -132,6 +132,15 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
         goto done;
     }
     ENTRY(args, flags);
+
+    /* Temporary backward compatibility. */
+    if (args->use_authtok && !args->force_first_pass) {
+        pamk5_error(args, "use_authtok option in authentication group should"
+                    " be changed to force_first_pass");
+        args->force_first_pass = 1;
+    }
+
+    /* Create a context and obtain the user. */
     pamret = pamk5_context_new(args);
     if (pamret != PAM_SUCCESS)
         goto done;
@@ -186,7 +195,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
             pamret = pamk5_password_change(args, 0);
             if (pamret == PAM_SUCCESS) {
                 pamk5_debug(args, "successfully changed expired password");
-                args->use_authtok = 1;
+                args->force_first_pass = 1;
                 pamret = pamk5_password_auth(args, NULL, &creds);
             }
         }

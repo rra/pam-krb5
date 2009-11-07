@@ -2,6 +2,40 @@
 
 pam-krb5 3.16 (unreleased)
 
+    UPGRADE WARNING: If you were using pam_krb5 with the use_authtok
+    parameter in the password group, you will need to add use_first_pass
+    to your configuration to keep the same behavior.  See below for
+    details.
+
+    UPGRADE WARNING: If you used the use_authtok parameter in the
+    authentication group, you should change it to force_first_pass.
+
+    Previous versions of this module incorrectly implemented the standard
+    use_authtok parameter.  use_authtok applies only to the password group
+    and says to use the new password stored in the PAM data rather than
+    prompting for a new password.  It doesn't imply anything about where
+    to obtain the old password, but it was implemented as requiring both
+    the old and new password be in the PAM stack already.  This doesn't
+    work when stacked with pam_cracklib.  Change use_authtok to have the
+    correct meaning, which means that password group configurations may
+    need to add use_first_pass to use_authtok to get the desired behavior.
+
+    use_first_pass and try_first_pass no longer affect how the new
+    password is obtained during password changes.  To use a password
+    obtained by a previous module, use use_authtok instead.
+
+    A new option, force_first_pass, is now supported for both the
+    authentication and password groups.  It tells the module to always get
+    the user's current password from the PAM data and fail without
+    prompting if it isn't already set.  This is the meaning that
+    use_authtok previously had for the current password.
+
+    use_authtok no longer has any meaning for the authentication stack.
+    Use force_first_pass instead, which does the same as use_authtok used
+    to do.  use_authtok will be temporarily converted to force_first_pass
+    in the authentication group and log a diagnostic, but this will be
+    removed in the future.
+
     Do not use issetugid on Solaris to determine when to avoid refreshing
     the ticket cache named in KRB5CCNAME during pam_setcred.  Instead,
     compare effective and real UID and GID and permit KRB5CCNAME to be

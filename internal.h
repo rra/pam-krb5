@@ -70,6 +70,7 @@ struct pam_args {
     int debug;                  /* Log debugging information. */
     int defer_pwchange;         /* Defer expired account fail to account. */
     int expose_account;         /* Display principal in password prompts. */
+    int force_first_pass;       /* Require a previous password be stored. */
     int force_pwchange;         /* Change expired passwords in auth. */
     int forwardable;            /* Obtain forwardable tickets. */
     int ignore_root;            /* Skip authentication for root. */
@@ -84,7 +85,7 @@ struct pam_args {
     int retain;                 /* Don't destroy the cache on session end. */
     int search_k5login;         /* Try password with each line of .k5login. */
     int try_first_pass;         /* Try the previously entered password. */
-    int use_authtok;            /* Require a previous password be used. */
+    int use_authtok;            /* Use the stored new password for changes. */
     int use_first_pass;         /* Always use the previous password. */
 
     /* Options used for the optional PKINIT support. */
