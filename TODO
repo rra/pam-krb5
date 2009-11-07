@@ -14,12 +14,6 @@ PAM API:
    logged at LOG_CRIT, and authentication failures should be logged at
    LOG_NOTICE.
 
- * pam-krb5 currently will still prompt the user for a password if
-   use_first_pass is set but no auth token has been saved; use_authtok is
-   required to force failure in this case.  This contradicts the Linux-PAM
-   Module Writers' Guide, which requires use_first_pass in the auth group
-   to work the way that use_authtok does now.
-
  * Tighter verification that all of our flags are valid might be a good
    idea.
 
