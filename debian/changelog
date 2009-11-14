@@ -1,4 +1,4 @@
-libpam-krb5 (4.0-1) UNRELEASED; urgency=low
+libpam-krb5 (4.0-1) unstable; urgency=low
 
   * New upstream release.
     - Add force_first_pass parameter to auth and password groups to force
