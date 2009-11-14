@@ -1,6 +1,6 @@
                       User-Visible pam-krb5 Changes
 
-pam-krb5 3.16 (unreleased)
+pam-krb5 4.0 (2009-11-13)
 
     UPGRADE WARNING: If you were using pam_krb5 with the use_authtok
     parameter in the password group, you will need to add use_first_pass

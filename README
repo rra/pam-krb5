@@ -1,4 +1,4 @@
-                              pam-krb5 3.15
+                               pam-krb5 4.0
                (PAM module for Kerberos v5 authentication)
 
                     Originally written by Frank Cusack
