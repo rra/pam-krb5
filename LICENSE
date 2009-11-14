@@ -181,9 +181,9 @@ the following copyright and license:
   recognition of their trademark status should be given).
 
 The files portable/asprintf.c, portable/dummy.c, portable/macros.h,
-portable/pam.h, portable/pam_syslog.c, portable/pam_vsyslog.c,
-portable/stdbool.h, and portable/system.h have been placed in the public
-domain by their author.
+portable/mkstemp.c, portable/pam.h, portable/pam_syslog.c,
+portable/pam_vsyslog.c, portable/stdbool.h, and portable/system.h have
+been placed in the public domain by their author.
 
 The file portable/snprintf.c is released under the following license:
 

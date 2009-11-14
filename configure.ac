@@ -72,7 +72,7 @@ AC_CHECK_HEADERS([sys/bittypes.h])
 AC_CHECK_DECLS([snprintf, vsnprintf])
 AC_TYPE_LONG_LONG_INT
 RRA_FUNC_SNPRINTF
-AC_REPLACE_FUNCS([asprintf])
+AC_REPLACE_FUNCS([asprintf mkstemp])
 
 dnl Everything we build needs the Kerberos libraries.
 AM_CPPFLAGS="$KRB5_CPPFLAGS"

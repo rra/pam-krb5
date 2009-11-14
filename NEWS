@@ -12,8 +12,8 @@ pam-krb5 4.1 (unreleased)
     Log successful authentications to syslog with priority LOG_INFO,
     including the Kerberos principal used for authentication.
 
-    Add replacement snprintf and vsnprintf functions for pointless
-    portability to ancient systems.
+    Add replacement snprintf, vsnprintf, and mkstemp functions for
+    pointless portability to ancient systems.
 
 pam-krb5 4.0 (2009-11-13)
 

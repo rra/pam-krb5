@@ -78,6 +78,9 @@ extern int snprintf(char *, size_t, const char *, ...)
 #if !HAVE_DECL_VSNPRINTF
 extern int vsnprintf(char *, size_t, const char *, va_list);
 #endif
+#if !HAVE_MKSTEMP
+extern int mkstemp(char *);
+#endif
 
 /* Undo default visibility change. */
 #pragma GCC visibility pop
