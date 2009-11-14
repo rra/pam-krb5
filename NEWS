@@ -12,6 +12,11 @@ pam-krb5 4.1 (unreleased)
     Log successful authentications to syslog with priority LOG_INFO,
     including the Kerberos principal used for authentication.
 
+    Use pam_syslog for logging where available.  This means pam-krb5 log
+    messages will look like all other log messages for Linux PAM modules
+    on Linux.  Change the format of log messages on all platforms to
+    hopefully be somewhat clearer.
+
     Add replacement snprintf, vsnprintf, and mkstemp functions for
     pointless portability to ancient systems.
 
