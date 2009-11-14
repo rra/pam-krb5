@@ -27,14 +27,18 @@
 void
 pam_vsyslog(pam_handle_t *pamh, int priority, const char *fmt, va_list args)
 {
-    char msg[BUFSIZ];
+    char *msg = NULL;
     const char *service = NULL;
     int retval;
 
     retval = pam_get_item(pamh, PAM_SERVICE, (void **) &service);
     if (retval != PAM_SUCCESS)
         service = NULL;
-    vsnprintf(msg, sizeof(msg), fmt, args);
+    if (vasprintf(&msg, fmt, args) < 0) {
+        syslog(LOG_CRIT | LOG_AUTHPRIV,
+               "cannot allocate memory in vasprintf: %m");
+        return;
+    }
     syslog(priority | LOG_AUTHPRIV, MODULE_NAME "%s%s%s: %s",
            (service == NULL) ? "" : "(",
            (service == NULL) ? "" : service,
