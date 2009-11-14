@@ -60,6 +60,8 @@ RRA_LIB_KRB5_RESTORE
 dnl Everything we build needs the Kerberos libraries.
 AM_CPPFLAGS="$KRB5_CPPFLAGS"
 AM_LDFLAGS="$KRB5_LDFLAGS"
+AC_SUBST([AM_CPPFLAGS])
+AC_SUBST([AM_LDFLAGS])
 
 dnl Try to specify the binding so that any references within the PAM module
 dnl are resolved to the functions in that module in preference to any external
