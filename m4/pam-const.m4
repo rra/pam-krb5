@@ -1,4 +1,4 @@
-dnl pam-const.m4 -- Determine whether PAM uses const in prototypes.
+dnl Determine whether PAM uses const in prototypes.
 dnl
 dnl Linux marks several PAM arguments const, including the argument to
 dnl pam_get_item and some arguments to conversation functions, which Solaris

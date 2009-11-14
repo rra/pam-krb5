@@ -1,4 +1,4 @@
-dnl krb5-pkinit.m4 -- Find the compiler and linker flags for Kerberos v5.
+dnl Find the compiler and linker flags for Kerberos v5.
 dnl
 dnl Additonal Kerberos v5 library probes that check behavior of the library
 dnl relevant to PKINIT support.  Provides the macros:

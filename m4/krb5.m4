@@ -1,17 +1,17 @@
-dnl krb5.m4 -- Find the compiler and linker flags for Kerberos v5.
+dnl Find the compiler and linker flags for Kerberos v5.
 dnl
 dnl Finds the compiler and linker flags for linking with Kerberos v5
 dnl libraries.  Provides the --with-krb5, --with-krb5-include, and
-dnl --with-krb5-lib configure option to specify non-standards paths to the
+dnl --with-krb5-lib configure options to specify non-standards paths to the
 dnl Kerberos libraries.  Uses krb5-config where available unless reduced
 dnl dependencies is requested.
 dnl
 dnl Provides the macro RRA_LIB_KRB5 and sets the substitution variables
 dnl KRB5_CPPFLAGS, KRB5_LDFLAGS, and KRB5_LIBS.  Also provides
-dnl RRA_LIB_KRB5_SET to set CPPFLAGS, LDFLAGS, and LIBS to include the
-dnl Kerberos libraries; RRA_LIB_KRB5_SWITCH to do the same but save the
-dnl current values first; and RRA_LIB_KRB5_RESTORE to restore those settings
-dnl to before the last RRA_LIB_KRB5_SWITCH.
+dnl RRA_LIB_KRB5_SWITCH to set CPPFLAGS, LDFLAGS, and LIBS to include the
+dnl Kerberos libraries, saving the current values first, and
+dnl RRA_LIB_KRB5_RESTORE to restore those settings to before the last
+dnl RRA_LIB_KRB5_SWITCH.
 dnl
 dnl Provides the RRA_LIB_KRB5_OPTIONAL macro, which should be used if Kerberos
 dnl support is optional.  This macro will still always set the substitution
@@ -31,13 +31,6 @@ dnl     Board of Trustees, Leland Stanford Jr. University
 dnl
 dnl See LICENSE for licensing terms.
 
-dnl Set CPPFLAGS, LDFLAGS, and LIBS to values including the Kerberos v5
-dnl settings.
-AC_DEFUN([RRA_LIB_KRB5_SET],
-[CPPFLAGS="$KRB5_CPPFLAGS $CPPFLAGS"
- LDFLAGS="$KRB5_LDFLAGS $LDFLAGS"
- LIBS="$KRB5_LIBS $LIBS"])
-
 dnl Save the current CPPFLAGS, LDFLAGS, and LIBS settings and switch to
 dnl versions that include the Kerberos v5 flags.  Used as a wrapper, with
 dnl RRA_LIB_KRB5_RESTORE, around tests.
@@ -45,7 +38,9 @@ AC_DEFUN([RRA_LIB_KRB5_SWITCH],
 [rra_krb5_save_CPPFLAGS="$CPPFLAGS"
  rra_krb5_save_LDFLAGS="$LDFLAGS"
  rra_krb5_save_LIBS="$LIBS"
- RRA_LIB_KRB5_SET])
+ CPPFLAGS="$KRB5_CPPFLAGS $CPPFLAGS"
+ LDFLAGS="$KRB5_LDFLAGS $LDFLAGS"
+ LIBS="$KRB5_LIBS $LIBS"])
 
 dnl Restore CPPFLAGS, LDFLAGS, and LIBS to their previous values (before
 dnl RRA_LIB_KRB5_SWITCH was called).
@@ -142,17 +137,18 @@ AC_DEFUN([_RRA_LIB_KRB5_MANUAL],
  RRA_LIB_KRB5_RESTORE])
 
 dnl Sanity-check the results of krb5-config and be sure we can really link a
-dnl Kerberos program.  The first option says whether to fail if Kerberos was
-dnl not found.  If we shouldn't fail, clear KRB5_CPPFLAGS and KRB5_LIBS so
-dnl that we know we don't have usable flags.
+dnl Kerberos program.  If that fails, clear KRB5_CPPFLAGS and KRB5_LIBS so
+dnl that we know we don't have usable flags and fall back on the manual
+dnl check.
 AC_DEFUN([_RRA_LIB_KRB5_CHECK],
 [RRA_LIB_KRB5_SWITCH
- AC_CHECK_FUNC([krb5_init_context], ,
-    [AS_IF([test x"$1" = xtrue],
-        [AC_MSG_FAILURE([krb5-config results fail for Kerberos v5])])
+ AC_CHECK_FUNC([krb5_init_context],
+    [RRA_LIB_KRB5_RESTORE],
+    [RRA_LIB_KRB5_RESTORE
      KRB5_CPPFLAGS=
-     KRB5_LIBS=])
- RRA_LIB_KRB5_RESTORE])
+     KRB5_LIBS=
+     _RRA_LIB_KRB5_PATHS
+     _RRA_LIB_KRB5_MANUAL([$1])])])
 
 dnl The core of the library checking, shared between RRA_LIB_KRB5 and
 dnl RRA_LIB_KRB5_OPTIONAL.  The single argument, if "true", says to fail if
@@ -170,14 +166,14 @@ AC_DEFUN([_RRA_LIB_KRB5_INTERNAL],
      AS_IF([test x"$KRB5_CONFIG" != x && test -x "$KRB5_CONFIG"],
          [AC_CACHE_CHECK([for krb5 support in krb5-config],
              [rra_cv_lib_krb5_config],
-             [AS_IF(["$KRB5_CONFIG" | grep krb5 > /dev/null 2>&1],
+             [AS_IF(["$KRB5_CONFIG" 2>&1 | grep krb5 >/dev/null 2>&1],
                  [rra_cv_lib_krb5_config=yes],
                  [rra_cv_lib_krb5_config=no])])
-          AS_IF([test "$rra_cv_lib_krb5_config" = yes],
-              [KRB5_CPPFLAGS=`"$KRB5_CONFIG" --cflags krb5`
-               KRB5_LIBS=`"$KRB5_CONFIG" --libs krb5`],
-              [KRB5_CPPFLAGS=`"$KRB5_CONFIG" --cflags`
-               KRB5_LIBS=`"$KRB5_CONFIG" --libs`])
+          AS_IF([test x"$rra_cv_lib_krb5_config" = xyes],
+              [KRB5_CPPFLAGS=`"$KRB5_CONFIG" --cflags krb5 2>/dev/null`
+               KRB5_LIBS=`"$KRB5_CONFIG" --libs krb5 2>/dev/null`],
+              [KRB5_CPPFLAGS=`"$KRB5_CONFIG" --cflags 2>/dev/null`
+               KRB5_LIBS=`"$KRB5_CONFIG" --libs 2>/dev/null`])
           KRB5_CPPFLAGS=`echo "$KRB5_CPPFLAGS" | sed 's%-I/usr/include ?%%'`
           _RRA_LIB_KRB5_CHECK([$1])
           RRA_LIB_KRB5_SWITCH
@@ -212,17 +208,17 @@ AC_DEFUN([RRA_LIB_KRB5],
  AC_SUBST([KRB5_LIBS])
 
  AC_ARG_WITH([krb5],
-    [AC_HELP_STRING([--with-krb5=DIR],
+    [AS_HELP_STRING([--with-krb5=DIR],
         [Location of Kerberos v5 headers and libraries])],
     [AS_IF([test x"$withval" != xyes && test x"$withval" != xno],
         [rra_krb5_root="$withval"])])
  AC_ARG_WITH([krb5-include],
-    [AC_HELP_STRING([--with-krb5-include=DIR],
+    [AS_HELP_STRING([--with-krb5-include=DIR],
         [Location of Kerberos v5 headers])],
     [AS_IF([test x"$withval" != xyes && test x"$withval" != xno],
         [rra_krb5_includedir="$withval"])])
  AC_ARG_WITH([krb5-lib],
-    [AC_HELP_STRING([--with-krb5-lib=DIR],
+    [AS_HELP_STRING([--with-krb5-lib=DIR],
         [Location of Kerberos v5 libraries])],
     [AS_IF([test x"$withval" != xyes && test x"$withval" != xno],
         [rra_krb5_libdir="$withval"])])
@@ -242,19 +238,19 @@ AC_DEFUN([RRA_LIB_KRB5_OPTIONAL],
  AC_SUBST([KRB5_LIBS])
 
  AC_ARG_WITH([krb5],
-    [AC_HELP_STRING([--with-krb5@<:@=DIR@:>@],
+    [AS_HELP_STRING([--with-krb5@<:@=DIR@:>@],
         [Location of Kerberos v5 headers and libraries])],
     [AS_IF([test x"$withval" = xno],
         [rra_use_kerberos=false],
         [AS_IF([test x"$withval" != xyes], [rra_krb5_root="$withval"])
          rra_use_kerberos=true])])
  AC_ARG_WITH([krb5-include],
-    [AC_HELP_STRING([--with-krb5-include=DIR],
+    [AS_HELP_STRING([--with-krb5-include=DIR],
         [Location of Kerberos v5 headers])],
     [AS_IF([test x"$withval" != xyes && test x"$withval" != xno],
         [rra_krb5_includedir="$withval"])])
  AC_ARG_WITH([krb5-lib],
-    [AC_HELP_STRING([--with-krb5-lib=DIR],
+    [AS_HELP_STRING([--with-krb5-lib=DIR],
         [Location of Kerberos v5 libraries])],
     [AS_IF([test x"$withval" != xyes && test x"$withval" != xno],
         [rra_krb5_libdir="$withval"])])

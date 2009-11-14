@@ -358,6 +358,8 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
             args->defer_pwchange = 1;
         else if (strcmp(argv[i], "expose_account") == 0)
             args->expose_account = 1;
+        else if (strcmp(argv[i], "force_first_pass") == 0)
+            args->force_first_pass = 1;
         else if (strcmp(argv[i], "force_pwchange") == 0)
             args->force_pwchange = 1;
         else if (strcmp(argv[i], "force_alt_auth") == 0)
@@ -443,14 +445,14 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
         args->banner = NULL;
     }
 
-    /* Sanity-check try_first_pass, use_first_pass, and use_authtok. */
-    if (args->use_authtok && args->try_first_pass) {
-        pamk5_error(NULL, "use_authtok set, ignoring try_first_pass");
+    /* Sanity-check try_first_pass, use_first_pass, and force_first_pass. */
+    if (args->force_first_pass && args->try_first_pass) {
+        pamk5_error(NULL, "force_first_pass set, ignoring try_first_pass");
         args->try_first_pass = 0;
         args->use_first_pass = 0;
     }
-    if (args->use_authtok && args->use_first_pass) {
-        pamk5_error(NULL, "use_authtok set, ignoring use_first_pass");
+    if (args->force_first_pass && args->use_first_pass) {
+        pamk5_error(NULL, "force_first_pass set, ignoring use_first_pass");
         args->use_first_pass = 0;
     }
     if (args->use_first_pass && args->try_first_pass) {
