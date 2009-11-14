@@ -10,17 +10,12 @@
 #ifndef INTERNAL_H
 #define INTERNAL_H 1
 
-#include "config.h"
+#include <config.h>
+#include <portable/pam.h>
 
 #include <krb5.h>
-#ifdef HAVE_SECURITY_PAM_APPL_H
-# include <security/pam_appl.h>
-# include <security/pam_modules.h>
-#elif HAVE_PAM_PAM_APPL_H
-# include <pam/pam_appl.h>
-# include <pam/pam_modules.h>
-#endif
 #include <stdarg.h>
+#include <syslog.h>
 
 /* Forward declarations to avoid unnecessary includes. */
 struct passwd;
@@ -244,6 +239,7 @@ krb5_error_code pamk5_compat_secure_context(krb5_context *);
 int pamk5_compat_issetugid(void);
 
 /* Error reporting and debugging functions. */
+void pamk5_log(struct pam_args *, int priority, const char *, ...);
 void pamk5_error(struct pam_args *, const char *, ...);
 void pamk5_error_krb5(struct pam_args *, const char *, int);
 void pamk5_debug(struct pam_args *, const char *, ...);
@@ -263,11 +259,14 @@ void pamk5_debug_krb5(struct pam_args *, const char *, int);
 #endif
 
 /* Macros to record entry and exit from the main PAM functions. */
-#define ENTRY(args, flags) \
-    pamk5_debug((args), "%s: entry (0x%x)", __func__, (flags))
-#define EXIT(args, pamret) \
-    pamk5_debug((args), "%s: exit (%s)", __func__, \
-                ((pamret) == PAM_SUCCESS) ? "success" \
-                : (((pamret) == PAM_IGNORE) ? "ignore" : "failure"))
+#define ENTRY(args, flags)                                      \
+    if (args->debug)                                            \
+        pam_syslog((args)->pamh, LOG_DEBUG,                     \
+                   "%s: entry (0x%x)", __func__, (flags))
+#define EXIT(args, pamret)                                              \
+    if (args->debug)                                                    \
+        pam_syslog((args)->pamh, LOG_DEBUG, "%s: exit (%s)", __func__,  \
+                   ((pamret) == PAM_SUCCESS) ? "success"                \
+                   : (((pamret) == PAM_IGNORE) ? "ignore" : "failure"))
 
 #endif /* !INTERNAL_H */

@@ -27,21 +27,58 @@
 #endif
 
 /*
- * Basic error logging.  Log a message with LOG_ERR priority.
+ * Log wrapper function that adds the user.  Log a message with the given
+ * priority, prefixed by (user <user>) with the account name being
+ * authenticated if known.
+ */
+void
+pamk5_log(struct pam_args *pargs, int priority, const char *fmt, ...)
+{
+    const char *name;
+    char *msg;
+    va_list args;
+    int retval;
+
+    if (pargs != NULL && pargs->ctx != NULL && pargs->ctx->name != NULL) {
+        name = pargs->ctx->name;
+        va_start(args, fmt);
+        retval = vasprintf(&msg, fmt, args);
+        va_end(args);
+        if (retval < 0) {
+            syslog(LOG_CRIT | LOG_AUTHPRIV,
+                   "cannot allocate memory in vasprintf: %m");
+            return;
+        }
+        pam_syslog(pargs->pamh, priority, "(user %s) %s", name, msg);
+        free(msg);
+    } else {
+        va_start(args, fmt);
+        pam_vsyslog(pargs->pamh, priority, fmt, args);
+        va_end(args);
+    }
+}
+
+
+/*
+ * Log a generic error with LOG_ERR priority.
  */
 void
 pamk5_error(struct pam_args *pargs, const char *fmt, ...)
 {
-    const char *name = "none";
-    char msg[256];
+    char *msg;
     va_list args;
+    int retval;
 
     va_start(args, fmt);
-    vsnprintf(msg, sizeof(msg), fmt, args);
+    retval = vasprintf(&msg, fmt, args);
     va_end(args);
-    if (pargs != NULL && pargs->ctx != NULL && pargs->ctx->name != NULL)
-        name = pargs->ctx->name;
-    syslog(LOG_ERR | LOG_AUTHPRIV, "(pam_krb5): %s: %s", name, msg);
+    if (retval < 0) {
+        syslog(LOG_CRIT | LOG_AUTHPRIV,
+               "cannot allocate memory in vasprintf: %m");
+        return;
+    }
+    pamk5_log(pargs, LOG_ERR, "%s", msg);
+    free(msg);
 }
 
 
@@ -60,7 +97,7 @@ pamk5_error_krb5(struct pam_args *args, const char *msg, int status)
         k5_msg = pamk5_compat_get_error(args->ctx->context, status);
     else
         k5_msg = pamk5_compat_get_error(NULL, status);
-    pamk5_error(args, "%s: %s", msg, k5_msg);
+    pamk5_log(args, LOG_ERR, "%s: %s", msg, k5_msg);
     if (args != NULL && args->ctx != NULL && args->ctx->context != NULL)
         pamk5_compat_free_error(args->ctx->context, k5_msg);
 }
@@ -72,19 +109,23 @@ pamk5_error_krb5(struct pam_args *args, const char *msg, int status)
 void
 pamk5_debug(struct pam_args *pargs, const char *fmt, ...)
 {
-    const char *name = "none";
-    char msg[256];
+    char *msg;
     va_list args;
+    int retval;
 
     if (!pargs->debug)
         return;
 
     va_start(args, fmt);
-    vsnprintf(msg, sizeof(msg), fmt, args);
+    retval = vasprintf(&msg, fmt, args);
     va_end(args);
-    if (pargs != NULL && pargs->ctx != NULL && pargs->ctx->name != NULL)
-        name = pargs->ctx->name;
-    syslog(LOG_DEBUG | LOG_AUTHPRIV, "(pam_krb5): %s: %s", name, msg);
+    if (retval < 0) {
+        syslog(LOG_CRIT | LOG_AUTHPRIV,
+               "cannot allocate memory in vasprintf: %m");
+        return;
+    }
+    pamk5_log(pargs, LOG_DEBUG, "%s", msg);
+    free(msg);
 }
 
 
