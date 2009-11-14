@@ -19,6 +19,7 @@ libpam-krb5 (4.0-1) UNRELEASED; urgency=low
     Kerberos password.
   * Remove the libtool *.la file and set the permissions of pam_krb5.so
     properly to work around the annoyances of switching to libtool.
+  * Update standards version to 3.8.3 (no changes required).
 
  -- Russ Allbery <rra@debian.org>  Fri, 13 Nov 2009 18:19:45 -0800
 

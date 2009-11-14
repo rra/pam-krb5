@@ -3,7 +3,7 @@ Section: admin
 Priority: optional
 Maintainer: Russ Allbery <rra@debian.org>
 Uploaders: Sam Hartman <hartmans@debian.org>
-Standards-Version: 3.8.2
+Standards-Version: 3.8.3
 Build-Depends: debhelper (>= 7.0.50~), libkrb5-dev, libpam0g-dev
 Homepage: http://www.eyrie.org/~eagle/software/pam-krb5/
 Vcs-Git: git://git.debian.org/git/pkg-k5-afs/pam-krb5.git
