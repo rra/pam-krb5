@@ -27,134 +27,149 @@
 #endif
 
 /*
+ * Utility function to format a message into newly allocated memory, reporting
+ * an error via syslog if vasprintf fails.
+ */
+static char *
+format(const char *fmt, va_list args)
+{
+    char *msg;
+
+    if (vasprintf(&msg, fmt, args) < 0) {
+        syslog(LOG_CRIT | LOG_AUTHPRIV, "vasprintf failed: %m");
+        return NULL;
+    }
+    return msg;
+}
+
+
+/*
  * Log wrapper function that adds the user.  Log a message with the given
  * priority, prefixed by (user <user>) with the account name being
  * authenticated if known.
  */
-void
-pamk5_log(struct pam_args *pargs, int priority, const char *fmt, ...)
+static void
+log_vplain(struct pam_args *pargs, int priority, const char *fmt, va_list args)
 {
     const char *name;
     char *msg;
-    va_list args;
-    int retval;
 
+    if (priority == LOG_DEBUG && !pargs->debug)
+        return;
     if (pargs != NULL && pargs->ctx != NULL && pargs->ctx->name != NULL) {
         name = pargs->ctx->name;
-        va_start(args, fmt);
-        retval = vasprintf(&msg, fmt, args);
-        va_end(args);
-        if (retval < 0) {
-            syslog(LOG_CRIT | LOG_AUTHPRIV,
-                   "cannot allocate memory in vasprintf: %m");
+        msg = format(fmt, args);
+        if (msg == NULL)
             return;
-        }
         pam_syslog(pargs->pamh, priority, "(user %s) %s", name, msg);
         free(msg);
     } else {
-        va_start(args, fmt);
         pam_vsyslog(pargs->pamh, priority, fmt, args);
-        va_end(args);
     }
 }
 
 
 /*
- * Log a generic error with LOG_ERR priority.
+ * Wrapper around log_vplain with variadic arguments.
  */
-void
-pamk5_error(struct pam_args *pargs, const char *fmt, ...)
+static void
+log_plain(struct pam_args *pargs, int priority, const char *fmt, ...)
 {
-    char *msg;
     va_list args;
-    int retval;
 
     va_start(args, fmt);
-    retval = vasprintf(&msg, fmt, args);
+    log_vplain(pargs, priority, fmt, args);
     va_end(args);
-    if (retval < 0) {
-        syslog(LOG_CRIT | LOG_AUTHPRIV,
-               "cannot allocate memory in vasprintf: %m");
+}
+
+
+/*
+ * Log wrapper function for reporting a PAM error.  Log a message with the
+ * given priority, prefixed by (user <user>) with the account name being
+ * authenticated if known, followed by a colon and the formatted PAM error.
+ */
+static void
+log_pam(struct pam_args *pargs, int priority, int status, const char *fmt,
+        va_list args)
+{
+    char *msg;
+
+    if (priority == LOG_DEBUG && !pargs->debug)
         return;
-    }
-    pamk5_log(pargs, LOG_ERR, "%s", msg);
+    msg = format(fmt, args);
+    if (msg == NULL)
+        return;
+    log_plain(pargs, priority, "%s: %s", msg,
+              pam_strerror(pargs->pamh, status));
     free(msg);
 }
 
 
 /*
- * Log a Kerberos v5 failure with LOG_ERR priority.  We don't free the message
- * if we have no context under the assumption that no memory would be
- * allocated in that case.  This is true for the current MIT Kerberos
- * implementation.
+ * Log wrapper function for reporting a Kerberos error.  Log a message with
+ * the given priority, prefixed by (user <user>) with the account name being
+ * authenticated if known, followed by a colon and the formatted Kerberos
+ * error.
  */
-void
-pamk5_error_krb5(struct pam_args *args, const char *msg, int status)
-{
-    const char *k5_msg = NULL;
-
-    if (args != NULL && args->ctx != NULL && args->ctx->context != NULL)
-        k5_msg = pamk5_compat_get_error(args->ctx->context, status);
-    else
-        k5_msg = pamk5_compat_get_error(NULL, status);
-    pamk5_log(args, LOG_ERR, "%s: %s", msg, k5_msg);
-    if (args != NULL && args->ctx != NULL && args->ctx->context != NULL)
-        pamk5_compat_free_error(args->ctx->context, k5_msg);
-}
-
-
-/*
- * Log a generic debugging message only if debug is enabled.
- */
-void
-pamk5_debug(struct pam_args *pargs, const char *fmt, ...)
+static void
+log_krb5(struct pam_args *pargs, int priority, int status, const char *fmt,
+         va_list args)
 {
     char *msg;
-    va_list args;
-    int retval;
-
-    if (!pargs->debug)
-        return;
-
-    va_start(args, fmt);
-    retval = vasprintf(&msg, fmt, args);
-    va_end(args);
-    if (retval < 0) {
-        syslog(LOG_CRIT | LOG_AUTHPRIV,
-               "cannot allocate memory in vasprintf: %m");
-        return;
-    }
-    pamk5_log(pargs, LOG_DEBUG, "%s", msg);
-    free(msg);
-}
-
-
-/*
- * Log a PAM failure if debugging is enabled.
- */
-void
-pamk5_debug_pam(struct pam_args *args, const char *msg, int status)
-{
-    pamk5_debug(args, "%s: %s", msg, pam_strerror(args->pamh, status));
-}
-
-
-/*
- * Log a Kerberos v5 failure if debugging is enabled.  We don't free the
- * message if we have no context under the assumption that no memory would be
- * allocated in that case.  This is true for the current MIT Kerberos
- * implementation.
- */
-void
-pamk5_debug_krb5(struct pam_args *args, const char *msg, int status)
-{
     const char *k5_msg = NULL;
 
-    if (args != NULL && args->ctx != NULL && args->ctx->context != NULL)
-        k5_msg = pamk5_compat_get_error(args->ctx->context, status);
+    if (priority == LOG_DEBUG && !pargs->debug)
+        return;
+    msg = format(fmt, args);
+    if (msg == NULL)
+        return;
+    if (pargs != NULL && pargs->ctx != NULL && pargs->ctx->context != NULL)
+        k5_msg = pamk5_compat_get_error(pargs->ctx->context, status);
     else
         k5_msg = pamk5_compat_get_error(NULL, status);
-    pamk5_debug(args, "%s: %s", msg, k5_msg);
-    if (args != NULL && args->ctx != NULL && args->ctx->context != NULL)
-        pamk5_compat_free_error(args->ctx->context, k5_msg);
+    log_plain(pargs, priority, "%s: %s", msg, k5_msg);
+    free(msg);
+    if (pargs != NULL && pargs->ctx != NULL && pargs->ctx->context != NULL)
+        pamk5_compat_free_error(pargs->ctx->context, k5_msg);
 }
+
+
+/*
+ * The public interfaces.  For each common log level (alert, crit, err, and
+ * debug), generate a pamk5_<level> function and one for _pam and _krb5.  Do
+ * this with the preprocessor to save duplicate code.
+ */
+#define LOG_FUNCTION(level, priority)                                   \
+    void                                                                \
+    pamk5_ ## level(struct pam_args *pargs, const char *fmt, ...)       \
+    {                                                                   \
+        va_list args;                                                   \
+                                                                        \
+        va_start(args, fmt);                                            \
+        log_vplain(pargs, priority, fmt, args);                         \
+        va_end(args);                                                   \
+    }                                                                   \
+    void                                                                \
+    pamk5_ ## level ## _pam(struct pam_args *pargs, int status,         \
+                            const char *fmt, ...)                       \
+    {                                                                   \
+        va_list args;                                                   \
+                                                                        \
+        va_start(args, fmt);                                            \
+        log_pam(pargs, priority, status, fmt, args);                    \
+        va_end(args);                                                   \
+    }                                                                   \
+    void                                                                \
+    pamk5_ ## level ## _krb5(struct pam_args *pargs, int status,        \
+                             const char *fmt, ...)                      \
+    {                                                                   \
+        va_list args;                                                   \
+                                                                        \
+        va_start(args, fmt);                                            \
+        log_krb5(pargs, priority, status, fmt, args);                   \
+        va_end(args);                                                   \
+    }
+LOG_FUNCTION(alert, LOG_ALERT)
+LOG_FUNCTION(crit,  LOG_CRIT)
+LOG_FUNCTION(err,   LOG_ERR)
+LOG_FUNCTION(debug, LOG_DEBUG)

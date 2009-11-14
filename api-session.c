@@ -37,7 +37,7 @@ pam_sm_open_session(pam_handle_t *pamh, int flags, int argc,
 
     args = pamk5_args_parse(pamh, flags, argc, argv);
     if (args == NULL) {
-        pamk5_error(NULL, "cannot allocate memory: %s", strerror(errno));
+        pamk5_err(NULL, "cannot allocate memory: %s", strerror(errno));
         pamret = PAM_SERVICE_ERR;
         goto done;
     }
@@ -64,7 +64,7 @@ pam_sm_close_session(pam_handle_t *pamh, int flags, int argc,
 
     args = pamk5_args_parse(pamh, flags, argc, argv);
     if (args == NULL) {
-        pamk5_error(NULL, "cannot allocate memory: %s", strerror(errno));
+        pamk5_err(NULL, "cannot allocate memory: %s", strerror(errno));
         pamret = PAM_SERVICE_ERR;
         goto done;
     }

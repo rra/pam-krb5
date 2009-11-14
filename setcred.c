@@ -51,12 +51,12 @@ cache_init_from_cache(struct pam_args *args, const char *ccname,
     ctx = args->ctx;
     status = krb5_cc_start_seq_get(ctx->context, old, &cursor);
     if (status != 0) {
-        pamk5_debug_krb5(args, "krb5_cc_start_seq_get", status);
+        pamk5_debug_krb5(args, status, "krb5_cc_start_seq_get failed");
         return PAM_SERVICE_ERR;
     }
     status = krb5_cc_next_cred(ctx->context, old, &cursor, &creds);
     if (status != 0) {
-        pamk5_debug_krb5(args, "krb5_cc_next_cred", status);
+        pamk5_debug_krb5(args, status, "krb5_cc_next_cred failed");
         pamret = PAM_SERVICE_ERR;
         goto done;
     }
@@ -76,7 +76,7 @@ cache_init_from_cache(struct pam_args *args, const char *ccname,
         status = krb5_cc_store_cred(ctx->context, *cache, &creds);
         krb5_free_cred_contents(ctx->context, &creds);
         if (status != 0) {
-            pamk5_debug_krb5(args, "krb5_cc_store_cred", status);
+            pamk5_debug_krb5(args, status, "krb5_cc_store_cred failed");
             pamret = PAM_SERVICE_ERR;
             goto done;
         }
@@ -111,7 +111,7 @@ build_ccache_name(struct pam_args *args, uid_t uid)
         retval = asprintf(&cache_name, "%s/krb5cc_%d_XXXXXX",
                           args->ccache_dir, (int) uid);
         if (retval < 0) {
-            pamk5_error(args, "malloc failure: %s", strerror(errno));
+            pamk5_err(args, "malloc failure: %s", strerror(errno));
             return NULL;
         }
     } else {
@@ -132,7 +132,7 @@ build_ccache_name(struct pam_args *args, uid_t uid)
         len++;
         cache_name = malloc(len);
         if (cache_name == NULL) {
-            pamk5_error(args, "malloc failure: %s", strerror(errno));
+            pamk5_err(args, "malloc failure: %s", strerror(errno));
             return NULL;
         }
         for (p = args->ccache, q = cache_name; *p != '\0'; p++) {
@@ -207,7 +207,7 @@ create_session_context(struct pam_args *args)
     }
     status = krb5_cc_get_principal(ctx->context, ctx->cache, &ctx->princ);
     if (status != 0) {
-        pamk5_debug_krb5(args, "cannot retrieve principal", status);
+        pamk5_debug_krb5(args, status, "cannot retrieve principal");
         pamret = PAM_SERVICE_ERR;
         goto fail;
     }
@@ -219,7 +219,7 @@ create_session_context(struct pam_args *args)
      */
     pamret = pam_set_data(args->pamh, "pam_krb5", ctx, pamk5_context_destroy);
     if (pamret != PAM_SUCCESS) {
-        pamk5_debug_pam(args, "cannot set context data", pamret);
+        pamk5_debug_pam(args, pamret, "cannot set context data");
         goto fail;
     }
     return PAM_SUCCESS;
@@ -334,8 +334,8 @@ pamk5_setcred(struct pam_args *args, int refresh)
          * user.
          */
         if (getuid() != geteuid() || getgid() != getegid()) {
-            pamk5_error(args, "credential reinitialization in a setuid"
-                        " context ignored");
+            pamk5_err(args, "credential reinitialization in a setuid context"
+                      " ignored");
             pamret = PAM_SUCCESS;
             goto done;
         }
@@ -371,7 +371,7 @@ pamk5_setcred(struct pam_args *args, int refresh)
 
         cache_name = strdup(name);
         if (cache_name == NULL) {
-            pamk5_error(args, "malloc failure: %s", strerror(errno));
+            pamk5_err(args, "malloc failure: %s", strerror(errno));
             pamret = PAM_BUF_ERR;
             goto done;
         }

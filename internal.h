@@ -238,13 +238,36 @@ krb5_error_code pamk5_compat_secure_context(krb5_context *);
 /* Calls issetugid if available, otherwise checks effective IDs. */
 int pamk5_compat_issetugid(void);
 
-/* Error reporting and debugging functions. */
-void pamk5_log(struct pam_args *, int priority, const char *, ...);
-void pamk5_error(struct pam_args *, const char *, ...);
-void pamk5_error_krb5(struct pam_args *, const char *, int);
-void pamk5_debug(struct pam_args *, const char *, ...);
-void pamk5_debug_pam(struct pam_args *, const char *, int);
-void pamk5_debug_krb5(struct pam_args *, const char *, int);
+/*
+ * Error reporting and debugging functions.  For each log level, there are
+ * three functions.  The _log function just prints out the message it's
+ * given.  The _log_pam function reports a PAM error using pam_strerror.  The
+ * _log_krb5 function reports a Kerberos error.
+ */
+void pamk5_alert(struct pam_args *, const char *, ...)
+    __attribute__((__format__(printf, 2, 3)));
+void pamk5_alert_pam(struct pam_args *, int, const char *, ...)
+    __attribute__((__format__(printf, 3, 4)));
+void pamk5_alert_krb5(struct pam_args *, int, const char *, ...)
+    __attribute__((__format__(printf, 3, 4)));
+void pamk5_crit(struct pam_args *, const char *, ...)
+    __attribute__((__format__(printf, 2, 3)));
+void pamk5_crit_pam(struct pam_args *, int, const char *, ...)
+    __attribute__((__format__(printf, 3, 4)));
+void pamk5_crit_krb5(struct pam_args *, int, const char *, ...)
+    __attribute__((__format__(printf, 3, 4)));
+void pamk5_err(struct pam_args *, const char *, ...)
+    __attribute__((__format__(printf, 2, 3)));
+void pamk5_err_pam(struct pam_args *, int, const char *, ...)
+    __attribute__((__format__(printf, 3, 4)));
+void pamk5_err_krb5(struct pam_args *, int, const char *, ...)
+    __attribute__((__format__(printf, 3, 4)));
+void pamk5_debug(struct pam_args *, const char *, ...)
+    __attribute__((__format__(printf, 2, 3)));
+void pamk5_debug_pam(struct pam_args *, int, const char *, ...)
+    __attribute__((__format__(printf, 3, 4)));
+void pamk5_debug_krb5(struct pam_args *, int, const char *, ...)
+    __attribute__((__format__(printf, 3, 4)));
 
 /* Undo default visibility change. */
 #pragma GCC visibility pop
@@ -259,9 +282,9 @@ void pamk5_debug_krb5(struct pam_args *, const char *, int);
 #endif
 
 /* Macros to record entry and exit from the main PAM functions. */
-#define ENTRY(args, flags)                                      \
-    if (args->debug)                                            \
-        pam_syslog((args)->pamh, LOG_DEBUG,                     \
+#define ENTRY(args, flags)                                              \
+    if (args->debug)                                                    \
+        pam_syslog((args)->pamh, LOG_DEBUG,                             \
                    "%s: entry (0x%x)", __func__, (flags))
 #define EXIT(args, pamret)                                              \
     if (args->debug)                                                    \

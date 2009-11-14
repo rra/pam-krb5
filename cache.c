@@ -62,14 +62,14 @@ pamk5_set_krb5ccname(struct pam_args *args, const char *name, const char *key)
 
     env_name = malloc(strlen(key) + 1 + strlen(name) + 1);
     if (env_name == NULL) {
-        pamk5_error(args, "malloc failure: %s", strerror(errno));
+        pamk5_err(args, "malloc failure: %s", strerror(errno));
         pamret = PAM_BUF_ERR;
         goto done;
     }
     sprintf(env_name, "%s=%s", key, name);
     pamret = pam_putenv(args->pamh, env_name);
     if (pamret != PAM_SUCCESS) {
-        pamk5_error(args, "pam_putenv: %s", pam_strerror(args->pamh, pamret));
+        pamk5_err_pam(args, pamret, "pam_putenv failed");
         pamret = PAM_SERVICE_ERR;
         goto done;
     }
@@ -93,8 +93,8 @@ pamk5_cache_mkstemp(struct pam_args *args, char *template)
 
     ccfd = mkstemp(template);
     if (ccfd < 0) {
-        pamk5_error(args, "mkstemp(\"%s\") failed: %s", template,
-                    strerror(errno));
+        pamk5_err(args, "mkstemp(\"%s\") failed: %s", template,
+                  strerror(errno));
         return PAM_SERVICE_ERR;
     }
     close(ccfd);
@@ -119,19 +119,19 @@ pamk5_cache_init(struct pam_args *args, const char *ccname, krb5_creds *creds,
     ctx = args->ctx;
     retval = krb5_cc_resolve(ctx->context, ccname, cache);
     if (retval != 0) {
-        pamk5_debug_krb5(args, "krb5_cc_resolve", retval);
+        pamk5_debug_krb5(args, retval, "krb5_cc_resolve failed");
         retval = PAM_SERVICE_ERR;
         goto done;
     }
     retval = krb5_cc_initialize(ctx->context, *cache, ctx->princ);
     if (retval != 0) {
-        pamk5_debug_krb5(args, "krb5_cc_initialize", retval);
+        pamk5_debug_krb5(args, retval, "krb5_cc_initialize failed");
         retval = PAM_SERVICE_ERR;
         goto done;
     }
     retval = krb5_cc_store_cred(ctx->context, *cache, creds);
     if (retval != 0) {
-        pamk5_debug_krb5(args, "krb5_cc_store_cred", retval);
+        pamk5_debug_krb5(args, retval, "krb5_cc_store_cred failed");
         retval = PAM_SERVICE_ERR;
         goto done;
     }

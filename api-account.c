@@ -40,7 +40,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
     args = pamk5_args_parse(pamh, flags, argc, argv);
     if (args == NULL) {
-        pamk5_error(NULL, "cannot allocate memory: %s", strerror(errno));
+        pamk5_err(NULL, "cannot allocate memory: %s", strerror(errno));
         pamret = PAM_AUTH_ERR;
         goto done;
     }
@@ -98,8 +98,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
             krb5_free_principal(ctx->context, ctx->princ);
         retval = krb5_cc_get_principal(ctx->context, ctx->cache, &ctx->princ);
         if (retval != 0) {
-            pamk5_error_krb5(args, "cannot retrieve principal from cache",
-                             retval);
+            pamk5_err_krb5(args, retval, "cannot get principal from cache");
             pamret = PAM_AUTH_ERR;
             goto done;
         }

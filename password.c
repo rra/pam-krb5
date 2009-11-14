@@ -46,7 +46,7 @@ pamk5_password_prompt(struct pam_args *args, char **pass)
     if (args->use_authtok) {
         pamret = pam_get_item(args->pamh, PAM_AUTHTOK, &tmp);
         if (tmp == NULL) {
-            pamk5_debug_pam(args, "no stored password", pamret);
+            pamk5_debug_pam(args, pamret, "no stored password");
             pamret = PAM_AUTHTOK_ERR;
             goto done;
         }
@@ -57,13 +57,13 @@ pamk5_password_prompt(struct pam_args *args, char **pass)
     if (pass1 == NULL) {
         pamret = pamk5_get_password(args, "Enter new", &pass1);
         if (pamret != PAM_SUCCESS) {
-            pamk5_debug_pam(args, "error getting new password", pamret);
+            pamk5_debug_pam(args, pamret, "error getting new password");
             pamret = PAM_AUTHTOK_ERR;
             goto done;
         }
         pamret = pamk5_get_password(args, "Retype new", &pass2);
         if (pamret != PAM_SUCCESS) {
-            pamk5_debug_pam(args, "error getting new password", pamret);
+            pamk5_debug_pam(args, pamret, "error getting new password");
             pamret = PAM_AUTHTOK_ERR;
             goto done;
         }
@@ -83,7 +83,7 @@ pamk5_password_prompt(struct pam_args *args, char **pass)
         /* Save the new password for other modules. */
         pamret = pam_set_item(args->pamh, PAM_AUTHTOK, pass1);
         if (pamret != PAM_SUCCESS) {
-            pamk5_debug_pam(args, "error storing password", pamret);
+            pamk5_debug_pam(args, pamret, "error storing password");
             pamret = PAM_AUTHTOK_ERR;
             goto done;
         }
@@ -120,7 +120,7 @@ change_password(struct pam_args *args, const char *pass)
 
     /* Everything from here on is just handling diagnostics and output. */
     if (retval != 0) {
-        pamk5_debug_krb5(args, "krb5_change_password", retval);
+        pamk5_debug_krb5(args, retval, "krb5_change_password failed");
         message = pamk5_compat_get_error(ctx->context, retval);
         pamk5_conv(args, message, PAM_ERROR_MSG, NULL);
         pamk5_compat_free_error(ctx->context, message);
@@ -135,7 +135,7 @@ change_password(struct pam_args *args, const char *pass)
         retval = PAM_AUTHTOK_ERR;
         message = malloc(result_string.length + result_code_string.length + 3);
         if (message == NULL)
-            pamk5_error(args, "malloc failure: %s", strerror(errno));
+            pamk5_err(args, "malloc failure: %s", strerror(errno));
         else {
             sprintf(message, "%.*s%s%.*s",
                     (int) result_code_string.length,
@@ -159,7 +159,7 @@ done:
      */
     if (retval != PAM_SUCCESS && args->clear_on_fail) {
         if (pam_set_item(args->pamh, PAM_AUTHTOK, NULL))
-            pamk5_error(args, "error clearing password");
+            pamk5_err(args, "error clearing password");
     }
     return retval;
 }

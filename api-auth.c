@@ -51,7 +51,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 
     args = pamk5_args_parse(pamh, flags, argc, argv);
     if (args == NULL) {
-        pamk5_error(NULL, "cannot allocate memory: %s", strerror(errno));
+        pamk5_err(NULL, "cannot allocate memory: %s", strerror(errno));
         pamret = PAM_SERVICE_ERR;
         goto done;
     }
@@ -59,8 +59,8 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 
     /* Temporary backward compatibility. */
     if (args->use_authtok && !args->force_first_pass) {
-        pamk5_error(args, "use_authtok option in authentication group should"
-                    " be changed to force_first_pass");
+        pamk5_err(args, "use_authtok option in authentication group should"
+                  " be changed to force_first_pass");
         args->force_first_pass = 1;
     }
 
@@ -140,13 +140,13 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     if (!ctx->expired) {
         pamret = pam_set_item(args->pamh, PAM_USER, ctx->name);
         if (pamret != PAM_SUCCESS)
-            pamk5_debug_pam(args, "cannot set PAM_USER", pamret);
+            pamk5_debug_pam(args, pamret, "cannot set PAM_USER");
     }
 
     /* Log the successful authentication. */
     retval = krb5_unparse_name(ctx->context, ctx->princ, &principal);
     if (retval != 0) {
-        pamk5_error_krb5(args, "krb5_unparse_name", retval);
+        pamk5_err_krb5(args, retval, "krb5_unparse_name failed");
         pam_syslog(args->pamh, LOG_INFO, "user %s authenticated as UNKNOWN",
                    ctx->name);
     } else {
@@ -215,7 +215,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
     args = pamk5_args_parse(pamh, flags, argc, argv);
     if (args == NULL) {
-        pamk5_error(NULL, "cannot allocate memory: %s", strerror(errno));
+        pamk5_err(NULL, "cannot allocate memory: %s", strerror(errno));
         pamret = PAM_SERVICE_ERR;
         goto done;
     }
@@ -239,13 +239,13 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
     if (flags & (PAM_REINITIALIZE_CRED | PAM_REFRESH_CRED))
         refresh = 1;
     if (refresh && (flags & PAM_ESTABLISH_CRED)) {
-        pamk5_error(args, "requested establish and refresh at the same time");
+        pamk5_err(args, "requested establish and refresh at the same time");
         pamret = PAM_SERVICE_ERR;
         goto done;
     }
     allow = PAM_REINITIALIZE_CRED | PAM_REFRESH_CRED | PAM_ESTABLISH_CRED;
     if (!(flags & allow)) {
-        pamk5_error(args, "invalid pam_setcred flags %d", flags);
+        pamk5_err(args, "invalid pam_setcred flags %d", flags);
         pamret = PAM_SERVICE_ERR;
         goto done;
     }
