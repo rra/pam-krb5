@@ -27,11 +27,13 @@ AC_CHECK_FUNCS([issetugid])
 dnl Probe for the functionality of the PAM libraries and their include file
 dnl naming.  Mac OS X puts them in pam/* instead of security/*.
 AC_SEARCH_LIBS([pam_set_data], [pam])
-AC_CHECK_FUNCS([pam_modutil_getpwnam])
+AC_CHECK_FUNCS([pam_modutil_getpwnam pam_vsyslog])
 AC_CHECK_HEADERS([security/pam_modutil.h])
 AC_CHECK_HEADERS([security/pam_appl.h], ,
     [AC_CHECK_HEADERS([pam/pam_appl.h], ,
         [AC_MSG_ERROR([No PAM header files found])])])
+AC_CHECK_HEADERS([security/pam_ext.h], ,
+    [AC_CHECK_HEADERS([pam/pam_ext.h])])
 RRA_HEADER_PAM_CONST
 
 dnl Probe for the location and functionality of the Kerberos libraries.

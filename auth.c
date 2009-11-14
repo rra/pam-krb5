@@ -753,7 +753,8 @@ done:
 
     /*
      * If we failed, free any credentials we have sitting around and return
-     * the appropriate PAM error code.
+     * the appropriate PAM error code.  If we succeeded and debug is enabled,
+     * log the successful authentication.
      */ 
     if (retval == 0)
         retval = PAM_SUCCESS;

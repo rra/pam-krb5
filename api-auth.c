@@ -19,6 +19,7 @@
 #include "config.h"
 
 #include <errno.h>
+#include <krb5.h>
 #ifdef HAVE_SECURITY_PAM_APPL_H
 # include <security/pam_appl.h>
 # include <security/pam_modules.h>
@@ -27,6 +28,7 @@
 # include <pam/pam_modules.h>
 #endif
 #include <string.h>
+#include <syslog.h>
 
 #include "internal.h"
 
@@ -48,8 +50,10 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     struct pam_args *args;
     krb5_creds *creds = NULL;
     char *pass = NULL;
+    char *principal;
     int pamret;
     int set_context = 0;
+    krb5_error_code retval;
 
     args = pamk5_args_parse(pamh, flags, argc, argv);
     if (args == NULL) {
@@ -143,6 +147,19 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
         pamret = pam_set_item(args->pamh, PAM_USER, ctx->name);
         if (pamret != PAM_SUCCESS)
             pamk5_debug_pam(args, "cannot set PAM_USER", pamret);
+    }
+
+    /* Log the successful authentication. */
+    retval = krb5_unparse_name(ctx->context, ctx->princ, &principal);
+    if (retval != 0) {
+        pamk5_error_krb5(args, "krb5_unparse_name", retval);
+        pamk5_compat_syslog(args->pamh, LOG_INFO,
+                            "user %s authenticated as UNKNOWN", ctx->name);
+    } else {
+        pamk5_compat_syslog(args->pamh, LOG_INFO,
+                            "user %s authenticated as %s", ctx->name,
+                            principal);
+        free(principal);
     }
 
     /* Now that we know we're successful, we can store the context. */

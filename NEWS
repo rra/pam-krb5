@@ -9,6 +9,9 @@ pam-krb5 4.1 (unreleased)
     second module won't be able to work for any ignored user since it will
     see no saved password and use_authtok will reject the password change.
 
+    Log successful authentications to syslog with priority LOG_INFO,
+    including the Kerberos principal used for authentication.
+
 pam-krb5 4.0 (2009-11-13)
 
     UPGRADE WARNING: If you were using pam_krb5 with the use_authtok

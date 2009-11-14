@@ -246,6 +246,10 @@ int pamk5_compat_issetugid(void);
 /* Calls pam_modutil_getpwnam if available, otherwise getpwnam. */
 struct passwd *pamk5_compat_getpwnam(struct pam_args *, const char *);
 
+/* Calls pam_syslog and pam_vsyslog if available, otherwise replacements. */
+void pamk5_compat_syslog(pam_handle_t *, int, const char *, ...);
+void pamk5_compat_vsyslog(pam_handle_t *, int, const char *, va_list);
+
 /* Error reporting and debugging functions. */
 void pamk5_error(struct pam_args *, const char *, ...);
 void pamk5_error_krb5(struct pam_args *, const char *, int);

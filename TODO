@@ -17,10 +17,6 @@ PAM API:
  * Tighter verification that all of our flags are valid might be a good
    idea.
 
-Logging:
-
- * Log the principal used for authentication in the search_k5login case.
-
 Build System:
 
  * It would be very nice to use Automake to match my other projects, but
