@@ -1,7 +1,7 @@
 /*
  * Implements the PAM password group API (pam_sm_chauthtok).
  *
- * Copyright 2005, 2006, 2007, 2008 Russ Allbery <rra@debian.org>
+ * Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@debian.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  *
@@ -54,10 +54,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
         goto done;
     }
 
-    /*
-     * Skip root password changes on the assumption that they'll be handled by
-     * some other module.  Don't tromp on pamret here unless we're failing.
-     */
+    /* Check whether we should ignore this user. */
     if (args->ignore_root || args->minimum_uid > 0) {
         status = pam_get_user(pamh, &user, NULL);
         if (status == PAM_SUCCESS && pamk5_should_ignore(args, user)) {
@@ -92,7 +89,10 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
         pamk5_conv(args, "Password expired.  You must change it now.",
                    PAM_TEXT_INFO, NULL);
 
-    /* Do the password change.  This may only get tickets. */
+    /*
+     * Do the password change.  This may only get tickets if we're doing the
+     * preliminary check phase.
+     */
     pamret = pamk5_password_change(args, !(flags & PAM_UPDATE_AUTHTOK));
     if (!(flags & PAM_UPDATE_AUTHTOK))
         goto done;
@@ -105,7 +105,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
         krb5_creds *creds = NULL;
 
         pamk5_debug(args, "obtaining credentials with new password");
-        args->use_authtok = 1;
+        args->force_first_pass = 1;
         pamret = pamk5_password_auth(args, NULL, &creds);
         if (pamret != PAM_SUCCESS)
             goto done;

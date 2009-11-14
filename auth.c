@@ -619,9 +619,11 @@ pamk5_password_auth(struct pam_args *args, const char *service,
     set_credential_options(args, opts, service != NULL);
 
     /*
-     * If try_first_pass or use_first_pass is set, grab the old password (if
-     * set) instead of prompting.  If try_first_pass is set, and the old
-     * password doesn't work, prompt for the password (loop).
+     * If try_first_pass, use_first_pass, or force_first_pass is set, grab the
+     * old password (if set) instead of prompting.  If try_first_pass is set,
+     * and the old password doesn't work, prompt for the password (loop).  If
+     * use_first_pass is set, only prompt if there's no existing password.  If
+     * force_first_pass is set, fail if the password is not already set.
      *
      * The empty password has to be handled separately, since the Kerberos
      * libraries may treat it as equivalent to no password and prompt when
@@ -635,16 +637,16 @@ pamk5_password_auth(struct pam_args *args, const char *service,
      * to turn off type-checking entirely.
      */
     retry = args->try_first_pass ? 1 : 0;
-    if (args->try_first_pass || args->use_first_pass || args->use_authtok)
+    if (args->try_first_pass || args->use_first_pass || args->force_first_pass)
         retval = pam_get_item(args->pamh, authtok, (void *) &pass);
-    if (args->use_first_pass || args->use_authtok) {
+    if (args->use_first_pass || args->force_first_pass) {
         if (pass != NULL && *pass == '\0') {
             pamk5_debug(args, "rejecting empty password");
             retval = PAM_AUTH_ERR;
             goto done;
         }
     }
-    if (args->use_authtok && (retval != PAM_SUCCESS || pass == NULL)) {
+    if (args->force_first_pass && (retval != PAM_SUCCESS || pass == NULL)) {
         pamk5_debug_pam(args, "no stored password", retval);
         retval = PAM_SERVICE_ERR;
         goto done;
