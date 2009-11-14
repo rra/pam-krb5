@@ -1,0 +1,13 @@
+libpam-krb5 (4.0-1) unstable; urgency=low
+
+  The meaning of use_authtok has changed in this version to only affect
+  the new password when changing passwords.  If you were using this
+  parameter in the auth group, you should now use force_first_pass
+  instead.  If you were using it in the password group, you should add
+  try_first_pass, use_first_pass, or force_first_pass depending on how you
+  want to handle prompting for the old password.  use_authtok in the auth
+  group will temporarily be treated as equivalent to force_first_pass for
+  backwards compatibility.
+
+ -- Russ Allbery <rra@debian.org>  Fri, 13 Nov 2009 18:26:23 -0800
+
