@@ -66,6 +66,14 @@ AC_CHECK_FUNC([krb5_get_init_creds_opt_free],
     [RRA_FUNC_KRB5_GET_INIT_CREDS_OPT_FREE_ARGS])
 RRA_LIB_KRB5_RESTORE
 
+dnl Other probes of the system libraries.
+AC_HEADER_STDBOOL
+AC_CHECK_HEADERS([sys/bittypes.h])
+AC_CHECK_DECLS([snprintf, vsnprintf])
+AC_TYPE_LONG_LONG_INT
+RRA_FUNC_SNPRINTF
+AC_REPLACE_FUNCS([asprintf])
+
 dnl Everything we build needs the Kerberos libraries.
 AM_CPPFLAGS="$KRB5_CPPFLAGS"
 AM_LDFLAGS="$KRB5_LDFLAGS"
