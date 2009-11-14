@@ -1,3 +1,20 @@
+libpam-krb5 (4.0-1) UNRELEASED; urgency=low
+
+  * New upstream release.
+    - Add force_first_pass parameter to auth and password groups to force
+      use of the password in the PAM data even if none is set, replacing
+      part of the old meaning of use_authtok.
+    - use_authtok now only affects the new password during password
+      change, although use_authtok in the auth group has the old meaning
+      for backward compatibility.  (Closes: #549188)
+    - use_first_pass and try_first_pass no longer affect how the new
+      password is obtained during password changes.
+    - Stop returning PAM_IGNORE from pam_setcred.  This confuses older
+      versions of the Linux PAM library.
+    - Better logging in pam_sm_{open,close}_session.
+
+ -- Russ Allbery <rra@debian.org>  Fri, 13 Nov 2009 18:19:45 -0800
+
 libpam-krb5 (3.15-1) unstable; urgency=low
 
   * New upstream release.
