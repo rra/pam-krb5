@@ -68,11 +68,12 @@ pamk5_get_password(struct pam_args *args, const char *prefix, char **password)
     krb5_error_code k5_errno;
     int retval;
 
-    if (args->expose_account || prefix != NULL) {
-        k5_errno = krb5_unparse_name(ctx->context, ctx->princ, &principal);
-        if (k5_errno != 0)
-            pamk5_debug_krb5(args, "krb5_unparse_name", k5_errno);
-    }
+    if (args->expose_account || prefix != NULL)
+        if (ctx != NULL && ctx->context != NULL && ctx->princ != NULL) {
+            k5_errno = krb5_unparse_name(ctx->context, ctx->princ, &principal);
+            if (k5_errno != 0)
+                pamk5_debug_krb5(args, "krb5_unparse_name", k5_errno);
+        }
     if (prefix == NULL) {
         if (args->expose_account && principal != NULL) {
             length = strlen("Password for ") + strlen(principal) + 3;
