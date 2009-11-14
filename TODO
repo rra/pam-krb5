@@ -45,10 +45,6 @@ Code Cleanup:
    Helpful for this would be improved documentation of what error codes
    are permitted and where.
 
- * Add portability glue for a missing or broken snprintf and use snprintf
-   everywhere sprintf is currently used.  A portable replacement for
-   mkstemp is probably also a good idea.
-
 Documentation:
 
  * Document PKINIT configuration with MIT in krb5.conf.  It looks like the
