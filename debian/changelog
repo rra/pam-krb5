@@ -12,6 +12,11 @@ libpam-krb5 (4.0-1) UNRELEASED; urgency=low
     - Stop returning PAM_IGNORE from pam_setcred.  This confuses older
       versions of the Linux PAM library.
     - Better logging in pam_sm_{open,close}_session.
+  * Add try_first_pass to the pam-krb5 password group pam-auth-update
+    configuration.  Unlike the previous behavior, this means that if the
+    Kerberos password is different than the password of an earlier module
+    in the password group, pam-krb5 will now prompt the user for the
+    Kerberos password.
 
  -- Russ Allbery <rra@debian.org>  Fri, 13 Nov 2009 18:19:45 -0800
 
