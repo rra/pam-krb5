@@ -18,8 +18,9 @@ BLURB
   services, password changing, and password expiration, as well as all the
   standard expected PAM features.  It works correctly with OpenSSH, even
   with ChallengeResponseAuthentication and PrivilegeSeparation enabled,
-  and supports configuration either by PAM options or in krb5.conf or
-  both.
+  and supports extensive configuration either by PAM options or in
+  krb5.conf or both.  PKINIT is supported with recent versions of both MIT
+  Kerberos and Heimdal.
 
 DESCRIPTION
 
