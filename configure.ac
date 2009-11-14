@@ -1,27 +1,24 @@
 dnl Process this file with Autoconf to produce a configure script.
 dnl
+dnl Copyright 2009 Board of Trustees, Leland Stanford Jr. University
 dnl Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@debian.org>
 dnl Copyright 2005 Andres Salomon <dilinger@debian.org>
 dnl Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
 dnl
 dnl See LICENSE for licensing terms.
 
-AC_PREREQ([2.63])
+AC_PREREQ([2.64])
 AC_INIT([pam-krb5], [3.15], [rra@stanford.edu])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
-
-m4_include([m4/krb5.m4])
-m4_include([m4/krb5-pkinit.m4])
-m4_include([m4/lib-depends.m4])
-m4_include([m4/lib-pathname.m4])
-m4_include([m4/pam-const.m4])
+AM_INIT_AUTOMAKE([1.11 check-news silent-rules])
+AM_MAINTAINER_MODE
 
 AC_PROG_CC
 AC_USE_SYSTEM_EXTENSIONS
+AM_PROG_CC_C_O
 AC_PROG_INSTALL
-AC_PROG_MAKE_SET
-AC_CANONICAL_HOST
+LT_INIT([disable-static])
 
 dnl Check for the Solaris issetugid function, which is nicer than comparing
 dnl real and effective UIDs and GIDs.
@@ -39,7 +36,7 @@ RRA_HEADER_PAM_CONST
 
 dnl Probe for the location and functionality of the Kerberos libraries.
 RRA_LIB_KRB5
-RRA_LIB_KRB5_SET
+RRA_LIB_KRB5_SWITCH
 AC_CHECK_HEADERS([hx509_err.h k5profile.h])
 AC_CHECK_MEMBER([krb5_creds.session],
     [AC_DEFINE([HAVE_KRB5_HEIMDAL], [1],
@@ -58,13 +55,14 @@ AC_CHECK_FUNCS([krb5_get_init_creds_opt_set_pkinit],
     [RRA_FUNC_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT_ARGS])
 AC_CHECK_FUNC([krb5_get_init_creds_opt_free],
     [RRA_FUNC_KRB5_GET_INIT_CREDS_OPT_FREE_ARGS])
+RRA_LIB_KRB5_RESTORE
 
-dnl Crank up the warnings if we're using GCC.
-AS_IF([test x"$GCC" = x"yes"], [CFLAGS="-Wall $CFLAGS"])
+dnl Everything we build needs the Kerberos libraries.
+AM_CPPFLAGS="$KRB5_CPPFLAGS"
+AM_LDFLAGS="$KRB5_LDFLAGS"
 
-dnl Try to add the compiler flags for position-independent code and try to
-dnl specify the binding so that any references within the PAM module are
-dnl resolved to the functions in that module in preference to any external
+dnl Try to specify the binding so that any references within the PAM module
+dnl are resolved to the functions in that module in preference to any external
 dnl function.
 dnl
 dnl Also, if and only if we're on Linux, make sure that all the symbols in the
@@ -79,22 +77,13 @@ dnl More platforms could be handled here.  Contributions welcome.
 MAP='-Wl,--version-script=${srcdir}/pam_krb5.map'
 LD="$CC"
 AS_CASE([$host],
-    [*-darwin*],
-    [AS_IF([test x"$GCC" = x"yes"],
-        [LDFLAGS="-bundle $LDFLAGS"],
-        [AC_MSG_ERROR([Only know compiler flags for gcc on this platform])])],
-
     [*-hpux*],
     [AS_IF([test x"$GCC" = x"yes"],
-        [CFLAGS="-fPIC $CFLAGS"
-         LDFLAGS="-fPIC -shared -Wl,-Bsymbolic $LDFLAGS"],
-        [CFLAGS="+z $CFLAGS"
-         LD="ld"
-         LDFLAGS="+vshlibunsats -b $LDFLAGS"])],
+        [AM_LDFLAGS="-Wl,-Bsymbolic $AM_LDFLAGS"],
+        [AM_LDFLAGS="-Wl,+vshlibunsats $AM_LDFLAGS"])],
 
     [*-linux*],
-    [CFLAGS="-fPIC $CFLAGS"
-     LDFLAGS="-fPIC -shared -Wl,-z,defs -Wl,-Bsymbolic $MAP $LDFLAGS"
+    [AM_LDFLAGS="-Wl,-z,defs -Wl,-Bsymbolic $MAP $AM_LDFLAGS"
      AS_IF([test x"${prefix}" = x"/usr"],
         [AS_IF([test x"${libdir}" = x'${exec_prefix}/lib'],
             [AS_CASE(["$host"],
@@ -103,18 +92,8 @@ AS_CASE([$host],
 
     [*-solaris2*],
     [AS_IF([test x"$GCC" = x"yes"],
-        [CFLAGS="-fPIC $CFLAGS"
-         LDFLAGS="-fPIC -shared -Wl,-Bsymbolic $LDFLAGS"],
-        [CFLAGS="-KPIC $CFLAGS"
-         LDFLAGS="-G -xldscope=symbolic $LDFLAGS"])],
-
-    [*],
-    [AS_IF([test x"$GCC" = x"yes"],
-        [CFLAGS="-fPIC $CFLAGS"
-         LDFLAGS="-fPIC -shared $LDFLAGS"],
-        [AC_MSG_ERROR([Only know compiler flags for gcc on this platform])])])
-
-AC_SUBST([LD])
+        [AM_LDFLAGS="-Wl,-Bsymbolic $AM_LDFLAGS"],
+        [AM_LDFLAGS="-Wl,-xldscope=symbolic $AM_LDFLAGS"])])
 
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_FILES([Makefile])
