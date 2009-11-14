@@ -261,10 +261,12 @@ pamk5_prompter_krb5(krb5_context context UNUSED, void *data, const char *name,
         pam_prompts++;
     }
     for (i = 0; i < num_prompts; i++) {
-        msg[pam_prompts]->msg = malloc(strlen(prompts[i].prompt) + 3);
-        if (msg[pam_prompts]->msg == NULL)
+        int status;
+
+        status = asprintf((char **) &msg[pam_prompts]->msg, "%s: ",
+                          prompts[i].prompt);
+        if (status < 0)
             goto cleanup;
-        sprintf((char *) msg[pam_prompts]->msg, "%s: ", prompts[i].prompt);
         msg[pam_prompts]->msg_style = prompts[i].hidden ? PAM_PROMPT_ECHO_OFF
                                                         : PAM_PROMPT_ECHO_ON;
         pam_prompts++;

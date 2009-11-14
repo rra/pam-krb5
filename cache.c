@@ -60,13 +60,11 @@ pamk5_set_krb5ccname(struct pam_args *args, const char *name, const char *key)
     char *env_name = NULL;
     int pamret;
 
-    env_name = malloc(strlen(key) + 1 + strlen(name) + 1);
-    if (env_name == NULL) {
-        pamk5_err(args, "malloc failure: %s", strerror(errno));
+    if (asprintf(&env_name, "%s=%s", key, name) < 0) {
+        pamk5_crit(args, "asprintf failed: %s", strerror(errno));
         pamret = PAM_BUF_ERR;
         goto done;
     }
-    sprintf(env_name, "%s=%s", key, name);
     pamret = pam_putenv(args->pamh, env_name);
     if (pamret != PAM_SUCCESS) {
         pamk5_err_pam(args, pamret, "pam_putenv failed");

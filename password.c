@@ -129,19 +129,20 @@ change_password(struct pam_args *args, const char *pass)
     }
     if (result_code != 0) {
         char *message;
+        int status;
 
         pamk5_debug(args, "krb5_change_password: %s",
                     (char *) result_code_string.data);
         retval = PAM_AUTHTOK_ERR;
-        message = malloc(result_string.length + result_code_string.length + 3);
-        if (message == NULL)
-            pamk5_err(args, "malloc failure: %s", strerror(errno));
+        status = asprintf(&message, "%.*s%s%.*s",
+                          (int) result_code_string.length,
+                          (char *) result_code_string.data,
+                          result_string.length == 0 ? "" : ": ",
+                          (int) result_string.length,
+                          (char *) result_string.data);
+        if (status < 0)
+            pamk5_crit(args, "asprintf failed: %s", strerror(errno));
         else {
-            sprintf(message, "%.*s%s%.*s",
-                    (int) result_code_string.length,
-                    (char *) result_code_string.data,
-                    result_string.length == 0 ? "" : ": ",
-                    (int) result_string.length, (char *) result_string.data);
             pamk5_conv(args, message, PAM_ERROR_MSG, NULL);
             free(message);
         }
