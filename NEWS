@@ -66,6 +66,11 @@ pam-krb5 3.16 (unreleased)
     hand-configured linker rules.  This may improve portability on some
     platforms and may hurt it on other platforms.
 
+    If configured with a prefix of /usr on Linux, use /lib, /lib32, or
+    /lib64 as an installation path based on the size of an integer in the
+    compilation environment rather than based on known 64-bit Linux
+    variants.
+
     Update to rra-c-util 2.0:
 
     * Sanity-check the results of krb5-config before proceeding.

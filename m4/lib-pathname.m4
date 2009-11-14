@@ -9,6 +9,9 @@ dnl the compilation environment.  If a suffix is given, a slash and that
 dnl suffix will be appended, to allow for adding a subdirectory of the library
 dnl directory.
 dnl
+dnl This file also provides the Autoconf macro RRA_SET_LIBDIR, which sets the
+dnl libdir variable to PREFIX/lib{,32,64} as appropriate.
+dnl
 dnl Written by Russ Allbery <rra@stanford.edu>
 dnl Copyright 2008, 2009 Board of Trustees, Leland Stanford Jr. University
 dnl
@@ -31,8 +34,8 @@ AC_DEFUN([_RRA_LIB_ARCH_NAME],
      [AS_IF([test "$ac_cv_sizeof_long" -eq 8 && test -d /usr/lib64],
          [rra_lib_arch_name=lib64])])])
 
-dnl The public interface.  Set VARIABLE to PREFIX/lib{,32,64} or
-dnl PREFIX/lib{,32,64}/SUFFIX as appropriate.
+dnl Set VARIABLE to -LPREFIX/lib{,32,64} or -LPREFIX/lib{,32,64}/SUFFIX as
+dnl appropriate.
 AC_DEFUN([RRA_SET_LDFLAGS],
 [AC_REQUIRE([_RRA_LIB_ARCH_NAME])
  AS_IF([test -d "$2/$rra_lib_arch_name"],
@@ -43,3 +46,10 @@ AC_DEFUN([RRA_SET_LDFLAGS],
         [$1="[$]$1 -L$2/lib"],
         [$1="[$]$1 -L$2/lib/$3"])])
  $1=`echo "[$]$1" | sed -e 's/^ *//'`])
+
+dnl Set libdir to PREFIX/lib{,32,64} as appropriate.
+AC_DEFUN([RRA_SET_LIBDIR],
+[AC_REQUIRE([_RRA_LIB_ARCH_NAME])
+ AS_IF([test -d "$1/$rra_lib_arch_name"],
+    [libdir="$1/${rra_lib_arch_name}"],
+    [libdir="$1/lib"])])

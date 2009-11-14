@@ -88,9 +88,7 @@ AS_CASE([$host],
     [AM_LDFLAGS="-Wl,-z,defs -Wl,-Bsymbolic $MAP $AM_LDFLAGS"
      AS_IF([test x"${prefix}" = x"/usr"],
         [AS_IF([test x"${libdir}" = x'${exec_prefix}/lib'],
-            [AS_CASE(["$host"],
-                [x86_64-*|powerpc64-*|s390x-*|sparc64-*], [libdir="/lib64"],
-                [*], [libdir="/lib"])])])],
+            [RRA_SET_LIBDIR])])],
 
     [*-solaris2*],
     [AS_IF([test x"$GCC" = x"yes"],
