@@ -13,16 +13,11 @@
  * See LICENSE for licensing terms.
  */
 
-#include "config.h"
+#include <config.h>
+#include <portable/pam.h>
 
 #include <errno.h>
 #include <krb5.h>
-#ifndef HAVE_PAM_MODUTIL_GETPWNAM
-# include <pwd.h>
-#endif
-#ifdef HAVE_SECURITY_PAM_MODUTIL_H
-# include <security/pam_modutil.h>
-#endif
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -175,22 +170,6 @@ pamk5_compat_secure_context(krb5_context *ctx)
     return krb5_init_secure_context(ctx);
 #else
     return krb5_init_context(ctx);
-#endif
-}
-
-
-/*
- * Linux PAM provides a thread-safe version of getpwnam that we want to use if
- * available.  If it's not, fall back on getpwnam.  (Ideally, we should check
- * for getpwnam_r and use it, but I haven't written that routine.)
- */
-struct passwd *
-pamk5_compat_getpwnam(struct pam_args *args UNUSED, const char *user)
-{
-#ifdef HAVE_PAM_MODUTIL_GETPWNAM
-    return pam_modutil_getpwnam(args->pamh, user);
-#else
-    return getpwnam(user);
 #endif
 }
 

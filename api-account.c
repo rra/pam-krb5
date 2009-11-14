@@ -5,7 +5,7 @@
  * user's authorization against .k5login (or whatever equivalent we've been
  * configured for).
  *
- * Copyright 2005, 2006, 2007, 2008 Russ Allbery <rra@debian.org>
+ * Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@debian.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  *
@@ -15,21 +15,15 @@
 /* Get prototypes for the account management functions. */
 #define PAM_SM_ACCOUNT
 
-#include "config.h"
+#include <config.h>
+#include <portable/pam.h>
 
 #include <errno.h>
 #include <krb5.h>
-#ifdef HAVE_SECURITY_PAM_APPL_H
-# include <security/pam_appl.h>
-# include <security/pam_modules.h>
-#elif HAVE_PAM_PAM_APPL_H
-# include <pam/pam_appl.h>
-# include <pam/pam_modules.h>
-#endif
 #include <stdlib.h>
 #include <string.h>
 
-#include "internal.h"
+#include <internal.h>
 
 /*
  * Check the authorization of the user.  It's not entirely clear what this

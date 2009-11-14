@@ -1,29 +1,23 @@
 /*
  * Kerberos password changing.
  *
- * Copyright 2005, 2006, 2007, 2008 Russ Allbery <rra@debian.org>
+ * Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@debian.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  *
  * See LICENSE for licensing terms.
  */
 
-#include "config.h"
+#include <config.h>
+#include <portable/pam.h>
 
 #include <errno.h>
 #include <krb5.h>
-#ifdef HAVE_SECURITY_PAM_APPL_H
-# include <security/pam_appl.h>
-# include <security/pam_modules.h>
-#elif HAVE_PAM_PAM_APPL_H
-# include <pam/pam_appl.h>
-# include <pam/pam_modules.h>
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "internal.h"
+#include <internal.h>
 
 /* Solaris 8 has deficient PAM. */
 #ifndef PAM_AUTHTOK_RECOVER_ERR

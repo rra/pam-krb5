@@ -5,81 +5,26 @@
  * versions only log anything if debugging was enabled; the error versions
  * always log.
  *
- * Copyright 2005, 2006, 2007 Russ Allbery <rra@debian.org>
+ * Copyright 2005, 2006, 2007, 2009 Russ Allbery <rra@debian.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  *
  * See LICENSE for licensing terms.
  */
 
-#include "config.h"
+#include <config.h>
+#include <portable/pam.h>
 
 #include <krb5.h>
-#ifdef HAVE_SECURITY_PAM_APPL_H
-# include <security/pam_appl.h>
-# include <security/pam_modules.h>
-#elif HAVE_PAM_PAM_APPL_H
-# include <pam/pam_appl.h>
-# include <pam/pam_modules.h>
-#endif
-#ifdef HAVE_SECURITY_PAM_EXT_H
-# include <security/pam_ext.h>
-#elif HAVE_PAM_PAM_EXT_H
-# include <pam/pam_ext.h>
-#endif
 #include <stdarg.h>
 #include <stdio.h>
 #include <syslog.h>
 
-#include "internal.h"
+#include <internal.h>
 
 #ifndef LOG_AUTHPRIV
 # define LOG_AUTHPRIV LOG_AUTH
 #endif
-
-/*
- * Linux PAM provides pam_vsyslog.  Just call it if it's available; otherwise,
- * implement our own.  We won't be able to get access to which PAM group we're
- * in if we implement our own, but we try to get the service name at least.
- */
-void
-pamk5_compat_vsyslog(pam_handle_t *pamh, int priority, const char *fmt,
-                     va_list args)
-{
-#ifdef HAVE_PAM_VSYSLOG
-    pam_vsyslog(pamh, priority, fmt, args);
-#else
-    char msg[BUFSIZ];
-    const char *service = NULL;
-    int retval;
-
-    retval = pam_get_item(pamh, PAM_SERVICE, (void **) &service);
-    if (retval != PAM_SUCCESS)
-        service = NULL;
-    vsnprintf(msg, sizeof(msg), fmt, args);
-    syslog(priority | LOG_AUTHPRIV, "pam_krb5%s%s%s: %s",
-           (service == NULL) ? "" : "(",
-           (service == NULL) ? "" : service,
-           (service == NULL) ? "" : ")", msg);
-#endif
-}
-
-
-/*
- * Linux PAM provides pam_syslog, but don't bother using it; just always
- * implement in terms of pamk5_compat_vsyslog.  Then we don't need variadic
- * macros.
- */
-void
-pamk5_compat_syslog(pam_handle_t *pamh, int priority, const char *fmt, ...)
-{
-    va_list args;
-
-    va_start(args, fmt);
-    pamk5_compat_vsyslog(pamh, priority, fmt, args);
-    va_end(args);
-}
-
 
 /*
  * Basic error logging.  Log a message with LOG_ERR priority.

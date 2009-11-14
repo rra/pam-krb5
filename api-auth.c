@@ -16,21 +16,15 @@
 /* Get the prototypes for the authentication functions. */
 #define PAM_SM_AUTH
 
-#include "config.h"
+#include <config.h>
+#include <portable/pam.h>
 
 #include <errno.h>
 #include <krb5.h>
-#ifdef HAVE_SECURITY_PAM_APPL_H
-# include <security/pam_appl.h>
-# include <security/pam_modules.h>
-#elif HAVE_PAM_PAM_APPL_H
-# include <pam/pam_appl.h>
-# include <pam/pam_modules.h>
-#endif
 #include <string.h>
 #include <syslog.h>
 
-#include "internal.h"
+#include <internal.h>
 
 /*
  * Authenticate a user via Kerberos 5.
@@ -153,12 +147,11 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     retval = krb5_unparse_name(ctx->context, ctx->princ, &principal);
     if (retval != 0) {
         pamk5_error_krb5(args, "krb5_unparse_name", retval);
-        pamk5_compat_syslog(args->pamh, LOG_INFO,
-                            "user %s authenticated as UNKNOWN", ctx->name);
+        pam_syslog(args->pamh, LOG_INFO, "user %s authenticated as UNKNOWN",
+                   ctx->name);
     } else {
-        pamk5_compat_syslog(args->pamh, LOG_INFO,
-                            "user %s authenticated as %s", ctx->name,
-                            principal);
+        pam_syslog(args->pamh, LOG_INFO, "user %s authenticated as %s",
+                   ctx->name, principal);
         free(principal);
     }
 

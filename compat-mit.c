@@ -8,14 +8,14 @@
  * See LICENSE for licensing terms.
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <errno.h>
 #include <krb5.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "internal.h"
+#include <internal.h>
 
 void
 pamk5_compat_free_data_contents(krb5_context c, krb5_data *data)

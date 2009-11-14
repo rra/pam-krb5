@@ -13,23 +13,16 @@
  * See LICENSE for licensing terms.
  */
 
-/* Get prototypes for both the authentication and session functions. */
-#define PAM_SM_AUTH
+/* Get prototypes for the session functions. */
 #define PAM_SM_SESSION
 
-#include "config.h"
+#include <config.h>
+#include <portable/pam.h>
 
 #include <errno.h>
-#ifdef HAVE_SECURITY_PAM_APPL_H
-# include <security/pam_appl.h>
-# include <security/pam_modules.h>
-#elif HAVE_PAM_PAM_APPL_H
-# include <pam/pam_appl.h>
-# include <pam/pam_modules.h>
-#endif
 #include <string.h>
 
-#include "internal.h"
+#include <internal.h>
 
 /*
  * Store the user's credentials.  Nearly all of the work is done by

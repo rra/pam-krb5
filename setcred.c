@@ -12,25 +12,19 @@
  * See LICENSE for licensing terms.
  */
 
-#include "config.h"
+#include <config.h>
+#include <portable/pam.h>
 
 #include <errno.h>
 #include <krb5.h>
 #include <pwd.h>
-#ifdef HAVE_SECURITY_PAM_APPL_H
-# include <security/pam_appl.h>
-# include <security/pam_modules.h>
-#elif HAVE_PAM_PAM_APPL_H
-# include <pam/pam_appl.h>
-# include <pam/pam_modules.h>
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "internal.h"
+#include <internal.h>
 
 /*
  * Given a cache name and an existing cache, initialize a new cache, store the
@@ -293,7 +287,7 @@ pamk5_setcred(struct pam_args *args, int refresh)
      * pam_authenticate, but for either pam_setcred (other than DELETE) or for
      * pam_open_session, the user must be a local account.
      */
-    pw = pamk5_compat_getpwnam(args, ctx->name);
+    pw = pam_modutil_getpwnam(args->pamh, ctx->name);
     if (pw == NULL) {
         pamk5_debug(args, "getpwnam failed for %s", ctx->name);
         pamret = PAM_USER_UNKNOWN;

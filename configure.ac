@@ -10,6 +10,7 @@ dnl See LICENSE for licensing terms.
 AC_PREREQ([2.64])
 AC_INIT([pam-krb5], [4.0], [rra@stanford.edu])
 AC_CONFIG_AUX_DIR([build-aux])
+AC_CONFIG_LIBOBJ_DIR([portable])
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([1.11 check-news silent-rules])
 AM_MAINTAINER_MODE
@@ -27,14 +28,20 @@ AC_CHECK_FUNCS([issetugid])
 dnl Probe for the functionality of the PAM libraries and their include file
 dnl naming.  Mac OS X puts them in pam/* instead of security/*.
 AC_SEARCH_LIBS([pam_set_data], [pam])
-AC_CHECK_FUNCS([pam_modutil_getpwnam pam_vsyslog])
-AC_CHECK_HEADERS([security/pam_modutil.h])
+AC_CHECK_FUNCS([pam_modutil_getpwnam])
+AC_REPLACE_FUNCS([pam_syslog pam_vsyslog])
+AC_CHECK_HEADERS([security/pam_modutil.h], ,
+    [AC_CHECK_HEADERS([pam/pam_modutil.h])])
 AC_CHECK_HEADERS([security/pam_appl.h], ,
     [AC_CHECK_HEADERS([pam/pam_appl.h], ,
         [AC_MSG_ERROR([No PAM header files found])])])
 AC_CHECK_HEADERS([security/pam_ext.h], ,
     [AC_CHECK_HEADERS([pam/pam_ext.h])])
 RRA_HEADER_PAM_CONST
+
+dnl Needed for the pam_vsyslog replacement function.
+AC_DEFINE([MODULE_NAME], ["pam_krb5"],
+    [The name of the PAM module, used by the pam_vsyslog replacement.])
 
 dnl Probe for the location and functionality of the Kerberos libraries.
 RRA_LIB_KRB5

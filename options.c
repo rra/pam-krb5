@@ -12,13 +12,13 @@
  * See LICENSE for licensing terms.
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <krb5.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "internal.h"
+#include <internal.h>
 
 /*
  * Not all platforms have this, so just implement it ourselves.  Copy a

@@ -4,30 +4,24 @@
  * Provides functions for creating ticket caches, used by pam_authenticate,
  * pam_setcred, and pam_chauthtok after changing an expired password.
  *
- * Copyright 2005, 2006, 2007, 2008 Russ Allbery <rra@debian.org>
+ * Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@debian.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  *
  * See LICENSE for licensing terms.
  */
 
-#include "config.h"
+#include <config.h>
+#include <portable/pam.h>
 
 #include <errno.h>
 #include <krb5.h>
-#ifdef HAVE_SECURITY_PAM_APPL_H
-# include <security/pam_appl.h>
-# include <security/pam_modules.h>
-#elif HAVE_PAM_PAM_APPL_H
-# include <pam/pam_appl.h>
-# include <pam/pam_modules.h>
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#include "internal.h"
+#include <internal.h>
 
 /*
  * Get the name of a cache.  Takes the name of the environment variable that

@@ -6,34 +6,29 @@
  * the appropriate internal functions.  This interface is used by both the
  * authentication and the password groups.
  *
- * Copyright 2005, 2006, 2007, 2008 Russ Allbery <rra@debian.org>
+ * Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@debian.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  *
  * See LICENSE for licensing terms.
  */
 
-#include "config.h"
+#include <config.h>
+#include <portable/pam.h>
 
 #include <errno.h>
+#ifdef HAVE_HX509_ERR_H
+# include <hx509_err.h>
+#endif
 #include <krb5.h>
 #include <pwd.h>
-#ifdef HAVE_SECURITY_PAM_APPL_H
-# include <security/pam_appl.h>
-# include <security/pam_modules.h>
-#elif HAVE_PAM_PAM_APPL_H
-# include <pam/pam_appl.h>
-# include <pam/pam_modules.h>
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
-#ifdef HAVE_HX509_ERR_H
-# include <hx509_err.h>
-#endif
+#include <internal.h>
 
 /*
  * If the PKINIT smart card error statuses aren't defined, define them to 0.
@@ -46,7 +41,6 @@
 # define HX509_PKCS11_NO_SLOT 0
 #endif
 
-#include "internal.h"
 
 /*
  * Fill in ctx->princ from the value of ctx->name or (if configured) from
@@ -227,7 +221,7 @@ k5login_password_auth(struct pam_args *args, krb5_creds *creds,
      * exist, or the .k5login file cannot be read, fall back on the easy way
      * and assume ctx->princ is already set properly.
      */
-    pwd = pamk5_compat_getpwnam(args, ctx->name);
+    pwd = pam_modutil_getpwnam(args->pamh, ctx->name);
     if (pwd != NULL) {
         len = strlen(pwd->pw_dir) + strlen("/.k5login");
         filename = malloc(len + 1);

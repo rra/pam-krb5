@@ -20,6 +20,7 @@
 /pam_krb5.5
 /stamp-h1
 .deps/
+.dirstamp
 .libs/
 *.la
 *.lo

@@ -11,20 +11,14 @@
  * See LICENSE for licensing terms.
  */
 
-#include "config.h"
+#include <config.h>
+#include <portable/pam.h>
 
 #include <errno.h>
-#ifdef HAVE_SECURITY_PAM_APPL_H
-# include <security/pam_appl.h>
-# include <security/pam_modules.h>
-#elif HAVE_PAM_PAM_APPL_H
-# include <pam/pam_appl.h>
-# include <pam/pam_modules.h>
-#endif
 #include <stdlib.h>
 #include <string.h>
 
-#include "internal.h"
+#include <internal.h>
 
 /* Solaris doesn't have these. */
 #ifndef PAM_CONV_AGAIN
