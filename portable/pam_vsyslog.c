@@ -43,4 +43,5 @@ pam_vsyslog(pam_handle_t *pamh, int priority, const char *fmt, va_list args)
            (service == NULL) ? "" : "(",
            (service == NULL) ? "" : service,
            (service == NULL) ? "" : ")", msg);
+    free(msg);
 }
