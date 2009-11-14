@@ -17,6 +17,8 @@ libpam-krb5 (4.0-1) UNRELEASED; urgency=low
     Kerberos password is different than the password of an earlier module
     in the password group, pam-krb5 will now prompt the user for the
     Kerberos password.
+  * Remove the libtool *.la file and set the permissions of pam_krb5.so
+    properly to work around the annoyances of switching to libtool.
 
  -- Russ Allbery <rra@debian.org>  Fri, 13 Nov 2009 18:19:45 -0800
 
