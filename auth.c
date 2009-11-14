@@ -54,9 +54,8 @@ parse_name(struct pam_args *args)
     struct context *ctx = args->ctx;
     krb5_context c = ctx->context;
     char *user = ctx->name;
-    char *newuser;
+    char *newuser = NULL;
     char kuser[65] = "";        /* MAX_USERNAME == 65 (MIT Kerberos 1.4.1). */
-    size_t length;
     krb5_error_code k5_errno;
     int retval;
 
@@ -83,11 +82,8 @@ parse_name(struct pam_args *args)
      * force krb5_parse_name to do the right thing.
      */
     if (args->realm != NULL && strchr(user, '@') == NULL) {
-        length = strlen(user) + 1 + strlen(args->realm) + 1;
-        newuser = malloc(length);
-        if (newuser == NULL)
+        if (asprintf(&newuser, "%s@%s", user, args->realm) < 0)
             return KRB5_CC_NOMEM;
-        snprintf(newuser, length, "%s@%s", user, args->realm);
         if (user != ctx->name)
             free(user);
         user = newuser;

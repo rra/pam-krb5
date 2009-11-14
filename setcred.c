@@ -104,19 +104,16 @@ done:
 static char *
 build_ccache_name(struct pam_args *args, uid_t uid)
 {
-    char *cache_name;
+    char *cache_name = NULL;
+    int retval;
 
     if (args->ccache == NULL) {
-        size_t ccache_size = 1 + strlen(args->ccache_dir) +
-            strlen("/krb5cc_4294967295_XXXXXX");
-
-        cache_name = malloc(ccache_size);
-        if (cache_name == NULL) {
+        retval = asprintf(&cache_name, "%s/krb5cc_%d_XXXXXX",
+                          args->ccache_dir, (int) uid);
+        if (retval < 0) {
             pamk5_error(args, "malloc failure: %s", strerror(errno));
             return NULL;
         }
-        snprintf(cache_name, ccache_size, "%s/krb5cc_%d_XXXXXX",
-                 args->ccache_dir, (int) uid);
     } else {
         size_t len = 0, delta;
         char *p, *q;

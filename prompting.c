@@ -56,9 +56,8 @@ int
 pamk5_get_password(struct pam_args *args, const char *prefix, char **password)
 {
     struct context *ctx = args->ctx;
-    char *prompt;
+    char *prompt = NULL;
     char *principal = NULL;
-    size_t length;
     krb5_error_code k5_errno;
     int retval;
 
@@ -70,11 +69,8 @@ pamk5_get_password(struct pam_args *args, const char *prefix, char **password)
         }
     if (prefix == NULL) {
         if (args->expose_account && principal != NULL) {
-            length = strlen("Password for ") + strlen(principal) + 3;
-            prompt = malloc(length);
-            if (prompt == NULL)
+            if (asprintf(&prompt, "Password for %s: ", principal) < 0)
                 return PAM_BUF_ERR;
-            snprintf(prompt, length, "Password for %s: ", principal);
         } else {
             prompt = strdup("Password: ");
             if (prompt == NULL)
@@ -82,26 +78,18 @@ pamk5_get_password(struct pam_args *args, const char *prefix, char **password)
         }
     } else {
         if (args->expose_account && principal != NULL) {
-            length = strlen(prefix) + 1 + strlen(" password for ")
-                + strlen(principal) + 3;
-            if (args->banner != NULL)
-                length += strlen(args->banner) + 1;
-            prompt = malloc(length);
-            if (prompt == NULL)
+            retval = asprintf(&prompt, "%s%s%s password for %s: ", prefix,
+                              (args->banner == NULL) ? "" : " ",
+                              (args->banner == NULL) ? "" : args->banner,
+                              principal);
+            if (retval < 0)
                 return PAM_BUF_ERR;
-            snprintf(prompt, length, "%s%s%s password for %s: ", prefix,
-                     (args->banner == NULL) ? "" : " ",
-                     (args->banner == NULL) ? "" : args->banner, principal);
         } else {
-            length = strlen(prefix) + 1 + strlen(" password: ");
-            if (args->banner != NULL)
-                length += strlen(args->banner) + 1;
-            prompt = malloc(length);
-            if (prompt == NULL)
+            retval = asprintf(&prompt, "%s%s%s password: ", prefix,
+                              (args->banner == NULL) ? "" : " ",
+                              (args->banner == NULL) ? "" : args->banner);
+            if (retval < 0)
                 return PAM_BUF_ERR;
-            snprintf(prompt, length, "%s%s%s password: ", prefix,
-                     (args->banner == NULL) ? "" : " ",
-                     (args->banner == NULL) ? "" : args->banner);
         }
     }
     retval = pamk5_conv(args, prompt, PAM_PROMPT_ECHO_OFF, password);
