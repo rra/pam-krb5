@@ -1,5 +1,14 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 4.1 (unreleased)
+
+    In the second pass through the password group, prompt for the new
+    password and store it in the PAM data even if the user is being
+    ignored.  This is required to allow this module to be stacked with
+    another module that uses use_authtok.  Without this behavior, the
+    second module won't be able to work for any ignored user since it will
+    see no saved password and use_authtok will reject the password change.
+
 pam-krb5 4.0 (2009-11-13)
 
     UPGRADE WARNING: If you were using pam_krb5 with the use_authtok

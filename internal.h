@@ -154,6 +154,13 @@ int pamk5_password_auth(struct pam_args *, const char *service,
 int pamk5_setcred(struct pam_args *, int refresh);
 
 /*
+ * Prompt the user for a new password, twice so that they can confirm.  Sets
+ * PAM_AUTHTOK and puts the new password in newly allocated memory in pass if
+ * it's not NULL.
+ */
+int pamk5_password_prompt(struct pam_args *, char **pass);
+
+/*
  * Change the user's password.  Prompts for the current password as needed and
  * the new password.  If the second argument is true, only obtains the
  * necessary credentials without changing anything.

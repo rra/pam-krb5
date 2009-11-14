@@ -54,10 +54,29 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
         goto done;
     }
 
-    /* Check whether we should ignore this user. */
+    /*
+     * Check whether we should ignore this user.
+     *
+     * If we do ignore this user, and we're not in the preliminary check
+     * phase, still prompt the user for the new password, but suppress our
+     * banner.  This is a little strange, but it allows another module to be
+     * stacked behind pam-krb5 with use_authtok and have it still work for
+     * ignored users.
+     *
+     * We ignore the return status when prompting for the new password in this
+     * case.  The worst thing that can happen is to fail to get the password,
+     * in which case the other module will fail (or might even not care).
+     */
     if (args->ignore_root || args->minimum_uid > 0) {
         status = pam_get_user(pamh, &user, NULL);
         if (status == PAM_SUCCESS && pamk5_should_ignore(args, user)) {
+            if (flags & PAM_UPDATE_AUTHTOK) {
+                if (args->banner != NULL) {
+                    free(args->banner);
+                    args->banner = NULL;
+                }
+                pamk5_password_prompt(args, NULL);
+            }
             pamret = PAM_IGNORE;
             goto done;
         }

@@ -33,17 +33,22 @@
 
 /*
  * Get the new password.  Store it in PAM_AUTHTOK if we obtain it and verify
- * it successfully.
+ * it successfully and return it in the pass parameter.  If pass is set to
+ * NULL, only store the new password in PAM_AUTHTOK.
+ *
+ * Returns a PAM error code, usually either PAM_AUTHTOK_ERR or PAM_SUCCESS.
  */
-static int
-get_new_password(struct pam_args *args, char **pass)
+int
+pamk5_password_prompt(struct pam_args *args, char **pass)
 {
     int pamret = PAM_AUTHTOK_ERR;
+    char *pass1 = NULL;
     char *pass2;
     PAM_CONST void *tmp;
 
     /* Use the password from a previous module, if so configured. */
-    *pass = NULL;
+    if (pass != NULL)
+        *pass = NULL;
     if (args->use_authtok) {
         pamret = pam_get_item(args->pamh, PAM_AUTHTOK, &tmp);
         if (tmp == NULL) {
@@ -51,12 +56,12 @@ get_new_password(struct pam_args *args, char **pass)
             pamret = PAM_AUTHTOK_ERR;
             goto done;
         }
-        *pass = strdup((const char *) tmp);
+        pass1 = strdup((const char *) tmp);
     }
 
     /* Prompt for the new password if necessary. */
-    if (*pass == NULL) {
-        pamret = pamk5_get_password(args, "Enter new", pass);
+    if (pass1 == NULL) {
+        pamret = pamk5_get_password(args, "Enter new", &pass1);
         if (pamret != PAM_SUCCESS) {
             pamk5_debug_pam(args, "error getting new password", pamret);
             pamret = PAM_AUTHTOK_ERR;
@@ -68,9 +73,11 @@ get_new_password(struct pam_args *args, char **pass)
             pamret = PAM_AUTHTOK_ERR;
             goto done;
         }
-        if (strcmp(*pass, pass2) != 0) {
+        if (strcmp(pass1, pass2) != 0) {
             pamk5_debug(args, "new passwords don't match");
             pamk5_conv(args, "Passwords don't match", PAM_ERROR_MSG, NULL);
+            memset(pass1, 0, strlen(pass1));
+            free(pass1);
             memset(pass2, 0, strlen(pass2));
             free(pass2);
             pamret = PAM_AUTHTOK_ERR;
@@ -80,13 +87,15 @@ get_new_password(struct pam_args *args, char **pass)
         free(pass2);
 
         /* Save the new password for other modules. */
-        pamret = pam_set_item(args->pamh, PAM_AUTHTOK, *pass);
+        pamret = pam_set_item(args->pamh, PAM_AUTHTOK, pass1);
         if (pamret != PAM_SUCCESS) {
             pamk5_debug_pam(args, "error storing password", pamret);
             pamret = PAM_AUTHTOK_ERR;
             goto done;
         }
     }
+    if (pass != NULL)
+        *pass = pass1;
 
 done:
     return pamret;
@@ -195,7 +204,7 @@ pamk5_password_change(struct pam_args *args, int only_auth)
      */
     if (only_auth)
         goto done;
-    pamret = get_new_password(args, &pass);
+    pamret = pamk5_password_prompt(args, &pass);
     if (pamret != PAM_SUCCESS)
         goto done;
     pamret = change_password(args, pass);
