@@ -2,6 +2,12 @@
 
 pam-krb5 4.1 (unreleased)
 
+    Return PAM_SUCCESS, not PAM_USER_UNKNOWN, for ignored users in
+    pam_setcred.  It's safe to return success when doing nothing in
+    pam_setcred because the stack has already been frozen after the
+    authentication step, and returning an error causes the stack to fail
+    on some other Linux PAM implementations.  Thanks, Ian Ward Comfort.
+
     In the second pass through the password group, prompt for the new
     password and store it in the PAM data even if the user is being
     ignored.  This is required to allow this module to be stacked with

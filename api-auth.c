@@ -256,10 +256,16 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
     /*
      * Never return PAM_IGNORE from pam_setcred since this confuses older
      * versions of the Linux PAM library, such as 0.99.6.2 shipped with RHEL
-     * 5, when used with the [] syntax.
+     * 5, when used with the [] syntax.  Since we do nothing in this case, and
+     * since the stack is already frozen from the auth group, success makes
+     * sense.
+     *
+     * Don't return an error here or the PAM stack will fail if pam-krb5 is
+     * used with [success=ok default=1], since jumps are treated as required
+     * during the second pass with pam_setcred.
      */
     if (pamret == PAM_IGNORE)
-        pamret = PAM_USER_UNKNOWN;
+        pamret = PAM_SUCCESS;
 
 done:
     EXIT(args, pamret);
