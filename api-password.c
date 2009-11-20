@@ -35,7 +35,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
     args = pamk5_args_parse(pamh, flags, argc, argv);
     if (args == NULL) {
-        pamk5_err(NULL, "cannot allocate memory: %s", strerror(errno));
+        pamk5_crit(NULL, "cannot allocate memory: %s", strerror(errno));
         pamret = PAM_AUTHTOK_ERR;
         goto done;
     }
@@ -44,6 +44,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
     /* We only support password changes. */
     if (!(flags & PAM_UPDATE_AUTHTOK) && !(flags & PAM_PRELIM_CHECK)) {
+        pamk5_err(args, "invalid pam_chauthtok flags %d", flags);
         pamret = PAM_AUTHTOK_ERR;
         goto done;
     }
@@ -90,7 +91,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
         pamret = pam_set_data(pamh, "pam_krb5", args->ctx,
                               pamk5_context_destroy);
         if (pamret != PAM_SUCCESS) {
-            pamk5_debug_pam(args, pamret, "cannot set context data");
+            pamk5_err_pam(args, pamret, "cannot set context data");
             pamret = PAM_AUTHTOK_ERR;
             goto done;
         }

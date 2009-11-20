@@ -83,7 +83,7 @@ pamk5_password_prompt(struct pam_args *args, char **pass)
         /* Save the new password for other modules. */
         pamret = pam_set_item(args->pamh, PAM_AUTHTOK, pass1);
         if (pamret != PAM_SUCCESS) {
-            pamk5_debug_pam(args, pamret, "error storing password");
+            pamk5_err_pam(args, pamret, "error storing password");
             pamret = PAM_AUTHTOK_ERR;
             goto done;
         }
@@ -203,6 +203,9 @@ pamk5_password_change(struct pam_args *args, int only_auth)
     if (pamret != PAM_SUCCESS)
         goto done;
     pamret = change_password(args, pass);
+    if (pamret == PAM_SUCCESS)
+        pam_syslog(args->pamh, LOG_INFO, "user %s changed Kerberos password",
+                   ctx->name);
 
 done:
     if (pass != NULL) {

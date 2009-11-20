@@ -91,8 +91,8 @@ pamk5_cache_mkstemp(struct pam_args *args, char *template)
 
     ccfd = mkstemp(template);
     if (ccfd < 0) {
-        pamk5_err(args, "mkstemp(\"%s\") failed: %s", template,
-                  strerror(errno));
+        pamk5_crit(args, "mkstemp(\"%s\") failed: %s", template,
+                   strerror(errno));
         return PAM_SERVICE_ERR;
     }
     close(ccfd);
@@ -117,19 +117,20 @@ pamk5_cache_init(struct pam_args *args, const char *ccname, krb5_creds *creds,
     ctx = args->ctx;
     retval = krb5_cc_resolve(ctx->context, ccname, cache);
     if (retval != 0) {
-        pamk5_debug_krb5(args, retval, "krb5_cc_resolve failed");
+        pamk5_err_krb5(args, retval, "cannot resolve ticket cache %s", ccname);
         retval = PAM_SERVICE_ERR;
         goto done;
     }
     retval = krb5_cc_initialize(ctx->context, *cache, ctx->princ);
     if (retval != 0) {
-        pamk5_debug_krb5(args, retval, "krb5_cc_initialize failed");
+        pamk5_err_krb5(args, retval, "cannot initialize ticket cache %s",
+                       ccname);
         retval = PAM_SERVICE_ERR;
         goto done;
     }
     retval = krb5_cc_store_cred(ctx->context, *cache, creds);
     if (retval != 0) {
-        pamk5_debug_krb5(args, retval, "krb5_cc_store_cred failed");
+        pamk5_err_krb5(args, retval, "cannot store credentials in %s", ccname);
         retval = PAM_SERVICE_ERR;
         goto done;
     }

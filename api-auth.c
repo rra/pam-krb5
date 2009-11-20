@@ -51,7 +51,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 
     args = pamk5_args_parse(pamh, flags, argc, argv);
     if (args == NULL) {
-        pamk5_err(NULL, "cannot allocate memory: %s", strerror(errno));
+        pamk5_crit(NULL, "cannot allocate memory: %s", strerror(errno));
         pamret = PAM_SERVICE_ERR;
         goto done;
     }
@@ -108,7 +108,8 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
             ctx->expired = 1;
             pamret = PAM_SUCCESS;
         } else if (args->force_pwchange) {
-            pamk5_debug(args, "expired account, forcing password change");
+            pam_syslog(args->pamh, LOG_INFO, "user %s password expired,"
+                       " forcing password change", ctx->name);
             pamk5_conv(args, "Password expired.  You must change it now.",
                        PAM_TEXT_INFO, NULL);
             pamret = pam_get_item(args->pamh, PAM_AUTHTOK, (void *) &pass);
@@ -124,14 +125,16 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
             }
         }
     }
-    if (pamret != PAM_SUCCESS)
+    if (pamret != PAM_SUCCESS) {
+        pamk5_log_failure(args, "authentication failure");
         goto done;
+    }
 
     /* Check .k5login and alt_auth_map. */
     if (!ctx->expired) {
         pamret = pamk5_authorized(args);
         if (pamret != PAM_SUCCESS) {
-            pamk5_debug(args, "failed authorization check");
+            pamk5_log_failure(args, "failed authorization check");
             goto done;
         }
     }
@@ -140,7 +143,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     if (!ctx->expired) {
         pamret = pam_set_item(args->pamh, PAM_USER, ctx->name);
         if (pamret != PAM_SUCCESS)
-            pamk5_debug_pam(args, pamret, "cannot set PAM_USER");
+            pamk5_err_pam(args, pamret, "cannot set PAM_USER");
     }
 
     /* Log the successful authentication. */
@@ -158,6 +161,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     /* Now that we know we're successful, we can store the context. */
     pamret = pam_set_data(pamh, "pam_krb5", ctx, pamk5_context_destroy);
     if (pamret != PAM_SUCCESS) {
+        pamk5_err_pam(args, pamret, "cannot set context data");
         pamk5_context_free(ctx);
         pamret = PAM_SERVICE_ERR;
         goto done;
@@ -215,7 +219,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
     args = pamk5_args_parse(pamh, flags, argc, argv);
     if (args == NULL) {
-        pamk5_err(NULL, "cannot allocate memory: %s", strerror(errno));
+        pamk5_crit(NULL, "cannot allocate memory: %s", strerror(errno));
         pamret = PAM_SERVICE_ERR;
         goto done;
     }
@@ -227,6 +231,8 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
      */
     if (flags & PAM_DELETE_CRED) {
         pamret = pam_set_data(pamh, "pam_krb5", NULL, NULL);
+        if (pamret != PAM_SUCCESS)
+            pamk5_err_pam(args, pamret, "cannot clear context data");
         args->ctx = NULL;
         goto done;
     }

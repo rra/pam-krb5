@@ -163,7 +163,7 @@ default_time(struct pam_args *args, krb5_context c, const char *opt,
         ret = krb5_string_to_deltat(tmp, result);
         if (ret != 0) {
             message = pamk5_compat_get_error(c, ret);
-            pamk5_err(NULL, "bad time value for %s: %s", opt, message);
+            pamk5_err(args, "bad time value for %s: %s", opt, message);
             pamk5_compat_free_error(c, message);
             *result = defval;
         }

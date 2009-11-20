@@ -19,6 +19,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <syslog.h>
+#include <unistd.h>
 
 #include <internal.h>
 
@@ -54,7 +55,7 @@ log_vplain(struct pam_args *pargs, int priority, const char *fmt, va_list args)
     const char *name;
     char *msg;
 
-    if (priority == LOG_DEBUG && !pargs->debug)
+    if (priority == LOG_DEBUG && (pargs == NULL || !pargs->debug))
         return;
     if (pargs != NULL && pargs->ctx != NULL && pargs->ctx->name != NULL) {
         name = pargs->ctx->name;
@@ -63,8 +64,14 @@ log_vplain(struct pam_args *pargs, int priority, const char *fmt, va_list args)
             return;
         pam_syslog(pargs->pamh, priority, "(user %s) %s", name, msg);
         free(msg);
-    } else {
+    } else if (pargs != NULL) {
         pam_vsyslog(pargs->pamh, priority, fmt, args);
+    } else {
+        msg = format(fmt, args);
+        if (msg == NULL)
+            return;
+        syslog(priority | LOG_AUTHPRIV, "%s", msg);
+        free(msg);
     }
 }
 
@@ -94,13 +101,16 @@ log_pam(struct pam_args *pargs, int priority, int status, const char *fmt,
 {
     char *msg;
 
-    if (priority == LOG_DEBUG && !pargs->debug)
+    if (priority == LOG_DEBUG && (pargs == NULL || !pargs->debug))
         return;
     msg = format(fmt, args);
     if (msg == NULL)
         return;
-    log_plain(pargs, priority, "%s: %s", msg,
-              pam_strerror(pargs->pamh, status));
+    if (pargs == NULL)
+        log_plain(NULL, priority, "%s", msg);
+    else
+        log_plain(pargs, priority, "%s: %s", msg,
+                  pam_strerror(pargs->pamh, status));
     free(msg);
 }
 
@@ -118,7 +128,7 @@ log_krb5(struct pam_args *pargs, int priority, int status, const char *fmt,
     char *msg;
     const char *k5_msg = NULL;
 
-    if (priority == LOG_DEBUG && !pargs->debug)
+    if (priority == LOG_DEBUG && (pargs == NULL || !pargs->debug))
         return;
     msg = format(fmt, args);
     if (msg == NULL)
@@ -135,9 +145,9 @@ log_krb5(struct pam_args *pargs, int priority, int status, const char *fmt,
 
 
 /*
- * The public interfaces.  For each common log level (alert, crit, err, and
- * debug), generate a pamk5_<level> function and one for _pam and _krb5.  Do
- * this with the preprocessor to save duplicate code.
+ * The public interfaces.  For each common log level (crit, err, and debug),
+ * generate a pamk5_<level> function and one for _pam and _krb5.  Do this with
+ * the preprocessor to save duplicate code.
  */
 #define LOG_FUNCTION(level, priority)                                   \
     void                                                                \
@@ -169,7 +179,42 @@ log_krb5(struct pam_args *pargs, int priority, int status, const char *fmt,
         log_krb5(pargs, priority, status, fmt, args);                   \
         va_end(args);                                                   \
     }
-LOG_FUNCTION(alert, LOG_ALERT)
 LOG_FUNCTION(crit,  LOG_CRIT)
 LOG_FUNCTION(err,   LOG_ERR)
 LOG_FUNCTION(debug, LOG_DEBUG)
+
+
+/*
+ * Report an authentication failure.  This is a separate function since we
+ * want to include various PAM metadata in the log message and put it in a
+ * standard format.  The format here is modeled after the pam_unix
+ * authentication failure message from Linux PAM.
+ */
+void
+pamk5_log_failure(struct pam_args *pargs, const char *fmt, ...)
+{
+    char *msg;
+    va_list args;
+    const char *ruser = NULL;
+    const char *rhost = NULL;
+    const char *tty = NULL;
+    const char *name = NULL;
+
+    if (pargs->ctx != NULL && pargs->ctx->name != NULL)
+        name = pargs->ctx->name;
+    va_start(args, fmt);
+    msg = format(fmt, args);
+    if (msg == NULL)
+        return;
+    va_end(args);
+    pam_get_item(pargs->pamh, PAM_RUSER, (const void **) &ruser);
+    pam_get_item(pargs->pamh, PAM_RHOST, (const void **) &rhost);
+    pam_get_item(pargs->pamh, PAM_TTY, (const void **) &tty);
+    pam_syslog(pargs->pamh, LOG_NOTICE, "%s; logname=%s uid=%ld euid=%ld"
+               " tty=%s ruser=%s rhost=%s", msg,
+               (name  != NULL) ? name  : "",
+               (long) getuid(), (long) geteuid(),
+               (tty   != NULL) ? tty   : "",
+               (ruser != NULL) ? ruser : "",
+               (rhost != NULL) ? rhost : "");
+}

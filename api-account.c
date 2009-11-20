@@ -40,7 +40,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
     args = pamk5_args_parse(pamh, flags, argc, argv);
     if (args == NULL) {
-        pamk5_err(NULL, "cannot allocate memory: %s", strerror(errno));
+        pamk5_crit(NULL, "cannot allocate memory: %s", strerror(errno));
         pamret = PAM_AUTH_ERR;
         goto done;
     }
@@ -63,6 +63,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
     /* If the account was expired, here's where we actually fail. */
     if (ctx->expired) {
+        pamk5_debug(args, "account password is expired");
         pamret = PAM_NEW_AUTHTOK_REQD;
         goto done;
     }
@@ -78,7 +79,8 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
      */
     retval = pam_get_item(pamh, PAM_USER, (void *) &name);
     if (retval != PAM_SUCCESS || name == NULL) {
-        retval = PAM_AUTH_ERR;
+        pamk5_err_pam(args, retval, "unable to retrieve user");
+        pamret = PAM_AUTH_ERR;
         goto done;
     }
     if (ctx->name != NULL)

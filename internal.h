@@ -240,16 +240,10 @@ int pamk5_compat_issetugid(void);
 
 /*
  * Error reporting and debugging functions.  For each log level, there are
- * three functions.  The _log function just prints out the message it's
- * given.  The _log_pam function reports a PAM error using pam_strerror.  The
+ * three functions.  The _log function just prints out the message it's given.
+ * The _log_pam function reports a PAM error using pam_strerror.  The
  * _log_krb5 function reports a Kerberos error.
  */
-void pamk5_alert(struct pam_args *, const char *, ...)
-    __attribute__((__format__(printf, 2, 3)));
-void pamk5_alert_pam(struct pam_args *, int, const char *, ...)
-    __attribute__((__format__(printf, 3, 4)));
-void pamk5_alert_krb5(struct pam_args *, int, const char *, ...)
-    __attribute__((__format__(printf, 3, 4)));
 void pamk5_crit(struct pam_args *, const char *, ...)
     __attribute__((__format__(printf, 2, 3)));
 void pamk5_crit_pam(struct pam_args *, int, const char *, ...)
@@ -268,6 +262,10 @@ void pamk5_debug_pam(struct pam_args *, int, const char *, ...)
     __attribute__((__format__(printf, 3, 4)));
 void pamk5_debug_krb5(struct pam_args *, int, const char *, ...)
     __attribute__((__format__(printf, 3, 4)));
+
+/* Log an authentication failure. */
+void pamk5_log_failure(struct pam_args *, const char *, ...)
+    __attribute__((__format__(printf, 2, 3)));
 
 /* Undo default visibility change. */
 #pragma GCC visibility pop

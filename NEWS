@@ -15,13 +15,30 @@ pam-krb5 4.1 (unreleased)
     second module won't be able to work for any ignored user since it will
     see no saved password and use_authtok will reject the password change.
 
+    Fix return status from pam_sm_acct_mgmt if we were unable to retrieve
+    PAM_USER.
+
     Log successful authentications to syslog with priority LOG_INFO,
     including the Kerberos principal used for authentication.
+
+    Log failed authentication to syslog with priority LOG_NOTICE,
+    including roughly the same additional information that the Linux PAM
+    pam_unix logs by default.
 
     Use pam_syslog for logging where available.  This means pam-krb5 log
     messages will look like all other log messages for Linux PAM modules
     on Linux.  Change the format of log messages on all platforms to
     hopefully be somewhat clearer.
+
+    Rationalize logging.  The module should now follow the recommendations
+    of the Linux PAM Module Writers' Guide for log levels.  More errors
+    are logged at LOG_ERR instead of LOG_DEBUG, and system resource errors
+    are now logged at LOG_CRIT instead of LOG_ERR.
+
+    Add additional error and debug logging in places where significant
+    actions or failures may happen without previously being logged.  Also
+    add failure information from PAM or Kerberos libraries to messages
+    where appropriate.
 
     Add replacement snprintf, vsnprintf, and mkstemp functions for
     pointless portability to ancient systems.

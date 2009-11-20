@@ -67,7 +67,7 @@ parse_name(struct pam_args *args)
     if (args->prompt_princ) {
         retval = pamk5_conv(args, "Principal: ", PAM_PROMPT_ECHO_ON, &user);
         if (retval != PAM_SUCCESS)
-            pamk5_debug_pam(args, retval, "error getting principal");
+            pamk5_err_pam(args, retval, "error getting principal");
         if (*user == '\0') {
             free(user);
             user = ctx->name;
@@ -106,7 +106,7 @@ parse_name(struct pam_args *args)
             return 0;
         user = strdup(kuser);
         if (user == NULL) {
-            pamk5_err(args, "cannot allocate memory: %s", strerror(errno));
+            pamk5_crit(args, "cannot allocate memory: %s", strerror(errno));
             return 0;
         }
         free(ctx->name);
@@ -547,7 +547,7 @@ pamk5_password_auth(struct pam_args *args, const char *service,
     if (ctx->princ == NULL) {
         retval = parse_name(args);
         if (retval != 0) {
-            pamk5_debug_krb5(args, retval, "krb5_parse_name failed");
+            pamk5_err_krb5(args, retval, "krb5_parse_name failed");
             return PAM_SERVICE_ERR;
         }
     }
@@ -592,12 +592,12 @@ pamk5_password_auth(struct pam_args *args, const char *service,
     /* Allocate cred structure and set credential options. */
     *creds = calloc(1, sizeof(krb5_creds));
     if (*creds == NULL) {
-        pamk5_err(args, "cannot allocate memory: %s", strerror(errno));
+        pamk5_crit(args, "cannot allocate memory: %s", strerror(errno));
         return PAM_SERVICE_ERR;
     }
     retval = pamk5_compat_opt_alloc(ctx->context, &opts);
     if (retval != 0) {
-        pamk5_err_krb5(args, retval, "cannot allocate credential options");
+        pamk5_crit_krb5(args, retval, "cannot allocate credential options");
         goto done;
     }
     set_credential_options(args, opts, service != NULL);
@@ -657,7 +657,7 @@ pamk5_password_auth(struct pam_args *args, const char *service,
             memset(pass, 0, strlen(pass));
             free(pass);
             if (retval != PAM_SUCCESS) {
-                pamk5_debug_pam(args, retval, "error storing password");
+                pamk5_err_pam(args, retval, "error storing password");
                 retval = PAM_SERVICE_ERR;
                 goto done;
             }
