@@ -7,13 +7,6 @@ PAM API:
    available in the PAM data) and trying a regular authentication first to
    see if the account is expired.
 
- * Fix error logging levels to comply with the Linux PAM recommendations.
-   Currently, all errors are logged at LOG_ERR level.  Corrupt local
-   configuration (so failure of krb5_init_context) should be logged at
-   LOG_ALERT, malloc failures and other system resource failures should be
-   logged at LOG_CRIT, and authentication failures should be logged at
-   LOG_NOTICE.
-
  * Tighter verification that all of our flags are valid might be a good
    idea.
 
