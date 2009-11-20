@@ -1,6 +1,6 @@
                       User-Visible pam-krb5 Changes
 
-pam-krb5 4.1 (unreleased)
+pam-krb5 4.1 (2009-11-20)
 
     Return PAM_SUCCESS, not PAM_USER_UNKNOWN, for ignored users in
     pam_setcred.  It's safe to return success when doing nothing in
