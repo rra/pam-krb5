@@ -57,10 +57,10 @@ BEGIN_DECLS
 
 /* Prototype missing optional PAM functions. */
 #if !HAVE_PAM_SYSLOG
-void pam_syslog(pam_handle_t *, int, const char *, ...);
+void pam_syslog(const pam_handle_t *, int, const char *, ...);
 #endif
 #if !HAVE_PAM_VSYSLOG
-void pam_vsyslog(pam_handle_t *, int, const char *, va_list);
+void pam_vsyslog(const pam_handle_t *, int, const char *, va_list);
 #endif
 
 /* Undo default visibility change. */

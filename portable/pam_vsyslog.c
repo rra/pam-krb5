@@ -18,6 +18,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <syslog.h>
 
 #ifndef LOG_AUTHPRIV
@@ -25,13 +26,14 @@
 #endif
 
 void
-pam_vsyslog(pam_handle_t *pamh, int priority, const char *fmt, va_list args)
+pam_vsyslog(const pam_handle_t *pamh, int priority, const char *fmt,
+            va_list args)
 {
     char *msg = NULL;
     const char *service = NULL;
     int retval;
 
-    retval = pam_get_item(pamh, PAM_SERVICE, (void **) &service);
+    retval = pam_get_item(pamh, PAM_SERVICE, (PAM_CONST void **) &service);
     if (retval != PAM_SUCCESS)
         service = NULL;
     if (vasprintf(&msg, fmt, args) < 0) {

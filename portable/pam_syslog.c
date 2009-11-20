@@ -15,7 +15,7 @@
 #include <stdarg.h>
 
 void
-pam_syslog(pam_handle_t *pamh, int priority, const char *fmt, ...)
+pam_syslog(const pam_handle_t *pamh, int priority, const char *fmt, ...)
 {
     va_list args;
 
