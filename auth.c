@@ -613,16 +613,10 @@ pamk5_password_auth(struct pam_args *args, const char *service,
      * libraries may treat it as equivalent to no password and prompt when
      * we don't want them to.  We make the assumption here that the empty
      * password is always invalid and is an authentication failure.
-     *
-     * pass is a char * so &pass is a char **, which due to the stupid C type
-     * rules isn't convertable to a const void **.  If we cast directly to a
-     * const void **, gcc complains about type-punned pointers, even though
-     * void and char shouldn't worry about that rule.  So cast it to a void *
-     * to turn off type-checking entirely.
      */
     retry = args->try_first_pass ? 1 : 0;
     if (args->try_first_pass || args->use_first_pass || args->force_first_pass)
-        retval = pam_get_item(args->pamh, authtok, (void *) &pass);
+        retval = pam_get_item(args->pamh, authtok, (PAM_CONST void **) &pass);
     if (args->use_first_pass || args->force_first_pass) {
         if (pass != NULL && *pass == '\0') {
             pamk5_debug(args, "rejecting empty password");
@@ -661,7 +655,7 @@ pamk5_password_auth(struct pam_args *args, const char *service,
                 retval = PAM_SERVICE_ERR;
                 goto done;
             }
-            pam_get_item(args->pamh, authtok, (void *) &pass);
+            pam_get_item(args->pamh, authtok, (PAM_CONST void **) &pass);
         }
 
         /*

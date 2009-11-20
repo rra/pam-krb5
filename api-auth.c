@@ -112,7 +112,8 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
                        " forcing password change", ctx->name);
             pamk5_conv(args, "Password expired.  You must change it now.",
                        PAM_TEXT_INFO, NULL);
-            pamret = pam_get_item(args->pamh, PAM_AUTHTOK, (void *) &pass);
+            pamret = pam_get_item(args->pamh, PAM_AUTHTOK,
+                                  (PAM_CONST void **) &pass);
             if (pamret == PAM_SUCCESS && pass != NULL)
                 pam_set_item(args->pamh, PAM_OLDAUTHTOK, pass);
             pam_set_item(args->pamh, PAM_AUTHTOK, NULL);

@@ -120,7 +120,7 @@ pamk5_conv(struct pam_args *args, const char *message, int type,
 
     if (args->silent && (type == PAM_ERROR_MSG || type == PAM_TEXT_INFO))
         return PAM_SUCCESS;
-    pamret = pam_get_item(args->pamh, PAM_CONV, (void *) &conv);
+    pamret = pam_get_item(args->pamh, PAM_CONV, (PAM_CONST void **) &conv);
     if (pamret != PAM_SUCCESS)
 	return pamret;
     pmsg = &msg;
@@ -199,7 +199,7 @@ pamk5_prompter_krb5(krb5_context context UNUSED, void *data, const char *name,
     struct pam_conv *conv;
 
     /* Obtain the conversation function from the application. */
-    pamret = pam_get_item(args->pamh, PAM_CONV, (void *) &conv);
+    pamret = pam_get_item(args->pamh, PAM_CONV, (PAM_CONST void **) &conv);
     if (pamret != 0)
         return KRB5KRB_ERR_GENERIC;
 

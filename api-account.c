@@ -77,7 +77,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
      * set by the time we get to this point.  If we would have to prompt for a
      * user, something is definitely broken and we should fail.
      */
-    retval = pam_get_item(pamh, PAM_USER, (void *) &name);
+    retval = pam_get_item(pamh, PAM_USER, (PAM_CONST void **) &name);
     if (retval != PAM_SUCCESS || name == NULL) {
         pamk5_err_pam(args, retval, "unable to retrieve user");
         pamret = PAM_AUTH_ERR;

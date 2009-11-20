@@ -207,9 +207,9 @@ pamk5_log_failure(struct pam_args *pargs, const char *fmt, ...)
     if (msg == NULL)
         return;
     va_end(args);
-    pam_get_item(pargs->pamh, PAM_RUSER, (const void **) &ruser);
-    pam_get_item(pargs->pamh, PAM_RHOST, (const void **) &rhost);
-    pam_get_item(pargs->pamh, PAM_TTY, (const void **) &tty);
+    pam_get_item(pargs->pamh, PAM_RUSER, (PAM_CONST void **) &ruser);
+    pam_get_item(pargs->pamh, PAM_RHOST, (PAM_CONST void **) &rhost);
+    pam_get_item(pargs->pamh, PAM_TTY, (PAM_CONST void **) &tty);
     pam_syslog(pargs->pamh, LOG_NOTICE, "%s; logname=%s uid=%ld euid=%ld"
                " tty=%s ruser=%s rhost=%s", msg,
                (name  != NULL) ? name  : "",
