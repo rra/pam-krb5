@@ -51,14 +51,17 @@ DIST_COMMON = README $(am__configure_deps) $(dist_man_MANS) \
 	$(srcdir)/config.h.in $(top_srcdir)/configure NEWS TODO \
 	build-aux/compile build-aux/config.guess build-aux/config.sub \
 	build-aux/depcomp build-aux/install-sh build-aux/ltmain.sh \
-	build-aux/missing
+	build-aux/missing portable/asprintf.c portable/mkstemp.c \
+	portable/pam_syslog.c portable/pam_vsyslog.c \
+	portable/snprintf.c
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/krb5-pkinit.m4 \
 	$(top_srcdir)/m4/krb5.m4 $(top_srcdir)/m4/lib-depends.m4 \
 	$(top_srcdir)/m4/lib-pathname.m4 $(top_srcdir)/m4/libtool.m4 \
 	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
 	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
-	$(top_srcdir)/m4/pam-const.m4 $(top_srcdir)/configure.ac
+	$(top_srcdir)/m4/pam-const.m4 $(top_srcdir)/m4/snprintf.m4 \
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
@@ -89,9 +92,10 @@ am__base_list = \
   sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
   sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
 am__installdirs = "$(DESTDIR)$(pamdir)" "$(DESTDIR)$(man5dir)"
-LTLIBRARIES = $(pam_LTLIBRARIES)
+LTLIBRARIES = $(noinst_LTLIBRARIES) $(pam_LTLIBRARIES)
 am__DEPENDENCIES_1 =
-pam_krb5_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+pam_krb5_la_DEPENDENCIES = portable/libportable.la \
+	$(am__DEPENDENCIES_1)
 am_pam_krb5_la_OBJECTS = api-account.lo api-auth.lo api-password.lo \
 	api-session.lo auth.lo cache.lo compat.lo context.lo \
 	logging.lo options.lo password.lo prompting.lo setcred.lo \
@@ -103,6 +107,12 @@ am__v_lt_0 = --silent
 pam_krb5_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(pam_krb5_la_LDFLAGS) $(LDFLAGS) -o $@
+LIBOBJDIR = portable/
+portable_libportable_la_DEPENDENCIES = $(LTLIBOBJS)
+am__dirstamp = $(am__leading_dot)dirstamp
+am_portable_libportable_la_OBJECTS = portable/dummy.lo
+portable_libportable_la_OBJECTS =  \
+	$(am_portable_libportable_la_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/build-aux/depcomp
 am__depfiles_maybe = depfiles
@@ -129,8 +139,9 @@ am__v_CCLD_0 = @echo "  CCLD  " $@;
 AM_V_GEN = $(am__v_GEN_$(V))
 am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))
 am__v_GEN_0 = @echo "  GEN   " $@;
-SOURCES = $(pam_krb5_la_SOURCES)
-DIST_SOURCES = $(pam_krb5_la_SOURCES)
+SOURCES = $(pam_krb5_la_SOURCES) $(portable_libportable_la_SOURCES)
+DIST_SOURCES = $(pam_krb5_la_SOURCES) \
+	$(portable_libportable_la_SOURCES)
 man5dir = $(mandir)/man5
 NROFF = nroff
 MANS = $(dist_man_MANS)
@@ -271,6 +282,11 @@ ACLOCAL_AMFLAGS = -I m4
 EXTRA_DIST = LICENSE autogen compat-aix.c compat-heimdal.c compat-mit.c	\
 	pam_krb5.map pam_krb5.pod
 
+noinst_LTLIBRARIES = portable/libportable.la
+portable_libportable_la_SOURCES = portable/dummy.c portable/macros.h \
+        portable/pam.h
+
+portable_libportable_la_LIBADD = $(LTLIBOBJS)
 pamdir = $(libdir)/security
 pam_LTLIBRARIES = pam_krb5.la
 pam_krb5_la_SOURCES = api-account.c api-auth.c api-password.c api-session.c \
@@ -278,7 +294,7 @@ pam_krb5_la_SOURCES = api-account.c api-auth.c api-password.c api-session.c \
 	password.c prompting.c setcred.c support.c
 
 pam_krb5_la_LDFLAGS = -module -shared -avoid-version $(AM_LDFLAGS)
-pam_krb5_la_LIBADD = $(KRB5_LIBS)
+pam_krb5_la_LIBADD = portable/libportable.la $(KRB5_LIBS)
 dist_man_MANS = pam_krb5.5
 MAINTAINERCLEANFILES = Makefile.in aclocal.m4 build-aux/compile		 \
 	build-aux/config.guess build-aux/config.sub build-aux/depcomp	 \
@@ -350,6 +366,15 @@ $(srcdir)/config.h.in: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 
 distclean-hdr:
 	-rm -f config.h stamp-h1
+
+clean-noinstLTLIBRARIES:
+	-test -z "$(noinst_LTLIBRARIES)" || rm -f $(noinst_LTLIBRARIES)
+	@list='$(noinst_LTLIBRARIES)'; for p in $$list; do \
+	  dir="`echo $$p | sed -e 's|/[^/]*$$||'`"; \
+	  test "$$dir" != "$$p" || dir=.; \
+	  echo "rm -f \"$${dir}/so_locations\""; \
+	  rm -f "$${dir}/so_locations"; \
+	done
 install-pamLTLIBRARIES: $(pam_LTLIBRARIES)
 	@$(NORMAL_INSTALL)
 	test -z "$(pamdir)" || $(MKDIR_P) "$(DESTDIR)$(pamdir)"
@@ -383,9 +408,21 @@ clean-pamLTLIBRARIES:
 	done
 pam_krb5.la: $(pam_krb5_la_OBJECTS) $(pam_krb5_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(pam_krb5_la_LINK) -rpath $(pamdir) $(pam_krb5_la_OBJECTS) $(pam_krb5_la_LIBADD) $(LIBS)
+portable/$(am__dirstamp):
+	@$(MKDIR_P) portable
+	@: > portable/$(am__dirstamp)
+portable/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) portable/$(DEPDIR)
+	@: > portable/$(DEPDIR)/$(am__dirstamp)
+portable/dummy.lo: portable/$(am__dirstamp) \
+	portable/$(DEPDIR)/$(am__dirstamp)
+portable/libportable.la: $(portable_libportable_la_OBJECTS) $(portable_libportable_la_DEPENDENCIES) portable/$(am__dirstamp)
+	$(AM_V_CCLD)$(LINK)  $(portable_libportable_la_OBJECTS) $(portable_libportable_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
+	-rm -f portable/dummy.$(OBJEXT)
+	-rm -f portable/dummy.lo
 
 distclean-compile:
 	-rm -f *.tab.c
@@ -404,6 +441,12 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/prompting.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/setcred.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/support.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@portable/$(DEPDIR)/asprintf.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@portable/$(DEPDIR)/dummy.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@portable/$(DEPDIR)/mkstemp.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@portable/$(DEPDIR)/pam_syslog.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@portable/$(DEPDIR)/pam_vsyslog.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@portable/$(DEPDIR)/snprintf.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -437,6 +480,7 @@ mostlyclean-libtool:
 
 clean-libtool:
 	-rm -rf .libs _libs
+	-rm -rf portable/.libs portable/_libs
 
 distclean-libtool:
 	-rm -f libtool config.lt
@@ -718,12 +762,16 @@ install-strip:
 	  `test -z '$(STRIP)' || \
 	    echo "INSTALL_PROGRAM_ENV=STRIPPROG='$(STRIP)'"` install
 mostlyclean-generic:
+	-test -z "$(LIBOBJS)" || rm -f $(LIBOBJS)
+	-test -z "$(LTLIBOBJS)" || rm -f $(LTLIBOBJS)
 
 clean-generic:
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-rm -f portable/$(DEPDIR)/$(am__dirstamp)
+	-rm -f portable/$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -731,12 +779,12 @@ maintainer-clean-generic:
 	-test -z "$(MAINTAINERCLEANFILES)" || rm -f $(MAINTAINERCLEANFILES)
 clean: clean-am
 
-clean-am: clean-generic clean-libtool clean-pamLTLIBRARIES \
-	mostlyclean-am
+clean-am: clean-generic clean-libtool clean-noinstLTLIBRARIES \
+	clean-pamLTLIBRARIES mostlyclean-am
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-	-rm -rf ./$(DEPDIR)
+	-rm -rf ./$(DEPDIR) portable/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-libtool distclean-tags
@@ -784,7 +832,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-	-rm -rf ./$(DEPDIR)
+	-rm -rf ./$(DEPDIR) portable/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
@@ -808,21 +856,21 @@ uninstall-man: uninstall-man5
 .MAKE: all install-am install-strip
 
 .PHONY: CTAGS GTAGS all all-am am--refresh check check-am clean \
-	clean-generic clean-libtool clean-pamLTLIBRARIES ctags dist \
-	dist-all dist-bzip2 dist-gzip dist-lzma dist-shar dist-tarZ \
-	dist-xz dist-zip distcheck distclean distclean-compile \
-	distclean-generic distclean-hdr distclean-libtool \
-	distclean-tags distcleancheck distdir distuninstallcheck dvi \
-	dvi-am html html-am info info-am install install-am \
-	install-data install-data-am install-dvi install-dvi-am \
-	install-exec install-exec-am install-html install-html-am \
-	install-info install-info-am install-man install-man5 \
-	install-pamLTLIBRARIES install-pdf install-pdf-am install-ps \
-	install-ps-am install-strip installcheck installcheck-am \
-	installdirs maintainer-clean maintainer-clean-generic \
-	mostlyclean mostlyclean-compile mostlyclean-generic \
-	mostlyclean-libtool pdf pdf-am ps ps-am tags uninstall \
-	uninstall-am uninstall-man uninstall-man5 \
+	clean-generic clean-libtool clean-noinstLTLIBRARIES \
+	clean-pamLTLIBRARIES ctags dist dist-all dist-bzip2 dist-gzip \
+	dist-lzma dist-shar dist-tarZ dist-xz dist-zip distcheck \
+	distclean distclean-compile distclean-generic distclean-hdr \
+	distclean-libtool distclean-tags distcleancheck distdir \
+	distuninstallcheck dvi dvi-am html html-am info info-am \
+	install install-am install-data install-data-am install-dvi \
+	install-dvi-am install-exec install-exec-am install-html \
+	install-html-am install-info install-info-am install-man \
+	install-man5 install-pamLTLIBRARIES install-pdf install-pdf-am \
+	install-ps install-ps-am install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
+	tags uninstall uninstall-am uninstall-man uninstall-man5 \
 	uninstall-pamLTLIBRARIES
 
 

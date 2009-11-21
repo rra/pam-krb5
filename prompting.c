@@ -4,29 +4,23 @@
  * Handles all interaction with the PAM conversation, either directly or
  * indirectly through the Kerberos libraries.
  *
- * Copyright 2005, 2006, 2007 Russ Allbery <rra@debian.org>
+ * Copyright 2005, 2006, 2007, 2009 Russ Allbery <rra@debian.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  *
  * See LICENSE for licensing terms.
  */
 
-#include "config.h"
+#include <config.h>
+#include <portable/pam.h>
 
 #include <errno.h>
 #include <krb5.h>
-#ifdef HAVE_SECURITY_PAM_APPL_H
-# include <security/pam_appl.h>
-# include <security/pam_modules.h>
-#elif HAVE_PAM_PAM_APPL_H
-# include <pam/pam_appl.h>
-# include <pam/pam_modules.h>
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "internal.h"
+#include <internal.h>
 
 /*
  * Prompt for a password.
@@ -62,24 +56,21 @@ int
 pamk5_get_password(struct pam_args *args, const char *prefix, char **password)
 {
     struct context *ctx = args->ctx;
-    char *prompt;
+    char *prompt = NULL;
     char *principal = NULL;
-    size_t length;
     krb5_error_code k5_errno;
     int retval;
 
-    if (args->expose_account || prefix != NULL) {
-        k5_errno = krb5_unparse_name(ctx->context, ctx->princ, &principal);
-        if (k5_errno != 0)
-            pamk5_debug_krb5(args, "krb5_unparse_name", k5_errno);
-    }
+    if (args->expose_account || prefix != NULL)
+        if (ctx != NULL && ctx->context != NULL && ctx->princ != NULL) {
+            k5_errno = krb5_unparse_name(ctx->context, ctx->princ, &principal);
+            if (k5_errno != 0)
+                pamk5_debug_krb5(args, k5_errno, "krb5_unparse_name failed");
+        }
     if (prefix == NULL) {
         if (args->expose_account && principal != NULL) {
-            length = strlen("Password for ") + strlen(principal) + 3;
-            prompt = malloc(length);
-            if (prompt == NULL)
+            if (asprintf(&prompt, "Password for %s: ", principal) < 0)
                 return PAM_BUF_ERR;
-            snprintf(prompt, length, "Password for %s: ", principal);
         } else {
             prompt = strdup("Password: ");
             if (prompt == NULL)
@@ -87,26 +78,18 @@ pamk5_get_password(struct pam_args *args, const char *prefix, char **password)
         }
     } else {
         if (args->expose_account && principal != NULL) {
-            length = strlen(prefix) + 1 + strlen(" password for ")
-                + strlen(principal) + 3;
-            if (args->banner != NULL)
-                length += strlen(args->banner) + 1;
-            prompt = malloc(length);
-            if (prompt == NULL)
+            retval = asprintf(&prompt, "%s%s%s password for %s: ", prefix,
+                              (args->banner == NULL) ? "" : " ",
+                              (args->banner == NULL) ? "" : args->banner,
+                              principal);
+            if (retval < 0)
                 return PAM_BUF_ERR;
-            snprintf(prompt, length, "%s%s%s password for %s: ", prefix,
-                     (args->banner == NULL) ? "" : " ",
-                     (args->banner == NULL) ? "" : args->banner, principal);
         } else {
-            length = strlen(prefix) + 1 + strlen(" password: ");
-            if (args->banner != NULL)
-                length += strlen(args->banner) + 1;
-            prompt = malloc(length);
-            if (prompt == NULL)
+            retval = asprintf(&prompt, "%s%s%s password: ", prefix,
+                              (args->banner == NULL) ? "" : " ",
+                              (args->banner == NULL) ? "" : args->banner);
+            if (retval < 0)
                 return PAM_BUF_ERR;
-            snprintf(prompt, length, "%s%s%s password: ", prefix,
-                     (args->banner == NULL) ? "" : " ",
-                     (args->banner == NULL) ? "" : args->banner);
         }
     }
     retval = pamk5_conv(args, prompt, PAM_PROMPT_ECHO_OFF, password);
@@ -137,7 +120,7 @@ pamk5_conv(struct pam_args *args, const char *message, int type,
 
     if (args->silent && (type == PAM_ERROR_MSG || type == PAM_TEXT_INFO))
         return PAM_SUCCESS;
-    pamret = pam_get_item(args->pamh, PAM_CONV, (void *) &conv);
+    pamret = pam_get_item(args->pamh, PAM_CONV, (PAM_CONST void **) &conv);
     if (pamret != PAM_SUCCESS)
 	return pamret;
     pmsg = &msg;
@@ -216,7 +199,7 @@ pamk5_prompter_krb5(krb5_context context UNUSED, void *data, const char *name,
     struct pam_conv *conv;
 
     /* Obtain the conversation function from the application. */
-    pamret = pam_get_item(args->pamh, PAM_CONV, (void *) &conv);
+    pamret = pam_get_item(args->pamh, PAM_CONV, (PAM_CONST void **) &conv);
     if (pamret != 0)
         return KRB5KRB_ERR_GENERIC;
 
@@ -278,10 +261,12 @@ pamk5_prompter_krb5(krb5_context context UNUSED, void *data, const char *name,
         pam_prompts++;
     }
     for (i = 0; i < num_prompts; i++) {
-        msg[pam_prompts]->msg = malloc(strlen(prompts[i].prompt) + 3);
-        if (msg[pam_prompts]->msg == NULL)
+        int status;
+
+        status = asprintf((char **) &msg[pam_prompts]->msg, "%s: ",
+                          prompts[i].prompt);
+        if (status < 0)
             goto cleanup;
-        sprintf((char *) msg[pam_prompts]->msg, "%s: ", prompts[i].prompt);
         msg[pam_prompts]->msg_style = prompts[i].hidden ? PAM_PROMPT_ECHO_OFF
                                                         : PAM_PROMPT_ECHO_ON;
         pam_prompts++;

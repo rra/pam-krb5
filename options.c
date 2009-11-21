@@ -12,13 +12,13 @@
  * See LICENSE for licensing terms.
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <krb5.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "internal.h"
+#include <internal.h>
 
 /*
  * Not all platforms have this, so just implement it ourselves.  Copy a
@@ -163,7 +163,7 @@ default_time(struct pam_args *args, krb5_context c, const char *opt,
         ret = krb5_string_to_deltat(tmp, result);
         if (ret != 0) {
             message = pamk5_compat_get_error(c, ret);
-            pamk5_error(NULL, "bad time value for %s: %s", opt, message);
+            pamk5_err(args, "bad time value for %s: %s", opt, message);
             pamk5_compat_free_error(c, message);
             *result = defval;
         }
@@ -434,7 +434,7 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
         else if (strcmp(argv[i], "use_pkinit") == 0)
             args->use_pkinit = 1;
         else
-            pamk5_error(NULL, "unknown option %s", argv[i]);
+            pamk5_err(NULL, "unknown option %s", argv[i]);
     }
     if (flags & PAM_SILENT)
         args->silent = 1;
@@ -447,16 +447,16 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
     /* Sanity-check try_first_pass, use_first_pass, and force_first_pass. */
     if (args->force_first_pass && args->try_first_pass) {
-        pamk5_error(NULL, "force_first_pass set, ignoring try_first_pass");
+        pamk5_err(NULL, "force_first_pass set, ignoring try_first_pass");
         args->try_first_pass = 0;
         args->use_first_pass = 0;
     }
     if (args->force_first_pass && args->use_first_pass) {
-        pamk5_error(NULL, "force_first_pass set, ignoring use_first_pass");
+        pamk5_err(NULL, "force_first_pass set, ignoring use_first_pass");
         args->use_first_pass = 0;
     }
     if (args->use_first_pass && args->try_first_pass) {
-        pamk5_error(NULL, "use_first_pass set, ignoring try_first_pass");
+        pamk5_err(NULL, "use_first_pass set, ignoring try_first_pass");
         args->try_first_pass = 0;
     }
 
@@ -480,11 +480,11 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
 #ifndef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT
 # ifndef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PA
     if (args->try_pkinit)
-	pamk5_error(NULL, "try_pkinit requested but PKINIT not available");
+	pamk5_err(NULL, "try_pkinit requested but PKINIT not available");
 # endif
     if (args->use_pkinit)
-	pamk5_error(NULL, "use_pkinit requested but PKINIT not available"
-                    " or cannot be enforced");
+	pamk5_err(NULL, "use_pkinit requested but PKINIT not available or"
+                  " cannot be enforced");
 #endif
 
     return args;

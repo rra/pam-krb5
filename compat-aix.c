@@ -13,7 +13,7 @@
  * For license information, see the end of this file.
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <krb5.h>
 #ifdef HAVE_K5PROFILE_H

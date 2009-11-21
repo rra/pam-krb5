@@ -5,7 +5,7 @@
  * user's authorization against .k5login (or whatever equivalent we've been
  * configured for).
  *
- * Copyright 2005, 2006, 2007, 2008 Russ Allbery <rra@debian.org>
+ * Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@debian.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  *
@@ -15,21 +15,15 @@
 /* Get prototypes for the account management functions. */
 #define PAM_SM_ACCOUNT
 
-#include "config.h"
+#include <config.h>
+#include <portable/pam.h>
 
 #include <errno.h>
 #include <krb5.h>
-#ifdef HAVE_SECURITY_PAM_APPL_H
-# include <security/pam_appl.h>
-# include <security/pam_modules.h>
-#elif HAVE_PAM_PAM_APPL_H
-# include <pam/pam_appl.h>
-# include <pam/pam_modules.h>
-#endif
 #include <stdlib.h>
 #include <string.h>
 
-#include "internal.h"
+#include <internal.h>
 
 /*
  * Check the authorization of the user.  It's not entirely clear what this
@@ -46,7 +40,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
     args = pamk5_args_parse(pamh, flags, argc, argv);
     if (args == NULL) {
-        pamk5_error(NULL, "cannot allocate memory: %s", strerror(errno));
+        pamk5_crit(NULL, "cannot allocate memory: %s", strerror(errno));
         pamret = PAM_AUTH_ERR;
         goto done;
     }
@@ -69,6 +63,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
     /* If the account was expired, here's where we actually fail. */
     if (ctx->expired) {
+        pamk5_debug(args, "account password is expired");
         pamret = PAM_NEW_AUTHTOK_REQD;
         goto done;
     }
@@ -82,9 +77,10 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
      * set by the time we get to this point.  If we would have to prompt for a
      * user, something is definitely broken and we should fail.
      */
-    retval = pam_get_item(pamh, PAM_USER, (void *) &name);
+    retval = pam_get_item(pamh, PAM_USER, (PAM_CONST void **) &name);
     if (retval != PAM_SUCCESS || name == NULL) {
-        retval = PAM_AUTH_ERR;
+        pamk5_err_pam(args, retval, "unable to retrieve user");
+        pamret = PAM_AUTH_ERR;
         goto done;
     }
     if (ctx->name != NULL)
@@ -104,8 +100,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
             krb5_free_principal(ctx->context, ctx->princ);
         retval = krb5_cc_get_principal(ctx->context, ctx->cache, &ctx->princ);
         if (retval != 0) {
-            pamk5_error_krb5(args, "cannot retrieve principal from cache",
-                             retval);
+            pamk5_err_krb5(args, retval, "cannot get principal from cache");
             pamret = PAM_AUTH_ERR;
             goto done;
         }
