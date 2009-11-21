@@ -1,3 +1,21 @@
+libpam-krb5 (4.1-1) unstable; urgency=low
+
+  * New upstream release.
+    - Fix return status for pam_setcred for ignored users and non-Kerberos
+      logins to return success.  Returning failure breaks PAM
+      configurations using jumps, since modules doing jumps become
+      required on the pam_setcred pass through the auth group.
+    - During the second pass through the password group, always prompt for
+      and store the new password even if the user is ignored.  This is
+      required to allow this module to be stacked with another module that
+      uses use_authtok.  Thanks, Steve Langasek.  (Closes: #545824)
+    - Log successful authentications with priority LOG_INFO.
+    - Log failed authentications with priority LOG_NOTICE.
+    - Use pam_syslog for logging and rationalize all logging to follow the
+      Linux PAM recommendations.
+
+ -- Russ Allbery <rra@debian.org>  Fri, 20 Nov 2009 16:09:05 -0800
+
 libpam-krb5 (4.0-1) unstable; urgency=low
 
   * New upstream release.
