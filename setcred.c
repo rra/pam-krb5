@@ -12,25 +12,19 @@
  * See LICENSE for licensing terms.
  */
 
-#include "config.h"
+#include <config.h>
+#include <portable/pam.h>
 
 #include <errno.h>
 #include <krb5.h>
 #include <pwd.h>
-#ifdef HAVE_SECURITY_PAM_APPL_H
-# include <security/pam_appl.h>
-# include <security/pam_modules.h>
-#elif HAVE_PAM_PAM_APPL_H
-# include <pam/pam_appl.h>
-# include <pam/pam_modules.h>
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "internal.h"
+#include <internal.h>
 
 /*
  * Given a cache name and an existing cache, initialize a new cache, store the
@@ -57,12 +51,12 @@ cache_init_from_cache(struct pam_args *args, const char *ccname,
     ctx = args->ctx;
     status = krb5_cc_start_seq_get(ctx->context, old, &cursor);
     if (status != 0) {
-        pamk5_debug_krb5(args, "krb5_cc_start_seq_get", status);
+        pamk5_err_krb5(args, status, "cannot open new credentials");
         return PAM_SERVICE_ERR;
     }
     status = krb5_cc_next_cred(ctx->context, old, &cursor, &creds);
     if (status != 0) {
-        pamk5_debug_krb5(args, "krb5_cc_next_cred", status);
+        pamk5_err_krb5(args, status, "cannot read new credentials");
         pamret = PAM_SERVICE_ERR;
         goto done;
     }
@@ -82,7 +76,8 @@ cache_init_from_cache(struct pam_args *args, const char *ccname,
         status = krb5_cc_store_cred(ctx->context, *cache, &creds);
         krb5_free_cred_contents(ctx->context, &creds);
         if (status != 0) {
-            pamk5_debug_krb5(args, "krb5_cc_store_cred", status);
+            pamk5_err_krb5(args, status, "cannot store additional credentials"
+                           " in %s", ccname);
             pamret = PAM_SERVICE_ERR;
             goto done;
         }
@@ -110,19 +105,16 @@ done:
 static char *
 build_ccache_name(struct pam_args *args, uid_t uid)
 {
-    char *cache_name;
+    char *cache_name = NULL;
+    int retval;
 
     if (args->ccache == NULL) {
-        size_t ccache_size = 1 + strlen(args->ccache_dir) +
-            strlen("/krb5cc_4294967295_XXXXXX");
-
-        cache_name = malloc(ccache_size);
-        if (cache_name == NULL) {
-            pamk5_error(args, "malloc failure: %s", strerror(errno));
+        retval = asprintf(&cache_name, "%s/krb5cc_%d_XXXXXX",
+                          args->ccache_dir, (int) uid);
+        if (retval < 0) {
+            pamk5_crit(args, "malloc failure: %s", strerror(errno));
             return NULL;
         }
-        snprintf(cache_name, ccache_size, "%s/krb5cc_%d_XXXXXX",
-                 args->ccache_dir, (int) uid);
     } else {
         size_t len = 0, delta;
         char *p, *q;
@@ -141,7 +133,7 @@ build_ccache_name(struct pam_args *args, uid_t uid)
         len++;
         cache_name = malloc(len);
         if (cache_name == NULL) {
-            pamk5_error(args, "malloc failure: %s", strerror(errno));
+            pamk5_crit(args, "malloc failure: %s", strerror(errno));
             return NULL;
         }
         for (p = args->ccache, q = cache_name; *p != '\0'; p++) {
@@ -197,7 +189,7 @@ create_session_context(struct pam_args *args)
      */
     pamret = pamk5_context_new(args);
     if (pamret != PAM_SUCCESS) {
-        pamk5_debug(args, "creating session context failed");
+        pamk5_crit_pam(args, pamret, "creating session context failed");
         goto fail;
     }
     ctx = args->ctx;
@@ -209,14 +201,15 @@ create_session_context(struct pam_args *args)
         goto fail;
     }
     pamk5_debug(args, "found initial ticket cache at %s", tmpname);
-    if (krb5_cc_resolve(ctx->context, tmpname, &ctx->cache) != 0) {
-        pamk5_debug(args, "cannot resolve cache %s", tmpname);
+    status = krb5_cc_resolve(ctx->context, tmpname, &ctx->cache);
+    if (status != 0) {
+        pamk5_err_krb5(args, status, "cannot resolve cache %s", tmpname);
         pamret = PAM_SERVICE_ERR;
         goto fail;
     }
     status = krb5_cc_get_principal(ctx->context, ctx->cache, &ctx->princ);
     if (status != 0) {
-        pamk5_debug_krb5(args, "cannot retrieve principal", status);
+        pamk5_err_krb5(args, status, "cannot retrieve principal");
         pamret = PAM_SERVICE_ERR;
         goto fail;
     }
@@ -228,7 +221,7 @@ create_session_context(struct pam_args *args)
      */
     pamret = pam_set_data(args->pamh, "pam_krb5", ctx, pamk5_context_destroy);
     if (pamret != PAM_SUCCESS) {
-        pamk5_debug_pam(args, "cannot set context data", pamret);
+        pamk5_err_pam(args, pamret, "cannot set context data");
         goto fail;
     }
     return PAM_SUCCESS;
@@ -293,9 +286,9 @@ pamk5_setcred(struct pam_args *args, int refresh)
      * pam_authenticate, but for either pam_setcred (other than DELETE) or for
      * pam_open_session, the user must be a local account.
      */
-    pw = pamk5_compat_getpwnam(args, ctx->name);
+    pw = pam_modutil_getpwnam(args->pamh, ctx->name);
     if (pw == NULL) {
-        pamk5_debug(args, "getpwnam failed for %s", ctx->name);
+        pamk5_err(args, "getpwnam failed for %s", ctx->name);
         pamret = PAM_USER_UNKNOWN;
         goto done;
     }
@@ -343,8 +336,8 @@ pamk5_setcred(struct pam_args *args, int refresh)
          * user.
          */
         if (getuid() != geteuid() || getgid() != getegid()) {
-            pamk5_error(args, "credential reinitialization in a setuid"
-                        " context ignored");
+            pamk5_err(args, "credential reinitialization in a setuid context"
+                      " ignored");
             pamret = PAM_SUCCESS;
             goto done;
         }
@@ -352,7 +345,7 @@ pamk5_setcred(struct pam_args *args, int refresh)
         if (name == NULL)
             name = krb5_cc_default_name(ctx->context);
         if (name == NULL) {
-            pamk5_debug(args, "unable to get ticket cache name");
+            pamk5_err(args, "unable to get ticket cache name");
             pamret = PAM_SERVICE_ERR;
             goto done;
         }
@@ -380,7 +373,7 @@ pamk5_setcred(struct pam_args *args, int refresh)
 
         cache_name = strdup(name);
         if (cache_name == NULL) {
-            pamk5_error(args, "malloc failure: %s", strerror(errno));
+            pamk5_crit(args, "malloc failure: %s", strerror(errno));
             pamret = PAM_BUF_ERR;
             goto done;
         }
@@ -428,13 +421,15 @@ pamk5_setcred(struct pam_args *args, int refresh)
     else if (strchr(cache_name, ':') == NULL)
         status = chown(cache_name, uid, gid);
     if (status == -1) {
-        pamk5_debug(args, "chown of ticket cache failed: %s", strerror(errno));
+        pamk5_crit(args, "chown of ticket cache failed: %s", strerror(errno));
         pamret = PAM_SERVICE_ERR;       
         goto done;
     }
     pamret = pamk5_set_krb5ccname(args, cache_name, "KRB5CCNAME");
-    if (pamret != PAM_SUCCESS)
+    if (pamret != PAM_SUCCESS) {
+        pamk5_crit(args, "setting KRB5CCNAME failed: %s", strerror(errno));
         goto done;
+    }
 
     /*
      * If we had a temporary ticket cache, delete the environment variable so

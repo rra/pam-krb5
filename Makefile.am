@@ -14,13 +14,18 @@ ACLOCAL_AMFLAGS = -I m4
 EXTRA_DIST = LICENSE autogen compat-aix.c compat-heimdal.c compat-mit.c	\
 	pam_krb5.map pam_krb5.pod
 
+noinst_LTLIBRARIES = portable/libportable.la
+portable_libportable_la_SOURCES = portable/dummy.c portable/macros.h \
+        portable/pam.h
+portable_libportable_la_LIBADD = $(LTLIBOBJS)
+
 pamdir = $(libdir)/security
 pam_LTLIBRARIES = pam_krb5.la
 pam_krb5_la_SOURCES = api-account.c api-auth.c api-password.c api-session.c \
 	auth.c cache.c compat.c context.c internal.h logging.c options.c    \
 	password.c prompting.c setcred.c support.c
 pam_krb5_la_LDFLAGS = -module -shared -avoid-version $(AM_LDFLAGS)
-pam_krb5_la_LIBADD = $(KRB5_LIBS)
+pam_krb5_la_LIBADD = portable/libportable.la $(KRB5_LIBS)
 dist_man_MANS = pam_krb5.5
 
 MAINTAINERCLEANFILES = Makefile.in aclocal.m4 build-aux/compile		 \

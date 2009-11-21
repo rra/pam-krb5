@@ -16,19 +16,15 @@
 /* Get the prototypes for the authentication functions. */
 #define PAM_SM_AUTH
 
-#include "config.h"
+#include <config.h>
+#include <portable/pam.h>
 
 #include <errno.h>
-#ifdef HAVE_SECURITY_PAM_APPL_H
-# include <security/pam_appl.h>
-# include <security/pam_modules.h>
-#elif HAVE_PAM_PAM_APPL_H
-# include <pam/pam_appl.h>
-# include <pam/pam_modules.h>
-#endif
+#include <krb5.h>
 #include <string.h>
+#include <syslog.h>
 
-#include "internal.h"
+#include <internal.h>
 
 /*
  * Authenticate a user via Kerberos 5.
@@ -48,12 +44,14 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     struct pam_args *args;
     krb5_creds *creds = NULL;
     char *pass = NULL;
+    char *principal;
     int pamret;
     int set_context = 0;
+    krb5_error_code retval;
 
     args = pamk5_args_parse(pamh, flags, argc, argv);
     if (args == NULL) {
-        pamk5_error(NULL, "cannot allocate memory: %s", strerror(errno));
+        pamk5_crit(NULL, "cannot allocate memory: %s", strerror(errno));
         pamret = PAM_SERVICE_ERR;
         goto done;
     }
@@ -61,8 +59,8 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 
     /* Temporary backward compatibility. */
     if (args->use_authtok && !args->force_first_pass) {
-        pamk5_error(args, "use_authtok option in authentication group should"
-                    " be changed to force_first_pass");
+        pamk5_err(args, "use_authtok option in authentication group should"
+                  " be changed to force_first_pass");
         args->force_first_pass = 1;
     }
 
@@ -110,10 +108,12 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
             ctx->expired = 1;
             pamret = PAM_SUCCESS;
         } else if (args->force_pwchange) {
-            pamk5_debug(args, "expired account, forcing password change");
+            pam_syslog(args->pamh, LOG_INFO, "user %s password expired,"
+                       " forcing password change", ctx->name);
             pamk5_conv(args, "Password expired.  You must change it now.",
                        PAM_TEXT_INFO, NULL);
-            pamret = pam_get_item(args->pamh, PAM_AUTHTOK, (void *) &pass);
+            pamret = pam_get_item(args->pamh, PAM_AUTHTOK,
+                                  (PAM_CONST void **) &pass);
             if (pamret == PAM_SUCCESS && pass != NULL)
                 pam_set_item(args->pamh, PAM_OLDAUTHTOK, pass);
             pam_set_item(args->pamh, PAM_AUTHTOK, NULL);
@@ -126,14 +126,16 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
             }
         }
     }
-    if (pamret != PAM_SUCCESS)
+    if (pamret != PAM_SUCCESS) {
+        pamk5_log_failure(args, "authentication failure");
         goto done;
+    }
 
     /* Check .k5login and alt_auth_map. */
     if (!ctx->expired) {
         pamret = pamk5_authorized(args);
         if (pamret != PAM_SUCCESS) {
-            pamk5_debug(args, "failed authorization check");
+            pamk5_log_failure(args, "failed authorization check");
             goto done;
         }
     }
@@ -142,12 +144,25 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     if (!ctx->expired) {
         pamret = pam_set_item(args->pamh, PAM_USER, ctx->name);
         if (pamret != PAM_SUCCESS)
-            pamk5_debug_pam(args, "cannot set PAM_USER", pamret);
+            pamk5_err_pam(args, pamret, "cannot set PAM_USER");
+    }
+
+    /* Log the successful authentication. */
+    retval = krb5_unparse_name(ctx->context, ctx->princ, &principal);
+    if (retval != 0) {
+        pamk5_err_krb5(args, retval, "krb5_unparse_name failed");
+        pam_syslog(args->pamh, LOG_INFO, "user %s authenticated as UNKNOWN",
+                   ctx->name);
+    } else {
+        pam_syslog(args->pamh, LOG_INFO, "user %s authenticated as %s",
+                   ctx->name, principal);
+        free(principal);
     }
 
     /* Now that we know we're successful, we can store the context. */
     pamret = pam_set_data(pamh, "pam_krb5", ctx, pamk5_context_destroy);
     if (pamret != PAM_SUCCESS) {
+        pamk5_err_pam(args, pamret, "cannot set context data");
         pamk5_context_free(ctx);
         pamret = PAM_SERVICE_ERR;
         goto done;
@@ -205,7 +220,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
     args = pamk5_args_parse(pamh, flags, argc, argv);
     if (args == NULL) {
-        pamk5_error(NULL, "cannot allocate memory: %s", strerror(errno));
+        pamk5_crit(NULL, "cannot allocate memory: %s", strerror(errno));
         pamret = PAM_SERVICE_ERR;
         goto done;
     }
@@ -217,6 +232,8 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
      */
     if (flags & PAM_DELETE_CRED) {
         pamret = pam_set_data(pamh, "pam_krb5", NULL, NULL);
+        if (pamret != PAM_SUCCESS)
+            pamk5_err_pam(args, pamret, "cannot clear context data");
         args->ctx = NULL;
         goto done;
     }
@@ -229,13 +246,13 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
     if (flags & (PAM_REINITIALIZE_CRED | PAM_REFRESH_CRED))
         refresh = 1;
     if (refresh && (flags & PAM_ESTABLISH_CRED)) {
-        pamk5_error(args, "requested establish and refresh at the same time");
+        pamk5_err(args, "requested establish and refresh at the same time");
         pamret = PAM_SERVICE_ERR;
         goto done;
     }
     allow = PAM_REINITIALIZE_CRED | PAM_REFRESH_CRED | PAM_ESTABLISH_CRED;
     if (!(flags & allow)) {
-        pamk5_error(args, "invalid pam_setcred flags %d", flags);
+        pamk5_err(args, "invalid pam_setcred flags %d", flags);
         pamret = PAM_SERVICE_ERR;
         goto done;
     }
@@ -244,12 +261,19 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
     pamret = pamk5_setcred(args, refresh);
 
     /*
-     * Never return PAM_IGNORE from pam_setcred since this confuses older
-     * versions of the Linux PAM library, such as 0.99.6.2 shipped with RHEL
-     * 5, when used with the [] syntax.
+     * Never return PAM_IGNORE from pam_setcred since this can confuse the
+     * Linux PAM library, at least for applications that call pam_setcred
+     * without pam_authenticate (possibly because authentication was done
+     * some other way), when used with jumps with the [] syntax.  Since we
+     * do nothing in this case, and since the stack is already frozen from
+     * the auth group, success makes sense.
+     *
+     * Don't return an error here or the PAM stack will fail if pam-krb5 is
+     * used with [success=ok default=1], since jumps are treated as required
+     * during the second pass with pam_setcred.
      */
     if (pamret == PAM_IGNORE)
-        pamret = PAM_USER_UNKNOWN;
+        pamret = PAM_SUCCESS;
 
 done:
     EXIT(args, pamret);

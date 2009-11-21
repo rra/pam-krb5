@@ -7,27 +7,8 @@ PAM API:
    available in the PAM data) and trying a regular authentication first to
    see if the account is expired.
 
- * Fix error logging levels to comply with the Linux PAM recommendations.
-   Currently, all errors are logged at LOG_ERR level.  Corrupt local
-   configuration (so failure of krb5_init_context) should be logged at
-   LOG_ALERT, malloc failures and other system resource failures should be
-   logged at LOG_CRIT, and authentication failures should be logged at
-   LOG_NOTICE.
-
  * Tighter verification that all of our flags are valid might be a good
    idea.
-
-Logging:
-
- * Log the principal used for authentication in the search_k5login case.
-
-Build System:
-
- * It would be very nice to use Automake to match my other projects, but
-   getting the flags right for building a PAM module while fighting with
-   Libtool is unappealing.  Maybe it won't be that bad, or maybe I can
-   convince Automake to generate a shared object using the flags I figured
-   out without using Libtool.
 
 Code Cleanup:
 
@@ -57,10 +38,6 @@ Code Cleanup:
    Helpful for this would be improved documentation of what error codes
    are permitted and where.
 
- * Add portability glue for a missing or broken snprintf and use snprintf
-   everywhere sprintf is currently used.  A portable replacement for
-   mkstemp is probably also a good idea.
-
 Documentation:
 
  * Document PKINIT configuration with MIT in krb5.conf.  It looks like the
@@ -80,3 +57,8 @@ Tests:
 
  * Add support for running an automated test suite using a user-configured
    test account with a known password.
+
+Portability:
+
+ * If pam_modutil_getpwnam is not available but getpwnam_r is, roll our
+   own using getpwnam_r.

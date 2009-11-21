@@ -10,17 +10,12 @@
 #ifndef INTERNAL_H
 #define INTERNAL_H 1
 
-#include "config.h"
+#include <config.h>
+#include <portable/pam.h>
 
 #include <krb5.h>
-#ifdef HAVE_SECURITY_PAM_APPL_H
-# include <security/pam_appl.h>
-# include <security/pam_modules.h>
-#elif HAVE_PAM_PAM_APPL_H
-# include <pam/pam_appl.h>
-# include <pam/pam_modules.h>
-#endif
 #include <stdarg.h>
+#include <syslog.h>
 
 /* Forward declarations to avoid unnecessary includes. */
 struct passwd;
@@ -154,6 +149,13 @@ int pamk5_password_auth(struct pam_args *, const char *service,
 int pamk5_setcred(struct pam_args *, int refresh);
 
 /*
+ * Prompt the user for a new password, twice so that they can confirm.  Sets
+ * PAM_AUTHTOK and puts the new password in newly allocated memory in pass if
+ * it's not NULL.
+ */
+int pamk5_password_prompt(struct pam_args *, char **pass);
+
+/*
  * Change the user's password.  Prompts for the current password as needed and
  * the new password.  If the second argument is true, only obtains the
  * necessary credentials without changing anything.
@@ -236,15 +238,34 @@ krb5_error_code pamk5_compat_secure_context(krb5_context *);
 /* Calls issetugid if available, otherwise checks effective IDs. */
 int pamk5_compat_issetugid(void);
 
-/* Calls pam_modutil_getpwnam if available, otherwise getpwnam. */
-struct passwd *pamk5_compat_getpwnam(struct pam_args *, const char *);
+/*
+ * Error reporting and debugging functions.  For each log level, there are
+ * three functions.  The _log function just prints out the message it's given.
+ * The _log_pam function reports a PAM error using pam_strerror.  The
+ * _log_krb5 function reports a Kerberos error.
+ */
+void pamk5_crit(struct pam_args *, const char *, ...)
+    __attribute__((__format__(printf, 2, 3)));
+void pamk5_crit_pam(struct pam_args *, int, const char *, ...)
+    __attribute__((__format__(printf, 3, 4)));
+void pamk5_crit_krb5(struct pam_args *, int, const char *, ...)
+    __attribute__((__format__(printf, 3, 4)));
+void pamk5_err(struct pam_args *, const char *, ...)
+    __attribute__((__format__(printf, 2, 3)));
+void pamk5_err_pam(struct pam_args *, int, const char *, ...)
+    __attribute__((__format__(printf, 3, 4)));
+void pamk5_err_krb5(struct pam_args *, int, const char *, ...)
+    __attribute__((__format__(printf, 3, 4)));
+void pamk5_debug(struct pam_args *, const char *, ...)
+    __attribute__((__format__(printf, 2, 3)));
+void pamk5_debug_pam(struct pam_args *, int, const char *, ...)
+    __attribute__((__format__(printf, 3, 4)));
+void pamk5_debug_krb5(struct pam_args *, int, const char *, ...)
+    __attribute__((__format__(printf, 3, 4)));
 
-/* Error reporting and debugging functions. */
-void pamk5_error(struct pam_args *, const char *, ...);
-void pamk5_error_krb5(struct pam_args *, const char *, int);
-void pamk5_debug(struct pam_args *, const char *, ...);
-void pamk5_debug_pam(struct pam_args *, const char *, int);
-void pamk5_debug_krb5(struct pam_args *, const char *, int);
+/* Log an authentication failure. */
+void pamk5_log_failure(struct pam_args *, const char *, ...)
+    __attribute__((__format__(printf, 2, 3)));
 
 /* Undo default visibility change. */
 #pragma GCC visibility pop
@@ -259,11 +280,14 @@ void pamk5_debug_krb5(struct pam_args *, const char *, int);
 #endif
 
 /* Macros to record entry and exit from the main PAM functions. */
-#define ENTRY(args, flags) \
-    pamk5_debug((args), "%s: entry (0x%x)", __func__, (flags))
-#define EXIT(args, pamret) \
-    pamk5_debug((args), "%s: exit (%s)", __func__, \
-                ((pamret) == PAM_SUCCESS) ? "success" \
-                : (((pamret) == PAM_IGNORE) ? "ignore" : "failure"))
+#define ENTRY(args, flags)                                              \
+    if (args->debug)                                                    \
+        pam_syslog((args)->pamh, LOG_DEBUG,                             \
+                   "%s: entry (0x%x)", __func__, (flags))
+#define EXIT(args, pamret)                                              \
+    if (args->debug)                                                    \
+        pam_syslog((args)->pamh, LOG_DEBUG, "%s: exit (%s)", __func__,  \
+                   ((pamret) == PAM_SUCCESS) ? "success"                \
+                   : (((pamret) == PAM_IGNORE) ? "ignore" : "failure"))
 
 #endif /* !INTERNAL_H */

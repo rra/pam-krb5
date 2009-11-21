@@ -4,29 +4,23 @@
  * Some general utility functions used by multiple PAM groups that aren't
  * associated with any particular chunk of functionality.
  *
- * Copyright 2005, 2006, 2007 Russ Allbery <rra@debian.org>
+ * Copyright 2005, 2006, 2007, 2009 Russ Allbery <rra@debian.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  *
  * See LICENSE for licensing terms.
  */
 
-#include "config.h"
+#include <config.h>
+#include <portable/pam.h>
 
 #include <krb5.h>
 #include <pwd.h>
-#ifdef HAVE_SECURITY_PAM_APPL_H
-# include <security/pam_appl.h>
-# include <security/pam_modules.h>
-#elif HAVE_PAM_PAM_APPL_H
-# include <pam/pam_appl.h>
-# include <pam/pam_modules.h>
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "internal.h"
+#include <internal.h>
 
 /*
  * Given the PAM arguments and the user we're authenticating, see if we should
@@ -44,7 +38,7 @@ pamk5_should_ignore(struct pam_args *args, PAM_CONST char *username)
         return 1;
     }
     if (args->minimum_uid > 0) {
-        pwd = pamk5_compat_getpwnam(args, username);
+        pwd = pam_modutil_getpwnam(args->pamh, username);
         if (pwd != NULL && pwd->pw_uid < (unsigned long) args->minimum_uid) {
             pamk5_debug(args, "ignoring low-UID user (%lu < %d)",
                         (unsigned long) pwd->pw_uid, args->minimum_uid);
@@ -204,7 +198,7 @@ pamk5_authorized(struct pam_args *args)
      * Otherwise, apply either krb5_aname_to_localname or krb5_kuserok
      * depending on the situation.
      */
-    pwd = pamk5_compat_getpwnam(args, ctx->name);
+    pwd = pam_modutil_getpwnam(args->pamh, ctx->name);
     if (args->ignore_k5login || pwd == NULL) {
         if (krb5_aname_to_localname(c, ctx->princ, sizeof(kuser), kuser) != 0)
             return PAM_AUTH_ERR;

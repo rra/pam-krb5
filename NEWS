@@ -1,5 +1,48 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 4.1 (2009-11-20)
+
+    Return PAM_SUCCESS, not PAM_USER_UNKNOWN, for ignored users in
+    pam_setcred.  It's safe to return success when doing nothing in
+    pam_setcred because the stack has already been frozen after the
+    authentication step, and returning an error causes the stack to fail
+    on some other Linux PAM implementations.  Thanks, Ian Ward Comfort.
+
+    In the second pass through the password group, prompt for the new
+    password and store it in the PAM data even if the user is being
+    ignored.  This is required to allow this module to be stacked with
+    another module that uses use_authtok.  Without this behavior, the
+    second module won't be able to work for any ignored user since it will
+    see no saved password and use_authtok will reject the password change.
+
+    Fix return status from pam_sm_acct_mgmt if we were unable to retrieve
+    PAM_USER.
+
+    Log successful authentications to syslog with priority LOG_INFO,
+    including the Kerberos principal used for authentication.
+
+    Log failed authentication to syslog with priority LOG_NOTICE,
+    including roughly the same additional information that the Linux PAM
+    pam_unix logs by default.
+
+    Use pam_syslog for logging where available.  This means pam-krb5 log
+    messages will look like all other log messages for Linux PAM modules
+    on Linux.  Change the format of log messages on all platforms to
+    hopefully be somewhat clearer.
+
+    Rationalize logging.  The module should now follow the recommendations
+    of the Linux PAM Module Writers' Guide for log levels.  More errors
+    are logged at LOG_ERR instead of LOG_DEBUG, and system resource errors
+    are now logged at LOG_CRIT instead of LOG_ERR.
+
+    Add additional error and debug logging in places where significant
+    actions or failures may happen without previously being logged.  Also
+    add failure information from PAM or Kerberos libraries to messages
+    where appropriate.
+
+    Add replacement snprintf, vsnprintf, and mkstemp functions for
+    pointless portability to ancient systems.
+
 pam-krb5 4.0 (2009-11-13)
 
     UPGRADE WARNING: If you were using pam_krb5 with the use_authtok
@@ -38,10 +81,10 @@ pam-krb5 4.0 (2009-11-13)
 
     Stop returning PAM_IGNORE from pam_setcred if the user is ignored or
     didn't log in via Kerberos and instead return PAM_USER_UNKNOWN.  This
-    works around a bug in older versions of the Linux PAM library where
-    returning PAM_IGNORE would cause pam_setcred to fail even if other
-    modules succeeded.  Since pam_authenticate never returned PAM_IGNORE,
-    this change should not cause any differences in behavior.
+    problems with the Linux PAM library where returning PAM_IGNORE would
+    cause pam_setcred to fail even if other modules succeeded.  Since
+    pam_authenticate never returned PAM_IGNORE, this change should not
+    cause any differences in behavior.
 
     Do not use issetugid on Solaris to determine when to avoid refreshing
     the ticket cache named in KRB5CCNAME during pam_setcred.  Instead,
