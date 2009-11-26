@@ -1,3 +1,11 @@
+libpam-krb5 (4.2-1) unstable; urgency=low
+
+  * New upstream release.
+    - New fail_pwchange option which treats expired passwords like
+      authentication failure and suppresses password change.
+
+ -- Russ Allbery <rra@debian.org>  Wed, 25 Nov 2009 17:37:03 -0800
+
 libpam-krb5 (4.1-1) unstable; urgency=low
 
   * New upstream release.
