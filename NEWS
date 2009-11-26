@@ -1,6 +1,6 @@
                       User-Visible pam-krb5 Changes
 
-pam-krb5 4.2 (unreleased)
+pam-krb5 4.2 (2009-11-25)
 
     Add a new fail_pwchange option, which suppresses password changes for
     expired passwords and treats expired passwords the same as incorrect
