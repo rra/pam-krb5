@@ -1,5 +1,14 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 4.2 (2009-11-25)
+
+    Add a new fail_pwchange option, which suppresses password changes for
+    expired passwords and treats expired passwords the same as incorrect
+    passwords.
+
+    Include all the new header files from the portability code so that
+    it will actually compile on non-Linux platforms.
+
 pam-krb5 4.1 (2009-11-20)
 
     Return PAM_SUCCESS, not PAM_USER_UNKNOWN, for ignored users in

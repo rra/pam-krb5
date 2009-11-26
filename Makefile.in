@@ -284,7 +284,7 @@ EXTRA_DIST = LICENSE autogen compat-aix.c compat-heimdal.c compat-mit.c	\
 
 noinst_LTLIBRARIES = portable/libportable.la
 portable_libportable_la_SOURCES = portable/dummy.c portable/macros.h \
-        portable/pam.h
+        portable/pam.h portable/stdbool.h portable/system.h
 
 portable_libportable_la_LIBADD = $(LTLIBOBJS)
 pamdir = $(libdir)/security
