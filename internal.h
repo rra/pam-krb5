@@ -65,6 +65,7 @@ struct pam_args {
     int debug;                  /* Log debugging information. */
     int defer_pwchange;         /* Defer expired account fail to account. */
     int expose_account;         /* Display principal in password prompts. */
+    int fail_pwchange;          /* Treat expired password as auth failure. */
     int force_first_pass;       /* Require a previous password be stored. */
     int force_pwchange;         /* Change expired passwords in auth. */
     int forwardable;            /* Obtain forwardable tickets. */

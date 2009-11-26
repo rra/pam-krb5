@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "PAM_KRB5 5"
-.TH PAM_KRB5 5 "2009-11-20" "4.1" "pam-krb5"
+.TH PAM_KRB5 5 "2009-11-25" "4.2" "pam-krb5"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -464,6 +464,16 @@ inaccurate.
 .Sp
 This option can be set in \fIkrb5.conf\fR and is only applicable to the auth
 and password groups.
+.IP "fail_pwchange" 4
+.IX Item "fail_pwchange"
+By default, pam\-krb5 lets the Kerberos library handle prompting for a
+password change if an account's password is expired during the auth
+group.  If this option is set, expired passwords are instead treated as an
+authentication failure identical to an incorrect password.  Also see
+\&\fIdefer_pwchange\fR and \fIforce_pwchange\fR.
+.Sp
+This option can be set in \fIkrb5.conf\fR and is only applicable to the auth
+group.
 .IP "force_alt_auth" 4
 .IX Item "force_alt_auth"
 This option is used with \fIalt_auth_map\fR and forces authentication as the

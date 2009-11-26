@@ -103,7 +103,9 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
      */
     pamret = pamk5_password_auth(args, NULL, &creds);
     if (pamret == PAM_NEW_AUTHTOK_REQD) {
-        if (args->defer_pwchange) {
+        if (args->fail_pwchange)
+            pamret = PAM_AUTH_ERR;
+        else if (args->defer_pwchange) {
             pamk5_debug(args, "expired account, deferring failure");
             ctx->expired = 1;
             pamret = PAM_SUCCESS;

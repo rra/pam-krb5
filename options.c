@@ -295,6 +295,7 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
         default_boolean(args, c, "debug", 0, &args->debug);
         default_boolean(args, c, "defer_pwchange", 0, &args->defer_pwchange);
         default_boolean(args, c, "expose_account", 0, &args->expose_account);
+        default_boolean(args, c, "fail_pwchange", 0, &args->fail_pwchange);
         default_boolean(args, c, "force_alt_auth", 0, &args->force_alt_auth);
         default_boolean(args, c, "force_pwchange", 0, &args->force_pwchange);
         default_boolean(args, c, "forwardable", 0, &args->forwardable);
@@ -358,6 +359,8 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
             args->defer_pwchange = 1;
         else if (strcmp(argv[i], "expose_account") == 0)
             args->expose_account = 1;
+        else if (strcmp(argv[i], "fail_pwchange") == 0)
+            args->fail_pwchange = 1;
         else if (strcmp(argv[i], "force_first_pass") == 0)
             args->force_first_pass = 1;
         else if (strcmp(argv[i], "force_pwchange") == 0)

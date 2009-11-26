@@ -348,6 +348,17 @@ inaccurate.
 This option can be set in F<krb5.conf> and is only applicable to the auth
 and password groups.
 
+=item fail_pwchange
+
+By default, pam-krb5 lets the Kerberos library handle prompting for a
+password change if an account's password is expired during the auth
+group.  If this option is set, expired passwords are instead treated as an
+authentication failure identical to an incorrect password.  Also see
+I<defer_pwchange> and I<force_pwchange>.
+
+This option can be set in F<krb5.conf> and is only applicable to the auth
+group.
+
 =item force_alt_auth
 
 This option is used with I<alt_auth_map> and forces authentication as the
