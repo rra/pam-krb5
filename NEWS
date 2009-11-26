@@ -2,6 +2,10 @@
 
 pam-krb5 4.2 (unreleased)
 
+    Add a new fail_pwchange option, which suppresses password changes for
+    expired passwords and treats expired passwords the same as incorrect
+    passwords.
+
     Include all the new header files from the portability code so that
     it will actually compile on non-Linux platforms.
 
