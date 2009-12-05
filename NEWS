@@ -1,5 +1,10 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 4.3 (unreleased)
+
+    Fix the linker flags for Solaris with the native compiler.  Thanks,
+    Kevin Sumner.
+
 pam-krb5 4.2 (2009-11-25)
 
     Add a new fail_pwchange option, which suppresses password changes for

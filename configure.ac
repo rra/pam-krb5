@@ -108,9 +108,7 @@ AS_CASE([$host],
             [RRA_SET_LIBDIR])])],
 
     [*-solaris2*],
-    [AS_IF([test x"$GCC" = x"yes"],
-        [AM_LDFLAGS="-Wl,-Bsymbolic $AM_LDFLAGS"],
-        [AM_LDFLAGS="-Wl,-xldscope=symbolic $AM_LDFLAGS"])])
+    [AM_LDFLAGS="-Wl,-Bsymbolic $AM_LDFLAGS"])
 
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_FILES([Makefile])
