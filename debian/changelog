@@ -1,4 +1,4 @@
-libpam-krb5 (4.2-2) UNRELEASED; urgency=low
+libpam-krb5 (4.2-2) unstable; urgency=low
 
   * Build libpam-krb5 and libpam-heimdal from the same source package.
   * Acknowledge libpam-heimdal NMU.
@@ -10,7 +10,7 @@ libpam-krb5 (4.2-2) UNRELEASED; urgency=low
   * Fix spelling error in manual page.
   * Update standards version to 3.8.4 (no changes required).
 
- -- Russ Allbery <rra@debian.org>  Sun, 31 Jan 2010 18:24:58 -0800
+ -- Russ Allbery <rra@debian.org>  Sun, 31 Jan 2010 20:49:19 -0800
 
 libpam-krb5 (4.2-1) unstable; urgency=low
 
