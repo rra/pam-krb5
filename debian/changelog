@@ -4,6 +4,9 @@ libpam-krb5 (4.2-2) UNRELEASED; urgency=low
   * Acknowledge libpam-heimdal NMU.
     - Rebuild against current Heimdal libraries.  (Closes: #559779)
     - Add support for pam-auth-update.  (Closes: #551455)
+  * Lower libpam-heimdal priority to extra, since it conflicts with
+    libpam-krb5 and the MIT Kerberos version will be sufficient for most
+    users.
   * Fix spelling error in manual page.
   * Update standards version to 3.8.4 (no changes required).
 

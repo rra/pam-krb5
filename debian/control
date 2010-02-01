@@ -22,6 +22,7 @@ Description: PAM module for MIT Kerberos
  file, and changing Kerberos v5 passwords.
 
 Package: libpam-heimdal
+Priority: extra
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, krb5-config,
  libpam-runtime (>= 1.0.1-6~)
