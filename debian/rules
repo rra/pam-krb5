@@ -3,16 +3,33 @@
 %:
 	dh $@
 
+override_dh_auto_clean:
+	rm -rf build-mit build-heimdal
+
 override_dh_auto_configure:
-	dh_auto_configure -- --enable-reduced-depends --libdir=/lib
+	mkdir build-mit build-heimdal
+	CPPFLAGS=-I/usr/include/mit-krb5 LDFLAGS=-L/usr/lib/mit-krb5 \
+	    dh_auto_configure -Bbuild-mit -- --enable-reduced-depends \
+		--libdir=/lib
+	CPPFLAGS=-I/usr/include/heimdal LDFLAGS=-L/usr/lib/heimdal \
+	    dh_auto_configure -Bbuild-heimdal -- --enable-reduced-depends \
+		--libdir=/lib
+
+override_dh_auto_build:
+	dh_auto_build -Bbuild-mit
+	dh_auto_build -Bbuild-heimdal
 
 override_dh_auto_install:
-	dh_auto_install
-	rm debian/libpam-krb5/lib/security/*.la
-	chmod 644 debian/libpam-krb5/lib/security/*.so
+	dh_auto_install -Bbuild-mit --destdir=debian/libpam-krb5
+	dh_auto_install -Bbuild-heimdal --destdir=debian/libpam-heimdal
+	rm debian/libpam-*/lib/security/*.la
+	chmod 644 debian/libpam-*/lib/security/*.so
 	install -d debian/libpam-krb5/usr/share/pam-configs
+	install -d debian/libpam-heimdal/usr/share/pam-configs
 	install -m 644 debian/pam-auth-update \
 	    debian/libpam-krb5/usr/share/pam-configs/krb5
+	install -m 644 debian/pam-auth-update \
+	    debian/libpam-heimdal/usr/share/pam-configs/krb5
 
 override_dh_installchangelogs:
 	dh_installchangelogs NEWS

@@ -4,7 +4,8 @@ Priority: optional
 Maintainer: Russ Allbery <rra@debian.org>
 Uploaders: Sam Hartman <hartmans@debian.org>
 Standards-Version: 3.8.3
-Build-Depends: debhelper (>= 7.0.50~), libkrb5-dev, libpam0g-dev
+Build-Depends: debhelper (>= 7.0.50~), heimdal-multidev, krb5-multidev,
+ libpam0g-dev
 Homepage: http://www.eyrie.org/~eagle/software/pam-krb5/
 Vcs-Git: git://git.debian.org/git/pkg-k5-afs/pam-krb5.git
 Vcs-Browser: http://git.debian.org/?p=pkg-k5-afs/pam-krb5.git
@@ -16,6 +17,17 @@ Depends: ${shlibs:Depends}, ${misc:Depends}, krb5-config,
 Conflicts: libpam-heimdal
 Description: PAM module for MIT Kerberos
  A Kerberos v5 PAM module build against the MIT Kerberos libraries.  It
+ supports authenticating against a Kerberos v5 KDC, obtaining tickets and
+ populating an initial ticket cache, authorizing users via a ~/.k5login
+ file, and changing Kerberos v5 passwords.
+
+Package: libpam-heimdal
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, krb5-config,
+ libpam-runtime (>= 1.0.1-6~)
+Conflicts: libpam-krb5
+Description: PAM module for Heimdal Kerberos
+ A Kerberos v5 PAM module build against the Heimdal libraries.  It
  supports authenticating against a Kerberos v5 KDC, obtaining tickets and
  populating an initial ticket cache, authorizing users via a ~/.k5login
  file, and changing Kerberos v5 passwords.

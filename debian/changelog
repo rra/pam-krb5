@@ -1,3 +1,12 @@
+libpam-krb5 (4.2-2) UNRELEASED; urgency=low
+
+  * Build libpam-krb5 and libpam-heimdal from the same source package.
+  * Acknowledge libpam-heimdal NMU.
+    - Rebuild against current Heimdal libraries.  (Closes: #559779)
+    - Add support for pam-auth-update.  (Closes: #551455)
+
+ -- Russ Allbery <rra@debian.org>  Sun, 31 Jan 2010 18:24:58 -0800
+
 libpam-krb5 (4.2-1) unstable; urgency=low
 
   * New upstream release.
