@@ -5,6 +5,7 @@ libpam-krb5 (4.2-2) UNRELEASED; urgency=low
     - Rebuild against current Heimdal libraries.  (Closes: #559779)
     - Add support for pam-auth-update.  (Closes: #551455)
   * Fix spelling error in manual page.
+  * Update standards version to 3.8.4 (no changes required).
 
  -- Russ Allbery <rra@debian.org>  Sun, 31 Jan 2010 18:24:58 -0800
 
