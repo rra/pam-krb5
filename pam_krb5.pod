@@ -34,7 +34,7 @@ password (unless configured to use an already-entered password), and then
 performs a Kerberos initial authentication, storing the obtained
 credentials (if successful) in a temporary ticket cache.  The latter,
 depending on the flags it is called with, either takes the contents of the
-temporary ticket cache and writes it out to a persistant ticket cache
+temporary ticket cache and writes it out to a persistent ticket cache
 owned by the user or uses the temporary ticket cache to refresh an
 existing user ticket cache.
 
