@@ -1,7 +1,6 @@
 # Makefile.am -- Automake makefile for pam-krb5.
 #
 # Written by Russ Allbery <rra@stanford.edu>
-#
 # Copyright 2009 Board of Trustees, Leland Stanford Jr. University
 # Copyright 2005, 2006, 2007 Russ Allbery <rra@debian.org>
 # Copyright 2005 Andres Salomon <dilinger@debian.org>
@@ -11,8 +10,8 @@
 
 AUTOMAKE_OPTIONS = foreign subdir-objects
 ACLOCAL_AMFLAGS = -I m4
-EXTRA_DIST = LICENSE autogen compat-aix.c compat-heimdal.c compat-mit.c	\
-	pam_krb5.map pam_krb5.pod
+EXTRA_DIST = .gitignore LICENSE autogen compat-aix.c compat-heimdal.c	\
+	compat-mit.c pam_krb5.map pam_krb5.pod
 
 noinst_LTLIBRARIES = portable/libportable.la
 portable_libportable_la_SOURCES = portable/dummy.c portable/macros.h \
