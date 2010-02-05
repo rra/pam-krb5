@@ -4,7 +4,7 @@
  * Provides functions for creating ticket caches, used by pam_authenticate,
  * pam_setcred, and pam_chauthtok after changing an expired password.
  *
- * Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@debian.org>
+ * Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@stanford.edu>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  *

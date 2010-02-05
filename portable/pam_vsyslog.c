@@ -9,7 +9,7 @@
  * MODULE_NAME to the name of the PAM module.  (PACKAGE isn't used since it
  * may use dashes where the module uses underscores.)
  *
- * Written by Russ Allbery <rra@debian.org>
+ * Written by Russ Allbery <rra@stanford.edu>
  * This work is hereby placed in the public domain by its author.
  */
 

@@ -5,7 +5,7 @@
  * to create the user's ticket cache.  The shared code is abstracted here into
  * the pamk5_setcred function.
  *
- * Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@debian.org>
+ * Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@stanford.edu>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  *

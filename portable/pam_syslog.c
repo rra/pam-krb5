@@ -5,7 +5,7 @@
  * replacement) if the PAM implementation does not provide it.  This is a
  * Linux PAM extension.
  *
- * Written by Russ Allbery <rra@debian.org>
+ * Written by Russ Allbery <rra@stanford.edu>
  * This work is hereby placed in the public domain by its author.
  */
 
