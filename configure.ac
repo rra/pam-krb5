@@ -1,5 +1,6 @@
-dnl Process this file with Autoconf to produce a configure script.
+dnl Autoconf configuration for pam-krb5.
 dnl
+dnl Written by Russ Allbery <rra@debian.org>
 dnl Copyright 2009 Board of Trustees, Leland Stanford Jr. University
 dnl Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@debian.org>
 dnl Copyright 2005 Andres Salomon <dilinger@debian.org>
