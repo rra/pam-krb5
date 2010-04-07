@@ -685,7 +685,9 @@ for a similar setting for the new password.
 Require PKINIT authentication.  You will probably also need to set the
 I<pkinit_user> configuration option.  If PKINIT fails, authentication will
 fail.  This option is currently only supported if pam-krb5 was built
-against Heimdal 0.8rc1 or later.
+against Heimdal 0.8rc1 or later.  MIT Kerberos doesn't provide a method to
+enforce use of PKINIT, so I<try_pkinit> must be used with that
+implementation instead.
 
 This option can be set in F<krb5.conf> and is only applicable to the auth
 and password groups.
