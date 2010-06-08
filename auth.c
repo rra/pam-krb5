@@ -130,6 +130,7 @@ static void
 set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
                        int service)
 {
+  krb5_ccache fast_ccache = NULL;
 #ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_DEFAULT_FLAGS
     krb5_get_init_creds_opt_set_default_flags(args->ctx->context, "pam",
                                               args->realm_data, opts);
@@ -181,6 +182,35 @@ set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
         }
     }
 #endif /* HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PA */
+    #ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_FAST_CCACHE_NAME
+    if (args->fast_ccache) {
+	krb5_error_code k5_errno;
+	krb5_context c = args->ctx->context;
+	krb5_principal princ = NULL;
+	k5_errno = krb5_cc_resolve(c, args->fast_ccache, &fast_ccache);
+	if (k5_errno != 0) {
+	    pamk5_debug_krb5(args, k5_errno, "failed resolving fast ccache");
+	    goto fast_ccache_error;
+	}
+	k5_errno = krb5_cc_get_principal(c, fast_ccache, &princ);
+	if (k5_errno != 0) {
+	    pamk5_debug_krb5(args, k5_errno, "failed to get principal from fast ccache");
+	    goto fast_ccache_error;
+	}
+	k5_errno = krb5_get_init_creds_opt_set_fast_ccache_name(c,
+								opts, args->fast_ccache);
+	if (k5_errno)
+	    pamk5_err_krb5(args, k5_errno, "failed setting fast ccache");
+    fast_ccache_error:
+	if (fast_ccache)
+	    krb5_cc_close(c, fast_ccache);
+	if (princ)
+	    krb5_free_principal(c, princ);
+    }
+#else /*HAVE_..._set_ccache_name*/
+    if (args->fast_ccache)
+	pamk5_crit(args, "fast_ccache set in pam_krb5 configuration but not supported by your Kerberos");
+    #endif
 }
 
 
