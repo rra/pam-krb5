@@ -499,5 +499,12 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
                   " cannot be enforced");
 #endif
 
+    /* Warn if the FAST option was set and FAST isn't supported. */
+#ifndef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_FAST_CCACHE_NAME
+    if (args->fast_ccache)
+        pamk5_err(args, "fast_ccache requested but FAST not supported by"
+                  " Kerberos libraries");
+#endif
+
     return args;
 }

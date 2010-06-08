@@ -117,10 +117,58 @@ parse_name(struct pam_args *args)
 
 
 /*
+ * Set initial credential options for FAST if support is available.  We open
+ * the ticket cache and read the principal from it first to ensure that the
+ * cache exists and contains credentials, and skip setting the FAST cache if
+ * we cannot do that.
+ */
+#ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_FAST_CCACHE_NAME
+static void
+set_fast_options(struct pam_args *args, krb5_get_init_creds_opt *opts)
+{
+    krb5_context c = args->ctx->context;
+    krb5_error_code k5_errno;
+    krb5_principal princ = NULL;
+    krb5_ccache fast_ccache = NULL;
+
+    if (!args->fast_ccache)
+        return;
+    k5_errno = krb5_cc_resolve(c, args->fast_ccache, &fast_ccache);
+    if (k5_errno != 0) {
+        pamk5_debug_krb5(args, k5_errno, "failed resolving fast ccache %s",
+                         args->fast_ccache);
+        goto done;
+    }
+    k5_errno = krb5_cc_get_principal(c, fast_ccache, &princ);
+    if (k5_errno != 0) {
+        pamk5_debug_krb5(args, k5_errno,
+                         "failed to get principal from fast ccache %s",
+                         args->fast_ccache);
+        goto done;
+    }
+    k5_errno = krb5_get_init_creds_opt_set_fast_ccache_name(c, opts,
+                                                            args->fast_ccache);
+    if (k5_errno != 0)
+        pamk5_err_krb5(args, k5_errno, "failed setting fast ccache to %s",
+                       args->fast_ccache);
+
+done:
+    if (fast_ccache != NULL)
+        krb5_cc_close(c, fast_ccache);
+    if (princ != NULL)
+        krb5_free_principal(c, princ);
+}
+#else /* !HAVE_KRB5_GET_INIT_CREDS_OPT_SET_FAST_CCACHE_NAME */
+# define set_fast_options(a, o) /* empty */
+#endif
+
+
+/*
  * Set initial credential options based on our configuration information, and
  * using the Heimdal call to set initial credential options if it's available.
  * This function is used both for regular password authentication and for
- * PKINIT.
+ * PKINIT.  It also configures FAST if requested and the Kerberos libraries
+ * support it.
  *
  * Takes a flag indicating whether we're getting tickets for a specific
  * service.  If so, we don't try to get forwardable, renewable, or proxiable
@@ -130,10 +178,11 @@ static void
 set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
                        int service)
 {
-  krb5_ccache fast_ccache = NULL;
+    krb5_context c = args->ctx->context;
+
 #ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_DEFAULT_FLAGS
-    krb5_get_init_creds_opt_set_default_flags(args->ctx->context, "pam",
-                                              args->realm_data, opts);
+    krb5_get_init_creds_opt_set_default_flags(c, "pam", args->realm_data,
+                                              opts);
 #endif
     if (!service) {
         if (args->forwardable)
@@ -151,14 +200,21 @@ set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
         krb5_get_init_creds_opt_set_proxiable(opts, 0);
         krb5_get_init_creds_opt_set_renew_life(opts, 0);
     }
+    set_fast_options(args, opts);
+
+    /*
+     * Set options for PKINIT.  Only used with MIT Kerberos; Heimdal's
+     * implementatin of PKINIT uses a separate API instead of setting
+     * get_init_creds options.
+     */
 #ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PA
     if (args->try_pkinit) {
         if (args->pkinit_user != NULL)
-            krb5_get_init_creds_opt_set_pa(args->ctx->context, opts,
-                "X509_user_identity", args->pkinit_user);
+            krb5_get_init_creds_opt_set_pa(c, opts, "X509_user_identity",
+                                           args->pkinit_user);
         if (args->pkinit_anchors != NULL)
-            krb5_get_init_creds_opt_set_pa(args->ctx->context, opts,
-                "X509_anchors", args->pkinit_anchors);
+            krb5_get_init_creds_opt_set_pa(c, opts, "X509_anchors",
+                                           args->pkinit_anchors);
         if (args->preauth_opt != NULL && args->preauth_opt_count > 0) {
             int i;
             char *name, *value;
@@ -174,7 +230,7 @@ set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
                     *value = '\0';
                     value++;
                 }
-                krb5_get_init_creds_opt_set_pa(args->ctx->context, opts,
+                krb5_get_init_creds_opt_set_pa(c, opts,
                     name, (value != NULL) ? value : "yes");
                 if (value != NULL)
                     value[-1] = save;
@@ -182,35 +238,6 @@ set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
         }
     }
 #endif /* HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PA */
-    #ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_FAST_CCACHE_NAME
-    if (args->fast_ccache) {
-	krb5_error_code k5_errno;
-	krb5_context c = args->ctx->context;
-	krb5_principal princ = NULL;
-	k5_errno = krb5_cc_resolve(c, args->fast_ccache, &fast_ccache);
-	if (k5_errno != 0) {
-	    pamk5_debug_krb5(args, k5_errno, "failed resolving fast ccache");
-	    goto fast_ccache_error;
-	}
-	k5_errno = krb5_cc_get_principal(c, fast_ccache, &princ);
-	if (k5_errno != 0) {
-	    pamk5_debug_krb5(args, k5_errno, "failed to get principal from fast ccache");
-	    goto fast_ccache_error;
-	}
-	k5_errno = krb5_get_init_creds_opt_set_fast_ccache_name(c,
-								opts, args->fast_ccache);
-	if (k5_errno)
-	    pamk5_err_krb5(args, k5_errno, "failed setting fast ccache");
-    fast_ccache_error:
-	if (fast_ccache)
-	    krb5_cc_close(c, fast_ccache);
-	if (princ)
-	    krb5_free_principal(c, princ);
-    }
-#else /*HAVE_..._set_ccache_name*/
-    if (args->fast_ccache)
-	pamk5_crit(args, "fast_ccache set in pam_krb5 configuration but not supported by your Kerberos");
-    #endif
 }
 
 
