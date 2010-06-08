@@ -2,6 +2,9 @@
 
 pam-krb5 4.3 (unreleased)
 
+    Fix error in freeing a previous alt_auth_map setting when parsing
+    configuration options.  Patch from Sam Hartman.
+
     Fix the linker flags for Solaris with the native compiler.  Thanks,
     Kevin Sumner.
 
