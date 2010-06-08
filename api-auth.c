@@ -210,15 +210,9 @@ done:
 int
 pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
-    struct context *ctx = NULL;
     struct pam_args *args;
-    krb5_ccache cache = NULL;
-    char *cache_name = NULL;
-    int refresh = 0, status = 0;
+    int refresh = 0;
     int pamret, allow;
-    struct passwd *pw = NULL;
-    uid_t uid;
-    gid_t gid;
 
     args = pamk5_args_parse(pamh, flags, argc, argv);
     if (args == NULL) {
