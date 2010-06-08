@@ -81,8 +81,8 @@ pamk5_args_free(struct pam_args *args)
             free(args->ccache);
         if (args->ccache_dir != NULL)
             free(args->ccache_dir);
-	if (args->fast_ccache != NULL)
-	    free(args->fast_ccache);
+        if (args->fast_ccache != NULL)
+            free(args->fast_ccache);
         if (args->keytab != NULL)
             free(args->keytab);
         if (args->pkinit_anchors != NULL)
