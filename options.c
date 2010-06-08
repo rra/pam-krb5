@@ -332,7 +332,7 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
      */
     for (i = 0; i < argc; i++) {
         if (strncmp(argv[i], "alt_auth_map=", 12) == 0) {
-            if (args->banner != NULL)
+            if (args->alt_auth_map != NULL)
                 free(args->alt_auth_map);
             args->alt_auth_map = strdup(&argv[i][strlen("alt_auth_map=")]);
         }
