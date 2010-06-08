@@ -359,6 +359,25 @@ I<defer_pwchange> and I<force_pwchange>.
 This option can be set in F<krb5.conf> and is only applicable to the auth
 group.
 
+=item fast_ccache=<ccache_name>
+
+If <ccache_name> contains tickets, then use these tickets as an armor
+ticket for Flexible Authentication Secure Tunneling (FAST). FAST is a
+mechanism to protect Kerberos against password guessing attacks and
+provide other security improvements.  To work, FAST requires that a
+ticket be obtained with a strong key to protect exchanges with
+potentially weaker user passwords.  This configuration value should be
+set to a credential cache containing such a ticket.  If this value is
+set to a ccache that has tickets then FAST will be attempted.  The
+easiest way to use this option is to use a program like kstart to
+obtain armor tickets based on the host's keytab.
+
+If no credentials are present in the ccache or if the ccache does not exist, then FAST is not used. However, if the credentials are allowed to expire, authentication will fail if the KDC supports FAST.
+
+This option can be
+set in F<krb5.conf> and is only applicable to the auth and session
+groups.
+
 =item force_alt_auth
 
 This option is used with I<alt_auth_map> and forces authentication as the

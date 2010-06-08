@@ -58,6 +58,7 @@ AC_CHECK_FUNCS([krb5_appdefault_string \
     krb5_get_init_creds_opt_alloc \
     krb5_get_init_creds_opt_set_change_password_prompt \
     krb5_get_init_creds_opt_set_default_flags \
+    krb5_get_init_creds_opt_set_fast_ccache_name \
     krb5_get_init_creds_opt_set_pa \
     krb5_init_secure_context \
     krb5_verify_init_creds_opt_init])

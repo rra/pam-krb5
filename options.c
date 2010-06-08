@@ -54,6 +54,7 @@ pamk5_args_new(void)
     args->banner = NULL;
     args->ccache = NULL;
     args->ccache_dir = NULL;
+    args->fast_ccache = NULL;
     args->keytab = NULL;
     args->pkinit_anchors = NULL;
     args->pkinit_user = NULL;
@@ -80,6 +81,8 @@ pamk5_args_free(struct pam_args *args)
             free(args->ccache);
         if (args->ccache_dir != NULL)
             free(args->ccache_dir);
+	if (args->fast_ccache != NULL)
+	    free(args->fast_ccache);
         if (args->keytab != NULL)
             free(args->keytab);
         if (args->pkinit_anchors != NULL)
@@ -296,6 +299,7 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
         default_boolean(args, c, "defer_pwchange", 0, &args->defer_pwchange);
         default_boolean(args, c, "expose_account", 0, &args->expose_account);
         default_boolean(args, c, "fail_pwchange", 0, &args->fail_pwchange);
+        default_string(args, c, "fast_ccache", NULL, &args->fast_ccache);
         default_boolean(args, c, "force_alt_auth", 0, &args->force_alt_auth);
         default_boolean(args, c, "force_pwchange", 0, &args->force_pwchange);
         default_boolean(args, c, "forwardable", 0, &args->forwardable);
@@ -361,6 +365,11 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
             args->expose_account = 1;
         else if (strcmp(argv[i], "fail_pwchange") == 0)
             args->fail_pwchange = 1;
+        else if (strncmp(argv[i], "fast_ccache=", 12) == 0) {
+            if (args->fast_ccache != NULL)
+                free(args->fast_ccache);
+            args->fast_ccache = strdup(&argv[i][strlen("fast_ccache=")]);
+        }
         else if (strcmp(argv[i], "force_first_pass") == 0)
             args->force_first_pass = 1;
         else if (strcmp(argv[i], "force_pwchange") == 0)
