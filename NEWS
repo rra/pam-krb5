@@ -2,6 +2,14 @@
 
 pam-krb5 4.3 (unreleased)
 
+    Add a new option fast_ccache, which if set points to a Kerberos ticket
+    cache used for Flexible Authenticatin Secure Tunneling (FAST) to
+    protect the authentication.  FAST is a mechanism to protect Kerberos
+    against password guessing attacks and provide other security
+    improvements.  This option is only available when built against
+    Kerberos libraries with FAST support (currently only MIT Kerberos 1.7
+    or later).  Patch from Sam Hartman.
+
     Fix error in freeing a previous alt_auth_map setting when parsing
     configuration options.  Patch from Sam Hartman.
 
