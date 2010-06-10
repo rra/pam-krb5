@@ -6,7 +6,7 @@
  * can also refresh an existing ticket cache or destroy a ticket cache,
  * depending on the flags passed in.
  *
- * Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@debian.org>
+ * Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@stanford.edu>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  *
@@ -210,15 +210,9 @@ done:
 int
 pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
-    struct context *ctx = NULL;
     struct pam_args *args;
-    krb5_ccache cache = NULL;
-    char *cache_name = NULL;
-    int refresh = 0, status = 0;
+    int refresh = 0;
     int pamret, allow;
-    struct passwd *pw = NULL;
-    uid_t uid;
-    gid_t gid;
 
     args = pamk5_args_parse(pamh, flags, argc, argv);
     if (args == NULL) {

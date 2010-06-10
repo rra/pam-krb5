@@ -5,7 +5,7 @@
  * found on the system, and defines replacements for PAM functions that may
  * not be available on the local system.
  *
- * Written by Russ Allbery <rra@debian.org>
+ * Written by Russ Allbery <rra@stanford.edu>
  * This work is hereby placed in the public domain by its author.
  */
 

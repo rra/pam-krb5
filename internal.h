@@ -1,7 +1,7 @@
 /*
  * Internal prototypes and structures for pam-krb5.
  *
- * Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@debian.org>
+ * Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@stanford.edu>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  * See LICENSE for licensing terms.
@@ -66,6 +66,7 @@ struct pam_args {
     int defer_pwchange;         /* Defer expired account fail to account. */
     int expose_account;         /* Display principal in password prompts. */
     int fail_pwchange;          /* Treat expired password as auth failure. */
+    char *fast_ccache;          /* Cache containing armor ticket. */
     int force_first_pass;       /* Require a previous password be stored. */
     int force_pwchange;         /* Change expired passwords in auth. */
     int forwardable;            /* Obtain forwardable tickets. */
