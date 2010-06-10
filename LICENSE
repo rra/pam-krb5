@@ -1,7 +1,8 @@
 The pam-krb5 package as a whole is:
 
-  Copyright 2009 Board of Trustees, Leland Stanford Jr. University
-  Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@stanford.edu>
+  Copyright 2009, 2010 Board of Trustees, Leland Stanford Jr. University
+  Copyright 2005, 2006, 2007, 2008, 2009, 2010
+      Russ Allbery <rra@stanford.edu>
   Copyright (c) 2005 Andres Salomon <dilinger@debian.org>
   Copyright (c) Frank Cusack, 1999-2000.
   fcusack@fcusack.com
@@ -45,8 +46,9 @@ Web at <http://www.gnu.org/licenses/>.
 
 Collected copyright notices for the entire package:
 
-  Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@stanford.edu>
-  Copyright 2005, 2006, 2007, 2008, 2009
+  Copyright 2005, 2006, 2007, 2008, 2009, 2010
+      Russ Allbery <rra@stanford.edu>
+  Copyright 2005, 2006, 2007, 2008, 2009, 2010
       Board of Trustees, Leland Stanford Jr. University
   Copyright 2007, 2008 Markus Moeller
   Copyright 1985-2005 Massachusetts Institute of Technology

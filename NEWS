@@ -1,6 +1,6 @@
                       User-Visible pam-krb5 Changes
 
-pam-krb5 4.3 (unreleased)
+pam-krb5 4.3 (2010-06-09)
 
     Add a new option fast_ccache, which if set points to a Kerberos ticket
     cache used for Flexible Authenticatin Secure Tunneling (FAST) to
