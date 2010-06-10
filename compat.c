@@ -6,7 +6,7 @@
  * MIT, and to provide compatibility versions of functions not found in some
  * PAM libraries.
  *
- * Copyright 2005, 2006, 2007, 2009 Russ Allbery <rra@debian.org>
+ * Copyright 2005, 2006, 2007, 2009 Russ Allbery <rra@stanford.edu>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  *

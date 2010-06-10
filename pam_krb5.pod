@@ -359,6 +359,30 @@ I<defer_pwchange> and I<force_pwchange>.
 This option can be set in F<krb5.conf> and is only applicable to the auth
 group.
 
+=item fast_ccache=<ccache_name>
+
+Attempt to use Flexible Authenticatin Secure Tunneling (FAST) to protect
+the authentication.  FAST is a mechanism to protect Kerberos against
+password guessing attacks and provide other security improvements.  To
+work, FAST requires that a ticket be obtained with a strong key to protect
+exchanges with potentially weaker user passwords.  This configuration
+value should be set to a credential cache containing such a ticket.
+
+If <ccache_name> names a ticket cache that is readable by the
+authenticating process and has tickets then FAST will be attempted.  The
+easiest way to use this option is to use a program like B<k5start> to
+maintain a ticket cache using the host's keytab.  This ticket cache should
+normally only be readable by root, so this option will not be able to
+protect authentications done as non-root users (such as screensavers).
+
+If no credentials are present in the ticket cache, or if the ticket cache
+does not exist or is not readable, FAST will not used and authentication
+will proceed as normal.  However, if the credentials in that ticket cache
+are expired, authentication will fail if the KDC supports FAST.
+
+This option can be set in F<krb5.conf> and is only applicable to the auth
+and password groups.
+
 =item force_alt_auth
 
 This option is used with I<alt_auth_map> and forces authentication as the
@@ -685,7 +709,9 @@ for a similar setting for the new password.
 Require PKINIT authentication.  You will probably also need to set the
 I<pkinit_user> configuration option.  If PKINIT fails, authentication will
 fail.  This option is currently only supported if pam-krb5 was built
-against Heimdal 0.8rc1 or later.
+against Heimdal 0.8rc1 or later.  MIT Kerberos doesn't provide a method to
+enforce use of PKINIT, so I<try_pkinit> must be used with that
+implementation instead.
 
 This option can be set in F<krb5.conf> and is only applicable to the auth
 and password groups.

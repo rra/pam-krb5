@@ -5,7 +5,8 @@
  * internal functions.  Retrieves configuration information from krb5.conf and
  * parses the PAM configuration.
  *
- * Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@debian.org>
+ * Copyright 2005, 2006, 2007, 2008, 2009, 2010
+ *     Russ Allbery <rra@stanford.edu>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  *
@@ -54,6 +55,7 @@ pamk5_args_new(void)
     args->banner = NULL;
     args->ccache = NULL;
     args->ccache_dir = NULL;
+    args->fast_ccache = NULL;
     args->keytab = NULL;
     args->pkinit_anchors = NULL;
     args->pkinit_user = NULL;
@@ -80,6 +82,8 @@ pamk5_args_free(struct pam_args *args)
             free(args->ccache);
         if (args->ccache_dir != NULL)
             free(args->ccache_dir);
+        if (args->fast_ccache != NULL)
+            free(args->fast_ccache);
         if (args->keytab != NULL)
             free(args->keytab);
         if (args->pkinit_anchors != NULL)
@@ -296,6 +300,7 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
         default_boolean(args, c, "defer_pwchange", 0, &args->defer_pwchange);
         default_boolean(args, c, "expose_account", 0, &args->expose_account);
         default_boolean(args, c, "fail_pwchange", 0, &args->fail_pwchange);
+        default_string(args, c, "fast_ccache", NULL, &args->fast_ccache);
         default_boolean(args, c, "force_alt_auth", 0, &args->force_alt_auth);
         default_boolean(args, c, "force_pwchange", 0, &args->force_pwchange);
         default_boolean(args, c, "forwardable", 0, &args->forwardable);
@@ -332,7 +337,7 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
      */
     for (i = 0; i < argc; i++) {
         if (strncmp(argv[i], "alt_auth_map=", 12) == 0) {
-            if (args->banner != NULL)
+            if (args->alt_auth_map != NULL)
                 free(args->alt_auth_map);
             args->alt_auth_map = strdup(&argv[i][strlen("alt_auth_map=")]);
         }
@@ -361,6 +366,11 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
             args->expose_account = 1;
         else if (strcmp(argv[i], "fail_pwchange") == 0)
             args->fail_pwchange = 1;
+        else if (strncmp(argv[i], "fast_ccache=", 12) == 0) {
+            if (args->fast_ccache != NULL)
+                free(args->fast_ccache);
+            args->fast_ccache = strdup(&argv[i][strlen("fast_ccache=")]);
+        }
         else if (strcmp(argv[i], "force_first_pass") == 0)
             args->force_first_pass = 1;
         else if (strcmp(argv[i], "force_pwchange") == 0)
@@ -488,6 +498,13 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
     if (args->use_pkinit)
 	pamk5_err(NULL, "use_pkinit requested but PKINIT not available or"
                   " cannot be enforced");
+#endif
+
+    /* Warn if the FAST option was set and FAST isn't supported. */
+#ifndef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_FAST_CCACHE_NAME
+    if (args->fast_ccache)
+        pamk5_err(args, "fast_ccache requested but FAST not supported by"
+                  " Kerberos libraries");
 #endif
 
     return args;

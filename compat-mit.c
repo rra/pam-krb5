@@ -1,7 +1,7 @@
 /*
  * Kerberos compatibility functions for MIT Kerberos.
  *
- * Copyright 2005, 2006, 2007 Russ Allbery <rra@debian.org>
+ * Copyright 2005, 2006, 2007 Russ Allbery <rra@stanford.edu>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  *

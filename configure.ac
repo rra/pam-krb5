@@ -1,14 +1,15 @@
-dnl Process this file with Autoconf to produce a configure script.
+dnl Autoconf configuration for pam-krb5.
 dnl
+dnl Written by Russ Allbery <rra@stanford.edu>
 dnl Copyright 2009 Board of Trustees, Leland Stanford Jr. University
-dnl Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@debian.org>
+dnl Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@stanford.edu>
 dnl Copyright 2005 Andres Salomon <dilinger@debian.org>
 dnl Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
 dnl
 dnl See LICENSE for licensing terms.
 
 AC_PREREQ([2.64])
-AC_INIT([pam-krb5], [4.2], [rra@stanford.edu])
+AC_INIT([pam-krb5], [4.3], [rra@stanford.edu])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_LIBOBJ_DIR([portable])
 AC_CONFIG_MACRO_DIR([m4])
@@ -57,6 +58,7 @@ AC_CHECK_FUNCS([krb5_appdefault_string \
     krb5_get_init_creds_opt_alloc \
     krb5_get_init_creds_opt_set_change_password_prompt \
     krb5_get_init_creds_opt_set_default_flags \
+    krb5_get_init_creds_opt_set_fast_ccache_name \
     krb5_get_init_creds_opt_set_pa \
     krb5_init_secure_context \
     krb5_verify_init_creds_opt_init])
@@ -108,9 +110,7 @@ AS_CASE([$host],
             [RRA_SET_LIBDIR])])],
 
     [*-solaris2*],
-    [AS_IF([test x"$GCC" = x"yes"],
-        [AM_LDFLAGS="-Wl,-Bsymbolic $AM_LDFLAGS"],
-        [AM_LDFLAGS="-Wl,-xldscope=symbolic $AM_LDFLAGS"])])
+    [AM_LDFLAGS="-Wl,-Bsymbolic $AM_LDFLAGS"])
 
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_FILES([Makefile])
