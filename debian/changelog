@@ -1,3 +1,14 @@
+libpam-krb5 (4.3-1) UNRELEASED; urgency=low
+
+  * New upstream release.
+    - New fast_ccache option, which if set attempts to use credentials in
+      that ticket cache to protect the Kerberos authentication with FAST.
+      Requires FAST support in the Kerberos libraries and hence only is
+      available in libpam-krb5, not libpam-heimdal, for right now.
+    - Fix error in freeing a previous alt_auth_map setting.
+
+ -- Russ Allbery <rra@debian.org>  Wed, 09 Jun 2010 18:08:04 -0700
+
 libpam-krb5 (4.2-2) unstable; urgency=low
 
   * Build libpam-krb5 and libpam-heimdal from the same source package.
