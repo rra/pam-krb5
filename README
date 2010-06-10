@@ -20,7 +20,7 @@ BLURB
   with ChallengeResponseAuthentication and PrivilegeSeparation enabled,
   and supports extensive configuration either by PAM options or in
   krb5.conf or both.  PKINIT is supported with recent versions of both MIT
-  Kerberos and Heimdal.
+  Kerberos and Heimdal and FAST is supported with recent MIT Kerberos.
 
 DESCRIPTION
 
@@ -63,6 +63,9 @@ REQUIREMENTS
   For PKINIT support, Heimdal 0.8rc1 or later or MIT Kerberos 1.6.3 or
   later are required.  Earlier MIT Kerberos 1.6 releases have a bug in
   their handling of PKINIT options.
+
+  For FAST (Flexible Authentication Secure Tunneling) support, MIT
+  Kerberos 1.7 or higher is required.
 
   This module should work on Linux and Solaris (and build with either gcc
   or the Sun C compiler), but has been far more heavily tested on Linux.
@@ -498,3 +501,5 @@ HISTORY AND ACKNOWLEDGEMENTS
 
   Thanks to Booker Bense for the implementation of the alt_auth_map
   option.
+
+  Thanks to Sam Hartman for the FAST support implementation.
