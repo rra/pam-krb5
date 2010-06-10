@@ -1,4 +1,4 @@
-Subject: Collected Debian patches for remctl
+Subject: Collected Debian patches for pam-krb5
 Author: Russ Allbery <rra@debian.org>
 
 Since I am also upstream for this package, there will normally not be any

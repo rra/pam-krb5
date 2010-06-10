@@ -1,3 +1,9 @@
+libpam-krb5 (4.3-2) UNRELEASED; urgency=low
+
+  * Fix custom patch header to refer to pam-krb5, not remctl.
+
+ -- Russ Allbery <rra@debian.org>  Wed, 09 Jun 2010 18:49:03 -0700
+
 libpam-krb5 (4.3-1) unstable; urgency=low
 
   * New upstream release.
