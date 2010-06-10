@@ -6,6 +6,10 @@ libpam-krb5 (4.3-1) UNRELEASED; urgency=low
       Requires FAST support in the Kerberos libraries and hence only is
       available in libpam-krb5, not libpam-heimdal, for right now.
     - Fix error in freeing a previous alt_auth_map setting.
+  * Switch to 3.0 (quilt) source format.  Force a single Debian patch and
+    include a custom patch header explaining that it is a rollup of any
+    fixes cherry-picked from upstream and breaking those patches out
+    separately would be work for no gain.
 
  -- Russ Allbery <rra@debian.org>  Wed, 09 Jun 2010 18:08:04 -0700
 
