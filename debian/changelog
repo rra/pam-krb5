@@ -1,4 +1,4 @@
-libpam-krb5 (4.3-1) UNRELEASED; urgency=low
+libpam-krb5 (4.3-1) unstable; urgency=low
 
   * New upstream release.
     - New fast_ccache option, which if set attempts to use credentials in
