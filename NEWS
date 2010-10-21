@@ -1,5 +1,12 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 4.4 (unreleased)
+
+    When probing for <ibm_svc/krb5_svc.h> (part of AIX's bundled Kerberos
+    implementation), include <krb5.h> before attempting to include that
+    header to quiet confusing Autoconf warnings.  Reported by Wilfried
+    Weiss.
+
 pam-krb5 4.3 (2010-06-09)
 
     Add a new option fast_ccache, which if set points to a Kerberos ticket

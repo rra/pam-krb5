@@ -73,12 +73,13 @@ AC_DEFUN([_RRA_LIB_KRB5_REDUCED],
  LIBS="$KRB5_LIBS $LIBS"
  AC_CHECK_FUNCS([krb5_get_error_message],
      [AC_CHECK_FUNCS([krb5_free_error_message])],
-     [AC_CHECK_FUNCS([krb5_get_error_string], ,
-         [AC_CHECK_FUNCS([krb5_get_err_txt], ,
+     [AC_CHECK_FUNCS([krb5_get_error_string], [],
+         [AC_CHECK_FUNCS([krb5_get_err_txt], [],
              [AC_CHECK_LIB([ksvc], [krb5_svc_get_msg],
                  [KRB5_LIBS="$KRB5_LIBS -lksvc"
                   AC_DEFINE([HAVE_KRB5_SVC_GET_MSG], [1])
-                  AC_CHECK_HEADERS([ibm_svc/krb5_svc.h])],
+                  AC_CHECK_HEADERS([ibm_svc/krb5_svc.h], [], [],
+                     [#include <krb5.h>])],
                  [AC_CHECK_LIB([com_err], [com_err],
                      [KRB5_LIBS="$KRB5_LIBS -lcom_err"],
                      [AC_MSG_ERROR([cannot find usable com_err library])])
@@ -92,11 +93,11 @@ AC_DEFUN([_RRA_LIB_KRB5_MANUAL],
 [RRA_LIB_KRB5_SWITCH
  rra_krb5_extra=
  LIBS=
- AC_SEARCH_LIBS([res_search], [resolv], ,
+ AC_SEARCH_LIBS([res_search], [resolv], [],
     [AC_SEARCH_LIBS([__res_search], [resolv])])
  AC_SEARCH_LIBS([gethostbyname], [nsl])
- AC_SEARCH_LIBS([socket], [socket], ,
-    [AC_CHECK_LIB([nsl], [socket], [LIBS="-lnsl -lsocket $LIBS"], ,
+ AC_SEARCH_LIBS([socket], [socket], [],
+    [AC_CHECK_LIB([nsl], [socket], [LIBS="-lnsl -lsocket $LIBS"], [],
         [-lsocket])])
  AC_SEARCH_LIBS([crypt], [crypt])
  rra_krb5_extra="$LIBS"
@@ -111,7 +112,7 @@ AC_DEFUN([_RRA_LIB_KRB5_MANUAL],
                 [rra_krb5_pthread="-lpthread"])])
          AC_CHECK_LIB([krb5support], [krb5int_setspecific],
             [rra_krb5_extra="-lkrb5support $rra_krb5_extra $rra_krb5_pthread"],
-            , [$rra_krb5_pthread])])
+            [], [$rra_krb5_pthread])])
      AC_CHECK_LIB([com_err], [error_message],
         [rra_krb5_extra="-lcom_err $rra_krb5_extra"])
      AC_CHECK_LIB([ksvc], [krb5_svc_get_msg],
@@ -129,10 +130,11 @@ AC_DEFUN([_RRA_LIB_KRB5_MANUAL],
  LIBS="$KRB5_LIBS $LIBS"
  AC_CHECK_FUNCS([krb5_get_error_message],
      [AC_CHECK_FUNCS([krb5_free_error_message])],
-     [AC_CHECK_FUNCS([krb5_get_error_string], ,
-         [AC_CHECK_FUNCS([krb5_get_err_txt], ,
+     [AC_CHECK_FUNCS([krb5_get_error_string], [],
+         [AC_CHECK_FUNCS([krb5_get_err_txt], [],
              [AC_CHECK_FUNCS([krb5_svc_get_msg],
-                 [AC_CHECK_HEADERS([ibm_svc/krb5_svc.h])],
+                 [AC_CHECK_HEADERS([ibm_svc/krb5_svc.h], [], [],
+                     [#include <krb5.h>])],
                  [AC_CHECK_HEADERS([et/com_err.h])])])])])
  RRA_LIB_KRB5_RESTORE])
 
@@ -179,10 +181,11 @@ AC_DEFUN([_RRA_LIB_KRB5_INTERNAL],
           RRA_LIB_KRB5_SWITCH
           AC_CHECK_FUNCS([krb5_get_error_message],
               [AC_CHECK_FUNCS([krb5_free_error_message])],
-              [AC_CHECK_FUNCS([krb5_get_error_string], ,
-                  [AC_CHECK_FUNCS([krb5_get_err_txt], ,
+              [AC_CHECK_FUNCS([krb5_get_error_string], [],
+                  [AC_CHECK_FUNCS([krb5_get_err_txt], [],
                       [AC_CHECK_FUNCS([krb5_svc_get_msg],
-                          [AC_CHECK_HEADERS([ibm_svc/krb5_svc.h])],
+                          [AC_CHECK_HEADERS([ibm_svc/krb5_svc.h], [], [],
+                              [#include <krb5.h>])],
                           [AC_CHECK_HEADERS([et/com_err.h])])])])])
           RRA_LIB_KRB5_RESTORE],
          [_RRA_LIB_KRB5_PATHS
