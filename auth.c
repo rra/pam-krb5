@@ -689,7 +689,7 @@ pamk5_password_auth(struct pam_args *args, const char *service,
         goto done;
     }
     do {
-        if (pass == NULL || *pass == '\0') {
+        if ((pass == NULL || *pass == '\0') && !args->try_pkinit) {
             const char *prompt = (service == NULL) ? NULL : "Current";
 
             retry = 0;
@@ -718,7 +718,7 @@ pamk5_password_auth(struct pam_args *args, const char *service,
         }
 
         /*
-         * Get a TGT.  First, try authenticating as the alternate password if
+         * Get a TGT.  First, try authenticating as the alternate principal if
          * one were configured.  If that fails or wasn't configured, continue
          * on to trying search_k5login or a regular authentication unless
          * configuration indicates that regular authentication should not be

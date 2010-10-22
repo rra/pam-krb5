@@ -2,6 +2,13 @@
 
 pam-krb5 4.4 (unreleased)
 
+    Do not prompt for a password when try_pkinit is set and the module is
+    built against MIT Kerberos.  This fixes a spurious password prompt but
+    introduces a bug where the user's password is not saved in the PAM
+    data if the authentication falls back to password when PKINIT fails.
+    This requires more work to fix and will be addressed in a subsequent
+    release.  Thanks to Бранко Мајић for the report.
+
     When probing for <ibm_svc/krb5_svc.h> (part of AIX's bundled Kerberos
     implementation), include <krb5.h> before attempting to include that
     header to quiet confusing Autoconf warnings.  Reported by Wilfried

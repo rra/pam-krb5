@@ -677,6 +677,13 @@ PKINIT fails, the PAM module will fall back on regular password
 authentication.  This option is currently only supported if pam-krb5 was
 built against Heimdal 0.8rc1 or later or MIT Kerberos 1.6.3 or later.
 
+If this option is set and pam-krb5 is built against MIT Kerberos, and
+PKINIT fails and the module falls back to password authentication, the
+user's password will not be stored in the PAM stack for subsequent
+modules.  This is a bug in the interaction between the module and MIT
+Kerberos that requires some rearchitecting of the PKINIT authentication
+method to fix.
+
 This option can be set in F<krb5.conf> and is only applicable to the auth
 and password groups.
 
@@ -764,6 +771,12 @@ File containing Kerberos principals that are allowed access to that
 account.
 
 =back
+
+=head1 BUGS
+
+If I<try_pkinit> is set and pam-krb5 is built with MIT Kerberos, the
+user's password is not saved in the PAM data if PKINIT fails and the
+module falls back to password authentication.
 
 =head1 CAVEATS
 
