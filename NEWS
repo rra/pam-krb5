@@ -10,6 +10,9 @@ pam-krb5 4.4 (unreleased)
     to fix and will be addressed in a subsequent release.  Thanks to
     Бранко Мајић (Branko Majic) for the report.
 
+    Reorganize the configuration section of the pam_krb5 man page to
+    divide the many PAM module options into sections.
+
     When probing for <ibm_svc/krb5_svc.h> (part of AIX's bundled Kerberos
     implementation), include <krb5.h> before attempting to include that
     header to quiet confusing Autoconf warnings.  Reported by Wilfried
