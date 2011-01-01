@@ -1,5 +1,29 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 4.4 (2010-12-31)
+
+    Do not prompt for a password when try_pkinit is set and the module is
+    built against MIT Kerberos.  This fixes a spurious password prompt
+    introduced in 4.1, but partly reintroduces the bug fixed in 4.1 where
+    the user's password is not saved in the PAM data if the authentication
+    falls back to password when PKINIT fails.  This requires more work
+    to fix and will be addressed in a subsequent release.  Thanks to
+    Бранко Мајић (Branko Majic) for the report.
+
+    Reorganize the configuration section of the pam_krb5 man page to
+    divide the many PAM module options into sections.
+
+    When probing for <ibm_svc/krb5_svc.h> (part of AIX's bundled Kerberos
+    implementation), include <krb5.h> before attempting to include that
+    header to quiet confusing Autoconf warnings.  Reported by Wilfried
+    Weiss.
+
+    Update to rra-c-util 3.0:
+
+    * Fix compilation of the replacement snprintf for old systems.
+    * Look for krb5-config in /usr/kerberos/bin for Red Hat systems.
+    * Fix compilation with OpenBSD's Heimdal without separate libroken.
+
 pam-krb5 4.3 (2010-06-09)
 
     Add a new option fast_ccache, which if set points to a Kerberos ticket

@@ -10,6 +10,15 @@ PAM API:
  * Tighter verification that all of our flags are valid might be a good
    idea.
 
+Functionality:
+
+ * Find a way to do only PKINIT authentication with no password fallback
+   with MIT Kerberos and then change the authentication flow so that both
+   Heimdal and MIT use the same logic for attempting PKINIT first and then
+   falling back to password.  This will fix failure to store passwords in
+   the PAM data with try_pkinit and MIT Kerberos on password fallback and
+   will allow implementation of use_pkinit for MIT.
+
 Code Cleanup:
 
  * The PAM option parsing is repetitive code that involves counting the
@@ -43,11 +52,6 @@ Documentation:
  * Document PKINIT configuration with MIT in krb5.conf.  It looks like the
    library supports configuration in [realms] with similar names to the
    PAM module configuration.
-
- * Reorganize the man page to group options into categories.  The number
-   of options right now is intimidating and confusing and makes it hard to
-   find relevant options.  PAM API behavior, prompting behavior, PKINIT,
-   and ticket flags might be useful option groups.
 
  * Note the version number when options were added.  It helps people
    looking at the documentation on-line and writing portable
