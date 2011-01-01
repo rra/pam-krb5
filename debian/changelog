@@ -9,6 +9,7 @@ libpam-krb5 (4.4-1) UNRELEASED; urgency=low
   * Fix custom patch header to refer to pam-krb5, not remctl.
   * Update standards version to 3.9.1.
     - Refer to the GPL version 1 now that it's in common-licenses.
+  * Update to debhelper compatibility level V8 (no changes required).
 
  -- Russ Allbery <rra@debian.org>  Wed, 09 Jun 2010 18:49:03 -0700
 
