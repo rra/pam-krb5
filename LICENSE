@@ -276,10 +276,10 @@ under the following copyright and license:
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
   General Public License for more details.
 
-For the pam-krb4 distribution, the option described in the second-to-last
+For the pam-krb5 distribution, the option described in the second-to-last
 paragraph has been accepted and this file is distributed under the same
-terms as the pam-afs-session package as a whole, as described at the top
-of this file.
+terms as the pam-krb5 package as a whole, as described at the top of this
+file.
 
 The file build-aux/install-sh is covered by the following copyright and
 license:
