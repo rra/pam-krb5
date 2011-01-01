@@ -15,6 +15,12 @@ pam-krb5 4.4 (unreleased)
     header to quiet confusing Autoconf warnings.  Reported by Wilfried
     Weiss.
 
+    Update to rra-c-util 3.0:
+
+    * Fix compilation of the replacement snprintf for old systems.
+    * Look for krb5-config in /usr/kerberos/bin for Red Hat systems.
+    * Fix compilation with OpenBSD's Heimdal without separate libroken.
+
 pam-krb5 4.3 (2010-06-09)
 
     Add a new option fast_ccache, which if set points to a Kerberos ticket

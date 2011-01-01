@@ -2,7 +2,7 @@ dnl Find the compiler and linker flags for Kerberos v5.
 dnl
 dnl Finds the compiler and linker flags for linking with Kerberos v5
 dnl libraries.  Provides the --with-krb5, --with-krb5-include, and
-dnl --with-krb5-lib configure options to specify non-standards paths to the
+dnl --with-krb5-lib configure options to specify non-standard paths to the
 dnl Kerberos libraries.  Uses krb5-config where available unless reduced
 dnl dependencies is requested.
 dnl
@@ -12,6 +12,9 @@ dnl RRA_LIB_KRB5_SWITCH to set CPPFLAGS, LDFLAGS, and LIBS to include the
 dnl Kerberos libraries, saving the current values first, and
 dnl RRA_LIB_KRB5_RESTORE to restore those settings to before the last
 dnl RRA_LIB_KRB5_SWITCH.
+dnl
+dnl If KRB5_CPPFLAGS, KRB5_LDFLAGS, or KRB5_LIBS are set before calling these
+dnl macros, their values will be added to whatever the macros discover.
 dnl
 dnl Provides the RRA_LIB_KRB5_OPTIONAL macro, which should be used if Kerberos
 dnl support is optional.  This macro will still always set the substitution
@@ -25,8 +28,12 @@ dnl change library ordering in that case.
 dnl
 dnl Depends on RRA_ENABLE_REDUCED_DEPENDS and RRA_SET_LDFLAGS.
 dnl
+dnl Also provides RRA_FUNC_KRB5_GET_INIT_CREDS_OPT_FREE_ARGS, which checks
+dnl whether krb5_get_init_creds_opt_free takes one argument or two.  Defines
+dnl HAVE_KRB5_GET_INIT_CREDS_OPT_FREE_2_ARGS if it takes two arguments.
+dnl
 dnl Written by Russ Allbery <rra@stanford.edu>
-dnl Copyright 2005, 2006, 2007, 2008, 2009
+dnl Copyright 2005, 2006, 2007, 2008, 2009, 2010
 dnl     Board of Trustees, Leland Stanford Jr. University
 dnl
 dnl See LICENSE for licensing terms.
@@ -100,10 +107,11 @@ AC_DEFUN([_RRA_LIB_KRB5_MANUAL],
     [AC_CHECK_LIB([nsl], [socket], [LIBS="-lnsl -lsocket $LIBS"], [],
         [-lsocket])])
  AC_SEARCH_LIBS([crypt], [crypt])
+ AC_SEARCH_LIBS([rk_simple_execve], [roken])
  rra_krb5_extra="$LIBS"
  LIBS="$rra_krb5_save_LIBS"
  AC_CHECK_LIB([krb5], [krb5_init_context],
-    [KRB5_LIBS="-lkrb5 -lasn1 -lroken -lcrypto -lcom_err $rra_krb5_extra"],
+    [KRB5_LIBS="-lkrb5 -lasn1 -lcom_err -lcrypto $rra_krb5_extra"],
     [AC_CHECK_LIB([krb5support], [krb5int_getspecific],
         [rra_krb5_extra="-lkrb5support $rra_krb5_extra"],
         [AC_CHECK_LIB([pthreads], [pthread_setspecific],
@@ -126,7 +134,7 @@ AC_DEFUN([_RRA_LIB_KRB5_MANUAL],
         [AS_IF([test x"$1" = xtrue],
             [AC_MSG_ERROR([cannot find usable Kerberos v5 library])])],
         [$rra_krb5_extra])],
-    [-lasn1 -lroken -lcrypto -lcom_err $rra_krb5_extra])
+    [-lasn1 -lcom_err -lcrypto $rra_krb5_extra])
  LIBS="$KRB5_LIBS $LIBS"
  AC_CHECK_FUNCS([krb5_get_error_message],
      [AC_CHECK_FUNCS([krb5_free_error_message])],
@@ -164,7 +172,8 @@ AC_DEFUN([_RRA_LIB_KRB5_INTERNAL],
      AS_IF([test x"$rra_krb5_root" != x && test -z "$KRB5_CONFIG"],
          [AS_IF([test -x "${rra_krb5_root}/bin/krb5-config"],
              [KRB5_CONFIG="${rra_krb5_root}/bin/krb5-config"])],
-         [AC_PATH_PROG([KRB5_CONFIG], [krb5-config])])
+         [AC_PATH_PROG([KRB5_CONFIG], [krb5-config], [],
+             [${PATH}:/usr/kerberos/bin])])
      AS_IF([test x"$KRB5_CONFIG" != x && test -x "$KRB5_CONFIG"],
          [AC_CACHE_CHECK([for krb5 support in krb5-config],
              [rra_cv_lib_krb5_config],
@@ -203,9 +212,7 @@ AC_DEFUN([RRA_LIB_KRB5],
 [rra_krb5_root=
  rra_krb5_libdir=
  rra_krb5_includedir=
- KRB5_CPPFLAGS=
- KRB5_LDFLAGS=
- KRB5_LIBS=
+ rra_use_kerberos=true
  AC_SUBST([KRB5_CPPFLAGS])
  AC_SUBST([KRB5_LDFLAGS])
  AC_SUBST([KRB5_LIBS])
@@ -233,9 +240,6 @@ AC_DEFUN([RRA_LIB_KRB5_OPTIONAL],
  rra_krb5_libdir=
  rra_krb5_includedir=
  rra_use_kerberos=
- KRB5_CPPFLAGS=
- KRB5_LDFLAGS=
- KRB5_LIBS=
  AC_SUBST([KRB5_CPPFLAGS])
  AC_SUBST([KRB5_LDFLAGS])
  AC_SUBST([KRB5_LIBS])
@@ -264,3 +268,20 @@ AC_DEFUN([RRA_LIB_KRB5_OPTIONAL],
          [_RRA_LIB_KRB5_INTERNAL([false])])])
  AS_IF([test x"$KRB5_LIBS" != x],
     [AC_DEFINE([HAVE_KERBEROS], 1, [Define to enable Kerberos features.])])])
+
+dnl Check whether krb5_get_init_creds_opt_free takes one argument or two.
+dnl Early Heimdal used to take a single argument.  Defines
+dnl HAVE_KRB5_GET_INIT_CREDS_OPT_FREE_2_ARGS if it takes two arguments.
+dnl
+dnl Should be called with RRA_LIB_KRB5_SWITCH active.
+AC_DEFUN([RRA_FUNC_KRB5_GET_INIT_CREDS_OPT_FREE_ARGS],
+[AC_CACHE_CHECK([if krb5_get_init_creds_opt_free takes two arguments],
+    [rra_cv_func_krb5_get_init_creds_opt_free_args],
+    [AC_TRY_COMPILE([#include <krb5.h>],
+        [krb5_get_init_creds_opt *opts; krb5_context c;
+         krb5_get_init_creds_opt_free(c, opts);],
+        [rra_cv_func_krb5_get_init_creds_opt_free_args=yes],
+        [rra_cv_func_krb5_get_init_creds_opt_free_args=no])])
+ AS_IF([test $rra_cv_func_krb5_get_init_creds_opt_free_args = yes],
+    [AC_DEFINE([HAVE_KRB5_GET_INIT_CREDS_OPT_FREE_2_ARGS], 1,
+        [Define if krb5_get_init_creds_opt_free takes two arguments.])])])
