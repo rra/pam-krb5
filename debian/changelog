@@ -7,6 +7,7 @@ libpam-krb5 (4.4-1) UNRELEASED; urgency=low
       authentication falls back to password after a PKINIT failure.
     - Organize the pam_krb5 man page into sections.
   * Fix custom patch header to refer to pam-krb5, not remctl.
+  * Update standards version to 3.9.1 (no changes required).
 
  -- Russ Allbery <rra@debian.org>  Wed, 09 Jun 2010 18:49:03 -0700
 
