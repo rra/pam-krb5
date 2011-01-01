@@ -16,7 +16,7 @@
  *     #include <unistd.h>
  *
  * Missing functions are provided via #define or prototyped if available from
- * the util helper library.  Also provides some standard #defines.
+ * the portable helper library.  Also provides some standard #defines.
  *
  * Written by Russ Allbery <rra@stanford.edu>
  * This work is hereby placed in the public domain by its author.
@@ -90,6 +90,16 @@ END_DECLS
 /* Windows provides snprintf under a different name. */
 #ifdef _WIN32
 # define snprintf _snprintf
+#endif
+
+/*
+ * POSIX requires that these be defined in <unistd.h>.  If one of them has
+ * been defined, all the rest almost certainly have.
+ */
+#ifndef STDIN_FILENO
+# define STDIN_FILENO  0
+# define STDOUT_FILENO 1
+# define STDERR_FILENO 2
 #endif
 
 /*

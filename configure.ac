@@ -1,7 +1,7 @@
 dnl Autoconf configuration for pam-krb5.
 dnl
 dnl Written by Russ Allbery <rra@stanford.edu>
-dnl Copyright 2009 Board of Trustees, Leland Stanford Jr. University
+dnl Copyright 2009, 2010 Board of Trustees, Leland Stanford Jr. University
 dnl Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@stanford.edu>
 dnl Copyright 2005 Andres Salomon <dilinger@debian.org>
 dnl Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
@@ -9,7 +9,7 @@ dnl
 dnl See LICENSE for licensing terms.
 
 AC_PREREQ([2.64])
-AC_INIT([pam-krb5], [4.3], [rra@stanford.edu])
+AC_INIT([pam-krb5], [4.4], [rra@stanford.edu])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_LIBOBJ_DIR([portable])
 AC_CONFIG_MACRO_DIR([m4])
@@ -31,12 +31,12 @@ dnl naming.  Mac OS X puts them in pam/* instead of security/*.
 AC_SEARCH_LIBS([pam_set_data], [pam])
 AC_CHECK_FUNCS([pam_modutil_getpwnam])
 AC_REPLACE_FUNCS([pam_syslog pam_vsyslog])
-AC_CHECK_HEADERS([security/pam_modutil.h], ,
+AC_CHECK_HEADERS([security/pam_modutil.h], [],
     [AC_CHECK_HEADERS([pam/pam_modutil.h])])
-AC_CHECK_HEADERS([security/pam_appl.h], ,
-    [AC_CHECK_HEADERS([pam/pam_appl.h], ,
+AC_CHECK_HEADERS([security/pam_appl.h], [],
+    [AC_CHECK_HEADERS([pam/pam_appl.h], [],
         [AC_MSG_ERROR([No PAM header files found])])])
-AC_CHECK_HEADERS([security/pam_ext.h], ,
+AC_CHECK_HEADERS([security/pam_ext.h], [],
     [AC_CHECK_HEADERS([pam/pam_ext.h])])
 RRA_HEADER_PAM_CONST
 
