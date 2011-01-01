@@ -1,5 +1,11 @@
-libpam-krb5 (4.3-2) UNRELEASED; urgency=low
+libpam-krb5 (4.4-1) UNRELEASED; urgency=low
 
+  * New upstream release.
+    - Do not prompt for a password when try_pkinit is set, removing a
+      spurious password prompt introduced in 4.1, but partly reintroducing
+      a bug causing the password to not be saved in the PAM data if
+      authentication falls back to password after a PKINIT failure.
+    - Organize the pam_krb5 man page into sections.
   * Fix custom patch header to refer to pam-krb5, not remctl.
 
  -- Russ Allbery <rra@debian.org>  Wed, 09 Jun 2010 18:49:03 -0700
