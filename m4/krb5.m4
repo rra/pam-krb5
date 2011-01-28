@@ -120,15 +120,16 @@ AC_DEFUN([_RRA_LIB_KRB5_MANUAL],
                 [rra_krb5_pthread="-lpthread"])])
          AC_CHECK_LIB([krb5support], [krb5int_setspecific],
             [rra_krb5_extra="-lkrb5support $rra_krb5_extra $rra_krb5_pthread"],
-            [], [$rra_krb5_pthread])])
+            [], [$rra_krb5_pthread $rra_krb5_extra])],
+        [$rra_krb5_extra])
      AC_CHECK_LIB([com_err], [error_message],
-        [rra_krb5_extra="-lcom_err $rra_krb5_extra"])
+        [rra_krb5_extra="-lcom_err $rra_krb5_extra"], [], [$rra_krb5_extra])
      AC_CHECK_LIB([ksvc], [krb5_svc_get_msg],
-        [rra_krb5_extra="-lksvc $rra_krb5_extra"])
+        [rra_krb5_extra="-lksvc $rra_krb5_extra"], [], [$rra_krb5_extra])
      AC_CHECK_LIB([k5crypto], [krb5int_hash_md5],
-        [rra_krb5_extra="-lk5crypto $rra_krb5_extra"])
+        [rra_krb5_extra="-lk5crypto $rra_krb5_extra"], [], [$rra_krb5_extra])
      AC_CHECK_LIB([k5profile], [profile_get_values],
-        [rra_krb5_extra="-lk5profile $rra_krb5_extra"])
+        [rra_krb5_extra="-lk5profile $rra_krb5_extra"], [], [$rra_krb5_extra])
      AC_CHECK_LIB([krb5], [krb5_cc_default],
         [KRB5_LIBS="-lkrb5 $rra_krb5_extra"],
         [AS_IF([test x"$1" = xtrue],

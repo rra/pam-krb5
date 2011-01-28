@@ -1,5 +1,12 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 4.5 (unreleased)
+
+    When probing for Kerberos libraries, always add any supplemental
+    libraries found to that point to the link command.  This will fix
+    configure failures on platforms without working transitive shared
+    library dependencies.
+
 pam-krb5 4.4 (2010-12-31)
 
     Do not prompt for a password when try_pkinit is set and the module is
