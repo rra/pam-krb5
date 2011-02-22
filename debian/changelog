@@ -1,4 +1,4 @@
-libpam-krb5 (4.4-1) experimental; urgency=low
+libpam-krb5 (4.4-1) unstable; urgency=low
 
   * New upstream release.
     - Do not prompt for a password when try_pkinit is set, removing a
@@ -11,7 +11,7 @@ libpam-krb5 (4.4-1) experimental; urgency=low
     - Refer to the GPL version 1 now that it's in common-licenses.
   * Update to debhelper compatibility level V8 (no changes required).
 
- -- Russ Allbery <rra@debian.org>  Fri, 31 Dec 2010 20:32:38 -0800
+ -- Russ Allbery <rra@debian.org>  Tue, 22 Feb 2011 13:07:05 -0800
 
 libpam-krb5 (4.3-1) unstable; urgency=low
 
