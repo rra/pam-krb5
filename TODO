@@ -12,6 +12,9 @@ PAM API:
 
 Functionality:
 
+ * Add a configuration option to change where the temporary ticket cache
+   is stored.
+
  * Find a way to do only PKINIT authentication with no password fallback
    with MIT Kerberos and then change the authentication flow so that both
    Heimdal and MIT use the same logic for attempting PKINIT first and then
