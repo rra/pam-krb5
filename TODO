@@ -22,6 +22,9 @@ Functionality:
    the PAM data with try_pkinit and MIT Kerberos on password fallback and
    will allow implementation of use_pkinit for MIT.
 
+ * Add support for enabling trace logging if krb5_set_trace_filename() is
+   available (MIT Kerberos 1.9 and later).
+
 Code Cleanup:
 
  * The PAM option parsing is repetitive code that involves counting the
