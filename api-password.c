@@ -2,6 +2,8 @@
  * Implements the PAM password group API (pam_sm_chauthtok).
  *
  * Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@stanford.edu>
+ * Copyright 2011
+ *     The Board of Trustees of the Leland Stanford Junior University
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  *
@@ -98,10 +100,18 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
     }
     ctx = args->ctx;
 
-    /* Tell the user what's going on if we're handling an expiration. */
+    /*
+     * Tell the user what's going on if we're handling an expiration, but not
+     * if we were configured to use the same password as an earlier module in
+     * the stack.  The correct behavior here is not clear (what if the
+     * Kerberos password expired but the other one didn't?), but warning
+     * unconditionally leads to a strange message in the middle of doing the
+     * password change.
+     */
     if (ctx->expired && ctx->creds == NULL)
-        pamk5_conv(args, "Password expired.  You must change it now.",
-                   PAM_TEXT_INFO, NULL);
+        if (!args->force_first_pass && !args->use_first_pass)
+            pamk5_conv(args, "Password expired.  You must change it now.",
+                       PAM_TEXT_INFO, NULL);
 
     /*
      * Do the password change.  This may only get tickets if we're doing the

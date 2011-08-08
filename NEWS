@@ -2,6 +2,14 @@
 
 pam-krb5 4.5 (unreleased)
 
+    Suppress the notice that the password is being changed because it's
+    expired if force_first_pass or use_first_pass is set in the password
+    stack, indicating that it's stacked with another module that's also
+    doing password changes.  This is arguable, but without this change the
+    notification message of why the password is being changed shows up
+    confusingly in the middle of the password change interaction.  Based
+    on a patch by William Yang.
+
     When probing for Kerberos libraries, always add any supplemental
     libraries found to that point to the link command.  This will fix
     configure failures on platforms without working transitive shared
