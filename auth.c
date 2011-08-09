@@ -761,6 +761,23 @@ pamk5_password_auth(struct pam_args *args, const char *service,
         }
 
         /*
+         * Heimdal may return an expired key error even if the password is
+         * incorrect.  To avoid accepting any incorrect password for the user
+         * in the fully correct password change case, confirm that we can get
+         * a password change ticket for the user using this password, and
+         * otherwise change the error to invalid password.
+         */
+        if (retval == KRB5KDC_ERR_KEY_EXP) {
+            retval = krb5_get_init_creds_password(ctx->context, *creds,
+                         ctx->princ, pass, pamk5_prompter_krb5, args, 0,
+                         (char *) "kadmin/changepw", opts);
+            if (retval == 0) {
+                retval = KRB5KDC_ERR_KEY_EXP;
+                krb5_free_cred_contents(ctx->context, *creds);
+            }
+        }
+
+        /*
          * If we succeeded, we're done.  Otherwise, clear the password and
          * then see if we should try again after prompting for a password.  If
          * we failed, make sure retval is not 0 out of paranoia, since later
