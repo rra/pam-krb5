@@ -153,16 +153,23 @@ done:
 int
 pamk5_cache_init_random(struct pam_args *args, krb5_creds *creds)
 {
-    char cache_name[] = "/tmp/krb5cc_pam_XXXXXX";
+    char *cache_name = NULL;
     int pamret;
 
     /* Store the obtained credentials in a temporary cache. */
+    if (asprintf(&cache_name, "%s/krb5cc_pam_XXXXXX", args->ccache_dir) < 0) {
+        pamk5_crit(args, "malloc failure: %s", strerror(errno));
+        return PAM_SERVICE_ERR;
+    }
     pamret = pamk5_cache_mkstemp(args, cache_name);
     if (pamret != PAM_SUCCESS)
-        return pamret;
+        goto done;
     pamret = pamk5_cache_init(args, cache_name, creds, &args->ctx->cache);
     if (pamret != PAM_SUCCESS)
-        return pamret;
+        goto done;
     pamret = pamk5_set_krb5ccname(args, cache_name, "PAM_KRB5CCNAME");
+
+done:
+    free(cache_name);
     return pamret;
 }

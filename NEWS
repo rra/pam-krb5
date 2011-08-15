@@ -17,6 +17,13 @@ pam-krb5 4.5 (unreleased)
     instead of an invalid password error.  Based on a patch by William
     Yang.
 
+    The location of the temporary root-owned ticket cache created during
+    the authentication process is now also controlled by the ccache_dir
+    option (but not the ccache option) rather than forced to be in /tmp.
+    This will allow system administrators to configure an alternative
+    cache directory so that pam-krb5 can continue working when /tmp is
+    full.
+
     When probing for Kerberos libraries, always add any supplemental
     libraries found to that point to the link command.  This will fix
     configure failures on platforms without working transitive shared
