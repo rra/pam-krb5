@@ -10,8 +10,8 @@
 # See LICENSE for licensing terms.
 
 ACLOCAL_AMFLAGS = -I m4
-EXTRA_DIST = .gitignore LICENSE autogen compat-aix.c compat-heimdal.c	\
-	compat-mit.c pam_krb5.map pam_krb5.pod
+EXTRA_DIST = .gitignore LICENSE autogen compat-heimdal.c compat-mit.c	\
+	pam_krb5.map pam_krb5.pod
 
 # Everything we build needs the Kerbeors headers and library flags.
 AM_CPPFLAGS = $(KRB5_CPPFLAGS)
