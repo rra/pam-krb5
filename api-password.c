@@ -20,6 +20,8 @@
 #include <errno.h>
 
 #include <internal.h>
+#include <pam-util/args.h>
+#include <pam-util/logging.h>
 
 
 /*
@@ -37,7 +39,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
     args = pamk5_args_parse(pamh, flags, argc, argv);
     if (args == NULL) {
-        pamk5_crit(NULL, "cannot allocate memory: %s", strerror(errno));
+        putil_crit(NULL, "cannot allocate memory: %s", strerror(errno));
         pamret = PAM_AUTHTOK_ERR;
         goto done;
     }
@@ -46,7 +48,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
     /* We only support password changes. */
     if (!(flags & PAM_UPDATE_AUTHTOK) && !(flags & PAM_PRELIM_CHECK)) {
-        pamk5_err(args, "invalid pam_chauthtok flags %d", flags);
+        putil_err(args, "invalid pam_chauthtok flags %d", flags);
         pamret = PAM_AUTHTOK_ERR;
         goto done;
     }
@@ -86,14 +88,14 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
     if (args->config->ctx == NULL) {
         pamret = pamk5_context_new(args);
         if (pamret != PAM_SUCCESS) {
-            pamk5_debug_pam(args, pamret, "creating context failed");
+            putil_debug_pam(args, pamret, "creating context failed");
             pamret = PAM_AUTHTOK_ERR;
             goto done;
         }
         pamret = pam_set_data(pamh, "pam_krb5", args->config->ctx,
                               pamk5_context_destroy);
         if (pamret != PAM_SUCCESS) {
-            pamk5_err_pam(args, pamret, "cannot set context data");
+            putil_err_pam(args, pamret, "cannot set context data");
             pamret = PAM_AUTHTOK_ERR;
             goto done;
         }
@@ -128,7 +130,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
     if (pamret == PAM_SUCCESS && ctx->expired) {
         krb5_creds *creds = NULL;
 
-        pamk5_debug(args, "obtaining credentials with new password");
+        putil_debug(args, "obtaining credentials with new password");
         args->config->force_first_pass = 1;
         pamret = pamk5_password_auth(args, NULL, &creds);
         if (pamret != PAM_SUCCESS)

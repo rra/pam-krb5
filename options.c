@@ -21,6 +21,8 @@
 
 #include <internal.h>
 #include <pam-util/args.h>
+#include <pam-util/logging.h>
+
 
 /*
  * Not all platforms have this, so just implement it ourselves.  Copy a
@@ -171,7 +173,7 @@ default_time(struct pam_args *args, krb5_context c, const char *opt,
         ret = krb5_string_to_deltat(tmp, result);
         if (ret != 0) {
             message = krb5_get_error_message(c, ret);
-            pamk5_err(args, "bad time value for %s: %s", opt, message);
+            putil_err(args, "bad time value for %s: %s", opt, message);
             krb5_free_error_message(c, message);
             *result = defval;
         }
@@ -452,7 +454,7 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
         else if (strcmp(argv[i], "use_pkinit") == 0)
             config->use_pkinit = 1;
         else
-            pamk5_err(NULL, "unknown option %s", argv[i]);
+            putil_err(NULL, "unknown option %s", argv[i]);
     }
 
     /* An empty banner should be treated the same as not having one. */
@@ -463,16 +465,16 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
     /* Sanity-check try_first_pass, use_first_pass, and force_first_pass. */
     if (config->force_first_pass && config->try_first_pass) {
-        pamk5_err(NULL, "force_first_pass set, ignoring try_first_pass");
+        putil_err(NULL, "force_first_pass set, ignoring try_first_pass");
         config->try_first_pass = 0;
         config->use_first_pass = 0;
     }
     if (config->force_first_pass && config->use_first_pass) {
-        pamk5_err(NULL, "force_first_pass set, ignoring use_first_pass");
+        putil_err(NULL, "force_first_pass set, ignoring use_first_pass");
         config->use_first_pass = 0;
     }
     if (config->use_first_pass && config->try_first_pass) {
-        pamk5_err(NULL, "use_first_pass set, ignoring try_first_pass");
+        putil_err(NULL, "use_first_pass set, ignoring try_first_pass");
         config->try_first_pass = 0;
     }
 
@@ -496,17 +498,17 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
 #ifndef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT
 # ifndef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PA
     if (config->try_pkinit)
-	pamk5_err(NULL, "try_pkinit requested but PKINIT not available");
+        putil_err(NULL, "try_pkinit requested but PKINIT not available");
 # endif
     if (config->use_pkinit)
-	pamk5_err(NULL, "use_pkinit requested but PKINIT not available or"
+        putil_err(NULL, "use_pkinit requested but PKINIT not available or"
                   " cannot be enforced");
 #endif
 
     /* Warn if the FAST option was set and FAST isn't supported. */
 #ifndef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_FAST_CCACHE_NAME
     if (config->fast_ccache)
-        pamk5_err(args, "fast_ccache requested but FAST not supported by"
+        putil_err(args, "fast_ccache requested but FAST not supported by"
                   " Kerberos libraries");
 #endif
 

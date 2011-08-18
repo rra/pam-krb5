@@ -21,6 +21,9 @@
 #include <pwd.h>
 
 #include <internal.h>
+#include <pam-util/args.h>
+#include <pam-util/logging.h>
+
 
 /*
  * Given the PAM arguments and the user we're authenticating, see if we should
@@ -34,13 +37,13 @@ pamk5_should_ignore(struct pam_args *args, PAM_CONST char *username)
     struct passwd *pwd;
 
     if (args->config->ignore_root && strcmp("root", username) == 0) {
-        pamk5_debug(args, "ignoring root user");
+        putil_debug(args, "ignoring root user");
         return 1;
     }
     if (args->config->minimum_uid > 0) {
         pwd = pam_modutil_getpwnam(args->pamh, username);
         if (pwd != NULL && pwd->pw_uid < (unsigned long) args->config->minimum_uid) {
-            pamk5_debug(args, "ignoring low-UID user (%lu < %d)",
+            putil_debug(args, "ignoring low-UID user (%lu < %d)",
                         (unsigned long) pwd->pw_uid, args->config->minimum_uid);
             return 1;
         }

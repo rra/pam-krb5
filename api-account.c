@@ -25,6 +25,9 @@
 #include <errno.h>
 
 #include <internal.h>
+#include <pam-util/args.h>
+#include <pam-util/logging.h>
+
 
 /*
  * Check the authorization of the user.  It's not entirely clear what this
@@ -41,7 +44,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
     args = pamk5_args_parse(pamh, flags, argc, argv);
     if (args == NULL) {
-        pamk5_crit(NULL, "cannot allocate memory: %s", strerror(errno));
+        putil_crit(NULL, "cannot allocate memory: %s", strerror(errno));
         pamret = PAM_AUTH_ERR;
         goto done;
     }
@@ -57,14 +60,14 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
      */
     if (pamret != PAM_SUCCESS || args->config->ctx == NULL) {
         pamret = PAM_IGNORE;
-        pamk5_debug(args, "skipping non-Kerberos login");
+        putil_debug(args, "skipping non-Kerberos login");
         goto done;
     }
     ctx = args->config->ctx;
 
     /* If the account was expired, here's where we actually fail. */
     if (ctx->expired) {
-        pamk5_debug(args, "account password is expired");
+        putil_debug(args, "account password is expired");
         pamret = PAM_NEW_AUTHTOK_REQD;
         goto done;
     }
@@ -80,7 +83,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
      */
     retval = pam_get_item(pamh, PAM_USER, (PAM_CONST void **) &name);
     if (retval != PAM_SUCCESS || name == NULL) {
-        pamk5_err_pam(args, retval, "unable to retrieve user");
+        putil_err_pam(args, retval, "unable to retrieve user");
         pamret = PAM_AUTH_ERR;
         goto done;
     }
@@ -96,12 +99,12 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
      * bit more thorough.
      */
     if (ctx->cache != NULL) {
-        pamk5_debug(args, "retrieving principal from cache");
+        putil_debug(args, "retrieving principal from cache");
         if (ctx->princ != NULL)
             krb5_free_principal(ctx->context, ctx->princ);
         retval = krb5_cc_get_principal(ctx->context, ctx->cache, &ctx->princ);
         if (retval != 0) {
-            pamk5_err_krb5(args, retval, "cannot get principal from cache");
+            putil_err_krb5(args, retval, "cannot get principal from cache");
             pamret = PAM_AUTH_ERR;
             goto done;
         }

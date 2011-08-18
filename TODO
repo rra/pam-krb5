@@ -70,6 +70,9 @@ Code Cleanup:
    Helpful for this would be improved documentation of what error codes
    are permitted and where.  (PAMKRB-12)
 
+ * Add putil_info function to the logging layer and use it instead of
+   calling pam_syslog with INFO level.
+
 Documentation:
 
  * Document PKINIT configuration with MIT in krb5.conf.  It looks like the

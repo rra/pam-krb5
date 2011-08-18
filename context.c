@@ -20,12 +20,15 @@
 #include <errno.h>
 
 #include <internal.h>
+#include <pam-util/args.h>
+#include <pam-util/logging.h>
 
 /* Solaris doesn't have these. */
 #ifndef PAM_CONV_AGAIN
 # define PAM_CONV_AGAIN 0
 # define PAM_INCOMPLETE PAM_SERVICE_ERR
 #endif
+
 
 /*
  * Create a new context and populate it with the user from PAM and a new
@@ -61,12 +64,13 @@ pamk5_context_new(struct pam_args *args)
         goto done;
     }
     ctx->name = strdup(name);
+    args->user = ctx->name;
     if (issetuidgid())
         retval = krb5_init_secure_context(&ctx->context);
     else
         retval = krb5_init_context(&ctx->context);
     if (retval != 0) {
-        pamk5_err_krb5(args, retval, "krb5_init_context failed");
+        putil_err_krb5(args, retval, "krb5_init_context failed");
         retval = PAM_SERVICE_ERR;
         goto done;
     }
@@ -75,7 +79,7 @@ pamk5_context_new(struct pam_args *args)
     if (args->config->realm != NULL) {
         retval = krb5_set_default_realm(ctx->context, args->config->realm);
         if (retval != 0) {
-            pamk5_err_krb5(args, retval, "cannot set default realm");
+            putil_err_krb5(args, retval, "cannot set default realm");
             retval = PAM_SERVICE_ERR;
             goto done;
         }
@@ -105,6 +109,7 @@ pamk5_context_fetch(struct pam_args *args)
         args->config->ctx = NULL;
     if (pamret == 0 && args->config->ctx == NULL)
         return PAM_SERVICE_ERR;
+    args->user = args->config->ctx->name;
     return pamret;
 }
 

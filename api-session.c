@@ -24,6 +24,9 @@
 #include <errno.h>
 
 #include <internal.h>
+#include <pam-util/args.h>
+#include <pam-util/logging.h>
+
 
 /*
  * Store the user's credentials.  Nearly all of the work is done by
@@ -38,7 +41,7 @@ pam_sm_open_session(pam_handle_t *pamh, int flags, int argc,
 
     args = pamk5_args_parse(pamh, flags, argc, argv);
     if (args == NULL) {
-        pamk5_crit(NULL, "cannot allocate memory: %s", strerror(errno));
+        putil_crit(NULL, "cannot allocate memory: %s", strerror(errno));
         pamret = PAM_SERVICE_ERR;
         goto done;
     }
@@ -65,14 +68,15 @@ pam_sm_close_session(pam_handle_t *pamh, int flags, int argc,
 
     args = pamk5_args_parse(pamh, flags, argc, argv);
     if (args == NULL) {
-        pamk5_crit(NULL, "cannot allocate memory: %s", strerror(errno));
+        putil_crit(NULL, "cannot allocate memory: %s", strerror(errno));
         pamret = PAM_SERVICE_ERR;
         goto done;
     }
     ENTRY(args, flags);
     pamret = pam_set_data(pamh, "pam_krb5", NULL, NULL);
     if (pamret != PAM_SUCCESS)
-        pamk5_err_pam(args, pamret, "cannot clear context data");
+        putil_err_pam(args, pamret, "cannot clear context data");
+    args->user = NULL;
     args->config->ctx = NULL;
 
 done:

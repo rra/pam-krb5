@@ -30,8 +30,8 @@ pam_util_libpamutil_la_SOURCES = pam-util/args.c pam-util/args.h	\
 pamdir = $(libdir)/security
 pam_LTLIBRARIES = pam_krb5.la
 pam_krb5_la_SOURCES = api-account.c api-auth.c api-password.c api-session.c \
-	auth.c cache.c compat.c context.c internal.h logging.c options.c    \
-	password.c prompting.c setcred.c support.c
+	auth.c cache.c compat.c context.c internal.h options.c password.c   \
+	prompting.c setcred.c support.c
 pam_krb5_la_LDFLAGS = -module -shared -avoid-version $(AM_LDFLAGS)
 pam_krb5_la_LIBADD = pam-util/libpamutil.la portable/libportable.la \
 	$(KRB5_LIBS)

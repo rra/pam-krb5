@@ -21,10 +21,8 @@
 #include <stdarg.h>
 #include <syslog.h>
 
-/* Temporary. */
-#include <pam-util/args.h>
-
 /* Forward declarations to avoid unnecessary includes. */
+struct pam_args;
 struct passwd;
 
 /* Used for unused parameters to silence gcc warnings. */
@@ -217,56 +215,7 @@ int pamk5_cache_init_random(struct pam_args *, krb5_creds *);
 krb5_error_code pamk5_compat_set_realm(struct pam_config *, const char *);
 void pamk5_compat_free_realm(struct pam_config *);
 
-/*
- * Error reporting and debugging functions.  For each log level, there are
- * three functions.  The _log function just prints out the message it's given.
- * The _log_pam function reports a PAM error using pam_strerror.  The
- * _log_krb5 function reports a Kerberos error.
- */
-void pamk5_crit(struct pam_args *, const char *, ...)
-    __attribute__((__format__(printf, 2, 3)));
-void pamk5_crit_pam(struct pam_args *, int, const char *, ...)
-    __attribute__((__format__(printf, 3, 4)));
-void pamk5_crit_krb5(struct pam_args *, int, const char *, ...)
-    __attribute__((__format__(printf, 3, 4)));
-void pamk5_err(struct pam_args *, const char *, ...)
-    __attribute__((__format__(printf, 2, 3)));
-void pamk5_err_pam(struct pam_args *, int, const char *, ...)
-    __attribute__((__format__(printf, 3, 4)));
-void pamk5_err_krb5(struct pam_args *, int, const char *, ...)
-    __attribute__((__format__(printf, 3, 4)));
-void pamk5_debug(struct pam_args *, const char *, ...)
-    __attribute__((__format__(printf, 2, 3)));
-void pamk5_debug_pam(struct pam_args *, int, const char *, ...)
-    __attribute__((__format__(printf, 3, 4)));
-void pamk5_debug_krb5(struct pam_args *, int, const char *, ...)
-    __attribute__((__format__(printf, 3, 4)));
-
-/* Log an authentication failure. */
-void pamk5_log_failure(struct pam_args *, const char *, ...)
-    __attribute__((__format__(printf, 2, 3)));
-
 /* Undo default visibility change. */
 #pragma GCC visibility pop
-
-/* __func__ is C99, but not provided by all implementations. */
-#if __STDC_VERSION__ < 199901L
-# if __GNUC__ >= 2
-#  define __func__ __FUNCTION__
-# else
-#  define __func__ "<unknown>"
-# endif
-#endif
-
-/* Macros to record entry and exit from the main PAM functions. */
-#define ENTRY(args, flags)                                              \
-    if (args->debug)                                                    \
-        pam_syslog((args)->pamh, LOG_DEBUG,                             \
-                   "%s: entry (0x%x)", __func__, (flags))
-#define EXIT(args, pamret)                                              \
-    if (args->debug)                                                    \
-        pam_syslog((args)->pamh, LOG_DEBUG, "%s: exit (%s)", __func__,  \
-                   ((pamret) == PAM_SUCCESS) ? "success"                \
-                   : (((pamret) == PAM_IGNORE) ? "ignore" : "failure"))
 
 #endif /* !INTERNAL_H */

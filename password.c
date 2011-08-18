@@ -18,6 +18,8 @@
 #include <errno.h>
 
 #include <internal.h>
+#include <pam-util/args.h>
+#include <pam-util/logging.h>
 
 /* Solaris 8 has deficient PAM. */
 #ifndef PAM_AUTHTOK_RECOVER_ERR
@@ -46,7 +48,7 @@ pamk5_password_prompt(struct pam_args *args, char **pass)
     if (args->config->use_authtok) {
         pamret = pam_get_item(args->pamh, PAM_AUTHTOK, &tmp);
         if (tmp == NULL) {
-            pamk5_debug_pam(args, pamret, "no stored password");
+            putil_debug_pam(args, pamret, "no stored password");
             pamret = PAM_AUTHTOK_ERR;
             goto done;
         }
@@ -57,18 +59,18 @@ pamk5_password_prompt(struct pam_args *args, char **pass)
     if (pass1 == NULL) {
         pamret = pamk5_get_password(args, "Enter new", &pass1);
         if (pamret != PAM_SUCCESS) {
-            pamk5_debug_pam(args, pamret, "error getting new password");
+            putil_debug_pam(args, pamret, "error getting new password");
             pamret = PAM_AUTHTOK_ERR;
             goto done;
         }
         pamret = pamk5_get_password(args, "Retype new", &pass2);
         if (pamret != PAM_SUCCESS) {
-            pamk5_debug_pam(args, pamret, "error getting new password");
+            putil_debug_pam(args, pamret, "error getting new password");
             pamret = PAM_AUTHTOK_ERR;
             goto done;
         }
         if (strcmp(pass1, pass2) != 0) {
-            pamk5_debug(args, "new passwords don't match");
+            putil_debug(args, "new passwords don't match");
             pamk5_conv(args, "Passwords don't match", PAM_ERROR_MSG, NULL);
             memset(pass1, 0, strlen(pass1));
             free(pass1);
@@ -83,7 +85,7 @@ pamk5_password_prompt(struct pam_args *args, char **pass)
         /* Save the new password for other modules. */
         pamret = pam_set_item(args->pamh, PAM_AUTHTOK, pass1);
         if (pamret != PAM_SUCCESS) {
-            pamk5_err_pam(args, pamret, "error storing password");
+            putil_err_pam(args, pamret, "error storing password");
             pamret = PAM_AUTHTOK_ERR;
             goto done;
         }
@@ -122,7 +124,7 @@ change_password(struct pam_args *args, const char *pass)
 
     /* Everything from here on is just handling diagnostics and output. */
     if (retval != 0) {
-        pamk5_debug_krb5(args, retval, "krb5_change_password failed");
+        putil_debug_krb5(args, retval, "krb5_change_password failed");
         message = krb5_get_error_message(ctx->context, retval);
         pamk5_conv(args, message, PAM_ERROR_MSG, NULL);
         krb5_free_error_message(ctx->context, message);
@@ -133,7 +135,7 @@ change_password(struct pam_args *args, const char *pass)
         char *message;
         int status;
 
-        pamk5_debug(args, "krb5_change_password: %s",
+        putil_debug(args, "krb5_change_password: %s",
                     (char *) result_code_string.data);
         retval = PAM_AUTHTOK_ERR;
         status = asprintf(&message, "%.*s%s%.*s",
@@ -143,7 +145,7 @@ change_password(struct pam_args *args, const char *pass)
                           (int) result_string.length,
                           (char *) result_string.data);
         if (status < 0)
-            pamk5_crit(args, "asprintf failed: %s", strerror(errno));
+            putil_crit(args, "asprintf failed: %s", strerror(errno));
         else {
             pamk5_conv(args, message, PAM_ERROR_MSG, NULL);
             free(message);
@@ -162,7 +164,7 @@ done:
      */
     if (retval != PAM_SUCCESS && args->config->clear_on_fail) {
         if (pam_set_item(args->pamh, PAM_AUTHTOK, NULL))
-            pamk5_err(args, "error clearing password");
+            putil_err(args, "error clearing password");
     }
     return retval;
 }

@@ -29,6 +29,8 @@
 #include <sys/stat.h>
 
 #include <internal.h>
+#include <pam-util/args.h>
+#include <pam-util/logging.h>
 
 /*
  * If the PKINIT smart card error statuses aren't defined, define them to 0.
@@ -67,7 +69,7 @@ parse_name(struct pam_args *args)
     if (args->config->prompt_princ) {
         retval = pamk5_conv(args, "Principal: ", PAM_PROMPT_ECHO_ON, &user);
         if (retval != PAM_SUCCESS)
-            pamk5_err_pam(args, retval, "error getting principal");
+            putil_err_pam(args, retval, "error getting principal");
         if (*user == '\0') {
             free(user);
             user = ctx->name;
@@ -106,7 +108,7 @@ parse_name(struct pam_args *args)
             return 0;
         user = strdup(kuser);
         if (user == NULL) {
-            pamk5_crit(args, "cannot allocate memory: %s", strerror(errno));
+            putil_crit(args, "cannot allocate memory: %s", strerror(errno));
             return 0;
         }
         free(ctx->name);
@@ -136,19 +138,19 @@ set_fast_options(struct pam_args *args, krb5_get_init_creds_opt *opts)
         return;
     k5_errno = krb5_cc_resolve(c, cache, &fast_ccache);
     if (k5_errno != 0) {
-        pamk5_debug_krb5(args, k5_errno, "failed resolving fast ccache %s",
+        putil_debug_krb5(args, k5_errno, "failed resolving fast ccache %s",
                          cache);
         goto done;
     }
     k5_errno = krb5_cc_get_principal(c, fast_ccache, &princ);
     if (k5_errno != 0) {
-        pamk5_debug_krb5(args, k5_errno,
+        putil_debug_krb5(args, k5_errno,
                          "failed to get principal from fast ccache %s", cache);
         goto done;
     }
     k5_errno = krb5_get_init_creds_opt_set_fast_ccache_name(c, opts, cache);
     if (k5_errno != 0)
-        pamk5_err_krb5(args, k5_errno, "failed setting fast ccache to %s",
+        putil_err_krb5(args, k5_errno, "failed setting fast ccache to %s",
                        cache);
 
 done:
@@ -310,7 +312,7 @@ k5login_password_auth(struct pam_args *args, krb5_creds *creds,
     }
     if (st.st_uid != 0 && (st.st_uid != pwd->pw_uid)) {
         *retval = EACCES;
-        pamk5_err(args, "unsafe .k5login ownership (saw %lu, expected %lu)",
+        putil_err(args, "unsafe .k5login ownership (saw %lu, expected %lu)",
                   (unsigned long) st.st_uid, (unsigned long) pwd->pw_uid);
         goto fail;
     }
@@ -400,9 +402,9 @@ alt_password_auth(struct pam_args *args, krb5_creds *creds,
 
         k5_errno = krb5_unparse_name(ctx->context, princ, &principal);
         if (k5_errno != 0)
-            pamk5_debug_krb5(args, k5_errno, "krb5_unparse_name failed");
+            putil_debug_krb5(args, k5_errno, "krb5_unparse_name failed");
         else {
-            pamk5_debug(args, "mapping %s to %s", ctx->name, principal);
+            putil_debug(args, "mapping %s to %s", ctx->name, principal);
             free(principal);
         }
     }
@@ -411,10 +413,10 @@ alt_password_auth(struct pam_args *args, krb5_creds *creds,
     *retval = krb5_get_init_creds_password(ctx->context, creds, princ, pass,
                  pamk5_prompter_krb5, args, 0, (char *) service, opts);
     if (*retval != 0) {
-        pamk5_debug_krb5(args, *retval, "alternate authentication failed");
+        putil_debug_krb5(args, *retval, "alternate authentication failed");
         return PAM_AUTH_ERR;
     } else {
-        pamk5_debug(args, "alternate authentication successful");
+        putil_debug(args, "alternate authentication successful");
         if (ctx->princ != NULL)
             krb5_free_principal(ctx->context, ctx->princ);
         ctx->princ = princ;
@@ -545,7 +547,7 @@ verify_creds(struct pam_args *args, krb5_creds *creds)
     if (args->config->keytab) {
         retval = krb5_kt_resolve(c, args->config->keytab, &keytab);
         if (retval != 0) {
-            pamk5_err_krb5(args, retval, "cannot open keytab %s",
+            putil_err_krb5(args, retval, "cannot open keytab %s",
                            args->config->keytab);
             keytab = NULL;
         }
@@ -558,7 +560,7 @@ verify_creds(struct pam_args *args, krb5_creds *creds)
         if (retval == 0)
             retval = krb5_copy_principal(c, entry.principal, &princ);
         if (retval != 0)
-            pamk5_err_krb5(args, retval, "error reading keytab %s",
+            putil_err_krb5(args, retval, "error reading keytab %s",
                            args->config->keytab);
         if (entry.principal != NULL)
             krb5_kt_free_entry(c, &entry);
@@ -567,7 +569,7 @@ verify_creds(struct pam_args *args, krb5_creds *creds)
     }
     retval = krb5_verify_init_creds(c, creds, princ, keytab, NULL, &opts);
     if (retval != 0)
-        pamk5_err_krb5(args, retval, "credential verification failed");
+        putil_err_krb5(args, retval, "credential verification failed");
     if (princ != NULL)
         krb5_free_principal(c, princ);
     if (keytab != NULL)
@@ -607,7 +609,7 @@ pamk5_password_auth(struct pam_args *args, const char *service,
     if (ctx->princ == NULL) {
         retval = parse_name(args);
         if (retval != 0) {
-            pamk5_err_krb5(args, retval, "krb5_parse_name failed");
+            putil_err_krb5(args, retval, "krb5_parse_name failed");
             return PAM_SERVICE_ERR;
         }
     }
@@ -618,9 +620,9 @@ pamk5_password_auth(struct pam_args *args, const char *service,
 
         retval = krb5_unparse_name(ctx->context, ctx->princ, &principal);
         if (retval != 0)
-            pamk5_debug_krb5(args, retval, "krb5_unparse_name failed");
+            putil_debug_krb5(args, retval, "krb5_unparse_name failed");
         else {
-            pamk5_debug(args, "attempting authentication as %s", principal);
+            putil_debug(args, "attempting authentication as %s", principal);
             free(principal);
         }
     }
@@ -636,7 +638,7 @@ pamk5_password_auth(struct pam_args *args, const char *service,
         retval = pkinit_auth(args, service, creds);
         if (retval == 0)
             goto done;
-        pamk5_debug_krb5(args, retval, "pkinit failed");
+        putil_debug_krb5(args, retval, "pkinit failed");
         if (retval != HX509_PKCS11_NO_TOKEN && retval != HX509_PKCS11_NO_SLOT)
             goto done;
         if (retval != 0 && args->config->use_pkinit)
@@ -652,12 +654,12 @@ pamk5_password_auth(struct pam_args *args, const char *service,
     /* Allocate cred structure and set credential options. */
     *creds = calloc(1, sizeof(krb5_creds));
     if (*creds == NULL) {
-        pamk5_crit(args, "cannot allocate memory: %s", strerror(errno));
+        putil_crit(args, "cannot allocate memory: %s", strerror(errno));
         return PAM_SERVICE_ERR;
     }
     retval = krb5_get_init_creds_opt_alloc(ctx->context, &opts);
     if (retval != 0) {
-        pamk5_crit_krb5(args, retval, "cannot allocate credential options");
+        putil_crit_krb5(args, retval, "cannot allocate credential options");
         goto done;
     }
     set_credential_options(args, opts, service != NULL);
@@ -680,14 +682,14 @@ pamk5_password_auth(struct pam_args *args, const char *service,
         retval = pam_get_item(args->pamh, authtok, (PAM_CONST void **) &pass);
     if (args->config->use_first_pass || args->config->force_first_pass) {
         if (pass != NULL && *pass == '\0') {
-            pamk5_debug(args, "rejecting empty password");
+            putil_debug(args, "rejecting empty password");
             retval = PAM_AUTH_ERR;
             goto done;
         }
     }
     if (args->config->force_first_pass
         && (retval != PAM_SUCCESS || pass == NULL)) {
-        pamk5_debug_pam(args, retval, "no stored password");
+        putil_debug_pam(args, retval, "no stored password");
         retval = PAM_SERVICE_ERR;
         goto done;
     }
@@ -698,12 +700,12 @@ pamk5_password_auth(struct pam_args *args, const char *service,
             retry = 0;
             retval = pamk5_get_password(args, prompt, &pass);
             if (retval != PAM_SUCCESS) {
-                pamk5_debug_pam(args, retval, "error getting password");
+                putil_debug_pam(args, retval, "error getting password");
                 retval = PAM_SERVICE_ERR;
                 goto done;
             }
             if (*pass == '\0') {
-                pamk5_debug(args, "rejecting empty password");
+                putil_debug(args, "rejecting empty password");
                 retval = PAM_AUTH_ERR;
                 goto done;
             }
@@ -713,7 +715,7 @@ pamk5_password_auth(struct pam_args *args, const char *service,
             memset(pass, 0, strlen(pass));
             free(pass);
             if (retval != PAM_SUCCESS) {
-                pamk5_err_pam(args, retval, "error storing password");
+                putil_err_pam(args, retval, "error storing password");
                 retval = PAM_SERVICE_ERR;
                 goto done;
             }
@@ -793,7 +795,7 @@ pamk5_password_auth(struct pam_args *args, const char *service,
         pass = NULL;
     } while (retry && retval == KRB5KRB_AP_ERR_BAD_INTEGRITY);
     if (retval != 0)
-        pamk5_debug_krb5(args, retval, "krb5_get_init_creds_password");
+        putil_debug_krb5(args, retval, "krb5_get_init_creds_password");
     else
         creds_valid = 1;
 

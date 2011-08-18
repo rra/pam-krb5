@@ -21,6 +21,9 @@
 #include <errno.h>
 
 #include <internal.h>
+#include <pam-util/args.h>
+#include <pam-util/logging.h>
+
 
 /*
  * Get the name of a cache.  Takes the name of the environment variable that
@@ -60,13 +63,13 @@ pamk5_set_krb5ccname(struct pam_args *args, const char *name, const char *key)
     int pamret;
 
     if (asprintf(&env_name, "%s=%s", key, name) < 0) {
-        pamk5_crit(args, "asprintf failed: %s", strerror(errno));
+        putil_crit(args, "asprintf failed: %s", strerror(errno));
         pamret = PAM_BUF_ERR;
         goto done;
     }
     pamret = pam_putenv(args->pamh, env_name);
     if (pamret != PAM_SUCCESS) {
-        pamk5_err_pam(args, pamret, "pam_putenv failed");
+        putil_err_pam(args, pamret, "pam_putenv failed");
         pamret = PAM_SERVICE_ERR;
         goto done;
     }
@@ -90,7 +93,7 @@ pamk5_cache_mkstemp(struct pam_args *args, char *template)
 
     ccfd = mkstemp(template);
     if (ccfd < 0) {
-        pamk5_crit(args, "mkstemp(\"%s\") failed: %s", template,
+        putil_crit(args, "mkstemp(\"%s\") failed: %s", template,
                    strerror(errno));
         return PAM_SERVICE_ERR;
     }
@@ -117,20 +120,20 @@ pamk5_cache_init(struct pam_args *args, const char *ccname, krb5_creds *creds,
     ctx = args->config->ctx;
     retval = krb5_cc_resolve(ctx->context, ccname, cache);
     if (retval != 0) {
-        pamk5_err_krb5(args, retval, "cannot resolve ticket cache %s", ccname);
+        putil_err_krb5(args, retval, "cannot resolve ticket cache %s", ccname);
         retval = PAM_SERVICE_ERR;
         goto done;
     }
     retval = krb5_cc_initialize(ctx->context, *cache, ctx->princ);
     if (retval != 0) {
-        pamk5_err_krb5(args, retval, "cannot initialize ticket cache %s",
+        putil_err_krb5(args, retval, "cannot initialize ticket cache %s",
                        ccname);
         retval = PAM_SERVICE_ERR;
         goto done;
     }
     retval = krb5_cc_store_cred(ctx->context, *cache, creds);
     if (retval != 0) {
-        pamk5_err_krb5(args, retval, "cannot store credentials in %s", ccname);
+        putil_err_krb5(args, retval, "cannot store credentials in %s", ccname);
         retval = PAM_SERVICE_ERR;
         goto done;
     }
@@ -159,7 +162,7 @@ pamk5_cache_init_random(struct pam_args *args, krb5_creds *creds)
     /* Store the obtained credentials in a temporary cache. */
     if (asprintf(&cache_name, "%s/krb5cc_pam_XXXXXX",
                  args->config->ccache_dir) < 0) {
-        pamk5_crit(args, "malloc failure: %s", strerror(errno));
+        putil_crit(args, "malloc failure: %s", strerror(errno));
         return PAM_SERVICE_ERR;
     }
     pamret = pamk5_cache_mkstemp(args, cache_name);

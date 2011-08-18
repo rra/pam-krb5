@@ -27,6 +27,9 @@
 #include <syslog.h>
 
 #include <internal.h>
+#include <pam-util/args.h>
+#include <pam-util/logging.h>
+
 
 /*
  * Authenticate a user via Kerberos 5.
@@ -53,7 +56,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 
     args = pamk5_args_parse(pamh, flags, argc, argv);
     if (args == NULL) {
-        pamk5_crit(NULL, "cannot allocate memory: %s", strerror(errno));
+        putil_crit(NULL, "cannot allocate memory: %s", strerror(errno));
         pamret = PAM_SERVICE_ERR;
         goto done;
     }
@@ -61,7 +64,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 
     /* Temporary backward compatibility. */
     if (args->config->use_authtok && !args->config->force_first_pass) {
-        pamk5_err(args, "use_authtok option in authentication group should"
+        putil_err(args, "use_authtok option in authentication group should"
                   " be changed to force_first_pass");
         args->config->force_first_pass = 1;
     }
@@ -108,7 +111,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
         if (args->config->fail_pwchange)
             pamret = PAM_AUTH_ERR;
         else if (args->config->defer_pwchange) {
-            pamk5_debug(args, "expired account, deferring failure");
+            putil_debug(args, "expired account, deferring failure");
             ctx->expired = 1;
             pamret = PAM_SUCCESS;
         } else if (args->config->force_pwchange) {
@@ -124,14 +127,14 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
             args->config->use_first_pass = 1;
             pamret = pamk5_password_change(args, 0);
             if (pamret == PAM_SUCCESS) {
-                pamk5_debug(args, "successfully changed expired password");
+                putil_debug(args, "successfully changed expired password");
                 args->config->force_first_pass = 1;
                 pamret = pamk5_password_auth(args, NULL, &creds);
             }
         }
     }
     if (pamret != PAM_SUCCESS) {
-        pamk5_log_failure(args, "authentication failure");
+        putil_log_failure(args, "authentication failure");
         goto done;
     }
 
@@ -139,7 +142,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     if (!ctx->expired) {
         pamret = pamk5_authorized(args);
         if (pamret != PAM_SUCCESS) {
-            pamk5_log_failure(args, "failed authorization check");
+            putil_log_failure(args, "failed authorization check");
             goto done;
         }
     }
@@ -148,13 +151,13 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     if (!ctx->expired) {
         pamret = pam_set_item(args->pamh, PAM_USER, ctx->name);
         if (pamret != PAM_SUCCESS)
-            pamk5_err_pam(args, pamret, "cannot set PAM_USER");
+            putil_err_pam(args, pamret, "cannot set PAM_USER");
     }
 
     /* Log the successful authentication. */
     retval = krb5_unparse_name(ctx->context, ctx->princ, &principal);
     if (retval != 0) {
-        pamk5_err_krb5(args, retval, "krb5_unparse_name failed");
+        putil_err_krb5(args, retval, "krb5_unparse_name failed");
         pam_syslog(args->pamh, LOG_INFO, "user %s authenticated as UNKNOWN",
                    ctx->name);
     } else {
@@ -166,7 +169,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     /* Now that we know we're successful, we can store the context. */
     pamret = pam_set_data(pamh, "pam_krb5", ctx, pamk5_context_destroy);
     if (pamret != PAM_SUCCESS) {
-        pamk5_err_pam(args, pamret, "cannot set context data");
+        putil_err_pam(args, pamret, "cannot set context data");
         pamk5_context_free(ctx);
         pamret = PAM_SERVICE_ERR;
         goto done;
@@ -218,7 +221,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
     args = pamk5_args_parse(pamh, flags, argc, argv);
     if (args == NULL) {
-        pamk5_crit(NULL, "cannot allocate memory: %s", strerror(errno));
+        putil_crit(NULL, "cannot allocate memory: %s", strerror(errno));
         pamret = PAM_SERVICE_ERR;
         goto done;
     }
@@ -231,8 +234,9 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
     if (flags & PAM_DELETE_CRED) {
         pamret = pam_set_data(pamh, "pam_krb5", NULL, NULL);
         if (pamret != PAM_SUCCESS)
-            pamk5_err_pam(args, pamret, "cannot clear context data");
+            putil_err_pam(args, pamret, "cannot clear context data");
         args->config->ctx = NULL;
+        args->user = NULL;
         goto done;
     }
 
@@ -244,13 +248,13 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
     if (flags & (PAM_REINITIALIZE_CRED | PAM_REFRESH_CRED))
         refresh = 1;
     if (refresh && (flags & PAM_ESTABLISH_CRED)) {
-        pamk5_err(args, "requested establish and refresh at the same time");
+        putil_err(args, "requested establish and refresh at the same time");
         pamret = PAM_SERVICE_ERR;
         goto done;
     }
     allow = PAM_REINITIALIZE_CRED | PAM_REFRESH_CRED | PAM_ESTABLISH_CRED;
     if (!(flags & allow)) {
-        pamk5_err(args, "invalid pam_setcred flags %d", flags);
+        putil_err(args, "invalid pam_setcred flags %d", flags);
         pamret = PAM_SERVICE_ERR;
         goto done;
     }
