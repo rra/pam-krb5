@@ -29,6 +29,9 @@ pam-krb5 4.5 (unreleased)
     configure failures on platforms without working transitive shared
     library dependencies.
 
+    Close some memory leaks where unparsed Kerberos principal names were
+    never freed.
+
 pam-krb5 4.4 (2010-12-31)
 
     Do not prompt for a password when try_pkinit is set and the module is

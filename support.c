@@ -168,12 +168,12 @@ pamk5_authorized(struct pam_args *args)
             return PAM_SERVICE_ERR;
         }
         if (strcmp(authed, mapped) == 0) {
-            free(authed);
-            free(mapped);
+            krb5_free_unparsed_name(c, authed);
+            krb5_free_unparsed_name(c, mapped);
             return PAM_SUCCESS;
         }
-        free(authed);
-        free(mapped);
+        krb5_free_unparsed_name(c, authed);
+        krb5_free_unparsed_name(c, mapped);
     }
 
     /*
@@ -188,9 +188,10 @@ pamk5_authorized(struct pam_args *args)
         if (retval != 0)
             return PAM_SERVICE_ERR;
         if (strcmp(principal, ctx->name) != 0) {
-            free(principal);
+            krb5_free_unparsed_name(c, principal);
             return PAM_AUTH_ERR;
         }
+        krb5_free_unparsed_name(c, principal);
         return PAM_SUCCESS;
     }
 

@@ -70,11 +70,11 @@ pamk5_get_password(struct pam_args *args, const char *prefix, char **password)
     if (prefix == NULL) {
         if (args->expose_account && principal != NULL) {
             if (asprintf(&prompt, "Password for %s: ", principal) < 0)
-                return PAM_BUF_ERR;
+                goto fail;
         } else {
             prompt = strdup("Password: ");
             if (prompt == NULL)
-                return PAM_BUF_ERR;
+                goto fail;
         }
     } else {
         if (args->expose_account && principal != NULL) {
@@ -83,18 +83,25 @@ pamk5_get_password(struct pam_args *args, const char *prefix, char **password)
                               (args->banner == NULL) ? "" : args->banner,
                               principal);
             if (retval < 0)
-                return PAM_BUF_ERR;
+                goto fail;
         } else {
             retval = asprintf(&prompt, "%s%s%s password: ", prefix,
                               (args->banner == NULL) ? "" : " ",
                               (args->banner == NULL) ? "" : args->banner);
             if (retval < 0)
-                return PAM_BUF_ERR;
+                goto fail;
         }
     }
+    if (principal != NULL)
+        krb5_free_unparsed_name(ctx->context, principal);
     retval = pamk5_conv(args, prompt, PAM_PROMPT_ECHO_OFF, password);
     free(prompt);
     return retval;
+
+fail:
+    if (principal != NULL)
+        krb5_free_unparsed_name(ctx->context, principal);
+    return PAM_BUF_ERR;
 }
 
 
