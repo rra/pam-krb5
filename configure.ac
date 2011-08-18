@@ -67,7 +67,7 @@ AC_CHECK_FUNCS([krb5_get_init_creds_opt_set_pkinit],
     [RRA_FUNC_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT_ARGS])
 AC_CHECK_FUNC([krb5_get_init_creds_opt_free],
     [RRA_FUNC_KRB5_GET_INIT_CREDS_OPT_FREE_ARGS])
-AC_CHECK_DECLS([krb5_kt_free_entry])
+AC_CHECK_DECLS([krb5_kt_free_entry], [], [], [#include <krb5.h>])
 AC_CHECK_FUNCS([krb5_appdefault_string], [],
     [AC_CHECK_FUNCS([krb5_get_profile])
      AC_CHECK_HEADERS([k5profile.h profile.h])
