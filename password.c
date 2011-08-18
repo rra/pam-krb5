@@ -1,6 +1,8 @@
 /*
  * Kerberos password changing.
  *
+ * Copyright 2011
+ *     The Board of Trustees of the Leland Stanford Junior University
  * Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@stanford.edu>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
@@ -9,13 +11,11 @@
  */
 
 #include <config.h>
+#include <portable/krb5.h>
 #include <portable/pam.h>
+#include <portable/system.h>
 
 #include <errno.h>
-#include <krb5.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include <internal.h>
 
@@ -121,9 +121,9 @@ change_password(struct pam_args *args, const char *pass)
     /* Everything from here on is just handling diagnostics and output. */
     if (retval != 0) {
         pamk5_debug_krb5(args, retval, "krb5_change_password failed");
-        message = pamk5_compat_get_error(ctx->context, retval);
+        message = krb5_get_error_message(ctx->context, retval);
         pamk5_conv(args, message, PAM_ERROR_MSG, NULL);
-        pamk5_compat_free_error(ctx->context, message);
+        krb5_free_error_message(ctx->context, message);
         retval = PAM_AUTHTOK_ERR;
         goto done;
     }

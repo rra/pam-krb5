@@ -1,11 +1,12 @@
 /*
- * Implements the PAM session group API (pam_sm_open_session and
- * pam_sm_close_session).
+ * Implements the PAM session group API.
  *
  * Opening a session is mostly equivalent to calling pam_setcred with the flag
  * to establish credentials but may return PAM_IGNORE.  Closing a session
  * destroys the PAM context, which will destroy the ticket cache.
  *
+ * Copyright 2011
+ *     The Board of Trustees of the Leland Stanford Junior University
  * Copyright 2005, 2006, 2007, 2009 Russ Allbery <rra@stanford.edu>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
@@ -17,10 +18,10 @@
 #define PAM_SM_SESSION
 
 #include <config.h>
+#include <portable/system.h>
 #include <portable/pam.h>
 
 #include <errno.h>
-#include <string.h>
 
 #include <internal.h>
 

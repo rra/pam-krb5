@@ -1,7 +1,8 @@
 # Automake makefile for pam-krb5.
 #
 # Written by Russ Allbery <rra@stanford.edu>
-# Copyright 2009 Board of Trustees, Leland Stanford Jr. University
+# Copyright 2009, 2011
+#     The Board of Trustees of the Leland Stanford Junior University
 # Copyright 2005, 2006, 2007 Russ Allbery <rra@stanford.edu>
 # Copyright 2005 Andres Salomon <dilinger@debian.org>
 # Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
@@ -12,9 +13,14 @@ ACLOCAL_AMFLAGS = -I m4
 EXTRA_DIST = .gitignore LICENSE autogen compat-aix.c compat-heimdal.c	\
 	compat-mit.c pam_krb5.map pam_krb5.pod
 
+# Everything we build needs the Kerbeors headers and library flags.
+AM_CPPFLAGS = $(KRB5_CPPFLAGS)
+AM_LDFLAGS  = $(KRB5_LDFLAGS)
+
 noinst_LTLIBRARIES = portable/libportable.la
-portable_libportable_la_SOURCES = portable/dummy.c portable/macros.h \
-        portable/pam.h portable/stdbool.h portable/system.h
+portable_libportable_la_SOURCES = portable/dummy.c portable/krb5.h	\
+        portable/macros.h portable/pam.h portable/stdbool.h		\
+        portable/system.h
 portable_libportable_la_LIBADD = $(LTLIBOBJS)
 
 pamdir = $(libdir)/security

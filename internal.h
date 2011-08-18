@@ -1,9 +1,12 @@
 /*
  * Internal prototypes and structures for pam-krb5.
  *
+ * Copyright 2011
+ *     The Board of Trustees of the Leland Stanford Junior University
  * Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@stanford.edu>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
+ *
  * See LICENSE for licensing terms.
  */
 
@@ -11,25 +14,15 @@
 #define INTERNAL_H 1
 
 #include <config.h>
+#include <portable/krb5.h>
+#include <portable/macros.h>
 #include <portable/pam.h>
 
-#include <krb5.h>
 #include <stdarg.h>
 #include <syslog.h>
 
 /* Forward declarations to avoid unnecessary includes. */
 struct passwd;
-
-/*
- *__attribute__ is available in gcc 2.5 and later, but only with gcc 2.7
- * could you use the __format__ form of the attributes, which is what we use
- * (to avoid confusion with other macros).
- */
-#ifndef __attribute__
-# if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 7)
-#  define __attribute__(spec)   /* empty */
-# endif
-#endif
 
 /* Used for unused parameters to silence gcc warnings. */
 #define UNUSED  __attribute__((__unused__))
@@ -226,19 +219,8 @@ int pamk5_cache_init_random(struct pam_args *, krb5_creds *);
  * Kerberos or Heimdal, appropriate implementations for the Kerberos
  * implementation will be provided.
  */
-void pamk5_compat_free_data_contents(krb5_context, krb5_data *);
-void pamk5_compat_free_keytab_contents(krb5_context, krb5_keytab_entry *);
-const char *pamk5_compat_get_error(krb5_context, krb5_error_code);
-void pamk5_compat_free_error(krb5_context, const char *);
-krb5_error_code pamk5_compat_opt_alloc(krb5_context,
-                                       krb5_get_init_creds_opt **);
-void pamk5_compat_opt_free(krb5_context, krb5_get_init_creds_opt *);
 krb5_error_code pamk5_compat_set_realm(struct pam_args *, const char *);
 void pamk5_compat_free_realm(struct pam_args *);
-krb5_error_code pamk5_compat_secure_context(krb5_context *);
-
-/* Calls issetugid if available, otherwise checks effective IDs. */
-int pamk5_compat_issetugid(void);
 
 /*
  * Error reporting and debugging functions.  For each log level, there are

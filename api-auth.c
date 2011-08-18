@@ -6,6 +6,8 @@
  * can also refresh an existing ticket cache or destroy a ticket cache,
  * depending on the flags passed in.
  *
+ * Copyright 2011
+ *     The Board of Trustees of the Leland Stanford Junior University
  * Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@stanford.edu>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
@@ -17,11 +19,11 @@
 #define PAM_SM_AUTH
 
 #include <config.h>
+#include <portable/krb5.h>
 #include <portable/pam.h>
+#include <portable/system.h>
 
 #include <errno.h>
-#include <krb5.h>
-#include <string.h>
 #include <syslog.h>
 
 #include <internal.h>

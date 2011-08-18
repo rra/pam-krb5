@@ -1,7 +1,8 @@
 dnl Autoconf configuration for pam-krb5.
 dnl
 dnl Written by Russ Allbery <rra@stanford.edu>
-dnl Copyright 2009, 2010 Board of Trustees, Leland Stanford Jr. University
+dnl Copyright 2009, 2010, 2011
+dnl     The Board of Trustees of the Leland Stanford Junior University
 dnl Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@stanford.edu>
 dnl Copyright 2005 Andres Salomon <dilinger@debian.org>
 dnl Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
@@ -22,10 +23,6 @@ AC_USE_SYSTEM_EXTENSIONS
 AM_PROG_CC_C_O
 AC_PROG_INSTALL
 LT_INIT([disable-static])
-
-dnl Check for the Solaris issetugid function, which is nicer than comparing
-dnl real and effective UIDs and GIDs.
-AC_CHECK_FUNCS([issetugid])
 
 dnl Probe for the functionality of the PAM libraries and their include file
 dnl naming.  Mac OS X puts them in pam/* instead of security/*.
@@ -48,40 +45,43 @@ AC_DEFINE([MODULE_NAME], ["pam_krb5"],
 dnl Probe for the location and functionality of the Kerberos libraries.
 RRA_LIB_KRB5
 RRA_LIB_KRB5_SWITCH
-AC_CHECK_HEADERS([hx509_err.h k5profile.h])
+AC_CHECK_HEADERS([hx509_err.h])
 AC_CHECK_MEMBER([krb5_creds.session],
     [AC_DEFINE([HAVE_KRB5_HEIMDAL], [1],
         [Define if your Kerberos implementation is Heimdal.])],
     [AC_DEFINE([HAVE_KRB5_MIT], [1],
         [Define if your Kerberos implementation is MIT.])],
     [#include <krb5.h>])
-AC_CHECK_FUNCS([krb5_appdefault_string \
+AC_CHECK_TYPES([krb5_realm], [], [], [#include <krb5.h>])
+AC_CHECK_FUNCS([krb5_data_free \
+    krb5_free_default_realm \
     krb5_get_init_creds_opt_alloc \
     krb5_get_init_creds_opt_set_change_password_prompt \
     krb5_get_init_creds_opt_set_default_flags \
     krb5_get_init_creds_opt_set_fast_ccache_name \
     krb5_get_init_creds_opt_set_pa \
     krb5_init_secure_context \
-    krb5_verify_init_creds_opt_init])
+    krb5_verify_init_creds_opt_init \
+    krb5_xfree])
 AC_CHECK_FUNCS([krb5_get_init_creds_opt_set_pkinit],
     [RRA_FUNC_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT_ARGS])
 AC_CHECK_FUNC([krb5_get_init_creds_opt_free],
     [RRA_FUNC_KRB5_GET_INIT_CREDS_OPT_FREE_ARGS])
+AC_CHECK_DECLS([krb5_kt_free_entry])
+AC_CHECK_FUNCS([krb5_appdefault_string], [],
+    [AC_CHECK_FUNCS([krb5_get_profile])
+     AC_CHECK_HEADERS([k5profile.h profile.h])
+     AC_LIBOBJ([krb5-profile])])
+AC_LIBOBJ([krb5-extra])
 RRA_LIB_KRB5_RESTORE
 
 dnl Other probes of the system libraries.
 AC_HEADER_STDBOOL
-AC_CHECK_HEADERS([sys/bittypes.h])
+AC_CHECK_HEADERS([strings.h sys/bittypes.h])
 AC_CHECK_DECLS([snprintf, vsnprintf])
 AC_TYPE_LONG_LONG_INT
 RRA_FUNC_SNPRINTF
-AC_REPLACE_FUNCS([asprintf mkstemp])
-
-dnl Everything we build needs the Kerberos libraries.
-AM_CPPFLAGS="$KRB5_CPPFLAGS"
-AM_LDFLAGS="$KRB5_LDFLAGS"
-AC_SUBST([AM_CPPFLAGS])
-AC_SUBST([AM_LDFLAGS])
+AC_REPLACE_FUNCS([asprintf issetuidgid mkstemp strndup])
 
 dnl Try to specify the binding so that any references within the PAM module
 dnl are resolved to the functions in that module in preference to any external

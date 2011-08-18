@@ -4,6 +4,8 @@
  * Handles all interaction with the PAM conversation, either directly or
  * indirectly through the Kerberos libraries.
  *
+ * Copyright 2011
+ *     The Board of Trustees of the Leland Stanford Junior University
  * Copyright 2005, 2006, 2007, 2009 Russ Allbery <rra@stanford.edu>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
@@ -12,13 +14,11 @@
  */
 
 #include <config.h>
+#include <portable/krb5.h>
 #include <portable/pam.h>
+#include <portable/system.h>
 
 #include <errno.h>
-#include <krb5.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include <internal.h>
 

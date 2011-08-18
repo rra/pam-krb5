@@ -1,10 +1,12 @@
 /*
- * Ticket creation routines for pam_krb5.
+ * Ticket creation routines for pam-krb5.
  *
  * pam_setcred and pam_open_session need to do similar but not identical work
  * to create the user's ticket cache.  The shared code is abstracted here into
  * the pamk5_setcred function.
  *
+ * Copyright 2011
+ *     The Board of Trustees of the Leland Stanford Junior University
  * Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@stanford.edu>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
@@ -13,16 +15,12 @@
  */
 
 #include <config.h>
+#include <portable/krb5.h>
 #include <portable/pam.h>
+#include <portable/system.h>
 
 #include <errno.h>
-#include <krb5.h>
 #include <pwd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
-#include <unistd.h>
 
 #include <internal.h>
 
@@ -324,16 +322,15 @@ pamk5_setcred(struct pam_args *args, int refresh)
          * missing feature.  We therefore log an error and exit with
          * PAM_SUCCESS for the setuid case.
          *
-         * We do not use pamk5_compat_issetugid here since it always returns
-         * true if setuid was was involved anywhere in the process of running
-         * the binary.  This would prevent a setuid screensaver that drops
-         * permissions from refreshing a credential cache.  The issetugid
-         * behavior is safer, since the environment should ideally not be
-         * trusted even if the binary completely changed users away from the
-         * original user, but in that case the binary needs to take some
-         * responsibility for either sanitizing the environment or being
-         * certain that the calling user is permitted to act as the target
-         * user.
+         * We do not use issetugid here since it always returns true if setuid
+         * was was involved anywhere in the process of running the binary.
+         * This would prevent a setuid screensaver that drops permissions from
+         * refreshing a credential cache.  The issetugid behavior is safer,
+         * since the environment should ideally not be trusted even if the
+         * binary completely changed users away from the original user, but in
+         * that case the binary needs to take some responsibility for either
+         * sanitizing the environment or being certain that the calling user
+         * is permitted to act as the target user.
          */
         if (getuid() != geteuid() || getgid() != getegid()) {
             pamk5_err(args, "credential reinitialization in a setuid context"

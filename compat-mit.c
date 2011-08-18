@@ -9,27 +9,12 @@
  */
 
 #include <config.h>
+#include <portable/krb5.h>
+#include <portable/system.h>
 
 #include <errno.h>
-#include <krb5.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include <internal.h>
-
-void
-pamk5_compat_free_data_contents(krb5_context c, krb5_data *data)
-{
-    krb5_free_data_contents(c, data);
-}
-
-
-void
-pamk5_compat_free_keytab_contents(krb5_context c, krb5_keytab_entry *entry)
-{
-    krb5_free_keytab_entry_contents(c, entry);
-}
-
 
 krb5_error_code
 pamk5_compat_set_realm(struct pam_args *args, const char *realm)

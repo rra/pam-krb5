@@ -32,6 +32,9 @@ pam-krb5 4.5 (unreleased)
     Close some memory leaks where unparsed Kerberos principal names were
     never freed.
 
+    Replace the Kerberos compatibility layer with equivalent but
+    better-structured code from rra-c-util 3.7.
+
 pam-krb5 4.4 (2010-12-31)
 
     Do not prompt for a password when try_pkinit is set and the module is

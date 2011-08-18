@@ -5,6 +5,8 @@
  * internal functions.  Retrieves configuration information from krb5.conf and
  * parses the PAM configuration.
  *
+ * Copyright 2011
+ *     The Board of Trustees of the Leland Stanford Junior University
  * Copyright 2005, 2006, 2007, 2008, 2009, 2010
  *     Russ Allbery <rra@stanford.edu>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
@@ -14,10 +16,8 @@
  */
 
 #include <config.h>
-
-#include <krb5.h>
-#include <stdlib.h>
-#include <string.h>
+#include <portable/krb5.h>
+#include <portable/system.h>
 
 #include <internal.h>
 
@@ -166,9 +166,9 @@ default_time(struct pam_args *args, krb5_context c, const char *opt,
     if (tmp != NULL && tmp[0] != '\0') {
         ret = krb5_string_to_deltat(tmp, result);
         if (ret != 0) {
-            message = pamk5_compat_get_error(c, ret);
+            message = krb5_get_error_message(c, ret);
             pamk5_err(args, "bad time value for %s: %s", opt, message);
-            pamk5_compat_free_error(c, message);
+            krb5_free_error_message(c, message);
             *result = defval;
         }
     } else
@@ -280,8 +280,8 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
      * proceed; we'll die soon enough later and this way we'll die after we
      * know whether to debug things.
      */
-    if (pamk5_compat_issetugid())
-        retval = pamk5_compat_secure_context(&c);
+    if (issetuidgid())
+        retval = krb5_init_secure_context(&c);
     else
         retval = krb5_init_context(&c);
     if (retval != 0)

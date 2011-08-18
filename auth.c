@@ -6,7 +6,8 @@
  * the appropriate internal functions.  This interface is used by both the
  * authentication and the password groups.
  *
- * Copyright 2010 Board of Trustees, Leland Stanford Jr. University
+ * Copyright 2010, 2011
+ *     The Board of Trustees of the Leland Stanford Junior University
  * Copyright 2005, 2006, 2007, 2008, 2009, 2010
  *     Russ Allbery <rra@stanford.edu>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
@@ -16,19 +17,16 @@
  */
 
 #include <config.h>
+#include <portable/krb5.h>
 #include <portable/pam.h>
+#include <portable/system.h>
 
 #include <errno.h>
 #ifdef HAVE_HX509_ERR_H
 # include <hx509_err.h>
 #endif
-#include <krb5.h>
 #include <pwd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <sys/stat.h>
-#include <unistd.h>
 
 #include <internal.h>
 
@@ -501,7 +499,7 @@ pkinit_auth(struct pam_args *args, const char *service, krb5_creds **creds)
                  NULL, pamk5_prompter_krb5, args, 0, (char *) service, opts);
 
 done:
-    pamk5_compat_opt_free(ctx->context, opts);
+    krb5_get_init_creds_opt_free(ctx->context, opts);
     if (retval != 0) {
         krb5_free_cred_contents(ctx->context, *creds);
         free(*creds);
@@ -560,7 +558,7 @@ verify_creds(struct pam_args *args, krb5_creds *creds)
             pamk5_err_krb5(args, retval, "error reading keytab %s",
                            args->keytab);
         if (entry.principal != NULL)
-            pamk5_compat_free_keytab_contents(c, &entry);
+            krb5_kt_free_entry(c, &entry);
         if (cursor_valid)
             krb5_kt_end_seq_get(c, keytab, &cursor);
     }
@@ -654,7 +652,7 @@ pamk5_password_auth(struct pam_args *args, const char *service,
         pamk5_crit(args, "cannot allocate memory: %s", strerror(errno));
         return PAM_SERVICE_ERR;
     }
-    retval = pamk5_compat_opt_alloc(ctx->context, &opts);
+    retval = krb5_get_init_creds_opt_alloc(ctx->context, &opts);
     if (retval != 0) {
         pamk5_crit_krb5(args, retval, "cannot allocate credential options");
         goto done;
@@ -839,6 +837,6 @@ done:
         }
     }
     if (opts != NULL)
-        pamk5_compat_opt_free(ctx->context, opts);
+        krb5_get_init_creds_opt_free(ctx->context, opts);
     return retval;
 }

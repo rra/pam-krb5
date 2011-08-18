@@ -5,6 +5,8 @@
  * user's authorization against .k5login (or whatever equivalent we've been
  * configured for).
  *
+ * Copyright 2011
+ *     The Board of Trustees of the Leland Stanford Junior University
  * Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@stanford.edu>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
@@ -16,12 +18,11 @@
 #define PAM_SM_ACCOUNT
 
 #include <config.h>
+#include <portable/krb5.h>
 #include <portable/pam.h>
+#include <portable/system.h>
 
 #include <errno.h>
-#include <krb5.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include <internal.h>
 

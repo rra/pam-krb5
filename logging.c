@@ -134,13 +134,13 @@ log_krb5(struct pam_args *pargs, int priority, int status, const char *fmt,
     if (msg == NULL)
         return;
     if (pargs != NULL && pargs->ctx != NULL && pargs->ctx->context != NULL)
-        k5_msg = pamk5_compat_get_error(pargs->ctx->context, status);
+        k5_msg = krb5_get_error_message(pargs->ctx->context, status);
     else
-        k5_msg = pamk5_compat_get_error(NULL, status);
+        k5_msg = krb5_get_error_message(NULL, status);
     log_plain(pargs, priority, "%s: %s", msg, k5_msg);
     free(msg);
     if (pargs != NULL && pargs->ctx != NULL && pargs->ctx->context != NULL)
-        pamk5_compat_free_error(pargs->ctx->context, k5_msg);
+        krb5_free_error_message(pargs->ctx->context, k5_msg);
 }
 
 
