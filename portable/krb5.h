@@ -133,6 +133,15 @@ krb5_error_code krb5_get_init_creds_opt_alloc(krb5_context,
 #endif
 
 /*
+ * krb5_change_password is deprecated in favor of krb5_set_password in current
+ * Heimdal.  Current MIT provides both.
+ */
+#ifndef HAVE_KRB5_SET_PASSWORD
+# define krb5_set_password(c, cr, pw, p, rc, rcs, rs) \
+    krb5_change_password((c), (cr), (pw), (rc), (rcs), (rs))
+#endif
+
+/*
  * AIX's NAS Kerberos implementation mysteriously provides the struct and the
  * krb5_verify_init_creds function but not this function.
  */
