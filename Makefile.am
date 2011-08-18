@@ -33,7 +33,8 @@ pam_krb5_la_SOURCES = api-account.c api-auth.c api-password.c api-session.c \
 	auth.c cache.c compat.c context.c internal.h logging.c options.c    \
 	password.c prompting.c setcred.c support.c
 pam_krb5_la_LDFLAGS = -module -shared -avoid-version $(AM_LDFLAGS)
-pam_krb5_la_LIBADD = portable/libportable.la $(KRB5_LIBS)
+pam_krb5_la_LIBADD = pam-util/libpamutil.la portable/libportable.la \
+	$(KRB5_LIBS)
 dist_man_MANS = pam_krb5.5
 
 MAINTAINERCLEANFILES = Makefile.in aclocal.m4 build-aux/compile		 \

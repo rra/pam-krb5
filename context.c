@@ -46,7 +46,7 @@ pamk5_context_new(struct pam_args *args)
     ctx->cache = NULL;
     ctx->princ = NULL;
     ctx->creds = NULL;
-    args->ctx = ctx;
+    args->config->ctx = ctx;
 
     /*
      * This will prompt for the username if it's not already set (generally it
@@ -72,8 +72,8 @@ pamk5_context_new(struct pam_args *args)
     }
 
     /* Set a default realm if one was configured. */
-    if (args->realm != NULL) {
-        retval = krb5_set_default_realm(ctx->context, args->realm);
+    if (args->config->realm != NULL) {
+        retval = krb5_set_default_realm(ctx->context, args->config->realm);
         if (retval != 0) {
             pamk5_err_krb5(args, retval, "cannot set default realm");
             retval = PAM_SERVICE_ERR;
@@ -84,7 +84,7 @@ pamk5_context_new(struct pam_args *args)
 done:
     if (ctx != NULL && retval != PAM_SUCCESS) {
         pamk5_context_free(ctx);
-        args->ctx = NULL;
+        args->config->ctx = NULL;
     }
     return retval;
 }
@@ -100,10 +100,12 @@ pamk5_context_fetch(struct pam_args *args)
 {
     int pamret;
 
-    pamret = pam_get_data(args->pamh, "pam_krb5", (void *) &args->ctx);
+    pamret = pam_get_data(args->pamh, "pam_krb5", (void *) &args->config->ctx);
     if (pamret != PAM_SUCCESS)
-        args->ctx = NULL;
-    return (pamret == 0 && args->ctx == NULL) ? PAM_SERVICE_ERR : pamret;
+        args->config->ctx = NULL;
+    if (pamret == 0 && args->config->ctx == NULL)
+        return PAM_SERVICE_ERR;
+    return pamret;
 }
 
 

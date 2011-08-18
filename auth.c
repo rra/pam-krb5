@@ -51,7 +51,7 @@
 static krb5_error_code
 parse_name(struct pam_args *args)
 {
-    struct context *ctx = args->ctx;
+    struct context *ctx = args->config->ctx;
     krb5_context c = ctx->context;
     char *user = ctx->name;
     char *newuser = NULL;
@@ -64,7 +64,7 @@ parse_name(struct pam_args *args)
      * using the local username as normal if prompting fails or if the user
      * just presses Enter.
      */
-    if (args->prompt_princ) {
+    if (args->config->prompt_princ) {
         retval = pamk5_conv(args, "Principal: ", PAM_PROMPT_ECHO_ON, &user);
         if (retval != PAM_SUCCESS)
             pamk5_err_pam(args, retval, "error getting principal");
@@ -126,31 +126,30 @@ parse_name(struct pam_args *args)
 static void
 set_fast_options(struct pam_args *args, krb5_get_init_creds_opt *opts)
 {
-    krb5_context c = args->ctx->context;
+    krb5_context c = args->config->ctx->context;
     krb5_error_code k5_errno;
     krb5_principal princ = NULL;
     krb5_ccache fast_ccache = NULL;
+    const char *cache = args->config->fast_ccache;
 
-    if (!args->fast_ccache)
+    if (cache == NULL)
         return;
-    k5_errno = krb5_cc_resolve(c, args->fast_ccache, &fast_ccache);
+    k5_errno = krb5_cc_resolve(c, cache, &fast_ccache);
     if (k5_errno != 0) {
         pamk5_debug_krb5(args, k5_errno, "failed resolving fast ccache %s",
-                         args->fast_ccache);
+                         cache);
         goto done;
     }
     k5_errno = krb5_cc_get_principal(c, fast_ccache, &princ);
     if (k5_errno != 0) {
         pamk5_debug_krb5(args, k5_errno,
-                         "failed to get principal from fast ccache %s",
-                         args->fast_ccache);
+                         "failed to get principal from fast ccache %s", cache);
         goto done;
     }
-    k5_errno = krb5_get_init_creds_opt_set_fast_ccache_name(c, opts,
-                                                            args->fast_ccache);
+    k5_errno = krb5_get_init_creds_opt_set_fast_ccache_name(c, opts, cache);
     if (k5_errno != 0)
         pamk5_err_krb5(args, k5_errno, "failed setting fast ccache to %s",
-                       args->fast_ccache);
+                       cache);
 
 done:
     if (fast_ccache != NULL)
@@ -178,22 +177,24 @@ static void
 set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
                        int service)
 {
-    krb5_context c = args->ctx->context;
+    struct pam_config *config = args->config;
+    krb5_context c = config->ctx->context;
 
 #ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_DEFAULT_FLAGS
-    krb5_get_init_creds_opt_set_default_flags(c, "pam", args->realm_data,
+    krb5_get_init_creds_opt_set_default_flags(c, "pam", config->realm_data,
                                               opts);
 #endif
     if (!service) {
-        if (args->forwardable)
+        if (config->forwardable)
             krb5_get_init_creds_opt_set_forwardable(opts, 1);
-        if (args->lifetime != 0)
-            krb5_get_init_creds_opt_set_tkt_life(opts, args->lifetime);
-        if (args->renew_lifetime != 0)
-            krb5_get_init_creds_opt_set_renew_life(opts, args->renew_lifetime);
+        if (config->lifetime != 0)
+            krb5_get_init_creds_opt_set_tkt_life(opts, config->lifetime);
+        if (config->renew_lifetime != 0)
+            krb5_get_init_creds_opt_set_renew_life(opts,
+                                                   config->renew_lifetime);
 #ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_CHANGE_PASSWORD_PROMPT
         krb5_get_init_creds_opt_set_change_password_prompt(opts,
-            (args->defer_pwchange || args->fail_pwchange) ? 0 : 1);
+            (config->defer_pwchange || config->fail_pwchange) ? 0 : 1);
 #endif
     } else {
         krb5_get_init_creds_opt_set_forwardable(opts, 0);
@@ -208,20 +209,20 @@ set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
      * get_init_creds options.
      */
 #ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PA
-    if (args->try_pkinit) {
-        if (args->pkinit_user != NULL)
+    if (config->try_pkinit) {
+        if (config->pkinit_user != NULL)
             krb5_get_init_creds_opt_set_pa(c, opts, "X509_user_identity",
-                                           args->pkinit_user);
-        if (args->pkinit_anchors != NULL)
+                                           config->pkinit_user);
+        if (config->pkinit_anchors != NULL)
             krb5_get_init_creds_opt_set_pa(c, opts, "X509_anchors",
-                                           args->pkinit_anchors);
-        if (args->preauth_opt != NULL && args->preauth_opt_count > 0) {
+                                           config->pkinit_anchors);
+        if (config->preauth_opt != NULL && config->preauth_opt_count > 0) {
             int i;
             char *name, *value;
             char save;
 
-            for (i = 0; i < args->preauth_opt_count; i++) {
-                name = args->preauth_opt[i];
+            for (i = 0; i < config->preauth_opt_count; i++) {
+                name = config->preauth_opt[i];
                 if (name == NULL)
                     continue;
                 value = strchr(name, '=');
@@ -258,7 +259,7 @@ k5login_password_auth(struct pam_args *args, krb5_creds *creds,
                       krb5_get_init_creds_opt *opts, const char *service,
                       char *pass, int *retval)
 {
-    struct context *ctx = args->ctx;
+    struct context *ctx = args->config->ctx;
     char *filename = NULL;
     char line[BUFSIZ];
     size_t len;
@@ -377,7 +378,7 @@ alt_password_auth(struct pam_args *args, krb5_creds *creds,
                   krb5_get_init_creds_opt *opts, const char *service,
                   char *pass, int *retval)
 {
-    struct context *ctx = args->ctx;
+    struct context *ctx = args->config->ctx;
     char *kuser;
     krb5_principal princ;
     int ret, k5_errno;
@@ -444,7 +445,7 @@ alt_password_auth(struct pam_args *args, krb5_creds *creds,
 static krb5_error_code
 pkinit_auth(struct pam_args *args, const char *service, krb5_creds **creds)
 {
-    struct context *ctx = args->ctx;
+    struct context *ctx = args->config->ctx;
     krb5_get_init_creds_opt *opts = NULL;
     krb5_error_code retval;
     char *dummy = NULL;
@@ -463,9 +464,9 @@ pkinit_auth(struct pam_args *args, const char *service, krb5_creds **creds)
      * instead, they'll be prompted later when the PKINIT code discovers that
      * no smart card is available.
      */
-    if (args->pkinit_prompt) {
+    if (args->config->pkinit_prompt) {
         pamk5_conv(args,
-                   args->use_pkinit
+                   args->config->use_pkinit
                        ? "Insert smart card and press Enter:"
                        : "Insert smart card if desired, then press Enter:",
                    PAM_PROMPT_ECHO_OFF, &dummy);
@@ -484,12 +485,14 @@ pkinit_auth(struct pam_args *args, const char *service, krb5_creds **creds)
     set_credential_options(args, opts, service != NULL);
 #ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT_11_ARGS
     retval = krb5_get_init_creds_opt_set_pkinit(ctx->context, opts,
-                  ctx->princ, args->pkinit_user, args->pkinit_anchors, NULL,
-                  NULL, 0, pamk5_prompter_krb5, args, NULL);
+                  ctx->princ, args->config->pkinit_user,
+                  args->config->pkinit_anchors, NULL, NULL, 0,
+                  pamk5_prompter_krb5, args, NULL);
 #else
     retval = krb5_get_init_creds_opt_set_pkinit(ctx->context, opts,
-                  ctx->princ, args->pkinit_user, args->pkinit_anchors, 0,
-                  pamk5_prompter_krb5, args, NULL);
+                  ctx->princ, args->config->pkinit_user,
+                  args->config->pkinit_anchors, 0, pamk5_prompter_krb5,
+                  args, NULL);
 #endif
     if (retval != 0)
         goto done;
@@ -535,15 +538,15 @@ verify_creds(struct pam_args *args, krb5_creds *creds)
     krb5_keytab_entry entry;
     krb5_principal princ = NULL;
     krb5_error_code retval;
-    krb5_context c = args->ctx->context;
+    krb5_context c = args->config->ctx->context;
 
     memset(&entry, 0, sizeof(entry));
     krb5_verify_init_creds_opt_init(&opts);
-    if (args->keytab) {
-        retval = krb5_kt_resolve(c, args->keytab, &keytab);
+    if (args->config->keytab) {
+        retval = krb5_kt_resolve(c, args->config->keytab, &keytab);
         if (retval != 0) {
             pamk5_err_krb5(args, retval, "cannot open keytab %s",
-                           args->keytab);
+                           args->config->keytab);
             keytab = NULL;
         }
         if (retval == 0)
@@ -556,7 +559,7 @@ verify_creds(struct pam_args *args, krb5_creds *creds)
             retval = krb5_copy_principal(c, entry.principal, &princ);
         if (retval != 0)
             pamk5_err_krb5(args, retval, "error reading keytab %s",
-                           args->keytab);
+                           args->config->keytab);
         if (entry.principal != NULL)
             krb5_kt_free_entry(c, &entry);
         if (cursor_valid)
@@ -596,9 +599,9 @@ pamk5_password_auth(struct pam_args *args, const char *service,
     int authtok = (service == NULL) ? PAM_AUTHTOK : PAM_OLDAUTHTOK;
 
     /* Sanity check and initialization. */
-    if (args->ctx == NULL)
+    if (args->config->ctx == NULL)
         return PAM_SERVICE_ERR;
-    ctx = args->ctx;
+    ctx = args->config->ctx;
 
     /* Fill in the principal to authenticate as. */
     if (ctx->princ == NULL) {
@@ -610,7 +613,7 @@ pamk5_password_auth(struct pam_args *args, const char *service,
     }
 
     /* Log the principal we're attempting to authenticate as. */
-    if (args->debug && !args->search_k5login) {
+    if (args->config->debug && !args->config->search_k5login) {
         char *principal;
 
         retval = krb5_unparse_name(ctx->context, ctx->princ, &principal);
@@ -629,18 +632,18 @@ pamk5_password_auth(struct pam_args *args, const char *service,
      * that gives an approximately correct error message.
      */
 #if HAVE_KRB5_HEIMDAL && HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT
-    if (args->use_pkinit || args->try_pkinit) {
+    if (args->config->use_pkinit || args->config->try_pkinit) {
         retval = pkinit_auth(args, service, creds);
         if (retval == 0)
             goto done;
         pamk5_debug_krb5(args, retval, "pkinit failed");
         if (retval != HX509_PKCS11_NO_TOKEN && retval != HX509_PKCS11_NO_SLOT)
             goto done;
-        if (retval != 0 && args->use_pkinit)
+        if (retval != 0 && args->config->use_pkinit)
             goto done;
     }
 #else
-    if (args->use_pkinit) {
+    if (args->config->use_pkinit) {
         retval = KRB5_KDC_UNREACH;
         goto done;
     }
@@ -671,23 +674,25 @@ pamk5_password_auth(struct pam_args *args, const char *service,
      * we don't want them to.  We make the assumption here that the empty
      * password is always invalid and is an authentication failure.
      */
-    retry = args->try_first_pass ? 1 : 0;
-    if (args->try_first_pass || args->use_first_pass || args->force_first_pass)
+    retry = args->config->try_first_pass ? 1 : 0;
+    if (args->config->try_first_pass || args->config->use_first_pass
+        || args->config->force_first_pass)
         retval = pam_get_item(args->pamh, authtok, (PAM_CONST void **) &pass);
-    if (args->use_first_pass || args->force_first_pass) {
+    if (args->config->use_first_pass || args->config->force_first_pass) {
         if (pass != NULL && *pass == '\0') {
             pamk5_debug(args, "rejecting empty password");
             retval = PAM_AUTH_ERR;
             goto done;
         }
     }
-    if (args->force_first_pass && (retval != PAM_SUCCESS || pass == NULL)) {
+    if (args->config->force_first_pass
+        && (retval != PAM_SUCCESS || pass == NULL)) {
         pamk5_debug_pam(args, retval, "no stored password");
         retval = PAM_SERVICE_ERR;
         goto done;
     }
     do {
-        if ((pass == NULL || *pass == '\0') && !args->try_pkinit) {
+        if ((pass == NULL || *pass == '\0') && !args->config->try_pkinit) {
             const char *prompt = (service == NULL) ? NULL : "Current";
 
             retry = 0;
@@ -722,7 +727,7 @@ pamk5_password_auth(struct pam_args *args, const char *service,
          * configuration indicates that regular authentication should not be
          * attempted.
          */
-        if (args->alt_auth_map != NULL && do_alt) {
+        if (args->config->alt_auth_map != NULL && do_alt) {
             success = alt_password_auth(args, *creds, opts, service, pass,
                           &retval);
             if (success == PAM_SUCCESS)
@@ -734,12 +739,12 @@ pamk5_password_auth(struct pam_args *args, const char *service,
              * force_alt_auth is set, skip attempting normal authentication
              * iff the alternate principal exists.
              */
-            if (args->only_alt_auth) {
+            if (args->config->only_alt_auth) {
                 if (retval == KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN)
                     goto done;
                 else
                     do_only_alt = 1;
-            } else if (args->force_alt_auth) {
+            } else if (args->config->force_alt_auth) {
                 if (retval == KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN)
                     do_alt = 0;
                 else
@@ -747,7 +752,7 @@ pamk5_password_auth(struct pam_args *args, const char *service,
             }
         }
         if (!do_only_alt) {
-            if (args->search_k5login) {
+            if (args->config->search_k5login) {
                 success = k5login_password_auth(args, *creds, opts, service,
                               pass, &retval);
             } else {

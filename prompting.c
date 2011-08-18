@@ -36,8 +36,8 @@
  * where <prefix> is the argument passed and <banner> is the value of
  * args->banner (defaulting to "Kerberos").
  *
- * If args->expose_account is set, we append the principal name (taken from
- * args->ctx->princ) before the colon, so the prompts are:
+ * If args->config->expose_account is set, we append the principal name (taken
+ * from args->config->ctx->princ) before the colon, so the prompts are:
  *
  *     Password for <principal>:
  *     <prefix> <banner> password for <principal>:
@@ -55,20 +55,20 @@
 int
 pamk5_get_password(struct pam_args *args, const char *prefix, char **password)
 {
-    struct context *ctx = args->ctx;
+    struct context *ctx = args->config->ctx;
     char *prompt = NULL;
     char *principal = NULL;
     krb5_error_code k5_errno;
     int retval;
 
-    if (args->expose_account || prefix != NULL)
+    if (args->config->expose_account || prefix != NULL)
         if (ctx != NULL && ctx->context != NULL && ctx->princ != NULL) {
             k5_errno = krb5_unparse_name(ctx->context, ctx->princ, &principal);
             if (k5_errno != 0)
                 pamk5_debug_krb5(args, k5_errno, "krb5_unparse_name failed");
         }
     if (prefix == NULL) {
-        if (args->expose_account && principal != NULL) {
+        if (args->config->expose_account && principal != NULL) {
             if (asprintf(&prompt, "Password for %s: ", principal) < 0)
                 goto fail;
         } else {
@@ -77,17 +77,17 @@ pamk5_get_password(struct pam_args *args, const char *prefix, char **password)
                 goto fail;
         }
     } else {
-        if (args->expose_account && principal != NULL) {
+        if (args->config->expose_account && principal != NULL) {
             retval = asprintf(&prompt, "%s%s%s password for %s: ", prefix,
-                              (args->banner == NULL) ? "" : " ",
-                              (args->banner == NULL) ? "" : args->banner,
+                              (args->config->banner == NULL) ? "" : " ",
+                              (args->config->banner == NULL) ? "" : args->config->banner,
                               principal);
             if (retval < 0)
                 goto fail;
         } else {
             retval = asprintf(&prompt, "%s%s%s password: ", prefix,
-                              (args->banner == NULL) ? "" : " ",
-                              (args->banner == NULL) ? "" : args->banner);
+                              (args->config->banner == NULL) ? "" : " ",
+                              (args->config->banner == NULL) ? "" : args->config->banner);
             if (retval < 0)
                 goto fail;
         }

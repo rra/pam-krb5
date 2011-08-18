@@ -55,12 +55,12 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
      * not how other krb5 PAM modules work.  If we don't do this, root logins
      * with the system root password fail, which is a bad failure mode.
      */
-    if (pamret != PAM_SUCCESS || args->ctx == NULL) {
+    if (pamret != PAM_SUCCESS || args->config->ctx == NULL) {
         pamret = PAM_IGNORE;
         pamk5_debug(args, "skipping non-Kerberos login");
         goto done;
     }
-    ctx = args->ctx;
+    ctx = args->config->ctx;
 
     /* If the account was expired, here's where we actually fail. */
     if (ctx->expired) {

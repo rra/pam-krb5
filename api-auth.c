@@ -60,17 +60,17 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     ENTRY(args, flags);
 
     /* Temporary backward compatibility. */
-    if (args->use_authtok && !args->force_first_pass) {
+    if (args->config->use_authtok && !args->config->force_first_pass) {
         pamk5_err(args, "use_authtok option in authentication group should"
                   " be changed to force_first_pass");
-        args->force_first_pass = 1;
+        args->config->force_first_pass = 1;
     }
 
     /* Create a context and obtain the user. */
     pamret = pamk5_context_new(args);
     if (pamret != PAM_SUCCESS)
         goto done;
-    ctx = args->ctx;
+    ctx = args->config->ctx;
 
     /* Check whether we should ignore this user. */
     if (pamk5_should_ignore(args, ctx->name)) {
@@ -105,13 +105,13 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
      */
     pamret = pamk5_password_auth(args, NULL, &creds);
     if (pamret == PAM_NEW_AUTHTOK_REQD) {
-        if (args->fail_pwchange)
+        if (args->config->fail_pwchange)
             pamret = PAM_AUTH_ERR;
-        else if (args->defer_pwchange) {
+        else if (args->config->defer_pwchange) {
             pamk5_debug(args, "expired account, deferring failure");
             ctx->expired = 1;
             pamret = PAM_SUCCESS;
-        } else if (args->force_pwchange) {
+        } else if (args->config->force_pwchange) {
             pam_syslog(args->pamh, LOG_INFO, "user %s password expired,"
                        " forcing password change", ctx->name);
             pamk5_conv(args, "Password expired.  You must change it now.",
@@ -121,11 +121,11 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
             if (pamret == PAM_SUCCESS && pass != NULL)
                 pam_set_item(args->pamh, PAM_OLDAUTHTOK, pass);
             pam_set_item(args->pamh, PAM_AUTHTOK, NULL);
-            args->use_first_pass = 1;
+            args->config->use_first_pass = 1;
             pamret = pamk5_password_change(args, 0);
             if (pamret == PAM_SUCCESS) {
                 pamk5_debug(args, "successfully changed expired password");
-                args->force_first_pass = 1;
+                args->config->force_first_pass = 1;
                 pamret = pamk5_password_auth(args, NULL, &creds);
             }
         }
@@ -178,7 +178,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
      * we're done.  Otherwise, store the obtained credentials in a temporary
      * cache.
      */
-    if (!args->no_ccache && !ctx->expired)
+    if (!args->config->no_ccache && !ctx->expired)
         pamret = pamk5_cache_init_random(args, creds);
 
 done:
@@ -232,7 +232,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
         pamret = pam_set_data(pamh, "pam_krb5", NULL, NULL);
         if (pamret != PAM_SUCCESS)
             pamk5_err_pam(args, pamret, "cannot clear context data");
-        args->ctx = NULL;
+        args->config->ctx = NULL;
         goto done;
     }
 

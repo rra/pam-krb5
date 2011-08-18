@@ -33,15 +33,15 @@ pamk5_should_ignore(struct pam_args *args, PAM_CONST char *username)
 {
     struct passwd *pwd;
 
-    if (args->ignore_root && strcmp("root", username) == 0) {
+    if (args->config->ignore_root && strcmp("root", username) == 0) {
         pamk5_debug(args, "ignoring root user");
         return 1;
     }
-    if (args->minimum_uid > 0) {
+    if (args->config->minimum_uid > 0) {
         pwd = pam_modutil_getpwnam(args->pamh, username);
-        if (pwd != NULL && pwd->pw_uid < (unsigned long) args->minimum_uid) {
+        if (pwd != NULL && pwd->pw_uid < (unsigned long) args->config->minimum_uid) {
             pamk5_debug(args, "ignoring low-UID user (%lu < %d)",
-                        (unsigned long) pwd->pw_uid, args->minimum_uid);
+                        (unsigned long) pwd->pw_uid, args->config->minimum_uid);
             return 1;
         }
     }
@@ -64,7 +64,7 @@ pamk5_map_principal(struct pam_args *args, const char *username,
     size_t needed, offset;
 
     /* Makes no sense if alt_auth_map isn't set. */
-    if (args->alt_auth_map == NULL)
+    if (args->config->alt_auth_map == NULL)
         return PAM_SERVICE_ERR;
 
     /* Need to split off the realm if it is present. */
@@ -84,7 +84,7 @@ pamk5_map_principal(struct pam_args *args, const char *username,
 
     /* Now, allocate a string and build the principal. */
     needed = 0;
-    for (i = args->alt_auth_map; *i != '\0'; i++) {
+    for (i = args->config->alt_auth_map; *i != '\0'; i++) {
         if (i[0] == '%' && i[1] == 's') {
             needed += strlen(user);
             i++;
@@ -99,7 +99,7 @@ pamk5_map_principal(struct pam_args *args, const char *username,
     if (*principal == NULL)
         goto fail;
     offset = 0;
-    for (i = args->alt_auth_map; *i != '\0'; i++) {
+    for (i = args->config->alt_auth_map; *i != '\0'; i++) {
         if (i[0] == '%' && i[1] == 's') {
             memcpy(*principal + offset, user, strlen(user));
             offset += strlen(user);
@@ -133,9 +133,10 @@ pamk5_authorized(struct pam_args *args)
     struct passwd *pwd;
     char kuser[65];             /* MAX_USERNAME == 65 (MIT Kerberos 1.4.1). */
 
-    if (args == NULL || args->ctx == NULL || args->ctx->context == NULL)
+    if (args == NULL || args->config == NULL || args->config->ctx == NULL
+        || args->config->ctx->context == NULL)
         return PAM_SERVICE_ERR;
-    ctx = args->ctx;
+    ctx = args->config->ctx;
     if (ctx->name == NULL)
         return PAM_SERVICE_ERR;
     c = ctx->context;
@@ -145,7 +146,7 @@ pamk5_authorized(struct pam_args *args)
      * principal matches the mapped principal.  alt_auth_map essentially
      * serves as a supplemental .k5login.
      */
-    if (args->alt_auth_map != NULL) {
+    if (args->config->alt_auth_map != NULL) {
         char *mapped;
         char *authed;
         int retval;
@@ -200,7 +201,7 @@ pamk5_authorized(struct pam_args *args)
      * depending on the situation.
      */
     pwd = pam_modutil_getpwnam(args->pamh, ctx->name);
-    if (args->ignore_k5login || pwd == NULL) {
+    if (args->config->ignore_k5login || pwd == NULL) {
         if (krb5_aname_to_localname(c, ctx->princ, sizeof(kuser), kuser) != 0)
             return PAM_AUTH_ERR;
         if (strcmp(kuser, ctx->name) != 0)

@@ -73,7 +73,7 @@ pam_sm_close_session(pam_handle_t *pamh, int flags, int argc,
     pamret = pam_set_data(pamh, "pam_krb5", NULL, NULL);
     if (pamret != PAM_SUCCESS)
         pamk5_err_pam(args, pamret, "cannot clear context data");
-    args->ctx = NULL;
+    args->config->ctx = NULL;
 
 done:
     EXIT(args, pamret);

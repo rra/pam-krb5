@@ -57,8 +57,9 @@ log_vplain(struct pam_args *pargs, int priority, const char *fmt, va_list args)
 
     if (priority == LOG_DEBUG && (pargs == NULL || !pargs->debug))
         return;
-    if (pargs != NULL && pargs->ctx != NULL && pargs->ctx->name != NULL) {
-        name = pargs->ctx->name;
+    if (pargs != NULL && pargs->config != NULL && pargs->config->ctx != NULL
+        && pargs->config->ctx->name != NULL) {
+        name = pargs->config->ctx->name;
         msg = format(fmt, args);
         if (msg == NULL)
             return;
@@ -133,14 +134,16 @@ log_krb5(struct pam_args *pargs, int priority, int status, const char *fmt,
     msg = format(fmt, args);
     if (msg == NULL)
         return;
-    if (pargs != NULL && pargs->ctx != NULL && pargs->ctx->context != NULL)
-        k5_msg = krb5_get_error_message(pargs->ctx->context, status);
+    if (pargs != NULL && pargs->config != NULL && pargs->config->ctx != NULL
+        && pargs->config->ctx->context != NULL)
+        k5_msg = krb5_get_error_message(pargs->config->ctx->context, status);
     else
         k5_msg = krb5_get_error_message(NULL, status);
     log_plain(pargs, priority, "%s: %s", msg, k5_msg);
     free(msg);
-    if (pargs != NULL && pargs->ctx != NULL && pargs->ctx->context != NULL)
-        krb5_free_error_message(pargs->ctx->context, k5_msg);
+    if (pargs != NULL && pargs->config != NULL && pargs->config->ctx != NULL
+        && pargs->config->ctx->context != NULL)
+        krb5_free_error_message(pargs->config->ctx->context, k5_msg);
 }
 
 
@@ -200,8 +203,9 @@ pamk5_log_failure(struct pam_args *pargs, const char *fmt, ...)
     const char *tty = NULL;
     const char *name = NULL;
 
-    if (pargs->ctx != NULL && pargs->ctx->name != NULL)
-        name = pargs->ctx->name;
+    if (pargs->config != NULL && pargs->config->ctx != NULL
+        && pargs->config->ctx->name != NULL)
+        name = pargs->config->ctx->name;
     va_start(args, fmt);
     msg = format(fmt, args);
     if (msg == NULL)

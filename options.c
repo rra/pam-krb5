@@ -1,5 +1,5 @@
 /*
- * Option handling for pam_krb5.
+ * Option handling for pam-krb5.
  *
  * Responsible for initializing the args struct that's passed to nearly all
  * internal functions.  Retrieves configuration information from krb5.conf and
@@ -20,6 +20,7 @@
 #include <portable/system.h>
 
 #include <internal.h>
+#include <pam-util/args.h>
 
 /*
  * Not all platforms have this, so just implement it ourselves.  Copy a
@@ -45,25 +46,27 @@ xstrndup(const char *s, size_t n)
  * zero bit pattern, which probably don't exist, but I'm anal.
  */
 static struct pam_args *
-pamk5_args_new(void)
+pamk5_args_new(pam_handle_t *pamh, int flags)
 {
     struct pam_args *args;
+    struct pam_config *config;
 
-    args = calloc(1, sizeof(struct pam_args));
+    args = putil_args_new(pamh, flags);
     if (args == NULL)
         return NULL;
-    args->banner = NULL;
-    args->ccache = NULL;
-    args->ccache_dir = NULL;
-    args->fast_ccache = NULL;
-    args->keytab = NULL;
-    args->pkinit_anchors = NULL;
-    args->pkinit_user = NULL;
-    args->preauth_opt = NULL;
-    args->realm = NULL;
-    args->realm_data = NULL;
-    args->ctx = NULL;
-    args->pamh = NULL;
+    config = calloc(1, sizeof(struct pam_config));
+    config->banner = NULL;
+    config->ccache = NULL;
+    config->ccache_dir = NULL;
+    config->fast_ccache = NULL;
+    config->keytab = NULL;
+    config->pkinit_anchors = NULL;
+    config->pkinit_user = NULL;
+    config->preauth_opt = NULL;
+    config->realm = NULL;
+    config->realm_data = NULL;
+    config->ctx = NULL;
+    args->config = config;
     return args;
 }
 
@@ -74,32 +77,33 @@ void
 pamk5_args_free(struct pam_args *args)
 {
     int i;
+    struct pam_config *config = args->config;
 
-    if (args != NULL) {
-        if (args->banner != NULL)
-            free(args->banner);
-        if (args->ccache != NULL)
-            free(args->ccache);
-        if (args->ccache_dir != NULL)
-            free(args->ccache_dir);
-        if (args->fast_ccache != NULL)
-            free(args->fast_ccache);
-        if (args->keytab != NULL)
-            free(args->keytab);
-        if (args->pkinit_anchors != NULL)
-            free(args->pkinit_anchors);
-        if (args->pkinit_user != NULL)
-            free(args->pkinit_user);
-        if (args->realm != NULL)
-            free(args->realm);
-        if (args->preauth_opt != NULL) {
-            for (i = 0; i < args->preauth_opt_count; i++)
-                if (args->preauth_opt[i] != NULL)
-                    free(args->preauth_opt[i]);
-            free(args->preauth_opt);
+    if (config != NULL) {
+        if (config->banner != NULL)
+            free(config->banner);
+        if (config->ccache != NULL)
+            free(config->ccache);
+        if (config->ccache_dir != NULL)
+            free(config->ccache_dir);
+        if (config->fast_ccache != NULL)
+            free(config->fast_ccache);
+        if (config->keytab != NULL)
+            free(config->keytab);
+        if (config->pkinit_anchors != NULL)
+            free(config->pkinit_anchors);
+        if (config->pkinit_user != NULL)
+            free(config->pkinit_user);
+        if (config->realm != NULL)
+            free(config->realm);
+        if (config->preauth_opt != NULL) {
+            for (i = 0; i < config->preauth_opt_count; i++)
+                if (config->preauth_opt[i] != NULL)
+                    free(config->preauth_opt[i]);
+            free(config->preauth_opt);
         }
-        pamk5_compat_free_realm(args);
-        free(args);
+        pamk5_compat_free_realm(config);
+        putil_args_free(args);
     }
 }
 
@@ -108,7 +112,7 @@ pamk5_args_free(struct pam_args *args)
  * workaround because one cannot specify a default value of NULL.
  */
 static void
-default_string(struct pam_args *args, krb5_context c, const char *opt,
+default_string(struct pam_config *args, krb5_context c, const char *opt,
                const char *defval, char **result)
 {
     if (defval == NULL)
@@ -125,7 +129,7 @@ default_string(struct pam_args *args, krb5_context c, const char *opt,
  * doesn't support numbers, so we actually read a string and then convert.
  */
 static void
-default_number(struct pam_args *args, krb5_context c, const char *opt,
+default_number(struct pam_config *args, krb5_context c, const char *opt,
                int defval, int *result)
 {
     char *tmp;
@@ -144,7 +148,7 @@ default_number(struct pam_args *args, krb5_context c, const char *opt,
  * around the Kerberos library function.
  */
 static void
-default_boolean(struct pam_args *args, krb5_context c, const char *opt,
+default_boolean(struct pam_config *args, krb5_context c, const char *opt,
                 int defval, int *result)
 {
     krb5_appdefault_boolean(c, "pam", args->realm_data, opt, defval, result);
@@ -162,7 +166,7 @@ default_time(struct pam_args *args, krb5_context c, const char *opt,
     int ret;
     const char *message;
 
-    krb5_appdefault_string(c, "pam", args->realm_data, opt, "", &tmp);
+    krb5_appdefault_string(c, "pam", args->config->realm_data, opt, "", &tmp);
     if (tmp != NULL && tmp[0] != '\0') {
         ret = krb5_string_to_deltat(tmp, result);
         if (ret != 0) {
@@ -179,12 +183,12 @@ default_time(struct pam_args *args, krb5_context c, const char *opt,
 
 /*
  * Splits preauth options apart on spaces and stores the result in the
- * provided pam_args struct.  We don't return success.  On memory allocation
+ * provided pam_config struct.  We don't return success.  On memory allocation
  * failure, we just don't set the attribute, which will generally cause
  * preauth to fail.
  */
 static int
-split_preauth(struct pam_args *args, const char *preauth)
+split_preauth(struct pam_config *args, const char *preauth)
 {
     const char *p, *start;
     size_t count, i;
@@ -251,15 +255,16 @@ struct pam_args *
 pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
     struct pam_args *args;
+    struct pam_config *config;
     int i, num, retval;
     krb5_context c;
     char *preauth_opt = NULL;
     char **new_preauth;
 
-    args = pamk5_args_new();
+    args = pamk5_args_new(pamh, flags);
     if (args == NULL)
         return NULL;
-    args->pamh = pamh;
+    config = args->config;
 
     /*
      * Do an initial scan to see if the realm is already set in our options.
@@ -267,9 +272,9 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
      */
     for (i = 0; i < argc; i++) {
         if (strncmp(argv[i], "realm=", 6) == 0) {
-            if (args->realm != NULL)
-                free(args->realm);
-            args->realm = strdup(&argv[i][strlen("realm=")]);
+            if (config->realm != NULL)
+                free(config->realm);
+            config->realm = strdup(&argv[i][strlen("realm=")]);
         }
     }
 
@@ -287,44 +292,44 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
     if (retval != 0)
         c = NULL;
     if (c != NULL) {
-        if (args->realm == NULL)
-            krb5_get_default_realm(c, &args->realm);
-        if (args->realm != NULL)
-            pamk5_compat_set_realm(args, args->realm);
-        default_string(args, c, "alt_auth_map", NULL, &args->alt_auth_map);
-        default_string(args, c, "banner", "Kerberos", &args->banner);
-        default_string(args, c, "ccache", NULL, &args->ccache);
-        default_string(args, c, "ccache_dir", "FILE:/tmp", &args->ccache_dir);
-        default_boolean(args, c, "clear_on_fail", 0, &args->clear_on_fail);
-        default_boolean(args, c, "debug", 0, &args->debug);
-        default_boolean(args, c, "defer_pwchange", 0, &args->defer_pwchange);
-        default_boolean(args, c, "expose_account", 0, &args->expose_account);
-        default_boolean(args, c, "fail_pwchange", 0, &args->fail_pwchange);
-        default_string(args, c, "fast_ccache", NULL, &args->fast_ccache);
-        default_boolean(args, c, "force_alt_auth", 0, &args->force_alt_auth);
-        default_boolean(args, c, "force_pwchange", 0, &args->force_pwchange);
-        default_boolean(args, c, "forwardable", 0, &args->forwardable);
-        default_boolean(args, c, "ignore_k5login", 0, &args->ignore_k5login);
-        default_boolean(args, c, "ignore_root", 0, &args->ignore_root);
-        default_string(args, c, "keytab", NULL, &args->keytab);
-        default_number(args, c, "minimum_uid", 0, &args->minimum_uid);
-        default_boolean(args, c, "only_alt_auth", 0, &args->only_alt_auth);
-        default_string(args, c, "pkinit_anchors", NULL, &args->pkinit_anchors);
-        default_boolean(args, c, "pkinit_prompt", 0, &args->pkinit_prompt);
-        default_string(args, c, "pkinit_user", NULL, &args->pkinit_user);
-        default_string(args, c, "preauth_opt", NULL, &preauth_opt);
-        default_boolean(args, c, "prompt_principal", 0, &args->prompt_princ);
-        default_time(args, c, "renew_lifetime", 0, &args->renew_lifetime);
-        default_boolean(args, c, "retain_after_close", 0, &args->retain);
-        default_boolean(args, c, "search_k5login", 0, &args->search_k5login);
-        default_time(args, c, "ticket_lifetime", 0, &args->lifetime);
-        default_boolean(args, c, "try_pkinit", 0, &args->try_pkinit);
-        default_boolean(args, c, "use_pkinit", 0, &args->use_pkinit);
+        if (config->realm == NULL)
+            krb5_get_default_realm(c, &config->realm);
+        if (config->realm != NULL)
+            pamk5_compat_set_realm(config, config->realm);
+        default_string(config, c, "alt_auth_map", NULL, &config->alt_auth_map);
+        default_string(config, c, "banner", "Kerberos", &config->banner);
+        default_string(config, c, "ccache", NULL, &config->ccache);
+        default_string(config, c, "ccache_dir", "FILE:/tmp", &config->ccache_dir);
+        default_boolean(config, c, "clear_on_fail", 0, &config->clear_on_fail);
+        default_boolean(config, c, "debug", 0, &config->debug);
+        default_boolean(config, c, "defer_pwchange", 0, &config->defer_pwchange);
+        default_boolean(config, c, "expose_account", 0, &config->expose_account);
+        default_boolean(config, c, "fail_pwchange", 0, &config->fail_pwchange);
+        default_string(config, c, "fast_ccache", NULL, &config->fast_ccache);
+        default_boolean(config, c, "force_alt_auth", 0, &config->force_alt_auth);
+        default_boolean(config, c, "force_pwchange", 0, &config->force_pwchange);
+        default_boolean(config, c, "forwardable", 0, &config->forwardable);
+        default_boolean(config, c, "ignore_k5login", 0, &config->ignore_k5login);
+        default_boolean(config, c, "ignore_root", 0, &config->ignore_root);
+        default_string(config, c, "keytab", NULL, &config->keytab);
+        default_number(config, c, "minimum_uid", 0, &config->minimum_uid);
+        default_boolean(config, c, "only_alt_auth", 0, &config->only_alt_auth);
+        default_string(config, c, "pkinit_anchors", NULL, &config->pkinit_anchors);
+        default_boolean(config, c, "pkinit_prompt", 0, &config->pkinit_prompt);
+        default_string(config, c, "pkinit_user", NULL, &config->pkinit_user);
+        default_string(config, c, "preauth_opt", NULL, &preauth_opt);
+        default_boolean(config, c, "prompt_principal", 0, &config->prompt_princ);
+        default_time(args, c, "renew_lifetime", 0, &config->renew_lifetime);
+        default_boolean(config, c, "retain_after_close", 0, &config->retain);
+        default_boolean(config, c, "search_k5login", 0, &config->search_k5login);
+        default_time(args, c, "ticket_lifetime", 0, &config->lifetime);
+        default_boolean(config, c, "try_pkinit", 0, &config->try_pkinit);
+        default_boolean(config, c, "use_pkinit", 0, &config->use_pkinit);
         krb5_free_context(c);
 
         /* If preauth_opt was set, split it on spaces. */
         if (preauth_opt != NULL) {
-            split_preauth(args, preauth_opt);
+            split_preauth(config, preauth_opt);
             free(preauth_opt);
         }
     }
@@ -337,140 +342,138 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
      */
     for (i = 0; i < argc; i++) {
         if (strncmp(argv[i], "alt_auth_map=", 12) == 0) {
-            if (args->alt_auth_map != NULL)
-                free(args->alt_auth_map);
-            args->alt_auth_map = strdup(&argv[i][strlen("alt_auth_map=")]);
+            if (config->alt_auth_map != NULL)
+                free(config->alt_auth_map);
+            config->alt_auth_map = strdup(&argv[i][strlen("alt_auth_map=")]);
         }
         else if(strncmp(argv[i], "banner=", 7) == 0) {
-            if (args->banner != NULL)
-                free(args->banner);
-            args->banner = strdup(&argv[i][strlen("banner=")]);
+            if (config->banner != NULL)
+                free(config->banner);
+            config->banner = strdup(&argv[i][strlen("banner=")]);
         }
         else if (strncmp(argv[i], "ccache=", 7) == 0) {
-            if (args->ccache != NULL)
-                free(args->ccache);
-            args->ccache = strdup(&argv[i][strlen("ccache=")]);
+            if (config->ccache != NULL)
+                free(config->ccache);
+            config->ccache = strdup(&argv[i][strlen("ccache=")]);
         }
         else if (strncmp(argv[i], "ccache_dir=", 11) == 0) {
-            if (args->ccache_dir != NULL)
-                free(args->ccache_dir);
-            args->ccache_dir = strdup(&argv[i][strlen("ccache_dir=")]);
+            if (config->ccache_dir != NULL)
+                free(config->ccache_dir);
+            config->ccache_dir = strdup(&argv[i][strlen("ccache_dir=")]);
         }
         else if (strcmp(argv[i], "clear_on_fail") == 0)
-            args->clear_on_fail = 1;
+            config->clear_on_fail = 1;
         else if (strcmp(argv[i], "debug") == 0)
-            args->debug = 1;
+            config->debug = 1;
         else if (strcmp(argv[i], "defer_pwchange") == 0)
-            args->defer_pwchange = 1;
+            config->defer_pwchange = 1;
         else if (strcmp(argv[i], "expose_account") == 0)
-            args->expose_account = 1;
+            config->expose_account = 1;
         else if (strcmp(argv[i], "fail_pwchange") == 0)
-            args->fail_pwchange = 1;
+            config->fail_pwchange = 1;
         else if (strncmp(argv[i], "fast_ccache=", 12) == 0) {
-            if (args->fast_ccache != NULL)
-                free(args->fast_ccache);
-            args->fast_ccache = strdup(&argv[i][strlen("fast_ccache=")]);
+            if (config->fast_ccache != NULL)
+                free(config->fast_ccache);
+            config->fast_ccache = strdup(&argv[i][strlen("fast_ccache=")]);
         }
         else if (strcmp(argv[i], "force_first_pass") == 0)
-            args->force_first_pass = 1;
+            config->force_first_pass = 1;
         else if (strcmp(argv[i], "force_pwchange") == 0)
-            args->force_pwchange = 1;
+            config->force_pwchange = 1;
         else if (strcmp(argv[i], "force_alt_auth") == 0)
-            args->force_alt_auth = 1;
+            config->force_alt_auth = 1;
         else if (strcmp(argv[i], "forwardable") == 0)
-            args->forwardable = 1;
+            config->forwardable = 1;
         else if (strcmp(argv[i], "ignore_k5login") == 0)
-            args->ignore_k5login = 1;
+            config->ignore_k5login = 1;
         else if (strcmp(argv[i], "ignore_root") == 0)
-            args->ignore_root = 1;
+            config->ignore_root = 1;
         else if (strncmp(argv[i], "keytab=", 7) == 0) {
-            if (args->keytab != NULL)
-                free(args->keytab);
-            args->keytab = strdup(&argv[i][strlen("keytab=")]);
+            if (config->keytab != NULL)
+                free(config->keytab);
+            config->keytab = strdup(&argv[i][strlen("keytab=")]);
         }
         else if (strncmp(argv[i], "minimum_uid=", 12) == 0)
-            args->minimum_uid = atoi(&argv[i][strlen("minimum_uid=")]);
+            config->minimum_uid = atoi(&argv[i][strlen("minimum_uid=")]);
         else if (strcmp(argv[i], "no_ccache") == 0)
-            args->no_ccache = 1;
+            config->no_ccache = 1;
         else if (strcmp(argv[i], "only_alt_auth") == 0)
-            args->only_alt_auth = 1;
+            config->only_alt_auth = 1;
         else if (strncmp(argv[i], "pkinit_anchors=", 15) == 0) {
-            if (args->pkinit_anchors != NULL)
-                free(args->pkinit_anchors);
-            args->pkinit_anchors = strdup(&argv[i][strlen("pkinit_anchors=")]);
+            if (config->pkinit_anchors != NULL)
+                free(config->pkinit_anchors);
+            config->pkinit_anchors = strdup(&argv[i][strlen("pkinit_anchors=")]);
         }
         else if (strcmp(argv[i], "pkinit_prompt") == 0)
-            args->pkinit_prompt = 1;
+            config->pkinit_prompt = 1;
         else if (strncmp(argv[i], "pkinit_user=", 12) == 0) {
-            if (args->pkinit_user != NULL)
-                free(args->pkinit_user);
-            args->pkinit_user = strdup(&argv[i][strlen("pkinit_user=")]);
+            if (config->pkinit_user != NULL)
+                free(config->pkinit_user);
+            config->pkinit_user = strdup(&argv[i][strlen("pkinit_user=")]);
         }
         else if (strncmp(argv[i], "preauth_opt=", 12) == 0) {
-            num = args->preauth_opt_count;
-            new_preauth = realloc(args->preauth_opt,
-                                  sizeof(char *) * args->preauth_opt_count);
+            num = config->preauth_opt_count;
+            new_preauth = realloc(config->preauth_opt,
+                                  sizeof(char *) * config->preauth_opt_count);
             if (new_preauth != NULL) {
-                args->preauth_opt[num]
+                config->preauth_opt[num]
                     = strdup(&argv[i][strlen("preauth_opt")]);
-                args->preauth_opt_count++;
+                config->preauth_opt_count++;
             }
         }
         else if (strcmp(argv[i], "prompt_principal") == 0)
-            args->prompt_princ = 1;
+            config->prompt_princ = 1;
         else if (strncmp(argv[i], "realm=", 6) == 0)
             ; /* Handled above. */
         else if (strncmp(argv[i], "renew_lifetime=", 15) == 0) {
             const char *value;
 
             value = argv[i] + strlen("renew_lifetime=");
-            krb5_string_to_deltat((char *) value, &args->renew_lifetime);
+            krb5_string_to_deltat((char *) value, &config->renew_lifetime);
         }
         else if (strcmp(argv[i], "retain_after_close") == 0)
-            args->retain = 1;
+            config->retain = 1;
         else if (strcmp(argv[i], "search_k5login") == 0)
-            args->search_k5login = 1;
+            config->search_k5login = 1;
         else if (strncmp(argv[i], "ticket_lifetime=", 16) == 0) {
             const char *value;
 
             value = argv[i] + strlen("ticket_lifetime=");
-            krb5_string_to_deltat((char *) value, &args->lifetime);
+            krb5_string_to_deltat((char *) value, &config->lifetime);
         }
         else if (strcmp(argv[i], "try_first_pass") == 0)
-            args->try_first_pass = 1;
+            config->try_first_pass = 1;
         else if (strcmp(argv[i], "try_pkinit") == 0)
-            args->try_pkinit = 1;
+            config->try_pkinit = 1;
         else if (strcmp(argv[i], "use_authtok") == 0)
-            args->use_authtok = 1;
+            config->use_authtok = 1;
         else if (strcmp(argv[i], "use_first_pass") == 0)
-            args->use_first_pass = 1;
+            config->use_first_pass = 1;
         else if (strcmp(argv[i], "use_pkinit") == 0)
-            args->use_pkinit = 1;
+            config->use_pkinit = 1;
         else
             pamk5_err(NULL, "unknown option %s", argv[i]);
     }
-    if (flags & PAM_SILENT)
-        args->silent = 1;
 
     /* An empty banner should be treated the same as not having one. */
-    if (args->banner != NULL && args->banner[0] == '\0') {
-        free(args->banner);
-        args->banner = NULL;
+    if (config->banner != NULL && config->banner[0] == '\0') {
+        free(config->banner);
+        config->banner = NULL;
     }
 
     /* Sanity-check try_first_pass, use_first_pass, and force_first_pass. */
-    if (args->force_first_pass && args->try_first_pass) {
+    if (config->force_first_pass && config->try_first_pass) {
         pamk5_err(NULL, "force_first_pass set, ignoring try_first_pass");
-        args->try_first_pass = 0;
-        args->use_first_pass = 0;
+        config->try_first_pass = 0;
+        config->use_first_pass = 0;
     }
-    if (args->force_first_pass && args->use_first_pass) {
+    if (config->force_first_pass && config->use_first_pass) {
         pamk5_err(NULL, "force_first_pass set, ignoring use_first_pass");
-        args->use_first_pass = 0;
+        config->use_first_pass = 0;
     }
-    if (args->use_first_pass && args->try_first_pass) {
+    if (config->use_first_pass && config->try_first_pass) {
         pamk5_err(NULL, "use_first_pass set, ignoring try_first_pass");
-        args->try_first_pass = 0;
+        config->try_first_pass = 0;
     }
 
     /*
@@ -479,12 +482,12 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
      * which isn't the password they'll use (that's the whole point of
      * search_k5login).
      */
-    if (args->search_k5login)
-        args->expose_account = 0;
+    if (config->search_k5login)
+        config->expose_account = 0;
 
     /* UIDs are unsigned on some systems. */
-    if (args->minimum_uid < 0)
-        args->minimum_uid = 0;
+    if (config->minimum_uid < 0)
+        config->minimum_uid = 0;
 
     /*
      * Warn if PKINIT options were set and PKINIT isn't supported.  The MIT
@@ -492,17 +495,17 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
      */
 #ifndef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT
 # ifndef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PA
-    if (args->try_pkinit)
+    if (config->try_pkinit)
 	pamk5_err(NULL, "try_pkinit requested but PKINIT not available");
 # endif
-    if (args->use_pkinit)
+    if (config->use_pkinit)
 	pamk5_err(NULL, "use_pkinit requested but PKINIT not available or"
                   " cannot be enforced");
 #endif
 
     /* Warn if the FAST option was set and FAST isn't supported. */
 #ifndef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_FAST_CCACHE_NAME
-    if (args->fast_ccache)
+    if (config->fast_ccache)
         pamk5_err(args, "fast_ccache requested but FAST not supported by"
                   " Kerberos libraries");
 #endif

@@ -21,6 +21,9 @@
 #include <stdarg.h>
 #include <syslog.h>
 
+/* Temporary. */
+#include <pam-util/args.h>
+
 /* Forward declarations to avoid unnecessary includes. */
 struct passwd;
 
@@ -50,7 +53,7 @@ struct context {
  * pamk5_args_parse and passed as a first argument to most internal
  * functions.
  */
-struct pam_args {
+struct pam_config {
     char *banner;               /* Addition to password changing prompts. */
     char *ccache;               /* Path to write ticket cache to. */
     char *ccache_dir;           /* Directory for ticket cache. */
@@ -105,16 +108,8 @@ struct pam_args {
     krb5_data *realm_data;
 #endif
 
-    /*
-     * This isn't really an arg but instead records whether PAM_SILENT was
-     * included in the flags.  If set, only call the conversation function for
-     * prompts, not informational messages or errors.
-     */
-    int silent;
-
-    /* Pointers to our state so that we can pass around only one struct. */
-    pam_handle_t *pamh;         /* Pointer back to the PAM handle. */
-    struct context *ctx;        /* Pointer to our authentication context. */
+    /* The authentication context, which bundles together Kerberos data. */
+    struct context *ctx;
 };
 
 /* Default to a hidden visibility for all internal functions. */
@@ -219,8 +214,8 @@ int pamk5_cache_init_random(struct pam_args *, krb5_creds *);
  * Kerberos or Heimdal, appropriate implementations for the Kerberos
  * implementation will be provided.
  */
-krb5_error_code pamk5_compat_set_realm(struct pam_args *, const char *);
-void pamk5_compat_free_realm(struct pam_args *);
+krb5_error_code pamk5_compat_set_realm(struct pam_config *, const char *);
+void pamk5_compat_free_realm(struct pam_config *);
 
 /*
  * Error reporting and debugging functions.  For each log level, there are

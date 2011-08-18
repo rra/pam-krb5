@@ -64,13 +64,13 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
      * case.  The worst thing that can happen is to fail to get the password,
      * in which case the other module will fail (or might even not care).
      */
-    if (args->ignore_root || args->minimum_uid > 0) {
+    if (args->config->ignore_root || args->config->minimum_uid > 0) {
         status = pam_get_user(pamh, &user, NULL);
         if (status == PAM_SUCCESS && pamk5_should_ignore(args, user)) {
             if (flags & PAM_UPDATE_AUTHTOK) {
-                if (args->banner != NULL) {
-                    free(args->banner);
-                    args->banner = NULL;
+                if (args->config->banner != NULL) {
+                    free(args->config->banner);
+                    args->config->banner = NULL;
                 }
                 pamk5_password_prompt(args, NULL);
             }
@@ -83,14 +83,14 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
      * If we weren't able to find an existing context to use, we're going
      * into this fresh and need to create a new context.
      */
-    if (args->ctx == NULL) {
+    if (args->config->ctx == NULL) {
         pamret = pamk5_context_new(args);
         if (pamret != PAM_SUCCESS) {
             pamk5_debug_pam(args, pamret, "creating context failed");
             pamret = PAM_AUTHTOK_ERR;
             goto done;
         }
-        pamret = pam_set_data(pamh, "pam_krb5", args->ctx,
+        pamret = pam_set_data(pamh, "pam_krb5", args->config->ctx,
                               pamk5_context_destroy);
         if (pamret != PAM_SUCCESS) {
             pamk5_err_pam(args, pamret, "cannot set context data");
@@ -98,7 +98,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
             goto done;
         }
     }
-    ctx = args->ctx;
+    ctx = args->config->ctx;
 
     /*
      * Tell the user what's going on if we're handling an expiration, but not
@@ -109,7 +109,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
      * password change.
      */
     if (ctx->expired && ctx->creds == NULL)
-        if (!args->force_first_pass && !args->use_first_pass)
+        if (!args->config->force_first_pass && !args->config->use_first_pass)
             pamk5_conv(args, "Password expired.  You must change it now.",
                        PAM_TEXT_INFO, NULL);
 
@@ -129,7 +129,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
         krb5_creds *creds = NULL;
 
         pamk5_debug(args, "obtaining credentials with new password");
-        args->force_first_pass = 1;
+        args->config->force_first_pass = 1;
         pamret = pamk5_password_auth(args, NULL, &creds);
         if (pamret != PAM_SUCCESS)
             goto done;

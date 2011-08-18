@@ -17,7 +17,7 @@
 #include <internal.h>
 
 krb5_error_code
-pamk5_compat_set_realm(struct pam_args *args, const char *realm)
+pamk5_compat_set_realm(struct pam_config *args, const char *realm)
 {
     pamk5_compat_free_realm(args);
     args->realm_data = malloc(sizeof(*args->realm_data));
@@ -36,7 +36,7 @@ pamk5_compat_set_realm(struct pam_args *args, const char *realm)
 
 
 void
-pamk5_compat_free_realm(struct pam_args *args)
+pamk5_compat_free_realm(struct pam_config *args)
 {
     if (args->realm_data != NULL) {
         if (args->realm_data->data != NULL)

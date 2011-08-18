@@ -43,7 +43,7 @@ pamk5_password_prompt(struct pam_args *args, char **pass)
     /* Use the password from a previous module, if so configured. */
     if (pass != NULL)
         *pass = NULL;
-    if (args->use_authtok) {
+    if (args->config->use_authtok) {
         pamret = pam_get_item(args->pamh, PAM_AUTHTOK, &tmp);
         if (tmp == NULL) {
             pamk5_debug_pam(args, pamret, "no stored password");
@@ -110,9 +110,10 @@ change_password(struct pam_args *args, const char *pass)
     const char *message;
 
     /* Sanity check. */
-    if (args == NULL || args->ctx == NULL || args->ctx->creds == NULL)
+    if (args == NULL || args->config == NULL || args->config->ctx == NULL
+        || args->config->ctx->creds == NULL)
         return PAM_AUTHTOK_ERR;
-    ctx = args->ctx;
+    ctx = args->config->ctx;
 
     /* The actual change. */
     retval = krb5_change_password(ctx->context, ctx->creds, (char *) pass,
@@ -158,7 +159,7 @@ done:
      * fixed once the pre-check function runs, subsequent modules would
      * continue even when we failed.
      */
-    if (retval != PAM_SUCCESS && args->clear_on_fail) {
+    if (retval != PAM_SUCCESS && args->config->clear_on_fail) {
         if (pam_set_item(args->pamh, PAM_AUTHTOK, NULL))
             pamk5_err(args, "error clearing password");
     }
@@ -178,7 +179,7 @@ done:
 int
 pamk5_password_change(struct pam_args *args, int only_auth)
 {
-    struct context *ctx = args->ctx;
+    struct context *ctx = args->config->ctx;
     int pamret = PAM_SUCCESS;
     char *pass = NULL;
 

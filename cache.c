@@ -111,9 +111,10 @@ pamk5_cache_init(struct pam_args *args, const char *ccname, krb5_creds *creds,
     struct context *ctx;
     int retval;
 
-    if (args == NULL || args->ctx == NULL || args->ctx->context == NULL)
+    if (args == NULL || args->config == NULL || args->config->ctx == NULL
+        || args->config->ctx->context == NULL)
         return PAM_SERVICE_ERR;
-    ctx = args->ctx;
+    ctx = args->config->ctx;
     retval = krb5_cc_resolve(ctx->context, ccname, cache);
     if (retval != 0) {
         pamk5_err_krb5(args, retval, "cannot resolve ticket cache %s", ccname);
@@ -156,14 +157,16 @@ pamk5_cache_init_random(struct pam_args *args, krb5_creds *creds)
     int pamret;
 
     /* Store the obtained credentials in a temporary cache. */
-    if (asprintf(&cache_name, "%s/krb5cc_pam_XXXXXX", args->ccache_dir) < 0) {
+    if (asprintf(&cache_name, "%s/krb5cc_pam_XXXXXX",
+                 args->config->ccache_dir) < 0) {
         pamk5_crit(args, "malloc failure: %s", strerror(errno));
         return PAM_SERVICE_ERR;
     }
     pamret = pamk5_cache_mkstemp(args, cache_name);
     if (pamret != PAM_SUCCESS)
         goto done;
-    pamret = pamk5_cache_init(args, cache_name, creds, &args->ctx->cache);
+    pamret = pamk5_cache_init(args, cache_name, creds,
+                              &args->config->ctx->cache);
     if (pamret != PAM_SUCCESS)
         goto done;
     pamret = pamk5_set_krb5ccname(args, cache_name, "PAM_KRB5CCNAME");

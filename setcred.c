@@ -42,11 +42,12 @@ cache_init_from_cache(struct pam_args *args, const char *ccname,
 
     *cache = NULL;
     memset(&creds, 0, sizeof(creds));
-    if (args == NULL || args->ctx == NULL || args->ctx->context == NULL)
+    if (args == NULL || args->config == NULL || args->config->ctx == NULL
+        || args->config->ctx->context == NULL)
         return PAM_SERVICE_ERR;
     if (old == NULL)
         return PAM_SERVICE_ERR;
-    ctx = args->ctx;
+    ctx = args->config->ctx;
     status = krb5_cc_start_seq_get(ctx->context, old, &cursor);
     if (status != 0) {
         pamk5_err_krb5(args, status, "cannot open new credentials");
@@ -106,9 +107,9 @@ build_ccache_name(struct pam_args *args, uid_t uid)
     char *cache_name = NULL;
     int retval;
 
-    if (args->ccache == NULL) {
+    if (args->config->ccache == NULL) {
         retval = asprintf(&cache_name, "%s/krb5cc_%d_XXXXXX",
-                          args->ccache_dir, (int) uid);
+                          args->config->ccache_dir, (int) uid);
         if (retval < 0) {
             pamk5_crit(args, "malloc failure: %s", strerror(errno));
             return NULL;
@@ -117,7 +118,7 @@ build_ccache_name(struct pam_args *args, uid_t uid)
         size_t len = 0, delta;
         char *p, *q;
 
-        for (p = args->ccache; *p != '\0'; p++) {
+        for (p = args->config->ccache; *p != '\0'; p++) {
             if (p[0] == '%' && p[1] == 'u') {
                 len += snprintf(NULL, 0, "%ld", (long) uid);
                 p++;
@@ -134,7 +135,7 @@ build_ccache_name(struct pam_args *args, uid_t uid)
             pamk5_crit(args, "malloc failure: %s", strerror(errno));
             return NULL;
         }
-        for (p = args->ccache, q = cache_name; *p != '\0'; p++) {
+        for (p = args->config->ccache, q = cache_name; *p != '\0'; p++) {
             if (p[0] == '%' && p[1] == 'u') {
                 delta = snprintf(q, len, "%ld", (long) uid);
                 q += delta;
@@ -172,7 +173,7 @@ create_session_context(struct pam_args *args)
     int status, pamret;
 
     /* If we're going to ignore the user anyway, don't even bother. */
-    if (args->ignore_root || args->minimum_uid > 0) {
+    if (args->config->ignore_root || args->config->minimum_uid > 0) {
         pamret = pam_get_user(args->pamh, &user, NULL);
         if (pamret == PAM_SUCCESS && pamk5_should_ignore(args, user)) {
             pamret = PAM_IGNORE;
@@ -190,7 +191,7 @@ create_session_context(struct pam_args *args)
         pamk5_crit_pam(args, pamret, "creating session context failed");
         goto fail;
     }
-    ctx = args->ctx;
+    ctx = args->config->ctx;
     tmpname = pamk5_get_krb5ccname(args, "PAM_KRB5CCNAME");
     if (tmpname == NULL) {
         pamk5_debug(args, "unable to get PAM_KRB5CCNAME, assuming"
@@ -225,9 +226,9 @@ create_session_context(struct pam_args *args)
     return PAM_SUCCESS;
 
 fail:
-    if (args->ctx != NULL)
-        pamk5_context_free(args->ctx);
-    args->ctx = NULL;
+    if (args->config->ctx != NULL)
+        pamk5_context_free(args->config->ctx);
+    args->config->ctx = NULL;
     return pamret;
 }
 
@@ -251,7 +252,7 @@ pamk5_setcred(struct pam_args *args, int refresh)
     gid_t gid;
 
     /* If configured not to create a cache, we have nothing to do. */
-    if (args->no_ccache) {
+    if (args->config->no_ccache) {
         pamret = PAM_SUCCESS;
         goto done;
     }
@@ -262,13 +263,13 @@ pamk5_setcred(struct pam_args *args, int refresh)
      * for ourselves.
      */
     pamret = pamk5_context_fetch(args);
-    if (args->ctx == NULL) {
+    if (args->config->ctx == NULL) {
         pamk5_debug(args, "no context found, creating one");
         pamret = create_session_context(args);
-        if (args->ctx == NULL)
+        if (args->config->ctx == NULL)
             goto done;
     }
-    ctx = args->ctx;
+    ctx = args->config->ctx;
 
     /*
      * Some programs (xdm, for instance) appear to call setcred over and over
@@ -451,7 +452,7 @@ pamk5_setcred(struct pam_args *args, int refresh)
     ctx->cache = cache;
     cache = NULL;
     ctx->initialized = 1;
-    if (args->retain)
+    if (args->config->retain)
         ctx->dont_destroy_cache = 1;
 
 done:
