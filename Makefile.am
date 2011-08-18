@@ -8,7 +8,6 @@
 #
 # See LICENSE for licensing terms.
 
-AUTOMAKE_OPTIONS = foreign subdir-objects
 ACLOCAL_AMFLAGS = -I m4
 EXTRA_DIST = .gitignore LICENSE autogen compat-aix.c compat-heimdal.c	\
 	compat-mit.c pam_krb5.map pam_krb5.pod
