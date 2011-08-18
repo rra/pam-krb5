@@ -35,6 +35,12 @@ pam-krb5 4.5 (unreleased)
     Replace the Kerberos compatibility layer with equivalent but
     better-structured code from rra-c-util 3.7.
 
+    Update to rra-c-util 3.7:
+
+    * Add notices to all files copied over from rra-c-util.
+    * Include strings.h for additional POSIX functions where found.
+    * Fix detection of whether PAM uses const on FreeBSD.
+
 pam-krb5 4.4 (2010-12-31)
 
     Do not prompt for a password when try_pkinit is set and the module is

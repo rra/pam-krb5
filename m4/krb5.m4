@@ -32,11 +32,16 @@ dnl Also provides RRA_FUNC_KRB5_GET_INIT_CREDS_OPT_FREE_ARGS, which checks
 dnl whether krb5_get_init_creds_opt_free takes one argument or two.  Defines
 dnl HAVE_KRB5_GET_INIT_CREDS_OPT_FREE_2_ARGS if it takes two arguments.
 dnl
+dnl The canonical version of this file is maintained in the rra-c-util
+dnl package, available at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
+dnl
 dnl Written by Russ Allbery <rra@stanford.edu>
 dnl Copyright 2005, 2006, 2007, 2008, 2009, 2010
-dnl     Board of Trustees, Leland Stanford Jr. University
+dnl     The Board of Trustees of the Leland Stanford Junior University
 dnl
-dnl See LICENSE for licensing terms.
+dnl This file is free software; the authors give unlimited permission to copy
+dnl and/or distribute it, with or without modifications, as long as this
+dnl notice is preserved.
 
 dnl Save the current CPPFLAGS, LDFLAGS, and LIBS settings and switch to
 dnl versions that include the Kerberos v5 flags.  Used as a wrapper, with
@@ -266,7 +271,8 @@ AC_DEFUN([RRA_LIB_KRB5_OPTIONAL],
  AS_IF([test x"$rra_use_kerberos" != xfalse],
      [AS_IF([test x"$rra_use_kerberos" = xtrue],
          [_RRA_LIB_KRB5_INTERNAL([true])],
-         [_RRA_LIB_KRB5_INTERNAL([false])])])
+         [_RRA_LIB_KRB5_INTERNAL([false])])],
+     [AM_CONDITIONAL([KRB5_USES_COM_ERR], [false])])
  AS_IF([test x"$KRB5_LIBS" != x],
     [AC_DEFINE([HAVE_KERBEROS], 1, [Define to enable Kerberos features.])])])
 
