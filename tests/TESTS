@@ -1,0 +1,4 @@
+portable/asprintf
+portable/mkstemp
+portable/snprintf
+portable/strndup

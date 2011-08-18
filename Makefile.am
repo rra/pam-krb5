@@ -47,3 +47,31 @@ WARNINGS = -g -O -DDEBUG=1 -Wall -W -Wendif-labels -Wpointer-arith \
 
 warnings:
 	$(MAKE) V=0 CFLAGS='$(WARNINGS)'
+	$(MAKE) V=0 CFLAGS='$(WARNINGS)' $(check_PROGRAMS)
+
+# The bits below are for the test suite, not for the main package.
+check_PROGRAMS = tests/runtests tests/portable/asprintf-t	\
+	tests/portable/mkstemp-t tests/portable/snprintf-t	\
+	tests/portable/strndup-t
+tests_runtests_CPPFLAGS = -DSOURCE='"$(abs_top_srcdir)/tests"' \
+	-DBUILD='"$(abs_top_builddir)/tests"'
+check_LIBRARIES = tests/tap/libtap.a
+tests_tap_libtap_a_CPPFLAGS = -I$(abs_top_srcdir)/tests
+tests_tap_libtap_a_SOURCES = tests/tap/basic.c tests/tap/basic.h
+
+# The test programs themselves.
+tests_portable_asprintf_t_SOURCES = tests/portable/asprintf-t.c \
+	tests/portable/asprintf.c
+tests_portable_asprintf_t_LDADD = tests/tap/libtap.a portable/libportable.la
+tests_portable_mkstemp_t_SOURCES = tests/portable/mkstemp-t.c \
+	tests/portable/mkstemp.c
+tests_portable_mkstemp_t_LDADD = tests/tap/libtap.a portable/libportable.la
+tests_portable_snprintf_t_SOURCES = tests/portable/snprintf-t.c \
+	tests/portable/snprintf.c
+tests_portable_snprintf_t_LDADD = tests/tap/libtap.a portable/libportable.la
+tests_portable_strndup_t_SOURCES = tests/portable/strndup-t.c \
+	tests/portable/strndup.c
+tests_portable_strndup_t_LDADD = tests/tap/libtap.a portable/libportable.la
+
+check-local: $(check_PROGRAMS)
+	cd tests && ./runtests $(abs_top_srcdir)/tests/TESTS

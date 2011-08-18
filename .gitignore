@@ -1,7 +1,6 @@
 /Makefile
 /Makefile.in
 /aclocal.m4
-/autom4te.cache
 /build-aux/
 /config.cache
 /config.h
@@ -19,8 +18,15 @@
 /pam-krb5-*
 /pam_krb5.5
 /stamp-h1
+/tests/portable/asprintf-t
+/tests/portable/mkstemp-t
+/tests/portable/snprintf-t
+/tests/portable/strndup-t
+/tests/runtests
 .deps/
 .dirstamp
 .libs/
+*.a
 *.la
 *.lo
+*.o
