@@ -1,0 +1,12 @@
+The files in this directory provide a shim PAM library that's used for
+testing.  This library and its include files define the minimum amount of
+the PAM module interface so that PAM modules can be tested without such
+problems as needing configuration files in /etc/pam.d or needing changes
+to the system configuration to run a testing PAM module instead of the
+normal system PAM modules.
+
+The goal of this library is that all PAM code should be able to be left
+unchanged and the code just linked with the fakepam library rather than
+the regular PAM library.  The testing code can then call pam_start and
+pam_end as defind in the fakepam/testing.h header file and inspect
+internal PAM state as needed.

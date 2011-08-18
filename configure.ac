@@ -27,7 +27,7 @@ LT_INIT([disable-static])
 dnl Probe for the functionality of the PAM libraries and their include file
 dnl naming.  Mac OS X puts them in pam/* instead of security/*.
 AC_SEARCH_LIBS([pam_set_data], [pam])
-AC_CHECK_FUNCS([pam_modutil_getpwnam])
+AC_CHECK_FUNCS([pam_getenv pam_modutil_getpwnam])
 AC_REPLACE_FUNCS([pam_syslog pam_vsyslog])
 AC_CHECK_HEADERS([security/pam_modutil.h], [],
     [AC_CHECK_HEADERS([pam/pam_modutil.h])])
@@ -81,7 +81,7 @@ AC_CHECK_HEADERS([strings.h sys/bittypes.h])
 AC_CHECK_DECLS([snprintf, vsnprintf])
 AC_TYPE_LONG_LONG_INT
 RRA_FUNC_SNPRINTF
-AC_REPLACE_FUNCS([asprintf issetuidgid mkstemp strndup])
+AC_REPLACE_FUNCS([asprintf issetuidgid mkstemp strlcat strlcpy strndup])
 
 dnl Try to specify the binding so that any references within the PAM module
 dnl are resolved to the functions in that module in preference to any external

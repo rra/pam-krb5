@@ -11,7 +11,8 @@ dnl KRB5_CPPFLAGS, KRB5_LDFLAGS, and KRB5_LIBS.  Also provides
 dnl RRA_LIB_KRB5_SWITCH to set CPPFLAGS, LDFLAGS, and LIBS to include the
 dnl Kerberos libraries, saving the current values first, and
 dnl RRA_LIB_KRB5_RESTORE to restore those settings to before the last
-dnl RRA_LIB_KRB5_SWITCH.
+dnl RRA_LIB_KRB5_SWITCH.  HAVE_KERBEROS will always be defined if RRA_LIB_KRB5
+dnl is used.
 dnl
 dnl If KRB5_CPPFLAGS, KRB5_LDFLAGS, or KRB5_LIBS are set before calling these
 dnl macros, their values will be added to whatever the macros discover.
@@ -238,7 +239,8 @@ AC_DEFUN([RRA_LIB_KRB5],
         [Location of Kerberos v5 libraries])],
     [AS_IF([test x"$withval" != xyes && test x"$withval" != xno],
         [rra_krb5_libdir="$withval"])])
- _RRA_LIB_KRB5_INTERNAL([true])])
+ _RRA_LIB_KRB5_INTERNAL([true])
+ AC_DEFINE([HAVE_KERBEROS], 1, [Define to enable Kerberos features.])])
 
 dnl The main macro for packages with optional Kerberos support.
 AC_DEFUN([RRA_LIB_KRB5_OPTIONAL],

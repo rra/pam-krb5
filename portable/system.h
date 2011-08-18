@@ -98,6 +98,12 @@ extern int issetuidgid(void);
 #if !HAVE_MKSTEMP
 extern int mkstemp(char *);
 #endif
+#if !HAVE_STRLCAT
+extern size_t strlcat(char *, const char *, size_t);
+#endif
+#if !HAVE_STRLCPY
+extern size_t strlcpy(char *, const char *, size_t);
+#endif
 #if !HAVE_STRNDUP
 extern char *strndup(const char *, size_t);
 #endif
