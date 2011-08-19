@@ -392,8 +392,8 @@ main(void)
 
     /* Test for time parsing errors. */
     args->config = config_new();
-    TEST_ERROR("expires=87ft", LOG_ERR,
-               "bad time value in setting: expires=87ft");
+    TEST_ERROR("expires=ft87", LOG_ERR,
+               "bad time value in setting: expires=ft87");
 
     /* Test error reporting from the krb5.conf parser. */
     args->config = config_new();
@@ -413,7 +413,7 @@ main(void)
     status = putil_args_krb5(args, "bad-time", options, optlen);
     ok(status, "Options from krb5.conf (bad-time)");
     asprintf(&expected, "%d invalid time in krb5.conf setting for %s: %s",
-             LOG_ERR, "expires", "87ft");
+             LOG_ERR, "expires", "ft87");
     seen = pam_output();
     is_string(expected, seen, "...and correct error reported");
     free(expected);
