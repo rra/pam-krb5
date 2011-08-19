@@ -345,9 +345,12 @@ parse_options(FILE *script, struct work *work)
             bail("malformed action line near %s", token);
         token = strtok(NULL, "");
         split_options(token, &work->options[type]);
+        free(line);
     }
-    if (line != NULL)
+    if (line != NULL) {
+        free(line);
         rewind_section(script, length);
+    }
 }
 
 
@@ -390,8 +393,10 @@ parse_run(FILE *script)
     }
     if (head == NULL)
         bail("empty run section in script");
-    if (line != NULL)
+    if (line != NULL) {
+        free(line);
         rewind_section(script, length);
+    }
     return head;
 }
 
@@ -515,7 +520,7 @@ parse_script(FILE *script, const char *user)
 void
 run_script(const char *file, const char *user, const char *password)
 {
-    char *path;
+    char *path, *output;
     FILE *script;
     struct work *work;
     struct options *opts;
@@ -560,9 +565,12 @@ run_script(const char *file, const char *user, const char *password)
         }
         is_int(action->status, status, "status for %s", action->name);
     }
-    is_string(work->output, pam_output(), "Output is correct");
+    output = pam_output();
+    is_string(work->output, output, "Output is correct");
+    free(output);
 
     /* Free memory and return. */
+    pam_end(pamh, PAM_SUCCESS);
     action = work->actions;
     while (action != NULL) {
         free(action->name);
@@ -579,4 +587,5 @@ run_script(const char *file, const char *user, const char *password)
     if (work->output)
         free(work->output);
     free(work);
+    free(path);
 }
