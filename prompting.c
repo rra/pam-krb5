@@ -80,17 +80,19 @@ pamk5_get_password(struct pam_args *args, const char *prefix, char **password)
                 goto fail;
         }
     } else {
+        const char *banner;
+        const char *bspace;
+
+        banner = (args->config->banner == NULL) ? "" : args->config->banner;
+        bspace = (args->config->banner == NULL) ? "" : " ";
         if (args->config->expose_account && principal != NULL) {
             retval = asprintf(&prompt, "%s%s%s password for %s: ", prefix,
-                              (args->config->banner == NULL) ? "" : " ",
-                              (args->config->banner == NULL) ? "" : args->config->banner,
-                              principal);
+                              bspace, banner, principal);
             if (retval < 0)
                 goto fail;
         } else {
-            retval = asprintf(&prompt, "%s%s%s password: ", prefix,
-                              (args->config->banner == NULL) ? "" : " ",
-                              (args->config->banner == NULL) ? "" : args->config->banner);
+            retval = asprintf(&prompt, "%s%s%s password: ", prefix, bspace,
+                              banner);
             if (retval < 0)
                 goto fail;
         }
