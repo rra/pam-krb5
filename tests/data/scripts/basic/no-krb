@@ -1,0 +1,6 @@
+# Test account and session behavior with no context.  -*- conf -*-
+
+[run]
+    acct_mgmt     = PAM_IGNORE
+    open_session  = PAM_IGNORE
+    close_session = PAM_SUCCESS

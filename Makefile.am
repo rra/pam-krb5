@@ -11,8 +11,8 @@
 
 ACLOCAL_AMFLAGS = -I m4
 EXTRA_DIST = .gitignore LICENSE autogen pam_krb5.map pam_krb5.pod	\
-	pam_krb5.sym tests/README tests/TESTS tests/fakepam/README	\
-	tests/tap/libtap.sh
+	pam_krb5.sym tests/README tests/TESTS tests/data/scripts	\
+	tests/fakepam/README tests/tap/libtap.sh
 
 # Everything we build needs the Kerbeors headers and library flags.
 AM_CPPFLAGS = $(KRB5_CPPFLAGS)
@@ -68,11 +68,11 @@ warnings:
 	$(MAKE) V=0 CFLAGS='$(WARNINGS)' $(check_PROGRAMS)
 
 # The bits below are for the test suite, not for the main package.
-check_PROGRAMS = tests/runtests tests/pam-util/args-t		\
-	tests/pam-util/fakepam-t tests/pam-util/logging-t	\
-	tests/pam-util/options-t tests/pam-util/vector-t	\
-	tests/portable/asprintf-t tests/portable/mkstemp-t	\
-	tests/portable/snprintf-t tests/portable/strlcat-t	\
+check_PROGRAMS = tests/runtests tests/module/basic-t tests/pam-util/args-t \
+	tests/pam-util/fakepam-t tests/pam-util/logging-t		   \
+	tests/pam-util/options-t tests/pam-util/vector-t		   \
+	tests/portable/asprintf-t tests/portable/mkstemp-t		   \
+	tests/portable/snprintf-t tests/portable/strlcat-t		   \
 	tests/portable/strlcpy-t tests/portable/strndup-t
 tests_runtests_CPPFLAGS = -DSOURCE='"$(abs_top_srcdir)/tests"' \
 	-DBUILD='"$(abs_top_builddir)/tests"'
@@ -83,7 +83,18 @@ tests_fakepam_libfakepam_a_SOURCES = tests/fakepam/data.c	\
 tests_tap_libtap_a_CPPFLAGS = -I$(abs_top_srcdir)/tests $(AM_CPPFLAGS)
 tests_tap_libtap_a_SOURCES = tests/tap/basic.c tests/tap/basic.h
 
+# The list of objects and libraries used for module testing by programs that
+# link with the module with the fake PAM library.
+MODULE_OBJECTS = api-account.lo api-auth.lo api-password.lo api-session.lo \
+	auth.lo cache.lo context.lo options.lo password.lo prompting.lo	   \
+	setcred.lo support.lo pam-util/libpamutil.la			   \
+	tests/fakepam/libfakepam.a
+
 # The test programs themselves.
+tests_module_basic_t_SOURCES = tests/module/basic-t.c tests/module/script.c \
+	tests/module/script.h
+tests_module_basic_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
+	portable/libportable.la $(KRB5_LIBS)
 tests_pam_util_args_t_LDADD = pam-util/libpamutil.la	\
 	tests/fakepam/libfakepam.a tests/tap/libtap.a	\
 	portable/libportable.la $(KRB5_LIBS)
