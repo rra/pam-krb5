@@ -61,6 +61,7 @@ pam_start(const char *service_name, const char *user,
         return PAM_BUF_ERR;
     handle->service = service_name;
     handle->user = user;
+    handle->authtok = NULL;
     handle->conversation = pam_conversation;
     handle->environ = NULL;
     handle->data = NULL;
@@ -106,14 +107,3 @@ pam_modutil_getpwnam(pam_handle_t *pamh UNUSED, const char *name)
     return getpwnam(name);
 }
 #endif
-
-
-/*
- * The following functions are just stubs for right now and always fail.
- */
-int
-pam_get_item(const pam_handle_t *pamh UNUSED, int item UNUSED,
-             PAM_CONST void **data UNUSED)
-{
-    return PAM_SYSTEM_ERR;
-}
