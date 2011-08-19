@@ -86,10 +86,12 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
         pamret = PAM_AUTH_ERR;
         goto done;
     }
-    if (ctx->name != NULL)
-        free(ctx->name);
-    ctx->name = strdup(name);
-    args->user = ctx->name;
+    if (ctx->name != name) {
+        if (ctx->name != NULL)
+            free(ctx->name);
+        ctx->name = strdup(name);
+        args->user = ctx->name;
+    }
 
     /*
      * If we have a ticket cache, then we can apply an additional bit of
