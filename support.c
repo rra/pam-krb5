@@ -42,9 +42,10 @@ pamk5_should_ignore(struct pam_args *args, PAM_CONST char *username)
     }
     if (args->config->minimum_uid > 0 && strchr(username, '@') == NULL) {
         pwd = pam_modutil_getpwnam(args->pamh, username);
-        if (pwd != NULL && pwd->pw_uid < (unsigned long) args->config->minimum_uid) {
+        if (pwd != NULL && pwd->pw_uid < (uid_t) args->config->minimum_uid) {
             putil_debug(args, "ignoring low-UID user (%lu < %ld)",
-                        (unsigned long) pwd->pw_uid, args->config->minimum_uid);
+                        (unsigned long) pwd->pw_uid,
+                        args->config->minimum_uid);
             return 1;
         }
     }
