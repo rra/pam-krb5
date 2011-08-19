@@ -121,6 +121,19 @@ krb5_error_code krb5_get_init_creds_opt_alloc(krb5_context,
 #endif
 
 /*
+ * Old versions of Heimdal (0.7 and earlier) take only nine arguments to the
+ * krb5_get_init_creds_opt_set_pkinit instead of the 11 arguments that current
+ * versions take.  Adjust if needed.  This function is Heimdal-specific.
+ */
+#ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT
+# ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT_9_ARGS
+#  define krb5_get_init_creds_opt_set_pkinit(c, o, p, u, a, l, r, f, m, d, s) \
+    krb5_get_init_creds_opt_set_pkinit((c), (o), (p), (u), (a), (f), (m), \
+                                       (d), (s));
+# endif
+#endif
+
+/*
  * MIT-specific.  Heimdal automatically ignores environment variables if
  * called in a setuid context.
  */

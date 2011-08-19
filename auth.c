@@ -481,17 +481,10 @@ pkinit_auth(struct pam_args *args, const char *service, krb5_creds **creds)
     if (retval != 0)
         return retval;
     set_credential_options(args, opts, service != NULL);
-#ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT_11_ARGS
     retval = krb5_get_init_creds_opt_set_pkinit(ctx->context, opts,
                   ctx->princ, args->config->pkinit_user,
                   args->config->pkinit_anchors, NULL, NULL, 0,
                   pamk5_prompter_krb5, args, NULL);
-#else
-    retval = krb5_get_init_creds_opt_set_pkinit(ctx->context, opts,
-                  ctx->princ, args->config->pkinit_user,
-                  args->config->pkinit_anchors, 0, pamk5_prompter_krb5,
-                  args, NULL);
-#endif
     if (retval != 0)
         goto done;
 
