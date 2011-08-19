@@ -29,7 +29,7 @@
  * Given the PAM arguments and the user we're authenticating, see if we should
  * ignore that user because they're root or have a low-numbered UID and we
  * were configured to ignore such users.  Returns true if we should ignore
- * them, false otherwise.
+ * them, false otherwise.  Ignores any fully-qualified principal names.
  */
 int
 pamk5_should_ignore(struct pam_args *args, PAM_CONST char *username)
@@ -40,7 +40,7 @@ pamk5_should_ignore(struct pam_args *args, PAM_CONST char *username)
         putil_debug(args, "ignoring root user");
         return 1;
     }
-    if (args->config->minimum_uid > 0) {
+    if (args->config->minimum_uid > 0 && strchr(username, '@') == NULL) {
         pwd = pam_modutil_getpwnam(args->pamh, username);
         if (pwd != NULL && pwd->pw_uid < (unsigned long) args->config->minimum_uid) {
             putil_debug(args, "ignoring low-UID user (%lu < %ld)",
