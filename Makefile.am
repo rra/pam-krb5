@@ -68,12 +68,12 @@ warnings:
 	$(MAKE) V=0 CFLAGS='$(WARNINGS)' $(check_PROGRAMS)
 
 # The bits below are for the test suite, not for the main package.
-check_PROGRAMS = tests/pam-util/args-t tests/pam-util/fakepam-t		 \
-	tests/pam-util/logging-t tests/pam-util/options-t		 \
-	tests/pam-util/vector-t tests/runtests tests/portable/asprintf-t \
-	tests/portable/mkstemp-t tests/portable/snprintf-t		 \
-	tests/portable/strlcat-t tests/portable/strlcpy-t		 \
-	tests/portable/strndup-t
+check_PROGRAMS = tests/runtests tests/pam-util/args-t		\
+	tests/pam-util/fakepam-t tests/pam-util/logging-t	\
+	tests/pam-util/options-t tests/pam-util/vector-t	\
+	tests/portable/asprintf-t tests/portable/mkstemp-t	\
+	tests/portable/snprintf-t tests/portable/strlcat-t	\
+	tests/portable/strlcpy-t tests/portable/strndup-t
 tests_runtests_CPPFLAGS = -DSOURCE='"$(abs_top_srcdir)/tests"' \
 	-DBUILD='"$(abs_top_builddir)/tests"'
 check_LIBRARIES = tests/fakepam/libfakepam.a tests/tap/libtap.a
