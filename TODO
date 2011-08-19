@@ -12,9 +12,6 @@ PAM API:
 
 Functionality:
 
- * Add a configuration option to change where the temporary ticket cache
-   is stored.  (PAMKRB-7)
-
  * Find a way to do only PKINIT authentication with no password fallback
    with MIT Kerberos and then change the authentication flow so that both
    Heimdal and MIT use the same logic for attempting PKINIT first and then
@@ -43,26 +40,9 @@ Functionality:
 
 Code Cleanup:
 
- * The PAM option parsing is repetitive code that involves counting the
-   lengths of strings.  It should be possible to replace most of it with
-   some carefully-chosen macros.  (PAMKRB-9)
-
- * The PAM option parsing code could do a binary search on a table of
-   option strings rather than checking each one in turn, although the
-   performance and cleanliness gain may not be worth the effort.
-   (PAMKRB-9)
-
  * The PKINIT code for Heimdal involves too many #ifdefs right now for my
    taste.  Find a way to restructure it to only wrap the main PKINIT
    function for Heimdal.  (PAMKRB-11)
-
- * All of the option parsing code does not deal clealy with failure to
-   allocate memory.  Generally, we just don't set the parameter.  This may
-   not always be safe, or may lead to unexpected behavior.  We should
-   always check memory allocation failures and abort PAM if we see any.
-   Unfortunately, the profile library doesn't return errors on memory
-   allocation failure, which makes this mostly futile until there's a
-   better profile library API.  (PAMKRB-9)
 
  * The current handling of error return codes is a mess.  We need to find
    a way to return a rich set of error codes from the underlying functions
