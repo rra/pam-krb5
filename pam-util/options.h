@@ -57,6 +57,7 @@ struct vector;
 enum type {
     TYPE_BOOLEAN,
     TYPE_NUMBER,
+    TYPE_TIME,
     TYPE_STRING,
     TYPE_LIST,
     TYPE_STRLIST
@@ -78,6 +79,10 @@ enum type {
  * Note that numbers set in the configuration struct created by this interface
  * must be longs, not ints.  There is currently no provision for unsigned
  * numbers.
+ *
+ * Times take their default from defaults.number.  The difference between time
+ * and number is in the parsing of a user-supplied value and the type of the
+ * stored attribute.
  */
 struct option {
     const char *name;
@@ -99,6 +104,7 @@ struct option {
  */
 #define BOOL(def)    TYPE_BOOLEAN, { (def),     0,  NULL,  NULL }
 #define NUMBER(def)  TYPE_NUMBER,  {     0, (def),  NULL,  NULL }
+#define TIME(def)    TYPE_TIME,    {     0, (def),  NULL,  NULL }
 #define STRING(def)  TYPE_STRING,  {     0,     0, (def),  NULL }
 #define LIST(def)    TYPE_LIST,    {     0,     0,  NULL, (def) }
 #define STRLIST(def) TYPE_STRLIST, {     0,     0, (def),  NULL }

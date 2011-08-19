@@ -43,6 +43,11 @@
 struct pam_config {
     struct vector *cells;
     bool debug;
+#ifdef HAVE_KERBEROS
+    krb5_deltat expires;
+#else
+    long expires;
+#endif
     bool ignore_root;
     long minimum_uid;
     char *program;
@@ -54,6 +59,7 @@ struct pam_config {
 struct option options[] = {
     { K(cells),       true,  LIST   (NULL)  },
     { K(debug),       true,  BOOL   (false) },
+    { K(expires),     true,  TIME   (10)    },
     { K(ignore_root), false, BOOL   (true)  },
     { K(minimum_uid), true,  NUMBER (0)     },
     { K(program),     true,  STRING (NULL)  },
@@ -137,12 +143,17 @@ main(void)
     const char *argv_bool[2] = { NULL, NULL };
     const char *argv_err[2] = { NULL, NULL };
     const char *argv_empty[] = { NULL };
-    const char *argv_all[] = {
-        "cells=stanford.edu,ir.stanford.edu", "debug", "ignore_root",
-        "minimum_uid=1000", "program=/bin/true"
-    };
 #ifdef HAVE_KERBEROS
+    const char *argv_all[] = {
+        "cells=stanford.edu,ir.stanford.edu", "debug", "expires=1d",
+        "ignore_root", "minimum_uid=1000", "program=/bin/true"
+    };
     char *krb5conf;
+#else
+    const char *argv_all[] = {
+        "cells=stanford.edu,ir.stanford.edu", "debug", "expires=86400",
+        "ignore_root", "minimum_uid=1000", "program=/bin/true"
+    };
 #endif
 
     if (pam_start("test", NULL, &conv, &pamh) != PAM_SUCCESS)
@@ -151,7 +162,7 @@ main(void)
     if (args == NULL)
         sysbail("cannot create PAM argument struct");
 
-    plan(139);
+    plan(150);
 
     /* First, check just the defaults. */
     args->config = config_new();
@@ -159,6 +170,7 @@ main(void)
     ok(status, "Setting the defaults");
     ok(args->config->cells == NULL, "...cells default");
     is_int(false, args->config->debug, "...debug default");
+    is_int(10, args->config->expires, "...expires default");
     is_int(true, args->config->ignore_root, "...ignore_root default");
     is_int(0, args->config->minimum_uid, "...minimum_uid default");
     ok(args->config->program == NULL, "...program default");
@@ -168,12 +180,13 @@ main(void)
     ok(status, "Parse of empty argv");
     ok(args->config->cells == NULL, "...cells still default");
     is_int(false, args->config->debug, "...debug still default");
+    is_int(10, args->config->expires, "...expires default");
     is_int(true, args->config->ignore_root, "...ignore_root still default");
     is_int(0, args->config->minimum_uid, "...minimum_uid still default");
     ok(args->config->program == NULL, "...program still default");
 
     /* Now, check setting everything. */
-    status = putil_args_parse(args, 5, argv_all, options, optlen);
+    status = putil_args_parse(args, 6, argv_all, options, optlen);
     ok(status, "Parse of full argv");
     ok(args->config->cells != NULL, "...cells is set");
     is_int(2, args->config->cells->count, "...with two cells");
@@ -182,6 +195,7 @@ main(void)
     is_string("ir.stanford.edu", args->config->cells->strings[1],
               "...second is ir.stanford.edu");
     is_int(true, args->config->debug, "...debug is set");
+    is_int(86400, args->config->expires, "...expires is set");
     is_int(true, args->config->ignore_root, "...ignore_root is set");
     is_int(1000, args->config->minimum_uid, "...minimum_uid is set");
     is_string("/bin/true", args->config->program, "...program is set");
@@ -198,7 +212,7 @@ main(void)
     program = strdup("/bin/false");
     if (program == NULL)
         sysbail("cannot allocate memory");
-    options[4].defaults.string = program;
+    options[5].defaults.string = program;
     args->config = config_new();
     status = putil_args_defaults(args, options, optlen);
     ok(status, "Setting defaults with new defaults");
@@ -210,7 +224,7 @@ main(void)
               "...second is bar.com");
     is_string("/bin/false", args->config->program,
               "...program is /bin/false");
-    status = putil_args_parse(args, 5, argv_all, options, optlen);
+    status = putil_args_parse(args, 6, argv_all, options, optlen);
     ok(status, "Parse of full argv after defaults");
     ok(args->config->cells != NULL, "...cells is set");
     is_int(2, args->config->cells->count, "...with two cells");
@@ -219,6 +233,7 @@ main(void)
     is_string("ir.stanford.edu", args->config->cells->strings[1],
               "...second is ir.stanford.edu");
     is_int(true, args->config->debug, "...debug is set");
+    is_int(86400, args->config->expires, "...expires is set");
     is_int(true, args->config->ignore_root, "...ignore_root is set");
     is_int(1000, args->config->minimum_uid, "...minimum_uid is set");
     is_string("/bin/true", args->config->program, "...program is set");
@@ -231,7 +246,7 @@ main(void)
     is_string("bar.com", cells->strings[1], "...second cell after free");
     is_string("/bin/false", program, "...string after free");
     options[0].defaults.list = NULL;
-    options[4].defaults.string = NULL;
+    options[5].defaults.string = NULL;
     vector_free(cells);
     free(program);
 
@@ -253,7 +268,7 @@ main(void)
     options[0].defaults.string = NULL;
 
     /* Should be no errors so far. */
-    ok(pam_output() == NULL, "No errors so far");
+    is_string(NULL, pam_output(), "No errors so far");
 
     /* Test various ways of spelling booleans. */
     args->config = config_new();
@@ -313,6 +328,7 @@ main(void)
     ok(status, "Options from krb5.conf");
     ok(args->config->cells == NULL, "...cells default");
     is_int(true, args->config->debug, "...debug set from krb5.conf");
+    is_int(1800, args->config->expires, "...expires set from krb5.conf");
     is_int(true, args->config->ignore_root, "...ignore_root default");
     is_int(1000, args->config->minimum_uid,
            "...minimum_uid set from krb5.conf");
@@ -338,6 +354,7 @@ main(void)
     is_string("bar.com", args->config->cells->strings[1],
               "...second cell from krb5.conf");
     is_int(true, args->config->debug, "...debug set from krb5.conf");
+    is_int(1800, args->config->expires, "...expires set from krb5.conf");
     is_int(true, args->config->ignore_root, "...ignore_root default");
     is_int(1000, args->config->minimum_uid,
            "...minimum_uid set from krb5.conf");
@@ -357,6 +374,7 @@ main(void)
     is_string("foo.com", args->config->cells->strings[1],
               "...second cell from krb5.conf");
     is_int(true, args->config->debug, "...debug set from krb5.conf");
+    is_int(1800, args->config->expires, "...expires set from krb5.conf");
     is_int(true, args->config->ignore_root, "...ignore_root default");
     is_int(1000, args->config->minimum_uid,
            "...minimum_uid set from krb5.conf");
@@ -372,6 +390,11 @@ main(void)
     config_free(args->config);
     args->config = NULL;
 
+    /* Test for time parsing errors. */
+    args->config = config_new();
+    TEST_ERROR("expires=87ft", LOG_ERR,
+               "bad time value in setting: expires=87ft");
+
     /* Test error reporting from the krb5.conf parser. */
     args->config = config_new();
     status = putil_args_krb5(args, "bad-number", options, optlen);
@@ -384,8 +407,24 @@ main(void)
     free(seen);
     config_free(args->config);
     args->config = NULL;
+
+    /* Test error reporting on times from the krb5.conf parser. */
+    args->config = config_new();
+    status = putil_args_krb5(args, "bad-time", options, optlen);
+    ok(status, "Options from krb5.conf (bad-time)");
+    asprintf(&expected, "%d invalid time in krb5.conf setting for %s: %s",
+             LOG_ERR, "expires", "87ft");
+    seen = pam_output();
+    is_string(expected, seen, "...and correct error reported");
+    free(expected);
+    free(seen);
+    config_free(args->config);
+    args->config = NULL;
+
 #else /* !HAVE_KERBEROS */
-    skip_block(30, "Kerberos support not configured");
+
+    skip_block(37, "Kerberos support not configured");
+
 #endif
 
     putil_args_free(args);
