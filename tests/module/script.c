@@ -116,19 +116,6 @@ skip_whitespace(char *p)
 
 
 /*
- * Given a pointer to a string, find the next whitespace character (or the end
- * of the string) and return a pointer to it.
- */
-static char *
-find_whitespace(char *p)
-{
-    while (*p != '\0' && !isspace((unsigned char)(*p)))
-        p++;
-    return p;
-}
-
-
-/*
  * Read a line from a file into a BUFSIZ buffer, failing if the line was too
  * long to fit into the buffer, and returns a copy of that line in newly
  * allocated memory.  Ignores blank lines and comments.  Caller is responsible
@@ -183,6 +170,8 @@ string_to_status(const char *name)
 {
     size_t i;
 
+    if (name == NULL)
+        bail("no PAM status on line");
     for (i = 0; i < ARRAY_SIZE(RETURNS); i++)
         if (strcmp(name, RETURNS[i].name) == 0)
             return RETURNS[i].status;
@@ -203,7 +192,7 @@ static struct action *
 parse_run(FILE *script)
 {
     struct action *head = NULL, *current, *next;
-    char *line, *start, *end;
+    char *line, *token;
 
     for (line = readline(script); line != NULL; line = readline(script)) {
         next = xmalloc(sizeof(struct action));
@@ -211,21 +200,14 @@ parse_run(FILE *script)
             head = next;
         else
             current->next = next;
-        start = skip_whitespace(line);
-        end = find_whitespace(start);
-        if (*end == '\0')
-            bail("truncated action line: %s", line);
-        *end = '\0';
-        next->name = xstrdup(start);
-        next->call = string_to_call(start);
-        start = skip_whitespace(end + 1);
-        if (*start != '=')
-            bail("malformed action line: %s", start);
-        start = skip_whitespace(start + 1);
-        end = find_whitespace(start);
-        if (*end != '\0')
-            bail("malformed action line: %s", start);
-        next->status = string_to_status(start);
+        token = strtok(line, " ");
+        next->name = xstrdup(token);
+        next->call = string_to_call(token);
+        token = strtok(NULL, " ");
+        if (token == NULL || strcmp(token, "=") != 0)
+            bail("malformed action line near %s", token);
+        token = strtok(NULL, " ");
+        next->status = string_to_status(token);
         free(line);
         current = next;
     }
@@ -244,20 +226,18 @@ static struct work *
 parse_script(FILE *script)
 {
     struct work *work;
-    char *line, *start, *end;
+    char *line, *token;
 
     work = xmalloc(sizeof(struct work));
     work->actions = NULL;
     for (line = readline(script); line != NULL; line = readline(script)) {
-        start = skip_whitespace(line);
-        if (*start != '[')
+        token = strtok(line, " ");
+        if (token[0] != '[')
             bail("line outside of section: %s", line);
-        end = find_whitespace(line);
-        *end = '\0';
-        if (strcmp(start, "[run]") == 0)
+        if (strcmp(token, "[run]") == 0)
             work->actions = parse_run(script);
         else
-            bail("unknown section: %s", start);
+            bail("unknown section: %s", token);
         free(line);
     }
     if (work->actions == NULL)
