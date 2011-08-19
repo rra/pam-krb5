@@ -41,6 +41,7 @@ pam-krb5 4.5 (unreleased)
     * Include strings.h for additional POSIX functions where found.
     * Fix detection of whether PAM uses const on FreeBSD.
     * Update warning flags for make warnings for GCC 4.6.1.
+    * Limit symbol exports even on systems without GNU ld.
 
 pam-krb5 4.4 (2010-12-31)
 

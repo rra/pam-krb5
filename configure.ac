@@ -23,6 +23,8 @@ AC_USE_SYSTEM_EXTENSIONS
 AM_PROG_CC_C_O
 AC_PROG_INSTALL
 LT_INIT([disable-static])
+AC_CANONICAL_HOST
+RRA_LD_VERSION_SCRIPT
 
 dnl Probe for the functionality of the PAM libraries and their include file
 dnl naming.  Mac OS X puts them in pam/* instead of security/*.
@@ -91,14 +93,9 @@ dnl
 dnl Also, if and only if we're on Linux, make sure that all the symbols in the
 dnl module are resolved, try to adjust for the 32-bit vs. 64-bit library
 dnl paths, install into /lib or /lib64 instead of /usr/lib or /usr/lib64 if
-dnl the prefix is /usr, and use a version script to be sure that we hide
-dnl internal functions.  The version script could also be used on Solaris and
-dnl probably other ELF platforms, but the option is only valid with the GNU ld
-dnl and I don't know how to probe for that.
+dnl the prefix is /usr.
 dnl
 dnl More platforms could be handled here.  Contributions welcome.
-MAP='-Wl,--version-script=${srcdir}/pam_krb5.map'
-LD="$CC"
 AS_CASE([$host],
     [*-hpux*],
     [AS_IF([test x"$GCC" = x"yes"],
@@ -106,13 +103,15 @@ AS_CASE([$host],
         [AM_LDFLAGS="-Wl,+vshlibunsats $AM_LDFLAGS"])],
 
     [*-linux*],
-    [AM_LDFLAGS="-Wl,-z,defs -Wl,-Bsymbolic $MAP $AM_LDFLAGS"
+    [AM_LDFLAGS="-Wl,-z,defs -Wl,-Bsymbolic $AM_LDFLAGS"
      AS_IF([test x"${prefix}" = x"/usr"],
         [AS_IF([test x"${libdir}" = x'${exec_prefix}/lib'],
             [RRA_SET_LIBDIR])])],
 
     [*-solaris2*],
-    [AM_LDFLAGS="-Wl,-Bsymbolic $AM_LDFLAGS"])
+    [AS_IF([test x"$GCC" = x"yes"],
+        [AM_LDFLAGS="-Wl,-Bsymbolic $AM_LDFLAGS"],
+        [AM_LDFLAGS="-Wl,-xldscope=symbolic $AM_LDFLAGS"])])
 
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_FILES([Makefile])

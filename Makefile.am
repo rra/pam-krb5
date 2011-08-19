@@ -10,8 +10,9 @@
 # See LICENSE for licensing terms.
 
 ACLOCAL_AMFLAGS = -I m4
-EXTRA_DIST = .gitignore LICENSE autogen pam_krb5.map pam_krb5.pod	  \
-	tests/README tests/TESTS tests/fakepam/README tests/tap/libtap.sh
+EXTRA_DIST = .gitignore LICENSE autogen pam_krb5.map pam_krb5.pod	\
+	pam_krb5.sym tests/README tests/TESTS tests/fakepam/README	\
+	tests/tap/libtap.sh
 
 # Everything we build needs the Kerbeors headers and library flags.
 AM_CPPFLAGS = $(KRB5_CPPFLAGS)
@@ -26,12 +27,19 @@ pam_util_libpamutil_la_SOURCES = pam-util/args.c pam-util/args.h	\
 	pam-util/logging.c pam-util/logging.h pam-util/options.c	\
 	pam-util/options.h pam-util/vector.c pam-util/vector.h
 
+if HAVE_LD_VERSION_SCRIPT
+    VERSION_LDFLAGS = -Wl,--version-script=${srcdir}/pam_krb5.map
+else
+    VERSION_LDFLAGS = -export-symbols ${srcdir}/pam_krb5.sym
+endif
+
 pamdir = $(libdir)/security
 pam_LTLIBRARIES = pam_krb5.la
 pam_krb5_la_SOURCES = api-account.c api-auth.c api-password.c api-session.c \
 	auth.c cache.c context.c internal.h options.c password.c	    \
 	prompting.c setcred.c support.c
-pam_krb5_la_LDFLAGS = -module -shared -avoid-version $(AM_LDFLAGS)
+pam_krb5_la_LDFLAGS = -module -shared -avoid-version $(VERSION_LDFLAGS) \
+	$(AM_LDFLAGS)
 pam_krb5_la_LIBADD = pam-util/libpamutil.la portable/libportable.la \
 	$(KRB5_LIBS)
 dist_man_MANS = pam_krb5.5
