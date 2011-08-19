@@ -23,12 +23,6 @@
 #include <pam-util/args.h>
 #include <pam-util/logging.h>
 
-/* Solaris doesn't have these. */
-#ifndef PAM_CONV_AGAIN
-# define PAM_CONV_AGAIN 0
-# define PAM_INCOMPLETE PAM_SERVICE_ERR
-#endif
-
 
 /*
  * Create a new context and populate it with the user from PAM and a new

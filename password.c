@@ -21,11 +21,6 @@
 #include <pam-util/args.h>
 #include <pam-util/logging.h>
 
-/* Solaris 8 has deficient PAM. */
-#ifndef PAM_AUTHTOK_RECOVER_ERR
-# define PAM_AUTHTOK_RECOVER_ERR PAM_AUTHTOK_ERR
-#endif
-
 
 /*
  * Get the new password.  Store it in PAM_AUTHTOK if we obtain it and verify
