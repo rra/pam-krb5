@@ -114,6 +114,7 @@ parse_name(struct pam_args *args)
         }
         free(ctx->name);
         ctx->name = user;
+        args->user = user;
     }
     return k5_errno;
 }
