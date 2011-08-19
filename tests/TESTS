@@ -1,3 +1,4 @@
+module/basic
 pam-util/args
 pam-util/fakepam
 pam-util/logging
