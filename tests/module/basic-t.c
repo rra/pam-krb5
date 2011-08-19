@@ -22,7 +22,7 @@ main(void)
 {
     plan(4);
 
-    run_script("data/scripts/basic/no-krb");
+    run_script("data/scripts/basic/no-krb", NULL, NULL);
 
     return 0;
 }

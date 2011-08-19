@@ -22,10 +22,11 @@ BEGIN_DECLS
 
 /*
  * Given the file name of an interaction script (which may be a full path or
- * relative to SOURCE or BUILD), run that script, reporting the results via
- * the TAP format.
+ * relative to SOURCE or BUILD), an optional user that may be NULL, and an
+ * optional password that may be NULL, run that script, reporting the results
+ * via the TAP format.
  */
-void run_script(const char *);
+void run_script(const char *file, const char *user, const char *password);
 
 END_DECLS
 

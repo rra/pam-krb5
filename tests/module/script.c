@@ -18,7 +18,7 @@
 #include <portable/system.h>
 
 #include <ctype.h>
-#include <pwd.h>
+#include <syslog.h>
 
 #include <tests/fakepam/testing.h>
 #include <tests/module/script.h>
@@ -30,6 +30,20 @@
 /* The type of a PAM module call. */
 typedef int (*pam_call)(pam_handle_t *, int, int, const char **);
 
+/* The possible PAM groups as element numbers in an array of options. */
+enum group_type {
+    GROUP_ACCOUNT  = 0,
+    GROUP_AUTH     = 1,
+    GROUP_PASSWORD = 2,
+    GROUP_SESSION  = 3,
+};
+
+/* Holds a PAM argc and argv. */
+struct options {
+    char **argv;
+    int argc;
+};
+
 /*
  * Holds a linked list of actions: a PAM call that should return some
  * status.
@@ -37,6 +51,7 @@ typedef int (*pam_call)(pam_handle_t *, int, int, const char **);
 struct action {
     char *name;
     pam_call call;
+    enum group_type group;
     int status;
     struct action *next;
 };
@@ -46,17 +61,34 @@ struct action {
  * contains only a linked list of actions.
  */
 struct work {
+    struct options options[4];
     struct action *actions;
+    char *output;
 };
 
-/* Mapping of strings to PAM call constants. */
+/* Mapping of strings to PAM function pointers and group numbers. */
 static const struct {
     const char *name;
     pam_call call;
+    enum group_type group;
 } CALLS[] = {
-    { "acct_mgmt",     pam_sm_acct_mgmt     },
-    { "open_session",  pam_sm_open_session  },
-    { "close_session", pam_sm_close_session },
+    { "acct_mgmt",     pam_sm_acct_mgmt,     GROUP_ACCOUNT  },
+    { "authenticate",  pam_sm_authenticate,  GROUP_AUTH     },
+    { "setcred",       pam_sm_setcred,       GROUP_AUTH     },
+    { "chauthtok",     pam_sm_chauthtok,     GROUP_PASSWORD },
+    { "open_session",  pam_sm_open_session,  GROUP_SESSION  },
+    { "close_session", pam_sm_close_session, GROUP_SESSION  },
+};
+
+/* Mapping of strings to PAM groups. */
+static const struct {
+    const char *name;
+    enum group_type group;
+} GROUPS[] = {
+    { "account",  GROUP_ACCOUNT  },
+    { "auth",     GROUP_AUTH     },
+    { "password", GROUP_PASSWORD },
+    { "session",  GROUP_SESSION  },
 };
 
 /* Mapping of strings to PAM return values. */
@@ -66,6 +98,18 @@ static const struct {
 } RETURNS[] = {
     { "PAM_IGNORE",  PAM_IGNORE  },
     { "PAM_SUCCESS", PAM_SUCCESS },
+};
+
+/* Mappings of strings to syslog priorities. */
+static const struct {
+    const char *name;
+    int priority;
+} PRIORITIES[] = {
+    { "DEBUG",  LOG_DEBUG  },
+    { "INFO",   LOG_INFO   },
+    { "NOTICE", LOG_NOTICE },
+    { "ERR",    LOG_ERR    },
+    { "CRIT",   LOG_CRIT   },
 };
 
 
@@ -80,6 +124,19 @@ xmalloc(size_t size)
     p = malloc(size);
     if (p == NULL)
         sysbail("failed to malloc %lu", (unsigned long) size);
+    return p;
+}
+
+
+/*
+ * Reallocate memory, reporting a fatal error and exiting on failure.
+ */
+static void *
+xrealloc(void *p, size_t size)
+{
+    p = realloc(p, size);
+    if (p == NULL)
+        sysbail("failed to realloc %lu bytes", (unsigned long) size);
     return p;
 }
 
@@ -147,17 +204,53 @@ readline(FILE *file)
 /*
  * Given the name of a PAM call, map it to a call enum.  This is used later in
  * switch statements to determine which function to call.  Fails on any
- * unrecognized string.
+ * unrecognized string.  If the optional second argument is not NULL, also
+ * store the group number in that argument.
  */
 static pam_call
-string_to_call(const char *name)
+string_to_call(const char *name, enum group_type *group)
 {
     size_t i;
 
     for (i = 0; i < ARRAY_SIZE(CALLS); i++)
-        if (strcmp(name, CALLS[i].name) == 0)
+        if (strcmp(name, CALLS[i].name) == 0) {
+            if (group != NULL)
+                *group = CALLS[i].group;
             return CALLS[i].call;
+        }
     bail("unrecognized PAM call %s", name);
+}
+
+
+/*
+ * Given a PAM group name, map it to the array index for the options array for
+ * that group.  Fails on any unrecognized string.
+ */
+static enum group_type
+string_to_group(const char *name)
+{
+    size_t i;
+
+    for (i = 0; i < ARRAY_SIZE(GROUPS); i++)
+        if (strcmp(name, GROUPS[i].name) == 0)
+            return GROUPS[i].group;
+    bail("unrecognized PAM group %s", name);
+}
+
+
+/*
+ * Given a syslog priority name, map it to the numeric value of that priority.
+ * Fails on any unrecognized string.
+ */
+static int
+string_to_priority(const char *name)
+{
+    size_t i;
+
+    for (i = 0; i < ARRAY_SIZE(PRIORITIES); i++)
+        if (strcmp(name, PRIORITIES[i].name) == 0)
+            return PRIORITIES[i].priority;
+    bail("unrecognized syslog priority %s", name);
 }
 
 
@@ -180,6 +273,85 @@ string_to_status(const char *name)
 
 
 /*
+ * We found a section delimiter while parsing another section.  Rewind our
+ * input file back before the section delimiter so that we'll read it again.
+ * Takes the length of the line we read, which is used to determine how far to
+ * rewind.
+ */
+static void
+rewind_section(FILE *script, size_t length)
+{
+    if (fseek(script, -length - 1, SEEK_CUR) != 0)
+        sysbail("cannot rewind file");
+}
+
+
+/*
+ * Given a whitespace-delimited string of PAM options, split it into an argv
+ * array and argc count and store it in the provided option struct.
+ */
+static void
+split_options(char *string, struct options *options)
+{
+    char *opt;
+    size_t size;
+
+    for (opt = strtok(string, " "); opt != NULL; opt = strtok(NULL, " ")) {
+        if (options->argv == NULL) {
+            options->argv = xmalloc(sizeof(const char *) * 2);
+            options->argv[0] = xstrdup(opt);
+            options->argv[1] = NULL;
+            options->argc = 1;
+        } else {
+            size = sizeof(const char *) * (options->argc + 2);
+            options->argv = xrealloc(options->argv, size);
+            options->argv[options->argc] = xstrdup(opt);
+            options->argv[options->argc + 1] = NULL;
+            options->argc++;
+        }
+    }
+}
+
+
+/*
+ * Parse the options section of a PAM script.  This consists of one or more
+ * lines in the format:
+ *
+ *     <group> = <options>
+ *
+ * where options are either option names or option=value pairs, where the
+ * value may not contain whitespace.  Returns an options struct, which stores
+ * argc and argv values for each group.
+ *
+ * Takes the work struct as an argument and puts values into its array.
+ */
+static void
+parse_options(FILE *script, struct work *work)
+{
+    char *line, *group, *token;
+    size_t length;
+    enum group_type type;
+
+    for (line = readline(script); line != NULL; line = readline(script)) {
+        length = strlen(line);
+        group = strtok(line, " ");
+        if (group == NULL)
+            bail("malformed script line");
+        if (group[0] == '[')
+            break;
+        type = string_to_group(group);
+        token = strtok(NULL, " ");
+        if (token == NULL || strcmp(token, "=") != 0)
+            bail("malformed action line near %s", token);
+        token = strtok(NULL, "");
+        split_options(token, &work->options[type]);
+    }
+    if (line != NULL)
+        rewind_section(script, length);
+}
+
+
+/*
  * Parse the run section of a PAM script.  This consists of one or more lines
  * in the format:
  *
@@ -193,16 +365,21 @@ parse_run(FILE *script)
 {
     struct action *head = NULL, *current, *next;
     char *line, *token;
+    size_t length;
 
     for (line = readline(script); line != NULL; line = readline(script)) {
+        length = strlen(line);
+        token = strtok(line, " ");
+        if (token[0] == '[')
+            break;
         next = xmalloc(sizeof(struct action));
+        next->next = NULL;
         if (head == NULL)
             head = next;
         else
             current->next = next;
-        token = strtok(line, " ");
         next->name = xstrdup(token);
-        next->call = string_to_call(token);
+        next->call = string_to_call(token, &next->group);
         token = strtok(NULL, " ");
         if (token == NULL || strcmp(token, "=") != 0)
             bail("malformed action line near %s", token);
@@ -213,7 +390,85 @@ parse_run(FILE *script)
     }
     if (head == NULL)
         bail("empty run section in script");
+    if (line != NULL)
+        rewind_section(script, length);
     return head;
+}
+
+
+/*
+ * Parse the output section of a PAM script.  This consists of zero or more
+ * lines in the format:
+ *
+ *     PRIORITY some output information
+ *
+ * where PRIORITY is replaced by the numeric syslog priority corresponding to
+ * that priority and the rest of the output is used as-is except for the
+ * following substitutions:
+ *
+ *     %u full user as passed to this function
+ *
+ * Returns the accumulated output as a single string.
+ */
+static char *
+parse_output(FILE *script, const char *user)
+{
+    char *line, *token, *piece, *p, *out;
+    char *output = NULL;
+    size_t length;
+    size_t total = 0;
+    int priority;
+
+    for (line = readline(script); line != NULL; line = readline(script)) {
+        token = strtok(line, " ");
+        priority = string_to_priority(token);
+        if (asprintf(&piece, "%d ", priority) < 0)
+            sysbail("asprintf failed");
+        output = xrealloc(output, total + strlen(piece));
+        memcpy(output + total, piece, strlen(piece));
+        total += strlen(piece);
+        free(piece);
+        token = strtok(NULL, "");
+        if (token == NULL)
+            bail("malformed line %s", line);
+        length = 0;
+        for (p = token; *p != '\0'; p++) {
+            if (*p != '%')
+                length++;
+            else {
+                p++;
+                switch (*p) {
+                case 'u':
+                    length += strlen(user);
+                    break;
+                default:
+                    length++;
+                    break;
+                }
+            }
+        }
+        output = xrealloc(output, total + length + 1);
+        for (p = token, out = output + total; *p != '\0'; p++) {
+            if (*p != '%')
+                *out++ = *p;
+            else {
+                p++;
+                switch (*p) {
+                case 'u':
+                    memcpy(out, user, strlen(user));
+                    out += strlen(user);
+                    break;
+                default:
+                    *out++ = *p;
+                    break;
+                }
+            }
+        }
+        *out = '\0';
+        total += out - output;
+        free(line);
+    }
+    return output;
 }
 
 
@@ -223,19 +478,24 @@ parse_run(FILE *script)
  * total work to do as a work struct.
  */
 static struct work *
-parse_script(FILE *script)
+parse_script(FILE *script, const char *user)
 {
     struct work *work;
     char *line, *token;
 
     work = xmalloc(sizeof(struct work));
+    memset(work, 0, sizeof(struct work));
     work->actions = NULL;
     for (line = readline(script); line != NULL; line = readline(script)) {
         token = strtok(line, " ");
         if (token[0] != '[')
             bail("line outside of section: %s", line);
-        if (strcmp(token, "[run]") == 0)
+        if (strcmp(token, "[options]") == 0)
+            parse_options(script, work);
+        else if (strcmp(token, "[run]") == 0)
             work->actions = parse_run(script);
+        else if (strcmp(token, "[output]") == 0)
+            work->output = parse_output(script, user);
         else
             bail("unknown section: %s", token);
         free(line);
@@ -248,19 +508,22 @@ parse_script(FILE *script)
 
 /*
  * The core of the work.  Given the path to a PAM interaction script, which
- * may be relative to SOURCE or BUILD, run that script, outputing the results
- * in TAP format.
+ * may be relative to SOURCE or BUILD, the user (may be NULL), and the stored
+ * password (may be NULL), run that script, outputing the results in TAP
+ * format.
  */
 void
-run_script(const char *file)
+run_script(const char *file, const char *user, const char *password)
 {
     char *path;
     FILE *script;
     struct work *work;
+    struct options *opts;
     struct action *action, *oaction;
     struct pam_conv conv = { NULL, NULL };
     pam_handle_t *pamh;
     int status;
+    size_t i, j;
     const char *argv_empty[] = { NULL };
 
     /* Open and parse the script. */
@@ -274,20 +537,30 @@ run_script(const char *file)
     script = fopen(path, "r");
     if (script == NULL)
         sysbail("cannot open %s", path);
-    work = parse_script(script);
+    work = parse_script(script, user);
     diag("Starting %s", file);
 
     /* Initialize PAM. */
-    status = pam_start("test", "testuser", &conv, &pamh);
+    if (user == NULL)
+        user = "testuser";
+    status = pam_start("test", user, &conv, &pamh);
     if (status != PAM_SUCCESS)
         sysbail("cannot create PAM handle");
+    if (password != NULL)
+        pamh->authtok = password;
 
     /* Run the actions and check their return status. */
     for (action = work->actions; action != NULL; action = action->next) {
-        status = (*action->call)(pamh, 0, 0, argv_empty);
+        if (work->options[action->group].argv == NULL)
+            status = (*action->call)(pamh, 0, 0, argv_empty);
+        else {
+            opts = &work->options[action->group];
+            status = (*action->call)(pamh, 0, opts->argc,
+                                     (const char **) opts->argv);
+        }
         is_int(action->status, status, "status for %s", action->name);
     }
-    is_string(NULL, pam_output(), "No output");
+    is_string(work->output, pam_output(), "Output is correct");
 
     /* Free memory and return. */
     action = work->actions;
@@ -297,5 +570,13 @@ run_script(const char *file)
         action = action->next;
         free(oaction);
     }
+    for (i = 0; i < ARRAY_SIZE(work->options); i++)
+        if (work->options[i].argv != NULL) {
+            for (j = 0; work->options[i].argv[j] != NULL; j++)
+                free(work->options[i].argv[j]);
+            free(work->options[i].argv);
+        }
+    if (work->output)
+        free(work->output);
     free(work);
 }

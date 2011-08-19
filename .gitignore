@@ -18,7 +18,9 @@
 /pam-krb5-*
 /pam_krb5.5
 /stamp-h1
+/tests/config/password
 /tests/module/basic-t
+/tests/module/general-t
 /tests/pam-util/args-t
 /tests/pam-util/fakepam-t
 /tests/pam-util/logging-t
