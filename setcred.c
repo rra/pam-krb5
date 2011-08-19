@@ -229,9 +229,7 @@ create_session_context(struct pam_args *args)
     return PAM_SUCCESS;
 
 fail:
-    if (args->config->ctx != NULL)
-        pamk5_context_free(args->config->ctx);
-    args->config->ctx = NULL;
+    pamk5_context_free(args);
     return pamret;
 }
 
@@ -248,6 +246,7 @@ pamk5_setcred(struct pam_args *args, int refresh)
     struct context *ctx = NULL;
     krb5_ccache cache = NULL;
     char *cache_name = NULL;
+    bool set_context = false;
     int status = 0;
     int pamret;
     struct passwd *pw = NULL;
@@ -271,6 +270,7 @@ pamk5_setcred(struct pam_args *args, int refresh)
         pamret = create_session_context(args);
         if (args->config->ctx == NULL)
             goto done;
+        set_context = true;
     }
     ctx = args->config->ctx;
 
@@ -463,5 +463,10 @@ done:
         krb5_cc_destroy(ctx->context, cache);
     if (cache_name != NULL)
         free(cache_name);
+
+    /* If we stored our Kerberos context in PAM data, don't free it. */
+    if (set_context)
+        args->ctx = NULL;
+
     return pamret;
 }

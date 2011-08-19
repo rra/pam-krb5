@@ -73,8 +73,8 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
     /*
      * Re-retrieve the user rather than trusting our context; it's conceivable
-     * the application could have changed it.  We have to cast &name to void *
-     * due to C's broken type system.
+     * the application could have changed it.  We have to cast &name due to
+     * C's broken type system.
      *
      * Use pam_get_item rather than pam_get_user here since the user should be
      * set by the time we get to this point.  If we would have to prompt for a
@@ -89,6 +89,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
     if (ctx->name != NULL)
         free(ctx->name);
     ctx->name = strdup(name);
+    args->user = ctx->name;
 
     /*
      * If we have a ticket cache, then we can apply an additional bit of

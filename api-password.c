@@ -36,6 +36,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
     int status;
     PAM_CONST char *user;
     char *pass = NULL;
+    bool set_context = false;
 
     args = pamk5_init(pamh, flags, argc, argv);
     if (args == NULL) {
@@ -98,6 +99,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
             pamret = PAM_AUTHTOK_ERR;
             goto done;
         }
+        set_context = true;
     }
     ctx = args->config->ctx;
 
@@ -149,6 +151,14 @@ done:
         memset(pass, 0, strlen(pass));
         free(pass);
     }
+
+    /*
+     * Don't free our Kerberos context if we set a context, since the context
+     * will take care of that.
+     */
+    if (set_context)
+        args->ctx = NULL;
+
     pamk5_free(args);
     return pamret;
 }

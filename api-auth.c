@@ -169,7 +169,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     pamret = pam_set_data(pamh, "pam_krb5", ctx, pamk5_context_destroy);
     if (pamret != PAM_SUCCESS) {
         putil_err_pam(args, pamret, "cannot set context data");
-        pamk5_context_free(ctx);
+        pamk5_context_free(args);
         pamret = PAM_SERVICE_ERR;
         goto done;
     }
@@ -191,6 +191,13 @@ done:
     EXIT(args, pamret);
 
     /*
+     * Don't free our Kerberos context if we set a context, since the context
+     * will take care of that.
+     */
+    if (set_context)
+        args->ctx = NULL;
+
+    /*
      * Clear the context on failure so that the account management module
      * knows that we didn't authenticate with Kerberos.  Only clear the
      * context if we set it.  Otherwise, we may be blowing away the context of
@@ -200,7 +207,7 @@ done:
         if (set_context)
             pam_set_data(pamh, "pam_krb5", NULL, NULL);
         else
-            pamk5_context_free(ctx);
+            pamk5_context_free(args);
     }
     pamk5_free(args);
     return pamret;
@@ -233,8 +240,6 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
         pamret = pam_set_data(pamh, "pam_krb5", NULL, NULL);
         if (pamret != PAM_SUCCESS)
             putil_err_pam(args, pamret, "cannot clear context data");
-        args->config->ctx = NULL;
-        args->user = NULL;
         goto done;
     }
 

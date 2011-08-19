@@ -173,7 +173,7 @@ int pamk5_should_ignore(struct pam_args *, PAM_CONST char *);
 /* Context management. */
 int pamk5_context_new(struct pam_args *);
 int pamk5_context_fetch(struct pam_args *);
-void pamk5_context_free(struct context *);
+void pamk5_context_free(struct pam_args *);
 void pamk5_context_destroy(pam_handle_t *, void *data, int pam_end_status);
 
 /* Get and set environment variables for the ticket cache. */

@@ -25,7 +25,7 @@
 
 
 /*
- * Create a new context and populate it with the user from PAM and a new
+ * Create a new context and populate it with the user from PAM and the current
  * Kerberos context.  Set the default realm if one was configured.
  */
 int
@@ -43,6 +43,7 @@ pamk5_context_new(struct pam_args *args)
     ctx->cache = NULL;
     ctx->princ = NULL;
     ctx->creds = NULL;
+    ctx->context = args->ctx;
     args->config->ctx = ctx;
 
     /*
@@ -59,15 +60,6 @@ pamk5_context_new(struct pam_args *args)
     }
     ctx->name = strdup(name);
     args->user = ctx->name;
-    if (issetuidgid())
-        retval = krb5_init_secure_context(&ctx->context);
-    else
-        retval = krb5_init_context(&ctx->context);
-    if (retval != 0) {
-        putil_err_krb5(args, retval, "krb5_init_context failed");
-        retval = PAM_SERVICE_ERR;
-        goto done;
-    }
 
     /* Set a default realm if one was configured. */
     if (args->realm != NULL) {
@@ -80,10 +72,8 @@ pamk5_context_new(struct pam_args *args)
     }
 
 done:
-    if (ctx != NULL && retval != PAM_SUCCESS) {
-        pamk5_context_free(ctx);
-        args->config->ctx = NULL;
-    }
+    if (ctx != NULL && retval != PAM_SUCCESS)
+        pamk5_context_free(args);
     return retval;
 }
 
@@ -112,15 +102,18 @@ pamk5_context_fetch(struct pam_args *args)
  * Free a context and all of the data that's stored in it.  Normally this also
  * includes destroying the ticket cache, but don't do this (just close it) if
  * a flag was set to preserve it.
+ *
+ * This function is common code between pamk5_context_free (called internally
+ * by our code) and pamk5_context_destroy (called by PAM as a data callback).
  */
-void
-pamk5_context_free(struct context *ctx)
+static void
+context_free(struct context *ctx)
 {
     if (ctx == NULL)
         return;
+    if (ctx->name != NULL)
+        free(ctx->name);
     if (ctx->context != NULL) {
-        if (ctx->name != NULL)
-            free(ctx->name);
         if (ctx->princ != NULL)
             krb5_free_principal(ctx->context, ctx->princ);
         if (ctx->cache != NULL) {
@@ -140,9 +133,28 @@ pamk5_context_free(struct context *ctx)
 
 
 /*
+ * Free the current context, used internally by pam-krb5 code.  This is a
+ * wrapper around context_free that makes sure we don't destroy the Kerberos
+ * context if it's the same as the top-level context and handles other
+ * bookkeeping in the top-level pam_args struct.
+ */
+void
+pamk5_context_free(struct pam_args *args)
+{
+    if (args->config->ctx == NULL)
+        return;
+    if (args->ctx == args->config->ctx->context)
+        args->config->ctx->context = NULL;
+    if (args->user == args->config->ctx->name)
+        args->user = NULL;
+    context_free(args->config->ctx);
+    args->config->ctx = NULL;
+}
+
+
+/*
  * The PAM callback to destroy the context stored in the PAM data structures.
- * Just does the necessary conversion of arguments and calls
- * pamk5_context_free.
+ * Just does the necessary conversion of arguments and calls context_free.
  */
 void
 pamk5_context_destroy(pam_handle_t *pamh UNUSED, void *data,
@@ -151,5 +163,5 @@ pamk5_context_destroy(pam_handle_t *pamh UNUSED, void *data,
     struct context *ctx = (struct context *) data;
 
     if (ctx != NULL)
-        pamk5_context_free(ctx);
+        context_free(ctx);
 }
