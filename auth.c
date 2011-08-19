@@ -192,10 +192,8 @@ set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
         if (config->renew_lifetime != 0)
             krb5_get_init_creds_opt_set_renew_life(opts,
                                                    config->renew_lifetime);
-#ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_CHANGE_PASSWORD_PROMPT
         krb5_get_init_creds_opt_set_change_password_prompt(opts,
             (config->defer_pwchange || config->fail_pwchange) ? 0 : 1);
-#endif
     } else {
         krb5_get_init_creds_opt_set_forwardable(opts, 0);
         krb5_get_init_creds_opt_set_proxiable(opts, 0);

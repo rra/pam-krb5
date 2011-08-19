@@ -110,9 +110,14 @@ krb5_error_code krb5_get_init_creds_opt_alloc(krb5_context,
 # define krb5_get_init_creds_opt_free(c, o) free(o)
 #endif
 
+/* MIT-specific. */
+#ifndef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_CHANGE_PASSWORD_PROMPT
+# define krb5_get_init_creds_opt_set_change_password_prompt(o, f) /* empty */
+#endif
+
 /* Heimdal-specific. */
 #ifndef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_DEFAULT_FLAGS
-#define krb5_get_init_creds_opt_set_default_flags(c, p, r, o) /* empty */
+# define krb5_get_init_creds_opt_set_default_flags(c, p, r, o) /* empty */
 #endif
 
 /*
