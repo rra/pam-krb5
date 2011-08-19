@@ -27,54 +27,43 @@
 #include <pam-util/options.h>
 #include <pam-util/vector.h>
 
-/* Our option definition.  Sort by documentation order. */
+/* Our option definition.  Must be sorted. */
 #define K(name) (#name), offsetof(struct pam_config, name)
 static const struct option options[] = {
-    /* Authorization. */
     { K(alt_auth_map),       true,  STRING (NULL)  },
-    { K(force_alt_auth),     true,  BOOL   (false) },
-    { K(ignore_k5login),     true,  BOOL   (false) },
-    { K(ignore_root),        true,  BOOL   (false) },
-    { K(minimum_uid),        true,  NUMBER (0)     },
-    { K(only_alt_auth),      true,  BOOL   (false) },
-    { K(search_k5login),     true,  BOOL   (false) },
-
-    /* Kerberos behavior. */
-    { K(fast_ccache),        true,  STRING (NULL)  },
-    { K(forwardable),        true,  BOOL   (false) },
-    { K(keytab),             true,  STRING (NULL)  },
-    { K(renew_lifetime),     true,  TIME   (0)     },
-    { K(ticket_lifetime),    true,  TIME   (0)     },
-
-    /* PAM behavior. */
+    { K(banner),             true,  STRING ("Kerberos") },
+    { K(ccache),             true,  STRING (NULL)  },
+    { K(ccache_dir),         true,  STRING ("FILE:/tmp") },
     { K(clear_on_fail),      true,  BOOL   (false) },
     { K(debug),              true,  BOOL   (false) },
     { K(defer_pwchange),     true,  BOOL   (false) },
+    { K(expose_account),     true,  BOOL   (false) },
     { K(fail_pwchange),      true,  BOOL   (false) },
+    { K(fast_ccache),        true,  STRING (NULL)  },
+    { K(force_alt_auth),     true,  BOOL   (false) },
+    { K(force_first_pass),   false, BOOL   (false) },
     { K(force_pwchange),     true,  BOOL   (false) },
-
-    /* PKINIT. */
+    { K(forwardable),        true,  BOOL   (false) },
+    { K(ignore_k5login),     true,  BOOL   (false) },
+    { K(ignore_root),        true,  BOOL   (false) },
+    { K(keytab),             true,  STRING (NULL)  },
+    { K(minimum_uid),        true,  NUMBER (0)     },
+    { K(no_ccache),          false, BOOL   (false) },
+    { K(only_alt_auth),      true,  BOOL   (false) },
     { K(pkinit_anchors),     true,  STRING (NULL)  },
     { K(pkinit_prompt),      true,  BOOL   (false) },
     { K(pkinit_user),        true,  STRING (NULL)  },
     { K(preauth_opt),        true,  LIST   (NULL)  },
-    { K(try_pkinit),         true,  BOOL   (false) },
-    { K(use_pkinit),         true,  BOOL   (false) },
-
-    /* Prompting. */
-    { K(banner),             true,  STRING ("Kerberos") },
-    { K(expose_account),     true,  BOOL   (false) },
-    { K(force_first_pass),   false, BOOL   (false) },
     { K(prompt_principal),   true,  BOOL   (false) },
+    { K(renew_lifetime),     true,  TIME   (0)     },
+    { K(retain_after_close), true,  BOOL   (false) },
+    { K(search_k5login),     true,  BOOL   (false) },
+    { K(ticket_lifetime),    true,  TIME   (0)     },
     { K(try_first_pass),     false, BOOL   (false) },
+    { K(try_pkinit),         true,  BOOL   (false) },
     { K(use_authtok),        false, BOOL   (false) },
     { K(use_first_pass),     false, BOOL   (false) },
-
-    /* Ticket caches. */
-    { K(ccache),             true,  STRING (NULL)  },
-    { K(ccache_dir),         true,  STRING ("FILE:/tmp") },
-    { K(no_ccache),          false, BOOL   (false) },
-    { K(retain_after_close), true,  BOOL   (false) },
+    { K(use_pkinit),         true,  BOOL   (false) },
 };
 static const size_t optlen = sizeof(options) / sizeof(options[0]);
 
