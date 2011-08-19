@@ -132,13 +132,13 @@ change_password(struct pam_args *args, const char *pass)
         goto done;
     }
     if (result_code != 0) {
-        char *message;
+        char *output;
         int status;
 
         putil_debug(args, "krb5_change_password: %s",
                     (char *) result_code_string.data);
         retval = PAM_AUTHTOK_ERR;
-        status = asprintf(&message, "%.*s%s%.*s",
+        status = asprintf(&output, "%.*s%s%.*s",
                           (int) result_code_string.length,
                           (char *) result_code_string.data,
                           result_string.length == 0 ? "" : ": ",
@@ -147,8 +147,8 @@ change_password(struct pam_args *args, const char *pass)
         if (status < 0)
             putil_crit(args, "asprintf failed: %s", strerror(errno));
         else {
-            pamk5_conv(args, message, PAM_ERROR_MSG, NULL);
-            free(message);
+            pamk5_conv(args, output, PAM_ERROR_MSG, NULL);
+            free(output);
         }
     }
     krb5_free_data_contents(ctx->context, &result_string);

@@ -40,6 +40,7 @@ pam-krb5 4.5 (unreleased)
     * Add notices to all files copied over from rra-c-util.
     * Include strings.h for additional POSIX functions where found.
     * Fix detection of whether PAM uses const on FreeBSD.
+    * Update warning flags for make warnings for GCC 4.6.1.
 
 pam-krb5 4.4 (2010-12-31)
 
