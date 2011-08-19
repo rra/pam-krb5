@@ -611,7 +611,7 @@ pamk5_password_auth(struct pam_args *args, const char *service,
     }
 
     /* Log the principal we're attempting to authenticate as. */
-    if (args->config->debug && !args->config->search_k5login) {
+    if (args->debug && !args->config->search_k5login) {
         char *principal;
 
         retval = krb5_unparse_name(ctx->context, ctx->princ, &principal);
