@@ -455,7 +455,7 @@ pamk5_setcred(struct pam_args *args, int refresh)
     ctx->cache = cache;
     cache = NULL;
     ctx->initialized = 1;
-    if (args->config->retain)
+    if (args->config->retain_after_close)
         ctx->dont_destroy_cache = 1;
 
 done:

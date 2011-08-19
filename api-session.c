@@ -39,9 +39,8 @@ pam_sm_open_session(pam_handle_t *pamh, int flags, int argc,
     struct pam_args *args;
     int pamret;
 
-    args = pamk5_args_parse(pamh, flags, argc, argv);
+    args = pamk5_init(pamh, flags, argc, argv);
     if (args == NULL) {
-        putil_crit(NULL, "cannot allocate memory: %s", strerror(errno));
         pamret = PAM_SERVICE_ERR;
         goto done;
     }
@@ -50,7 +49,7 @@ pam_sm_open_session(pam_handle_t *pamh, int flags, int argc,
 
 done:
     EXIT(args, pamret);
-    pamk5_args_free(args);
+    pamk5_free(args);
     return pamret;
 }
 
@@ -66,9 +65,8 @@ pam_sm_close_session(pam_handle_t *pamh, int flags, int argc,
     struct pam_args *args;
     int pamret;
 
-    args = pamk5_args_parse(pamh, flags, argc, argv);
+    args = pamk5_init(pamh, flags, argc, argv);
     if (args == NULL) {
-        putil_crit(NULL, "cannot allocate memory: %s", strerror(errno));
         pamret = PAM_SERVICE_ERR;
         goto done;
     }
@@ -81,6 +79,6 @@ pam_sm_close_session(pam_handle_t *pamh, int flags, int argc,
 
 done:
     EXIT(args, pamret);
-    pamk5_args_free(args);
+    pamk5_free(args);
     return pamret;
 }

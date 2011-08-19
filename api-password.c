@@ -37,9 +37,8 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
     PAM_CONST char *user;
     char *pass = NULL;
 
-    args = pamk5_args_parse(pamh, flags, argc, argv);
+    args = pamk5_init(pamh, flags, argc, argv);
     if (args == NULL) {
-        putil_crit(NULL, "cannot allocate memory: %s", strerror(errno));
         pamret = PAM_AUTHTOK_ERR;
         goto done;
     }
@@ -150,6 +149,6 @@ done:
         memset(pass, 0, strlen(pass));
         free(pass);
     }
-    pamk5_args_free(args);
+    pamk5_free(args);
     return pamret;
 }

@@ -76,8 +76,8 @@ pamk5_context_new(struct pam_args *args)
     }
 
     /* Set a default realm if one was configured. */
-    if (args->config->realm != NULL) {
-        retval = krb5_set_default_realm(ctx->context, args->config->realm);
+    if (args->realm != NULL) {
+        retval = krb5_set_default_realm(ctx->context, args->realm);
         if (retval != 0) {
             putil_err_krb5(args, retval, "cannot set default realm");
             retval = PAM_SERVICE_ERR;

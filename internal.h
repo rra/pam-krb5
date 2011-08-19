@@ -24,6 +24,7 @@
 /* Forward declarations to avoid unnecessary includes. */
 struct pam_args;
 struct passwd;
+struct vector;
 
 /* Used for unused parameters to silence gcc warnings. */
 #define UNUSED  __attribute__((__unused__))
@@ -47,64 +48,56 @@ struct context {
 
 /*
  * The global structure holding our arguments, both from krb5.conf and from
- * the PAM configuration, and a pointer to our state.  Filled in by
- * pamk5_args_parse and passed as a first argument to most internal
- * functions.
+ * the PAM configuration.  Filled in by pamk5_init and stored in the pam_args
+ * struct passed as a first argument to most internal functions.  Sort by
+ * documentation order.
  */
 struct pam_config {
+    /* Authorization. */
+    char *alt_auth_map;          /* An sprintf pattern to map principals. */
+    bool force_alt_auth;         /* Alt principal must be used if it exists. */
+    bool ignore_k5login;         /* Don't check .k5login files. */
+    bool ignore_root;            /* Skip authentication for root. */
+    long minimum_uid;            /* Ignore users below this UID. */
+    bool only_alt_auth;          /* Alt principal must be used. */
+    bool search_k5login;         /* Try password with each line of .k5login. */
+
+    /* Kerberos behavior. */
+    char *fast_ccache;          /* Cache containing armor ticket. */
+    bool forwardable;           /* Obtain forwardable tickets. */
+    char *keytab;               /* Keytab for credential validation. */
+    krb5_deltat renew_lifetime; /* Renewable lifetime of credentials. */
+    krb5_deltat ticket_lifetime; /* Lifetime of credentials. */
+
+    /* PAM behavior. */
+    bool clear_on_fail;         /* Delete saved password on change failure. */
+    bool debug;                 /* Log debugging information. */
+    bool defer_pwchange;        /* Defer expired account fail to account. */
+    bool fail_pwchange;         /* Treat expired password as auth failure. */
+    bool force_pwchange;        /* Change expired passwords in auth. */
+
+    /* PKINIT. */
+    char *pkinit_anchors;       /* Trusted certificates, usually per realm. */
+    bool pkinit_prompt;         /* Prompt user to insert smart card. */
+    char *pkinit_user;          /* User ID to pass to PKINIT. */
+    struct vector *preauth_opt; /* Preauth options. */
+    bool try_pkinit;            /* Attempt PKINIT, fall back to password. */
+    bool use_pkinit;            /* Require PKINIT. */
+
+    /* Prompting. */
     char *banner;               /* Addition to password changing prompts. */
+    bool expose_account;        /* Display principal in password prompts. */
+    bool force_first_pass;      /* Require a previous password be stored. */
+    bool prompt_principal;      /* Prompt for the Kerberos principal. */
+    bool try_first_pass;        /* Try the previously entered password. */
+    bool use_authtok;           /* Use the stored new password for changes. */
+    bool use_first_pass;        /* Always use the previous password. */
+
+    /* Ticket caches. */
     char *ccache;               /* Path to write ticket cache to. */
     char *ccache_dir;           /* Directory for ticket cache. */
-    int clear_on_fail;          /* Delete saved password on change failure. */
-    int debug;                  /* Log debugging information. */
-    int defer_pwchange;         /* Defer expired account fail to account. */
-    int expose_account;         /* Display principal in password prompts. */
-    int fail_pwchange;          /* Treat expired password as auth failure. */
-    char *fast_ccache;          /* Cache containing armor ticket. */
-    int force_first_pass;       /* Require a previous password be stored. */
-    int force_pwchange;         /* Change expired passwords in auth. */
-    int forwardable;            /* Obtain forwardable tickets. */
-    int ignore_root;            /* Skip authentication for root. */
-    int ignore_k5login;         /* Don't check .k5login files. */
-    char *keytab;               /* Keytab for credential validation. */
-    krb5_deltat lifetime;       /* Lifetime of credentials. */
-    int minimum_uid;            /* Ignore users below this UID. */
-    int no_ccache;              /* Don't create a ticket cache. */
-    int prompt_princ;           /* Prompt for the Kerberos principal. */
-    char *realm;                /* Default realm. */
-    krb5_deltat renew_lifetime; /* Renewable lifetime of credentials. */
-    int retain;                 /* Don't destroy the cache on session end. */
-    int search_k5login;         /* Try password with each line of .k5login. */
-    int try_first_pass;         /* Try the previously entered password. */
-    int use_authtok;            /* Use the stored new password for changes. */
-    int use_first_pass;         /* Always use the previous password. */
-
-    /* Options used for the optional PKINIT support. */
-    char *pkinit_anchors;       /* Trusted certificates, usually per realm. */
-    int pkinit_prompt;          /* Prompt user to insert smart card. */
-    char *pkinit_user;          /* User ID to pass to PKINIT. */
-    int try_pkinit;             /* Attempt PKINIT, fall back to password. */
-    int use_pkinit;             /* Require PKINIT. */
-
-    /* Options used for MIT Kerberos preauth plugins. */
-    char **preauth_opt;         /* Preauth options. */
-    int preauth_opt_count;      /* Number of preauth options set. */
-
-    /* Options for use of alternate identities */
-    char *alt_auth_map;         /* An sprintf pattern to map principals. */
-    int force_alt_auth;         /* Alt principal must be used if it exists. */
-    int only_alt_auth;          /* Alt principal must be used. */
-
-    /*
-     * The default realm, used mostly in option parsing but also for
-     * initializing krb5_get_init_creds_opt.  Unfortunately, the storage type
-     * varies between Heimdal and MIT.
-     */
-#ifdef HAVE_KRB5_HEIMDAL
-    krb5_realm realm_data;
-#else
-    krb5_data *realm_data;
-#endif
+    bool no_ccache;             /* Don't create a ticket cache. */
+    bool retain_after_close;    /* Don't destroy the cache on session end. */
 
     /* The authentication context, which bundles together Kerberos data. */
     struct context *ctx;
@@ -114,11 +107,10 @@ struct pam_config {
 #pragma GCC visibility push(hidden)
 
 /* Parse the PAM flags, arguments, and krb5.conf and fill out pam_args. */
-struct pam_args *pamk5_args_parse(pam_handle_t *pamh, int flags, int argc,
-                                  const char **argv);
+struct pam_args *pamk5_init(pam_handle_t *, int flags, int, const char **);
 
 /* Free the pam_args struct when we're done. */
-void pamk5_args_free(struct pam_args *);
+void pamk5_free(struct pam_args *);
 
 /*
  * Authenticate the user.  Prompts for the password as needed and obtains

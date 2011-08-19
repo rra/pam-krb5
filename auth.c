@@ -31,6 +31,7 @@
 #include <internal.h>
 #include <pam-util/args.h>
 #include <pam-util/logging.h>
+#include <pam-util/vector.h>
 
 /*
  * If the PKINIT smart card error statuses aren't defined, define them to 0.
@@ -66,7 +67,7 @@ parse_name(struct pam_args *args)
      * using the local username as normal if prompting fails or if the user
      * just presses Enter.
      */
-    if (args->config->prompt_princ) {
+    if (args->config->prompt_principal) {
         retval = pamk5_conv(args, "Principal: ", PAM_PROMPT_ECHO_ON, &user);
         if (retval != PAM_SUCCESS)
             putil_err_pam(args, retval, "error getting principal");
@@ -182,15 +183,12 @@ set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
     struct pam_config *config = args->config;
     krb5_context c = config->ctx->context;
 
-#ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_DEFAULT_FLAGS
-    krb5_get_init_creds_opt_set_default_flags(c, "pam", config->realm_data,
-                                              opts);
-#endif
+    krb5_get_init_creds_opt_set_default_flags(c, "pam", args->realm, opts);
     if (!service) {
         if (config->forwardable)
             krb5_get_init_creds_opt_set_forwardable(opts, 1);
-        if (config->lifetime != 0)
-            krb5_get_init_creds_opt_set_tkt_life(opts, config->lifetime);
+        if (config->ticket_lifetime != 0)
+            krb5_get_init_creds_opt_set_tkt_life(opts, config->ticket_lifetime);
         if (config->renew_lifetime != 0)
             krb5_get_init_creds_opt_set_renew_life(opts,
                                                    config->renew_lifetime);
@@ -218,13 +216,13 @@ set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
         if (config->pkinit_anchors != NULL)
             krb5_get_init_creds_opt_set_pa(c, opts, "X509_anchors",
                                            config->pkinit_anchors);
-        if (config->preauth_opt != NULL && config->preauth_opt_count > 0) {
-            int i;
+        if (config->preauth_opt != NULL && config->preauth_opt->count > 0) {
+            size_t i;
             char *name, *value;
             char save;
 
-            for (i = 0; i < config->preauth_opt_count; i++) {
-                name = config->preauth_opt[i];
+            for (i = 0; i < config->preauth_opt->count; i++) {
+                name = config->preauth_opt->strings[i];
                 if (name == NULL)
                     continue;
                 value = strchr(name, '=');

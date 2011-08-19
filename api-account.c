@@ -42,9 +42,8 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
     int pamret, retval;
     const char *name;
 
-    args = pamk5_args_parse(pamh, flags, argc, argv);
+    args = pamk5_init(pamh, flags, argc, argv);
     if (args == NULL) {
-        putil_crit(NULL, "cannot allocate memory: %s", strerror(errno));
         pamret = PAM_AUTH_ERR;
         goto done;
     }
@@ -113,6 +112,6 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 done:
     EXIT(args, pamret);
-    pamk5_args_free(args);
+    pamk5_free(args);
     return pamret;
 }

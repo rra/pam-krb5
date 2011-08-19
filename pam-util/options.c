@@ -562,7 +562,7 @@ convert_time(struct pam_args *args, const char *arg, krb5_deltat *setting)
         putil_err(args, "value missing for option %s", arg);
         return;
     }
-    retval = krb5_string_to_deltat(value + 1, &result);
+    retval = krb5_string_to_deltat((char *) value + 1, &result);
     if (retval != 0)
         putil_err(args, "bad time value in setting: %s", arg);
     else
