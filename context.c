@@ -93,7 +93,8 @@ pamk5_context_fetch(struct pam_args *args)
         args->config->ctx = NULL;
     if (pamret == 0 && args->config->ctx == NULL)
         return PAM_SERVICE_ERR;
-    args->user = args->config->ctx->name;
+    if (args->config->ctx != NULL)
+        args->user = args->config->ctx->name;
     return pamret;
 }
 
