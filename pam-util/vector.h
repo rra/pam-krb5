@@ -96,7 +96,9 @@ void vector_free(struct vector *)
  * to only have partial results.
  *
  * Empty strings will yield zero-length vectors.  Adjacent delimiters are
- * treated as a single delimiter by vector_split_multi.
+ * treated as a single delimiter by vector_split_multi.  Any leading or
+ * trailing delimiters are ignored, so this function will never create
+ * zero-length strings (similar to the behavior of strtok).
  */
 struct vector *vector_split_multi(const char *string, const char *seps,
                                   struct vector *)

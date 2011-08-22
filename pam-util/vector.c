@@ -231,7 +231,7 @@ vector_split_multi(const char *string, const char *seps,
         goto fail;
 
     vector->count = 0;
-    for (start = string, p = string, i = 0; *p; p++)
+    for (start = string, p = string, i = 0; *p != '\0'; p++)
         if (strchr(seps, *p) != NULL) {
             if (start != p) {
                 vector->strings[i] = strndup(start, (size_t) (p - start));

@@ -70,6 +70,33 @@
 /* Get the bool type. */
 #include <portable/stdbool.h>
 
+/* Windows provides snprintf under a different name. */
+#ifdef _WIN32
+# define snprintf _snprintf
+#endif
+
+/*
+ * POSIX requires that these be defined in <unistd.h>.  If one of them has
+ * been defined, all the rest almost certainly have.
+ */
+#ifndef STDIN_FILENO
+# define STDIN_FILENO  0
+# define STDOUT_FILENO 1
+# define STDERR_FILENO 2
+#endif
+
+/*
+ * C99 requires va_copy.  Older versions of GCC provide __va_copy.  Per the
+ * Autoconf manual, memcpy is a generally portable fallback.
+ */
+#ifndef va_copy
+# ifdef __va_copy
+#  define va_copy(d, s) __va_copy((d), (s))
+# else
+#  define va_copy(d, s) memcpy(&(d), &(s), sizeof(va_list))
+# endif
+#endif
+
 BEGIN_DECLS
 
 /* Default to a hidden visibility for all portability functions. */
@@ -112,32 +139,5 @@ extern char *strndup(const char *, size_t);
 #pragma GCC visibility pop
 
 END_DECLS
-
-/* Windows provides snprintf under a different name. */
-#ifdef _WIN32
-# define snprintf _snprintf
-#endif
-
-/*
- * POSIX requires that these be defined in <unistd.h>.  If one of them has
- * been defined, all the rest almost certainly have.
- */
-#ifndef STDIN_FILENO
-# define STDIN_FILENO  0
-# define STDOUT_FILENO 1
-# define STDERR_FILENO 2
-#endif
-
-/*
- * C99 requires va_copy.  Older versions of GCC provide __va_copy.  Per the
- * Autoconf manual, memcpy is a generally portable fallback.
- */
-#ifndef va_copy
-# ifdef __va_copy
-#  define va_copy(d, s) __va_copy((d), (s))
-# else
-#  define va_copy(d, s) memcpy(&(d), &(s), sizeof(va_list))
-# endif
-#endif
 
 #endif /* !PORTABLE_SYSTEM_H */

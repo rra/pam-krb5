@@ -35,13 +35,22 @@ pam-krb5 4.5 (unreleased)
     Replace the Kerberos compatibility layer with equivalent but
     better-structured code from rra-c-util 3.7.
 
-    Update to rra-c-util 3.7:
+    Avoid krb5-config and use manual library probing if --with-krb5-lib or
+    --with-krb5-include were given to configure.  This avoids having to
+    point configure at a nonexistent krb5-config to override its results.
+
+    Use PATH_KRB5_CONFIG instead of KRB5_CONFIG to locate krb5-config in
+    configure, to avoid a conflict with the variable used by the Kerberos
+    libraries to find krb5.conf.
+
+    Update to rra-c-util 3.8:
 
     * Add notices to all files copied over from rra-c-util.
     * Include strings.h for additional POSIX functions where found.
     * Fix detection of whether PAM uses const on FreeBSD.
     * Update warning flags for make warnings for GCC 4.6.1.
     * Limit symbol exports even on systems without GNU ld.
+    * Fix replacement mkstemp to use long long where available.
 
 pam-krb5 4.4 (2010-12-31)
 

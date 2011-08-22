@@ -1,6 +1,6 @@
-dnl Find the compiler and linker flags for Kerberos v5.
+dnl Additional probes for Kerberos PKINIT support.
 dnl
-dnl Additonal Kerberos v5 library probes that check behavior of the library
+dnl Additonal Kerberos library probes that check behavior of the library
 dnl relevant to PKINIT support.  Provides the macro:
 dnl
 dnl     RRA_FUNC_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT_ARGS
