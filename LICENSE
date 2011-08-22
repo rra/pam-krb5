@@ -67,8 +67,8 @@ Collected copyright notices for the entire package:
       Free Software Foundation, Inc.
   Copyright 1994 X Consortium
 
-The original version of this module was based on an earlier Kerberos v5
-PAM module by Naomaru Itoi:
+The original version of this module was based on an earlier Kerberos PAM
+module by Naomaru Itoi:
 
   PAM-kerberos5 module Copyright notice.
   Naomaru Itoi <itoi@eecs.umich.edu>, June 24, 1997.

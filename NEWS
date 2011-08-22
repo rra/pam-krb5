@@ -43,6 +43,10 @@ pam-krb5 4.5 (unreleased)
     configure, to avoid a conflict with the variable used by the Kerberos
     libraries to find krb5.conf.
 
+    Change references to Kerberos v5 to just Kerberos in the
+    documentation.  Kerberos v5 has been the default version of Kerberos
+    for over ten years now.
+
     Update to rra-c-util 3.8:
 
     * Add notices to all files copied over from rra-c-util.

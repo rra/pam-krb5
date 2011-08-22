@@ -1,5 +1,5 @@
                                pam-krb5 4.4
-               (PAM module for Kerberos v5 authentication)
+                 (PAM module for Kerberos authentication)
 
                     Originally written by Frank Cusack
      Modifications by Joel Kociolek, Andres Salomon, and Sam Hartman
@@ -12,7 +12,7 @@
 
 BLURB
 
-  pam-krb5 is a Kerberos v5 PAM module for either MIT Kerberos or Heimdal.
+  pam-krb5 is a Kerberos PAM module for either MIT Kerberos or Heimdal.
   It supports ticket refreshing by screen savers, configurable
   authorization handling, authentication of non-local accounts for network
   services, password changing, and password expiration, as well as all the
@@ -24,7 +24,7 @@ BLURB
 
 DESCRIPTION
 
-  pam-krb5 provides a Kerberos v5 PAM module that supports authentication,
+  pam-krb5 provides a Kerberos PAM module that supports authentication,
   user ticket cache handling, simple authorization (via .k5login or
   checking Kerberos principals against local usernames), and password
   changing.  It can be configured through either options in the PAM
@@ -32,14 +32,14 @@ DESCRIPTION
   and it tries to work around PAM implementation flaws in commonly-used
   PAM-enabled applications such as OpenSSH and xdm.
 
-  This is not the Kerberos v5 PAM module maintained on Sourceforge and
-  used on Red Hat systems.  It is an independent implementation that, if
-  it ever shared any common code, diverged long ago.  It supports some
+  This is not the Kerberos PAM module maintained on Sourceforge and used
+  on Red Hat systems.  It is an independent implementation that, if it
+  ever shared any common code, diverged long ago.  It supports some
   features that the Sourceforge module does not (particularly around
   authorization), and does not support some options (particularly ones not
-  directly related to Kerberos v5) that it does.  This module will never
+  directly related to Kerberos) that it does.  This module will never
   support Kerberos v4 or AFS.  For an AFS session module that works with
-  this module (or any other Kerberos v5 PAM module), see:
+  this module (or any other Kerberos PAM module), see:
 
       <http://www.eyrie.org/~eagle/software/pam-afs-session/>
 
@@ -187,7 +187,7 @@ CONFIGURING
 
   in /etc/pam.d/common-account.  The minimum_uid setting tells the PAM
   module to pass on any users with a UID lower than 1000, thereby
-  bypassing Kerberos v5 authentication for the root account and any system
+  bypassing Kerberos authentication for the root account and any system
   accounts.  You normally want to do this since otherwise, if the network
   is down, the Kerberos authentication can time out and make it difficult
   to log in as root and fix matters.  This also avoids problems with
