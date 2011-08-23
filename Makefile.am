@@ -82,7 +82,8 @@ tests_fakepam_libfakepam_a_SOURCES = tests/fakepam/data.c	\
 	tests/fakepam/logging.c tests/fakepam/testing.c		\
 	tests/fakepam/testing.h
 tests_tap_libtap_a_CPPFLAGS = -I$(abs_top_srcdir)/tests $(AM_CPPFLAGS)
-tests_tap_libtap_a_SOURCES = tests/tap/basic.c tests/tap/basic.h
+tests_tap_libtap_a_SOURCES = tests/tap/basic.c tests/tap/basic.h \
+	tests/tap/process.c tests/tap/process.h
 
 # The list of objects and libraries used for module testing by programs that
 # link with the module with the fake PAM library.
