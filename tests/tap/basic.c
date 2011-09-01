@@ -47,8 +47,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#include <sys/time.h>
-#include <sys/wait.h>
 #include <unistd.h>
 
 #include <tap/basic.h>
@@ -471,6 +469,21 @@ sysdiag(const char *format, ...)
     vprintf(format, args);
     va_end(args);
     printf(": %s\n", strerror(oerrno));
+}
+
+
+/*
+ * Allocate cleared memory, reporting a fatal error with bail on failure.
+ */
+void *
+bcalloc(size_t n, size_t size)
+{
+    void *p;
+
+    p = calloc(n, size);
+    if (p == NULL)
+        sysbail("failed to calloc %lu", (unsigned long)(n * size));
+    return p;
 }
 
 

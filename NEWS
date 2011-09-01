@@ -56,6 +56,11 @@ pam-krb5 4.5 (unreleased)
     * Limit symbol exports even on systems without GNU ld.
     * Fix replacement mkstemp to use long long where available.
 
+    Update to C TAP Harness 1.8:
+
+    * Add bmalloc, bcalloc, brealloc, and bstrdup TAP library functions.
+    * Fix runtests to honor -s even if BUILD and -b aren't given.
+
 pam-krb5 4.4 (2010-12-31)
 
     Do not prompt for a password when try_pkinit is set and the module is

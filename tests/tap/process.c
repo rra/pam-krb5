@@ -151,7 +151,7 @@ exec_command(void *data)
 
     execvp(argv[0], argv);
 }
-    
+
 
 /*
  * Given a command expressed as an argv struct, with argv[0] the name or path
