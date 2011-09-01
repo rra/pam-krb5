@@ -51,6 +51,7 @@ struct options {
 struct action {
     char *name;
     pam_call call;
+    int flags;
     enum group_type group;
     int status;
     struct action *next;
@@ -78,6 +79,20 @@ static const struct {
     { "chauthtok",     pam_sm_chauthtok,     GROUP_PASSWORD },
     { "open_session",  pam_sm_open_session,  GROUP_SESSION  },
     { "close_session", pam_sm_close_session, GROUP_SESSION  },
+};
+
+/* Mapping of PAM flag names without the leading PAM_ to values. */
+static const struct {
+    const char *name;
+    int value;
+} FLAGS[] = {
+    { "CHANGE_EXPIRED_AUTHTOK", PAM_CHANGE_EXPIRED_AUTHTOK },
+    { "DISALLOW_NULL_AUTHTOK",  PAM_DISALLOW_NULL_AUTHTOK  },
+    { "DELETE_CRED",            PAM_DELETE_CRED            },
+    { "ESTABLISH_CRED",         PAM_ESTABLISH_CRED         },
+    { "REFRESH_CRED",           PAM_REFRESH_CRED           },
+    { "REINITIALIZE_CRED",      PAM_REINITIALIZE_CRED      },
+    { "SILENT",                 PAM_SILENT                 },
 };
 
 /* Mapping of strings to PAM groups. */
@@ -173,6 +188,22 @@ string_to_call(const char *name, enum group_type *group)
             return CALLS[i].call;
         }
     bail("unrecognized PAM call %s", name);
+}
+
+
+/*
+ * Given a PAM flag value without the leading PAM_, map it to the numeric
+ * value of that flag.  Fails on any unrecognized string.
+ */
+static enum group_type
+string_to_flag(const char *name)
+{
+    size_t i;
+
+    for (i = 0; i < ARRAY_SIZE(FLAGS); i++)
+        if (strcmp(name, FLAGS[i].name) == 0)
+            return FLAGS[i].value;
+    bail("unrecognized PAM flag %s", name);
 }
 
 
@@ -309,6 +340,31 @@ parse_options(FILE *script, struct work *work)
 
 
 /*
+ * Parse the call portion of a PAM call in the run section of a PAM script.
+ * This handles parsing the PAM flags that optionally may be given as part of
+ * the call.  Takes the token representing the call and a pointer to the
+ * action struct to fill in with the call and the option flags.
+ */
+static void
+parse_call(char *token, struct action *action)
+{
+    char *flags, *flag;
+
+    action->flags = 0;
+    flags = strchr(token, '(');
+    if (flags != NULL) {
+        *flags = '\0';
+        flags++;
+        for (flag = strtok(flags, "|,)"); flag != NULL;
+             flag = strtok(NULL, "|,)")) {
+            action->flags |= string_to_flag(flag);
+        }
+    }
+    action->call = string_to_call(token, &action->group);
+}
+
+
+/*
  * Parse the run section of a PAM script.  This consists of one or more lines
  * in the format:
  *
@@ -321,7 +377,7 @@ static struct action *
 parse_run(FILE *script)
 {
     struct action *head = NULL, *current, *next;
-    char *line, *token;
+    char *line, *token, *call;
     size_t length;
 
     for (line = readline(script); line != NULL; line = readline(script)) {
@@ -336,12 +392,13 @@ parse_run(FILE *script)
         else
             current->next = next;
         next->name = bstrdup(token);
-        next->call = string_to_call(token, &next->group);
+        call = token;
         token = strtok(NULL, " ");
         if (token == NULL || strcmp(token, "=") != 0)
             bail("malformed action line near %s", token);
         token = strtok(NULL, " ");
         next->status = string_to_status(token);
+        parse_call(call, next);
         free(line);
         current = next;
     }
@@ -511,10 +568,10 @@ run_script(const char *file, const char *user, const char *password)
     /* Run the actions and check their return status. */
     for (action = work->actions; action != NULL; action = action->next) {
         if (work->options[action->group].argv == NULL)
-            status = (*action->call)(pamh, 0, 0, argv_empty);
+            status = (*action->call)(pamh, action->flags, 0, argv_empty);
         else {
             opts = &work->options[action->group];
-            status = (*action->call)(pamh, 0, opts->argc,
+            status = (*action->call)(pamh, action->flags, opts->argc,
                                      (const char **) opts->argv);
         }
         is_int(action->status, status, "status for %s", action->name);

@@ -20,7 +20,7 @@
 int
 main(void)
 {
-    plan(4);
+    plan(8);
 
     run_script("data/scripts/basic/no-krb", NULL, NULL);
 
