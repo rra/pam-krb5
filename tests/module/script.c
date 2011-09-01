@@ -114,52 +114,6 @@ static const struct {
 
 
 /*
- * Allocate memory, reporting a fatal error and exiting on failure.
- */
-static void *
-xmalloc(size_t size)
-{
-    void *p;
-
-    p = malloc(size);
-    if (p == NULL)
-        sysbail("failed to malloc %lu", (unsigned long) size);
-    return p;
-}
-
-
-/*
- * Reallocate memory, reporting a fatal error and exiting on failure.
- */
-static void *
-xrealloc(void *p, size_t size)
-{
-    p = realloc(p, size);
-    if (p == NULL)
-        sysbail("failed to realloc %lu bytes", (unsigned long) size);
-    return p;
-}
-
-
-/*
- * Copy a string, reporting a fatal error and exiting on failure.
- */
-static char *
-xstrdup(const char *s)
-{
-    char *p;
-    size_t len;
-
-    len = strlen(s) + 1;
-    p = malloc(len);
-    if (p == NULL)
-        sysbail("failed to strdup %lu bytes", (unsigned long) len);
-    memcpy(p, s, len);
-    return p;
-}
-
-
-/*
  * Given a pointer to a string, skip any leading whitespace and return a
  * pointer to the first non-whitespace character.
  */
@@ -196,7 +150,7 @@ readline(FILE *file)
         buffer[strlen(buffer) - 1] = '\0';
         first = skip_whitespace(buffer);
     } while (first[0] == '#' || first[0] == '\0');
-    line = xstrdup(buffer);
+    line = bstrdup(buffer);
     return line;
 }
 
@@ -298,14 +252,14 @@ split_options(char *string, struct options *options)
 
     for (opt = strtok(string, " "); opt != NULL; opt = strtok(NULL, " ")) {
         if (options->argv == NULL) {
-            options->argv = xmalloc(sizeof(const char *) * 2);
-            options->argv[0] = xstrdup(opt);
+            options->argv = bmalloc(sizeof(const char *) * 2);
+            options->argv[0] = bstrdup(opt);
             options->argv[1] = NULL;
             options->argc = 1;
         } else {
             size = sizeof(const char *) * (options->argc + 2);
-            options->argv = xrealloc(options->argv, size);
-            options->argv[options->argc] = xstrdup(opt);
+            options->argv = brealloc(options->argv, size);
+            options->argv[options->argc] = bstrdup(opt);
             options->argv[options->argc + 1] = NULL;
             options->argc++;
         }
@@ -375,13 +329,13 @@ parse_run(FILE *script)
         token = strtok(line, " ");
         if (token[0] == '[')
             break;
-        next = xmalloc(sizeof(struct action));
+        next = bmalloc(sizeof(struct action));
         next->next = NULL;
         if (head == NULL)
             head = next;
         else
             current->next = next;
-        next->name = xstrdup(token);
+        next->name = bstrdup(token);
         next->call = string_to_call(token, &next->group);
         token = strtok(NULL, " ");
         if (token == NULL || strcmp(token, "=") != 0)
@@ -429,7 +383,7 @@ parse_output(FILE *script, const char *user)
         priority = string_to_priority(token);
         if (asprintf(&piece, "%d ", priority) < 0)
             sysbail("asprintf failed");
-        output = xrealloc(output, total + strlen(piece));
+        output = brealloc(output, total + strlen(piece));
         memcpy(output + total, piece, strlen(piece));
         total += strlen(piece);
         free(piece);
@@ -452,7 +406,7 @@ parse_output(FILE *script, const char *user)
                 }
             }
         }
-        output = xrealloc(output, total + length + 1);
+        output = brealloc(output, total + length + 1);
         for (p = token, out = output + total; *p != '\0'; p++) {
             if (*p != '%')
                 *out++ = *p;
@@ -488,7 +442,7 @@ parse_script(FILE *script, const char *user)
     struct work *work;
     char *line, *token;
 
-    work = xmalloc(sizeof(struct work));
+    work = bmalloc(sizeof(struct work));
     memset(work, 0, sizeof(struct work));
     work->actions = NULL;
     for (line = readline(script); line != NULL; line = readline(script)) {
@@ -533,7 +487,7 @@ run_script(const char *file, const char *user, const char *password)
 
     /* Open and parse the script. */
     if (access(file, R_OK) == 0)
-        path = xstrdup(file);
+        path = bstrdup(file);
     else {
         path = test_file_path(file);
         if (path == NULL)
