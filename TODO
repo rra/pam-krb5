@@ -38,6 +38,9 @@ Functionality:
    good to stay consistent with that protocol if possible.  (PAMKRB-10,
    Debian Bug#399001)
 
+ * Store the old password in the appropriate PAM data item in the auth
+   step if defer_pwchange is set and the password is expired.
+
 Code Cleanup:
 
  * The PKINIT code for Heimdal involves too many #ifdefs right now for my
@@ -72,3 +75,8 @@ Portability:
 
  * If pam_modutil_getpwnam is not available but getpwnam_r is, roll our
    own using getpwnam_r.  (PAMKRB-15)
+
+Logging:
+
+ * Log the information that the Kerberos library asks us to display, or
+   at least the info and error messages.
