@@ -96,8 +96,8 @@ pam_set_data(pam_handle_t *pamh, const char *item, void *data,
 
 
 /*
- * Retrieve a PAM item.  Currently, this only supports retrieving the current
- * auth token, and there's no provided interface to set it.
+ * Retrieve a PAM item.  Currently, this only supports a limited subset of the
+ * possible items.
  */
 int
 pam_get_item(const pam_handle_t *pamh, int item, PAM_CONST void **data)
@@ -106,27 +106,39 @@ pam_get_item(const pam_handle_t *pamh, int item, PAM_CONST void **data)
     case PAM_AUTHTOK:
         *data = pamh->authtok;
         return PAM_SUCCESS;
+    case PAM_CONV:
+        if (pamh->conversation) {
+            *data = pamh->conversation;
+            return PAM_SUCCESS;
+        } else {
+            return PAM_BAD_ITEM;
+        }
     case PAM_USER:
         *data = (PAM_CONST char *) pamh->user;
         return PAM_SUCCESS;
     default:
-        return PAM_SYSTEM_ERR;
+        return PAM_BAD_ITEM;
     }
 }
 
 
 /*
- * Set a PAM item.  Currently always fails.
+ * Set a PAM item.  Currently only PAM_USER is supported.
  */
 int
 pam_set_item(pam_handle_t *pamh, int item, PAM_CONST void *data)
 {
     switch (item) {
+    case PAM_AUTHTOK:
+        pamh->authtok = strdup(data);
+        if (pamh->authtok == NULL)
+            return PAM_BUF_ERR;
+        return PAM_SUCCESS;
     case PAM_USER:
         pamh->user = (const char *) data;
         return PAM_SUCCESS;
     default:
-        return PAM_SYSTEM_ERR;
+        return PAM_BAD_ITEM;
     }
 }
 

@@ -57,6 +57,21 @@ struct action {
     struct action *next;
 };
 
+/* Holds an expected PAM prompt style, the prompt, and the response. */
+struct prompt {
+    int style;
+    char *prompt;
+    char *response;
+};
+
+/* Holds an array of PAM prompts and the current index into that array. */
+struct prompts {
+    struct prompt *prompts;
+    size_t size;
+    size_t allocated;
+    size_t current;
+};
+
 /*
  * Holds the complete set of things that we should do.  Currently, this
  * contains only a linked list of actions.
@@ -64,6 +79,7 @@ struct action {
 struct work {
     struct options options[4];
     struct action *actions;
+    struct prompts *prompts;
     char *output;
 };
 
@@ -113,6 +129,17 @@ static const struct {
 } RETURNS[] = {
     { "PAM_IGNORE",  PAM_IGNORE  },
     { "PAM_SUCCESS", PAM_SUCCESS },
+};
+
+/* Mapping of PAM prompt styles to their values. */
+static const struct {
+    const char *name;
+    int style;
+} STYLES[] = {
+    { "echo_off",  PAM_PROMPT_ECHO_OFF },
+    { "echo_on",   PAM_PROMPT_ECHO_ON  },
+    { "error_msg", PAM_ERROR_MSG       },
+    { "info",      PAM_TEXT_INFO       },
 };
 
 /* Mappings of strings to syslog priorities. */
@@ -254,6 +281,22 @@ string_to_status(const char *name)
         if (strcmp(name, RETURNS[i].name) == 0)
             return RETURNS[i].status;
     bail("unrecognized PAM status %s", name);
+}
+
+
+/*
+ * Given a PAM prompt style value without the leading PAM_PROMPT_, map it to
+ * the numeric value of that flag.  Fails on any unrecognized string.
+ */
+static int
+string_to_style(const char *name)
+{
+    size_t i;
+
+    for (i = 0; i < ARRAY_SIZE(STYLES); i++)
+        if (strcmp(name, STYLES[i].name) == 0)
+            return STYLES[i].style;
+    bail("unrecognized PAM prompt style %s", name);
 }
 
 
@@ -489,12 +532,87 @@ parse_output(FILE *script, const char *user)
 
 
 /*
+ * Parse the prompts section of a PAM script.  This consists of zero or more
+ * lines in one of the formats:
+ *
+ *     type = prompt
+ *     type = prompt|response
+ *
+ * If the type is error_msg or info, there is no response.  Otherwise,
+ * everything after a colon is taken to be the response that should be
+ * provided to that prompt.
+ *
+ * The repsonse may be one of the special values %u (the username) or %p (the
+ * password).  This is currently not a substitution; this must instead be the
+ * entire value of the response.
+ */
+static struct prompts *
+parse_prompts(FILE *script, const char *user, const char *password)
+{
+    struct prompts *prompts = NULL;
+    struct prompt *prompt;
+    char *line, *token, *style;
+    size_t size, i, length;
+
+    for (line = readline(script); line != NULL; line = readline(script)) {
+        length = strlen(line);
+        token = strtok(line, " ");
+        if (token[0] == '[')
+            break;
+        if (prompts == NULL) {
+            prompts = bcalloc(1, sizeof(struct prompts));
+            prompts->prompts = bcalloc(1, sizeof(struct prompt));
+            prompts->allocated = 1;
+        } else if (prompts->allocated == prompts->size) {
+            prompts->allocated *= 2;
+            size = prompts->allocated * sizeof(struct prompt);
+            prompts->prompts = brealloc(prompts->prompts, size);
+            for (i = prompts->size; i < prompts->allocated; i++) {
+                prompts->prompts[i].prompt = NULL;
+                prompts->prompts[i].response = NULL;
+            }
+        }
+        prompt = &prompts->prompts[prompts->size];
+        style = token;
+        token = strtok(NULL, " ");
+        if (token == NULL || strcmp(token, "=") != 0)
+            bail("malformed prompt line near %s", token);
+        prompt->style = string_to_style(style);
+        token = strtok(NULL, "");
+        if (prompt->style == PAM_ERROR_MSG || prompt->style == PAM_TEXT_INFO) {
+            prompt->prompt = bstrdup(token);
+            continue;
+        }
+        token = strtok(token, "|");
+        prompt->prompt = bstrdup(token);
+        token = strtok(NULL, "");
+        if (token == NULL)
+            bail("malformed prompt line near %s", prompt->prompt);
+        token = skip_whitespace(token);
+        if (strcmp(token, "%u") == 0)
+            prompt->response = bstrdup(user);
+        else if (strcmp(token, "%p") == 0)
+            prompt->response = bstrdup(password);
+        else
+            prompt->response = bstrdup(token);
+        prompts->size++;
+        free(line);
+    }
+    if (line != NULL) {
+        free(line);
+        rewind_section(script, length);
+    }
+    return prompts;
+}
+
+
+/*
  * Parse a PAM interaction script.  This handles parsing of the top-level
  * section markers and dispatches the parsing to other functions.  Returns the
  * total work to do as a work struct.
  */
 static struct work *
-parse_script(FILE *script, const char *user)
+parse_script(FILE *script, const char *user, const char *password)
 {
     struct work *work;
     char *line, *token;
@@ -512,6 +630,8 @@ parse_script(FILE *script, const char *user)
             work->actions = parse_run(script);
         else if (strcmp(token, "[output]") == 0)
             work->output = parse_output(script, user);
+        else if (strcmp(token, "[prompts]") == 0)
+            work->prompts = parse_prompts(script, user, password);
         else
             bail("unknown section: %s", token);
         free(line);
@@ -519,6 +639,45 @@ parse_script(FILE *script, const char *user)
     if (work->actions == NULL)
         bail("no run section defined");
     return work;
+}
+
+
+/*
+ * The PAM conversation function.  Takes the prompts struct from the
+ * configuration and interacts appropriately.  If a prompt is of the expected
+ * type but not the expected string, it still responds; if it's not of the
+ * expected type, it returns PAM_CONV_ERR.
+ *
+ * Currently only handles a single prompt at a time.
+ */
+static int
+converse(int num_msg, const struct pam_message **msg,
+         struct pam_response **resp, void *appdata_ptr)
+{
+    struct prompts *prompts = appdata_ptr;
+    struct prompt *prompt;
+
+    if (num_msg > 1)
+        bail("only one prompt at a time currently supported");
+    if (prompts->current >= prompts->size) {
+        ok(0, "more prompts than expected");
+        return PAM_CONV_ERR;
+    }
+    prompt = &prompts->prompts[prompts->current];
+    is_int(prompt->style, msg[0]->msg_style, "style of prompt %lu",
+           (unsigned long) prompts->current);
+    is_string(prompt->prompt, msg[0]->msg, "value of prompt %lu",
+              (unsigned long) prompts->current);
+    prompts->current++;
+    *resp = NULL;
+    if (prompt->style == msg[0]->msg_style && prompt->response != NULL) {
+        *resp = bmalloc(sizeof(struct pam_response));
+        (*resp)->resp = bstrdup(prompt->response);
+        (*resp)->resp_retcode = 0;
+        return PAM_SUCCESS;
+    } else {
+        return PAM_CONV_ERR;
+    }
 }
         
 
@@ -553,8 +712,12 @@ run_script(const char *file, const char *user, const char *password)
     script = fopen(path, "r");
     if (script == NULL)
         sysbail("cannot open %s", path);
-    work = parse_script(script, user);
+    work = parse_script(script, user, password);
     diag("Starting %s", file);
+    if (work->prompts != NULL) {
+        conv.conv = converse;
+        conv.appdata_ptr = work->prompts;
+    }
 
     /* Initialize PAM. */
     if (user == NULL)
@@ -597,6 +760,16 @@ run_script(const char *file, const char *user, const char *password)
         }
     if (work->output)
         free(work->output);
+    if (work->prompts != NULL) {
+        for (i = 0; i < work->prompts->size; i++) {
+            if (work->prompts->prompts[i].prompt != NULL)
+                free(work->prompts->prompts[i].prompt);
+            if (work->prompts->prompts[i].response != NULL)
+                free(work->prompts->prompts[i].response);
+        }
+        free(work->prompts->prompts);
+        free(work->prompts);
+    }
     free(work);
     free(path);
 }
