@@ -1,9 +1,9 @@
 /*
- * General authentication tests for the pam-krb5 module.
+ * Authentication tests for the pam-krb5 module without a ticket cache.
  *
- * This test case includes all general tests that require Kerberos to be
- * configured and a username and password available, but which don't involve
- * interactive prompting.
+ * This test case includes all tests that require Kerberos to be configured
+ * and a username and password available, but which don't write a ticket
+ * cache (which requires additional work to test the cache ownership).
  *
  * Written by Russ Allbery <rra@stanford.edu>
  * Copyright 2011
@@ -66,8 +66,8 @@ main(void)
 
     plan(12);
 
-    run_script("data/scripts/general/no-cache", principal, password);
-    run_script("data/scripts/general/no-cache-prompt", principal, password);
+    run_script("data/scripts/no-cache/basic", principal, password);
+    run_script("data/scripts/no-cache/prompt", principal, password);
 
     if (chdir(getenv("BUILD")) == 0)
         unlink("krb5.conf");

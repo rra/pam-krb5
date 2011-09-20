@@ -20,7 +20,7 @@
 /stamp-h1
 /tests/config/password
 /tests/module/basic-t
-/tests/module/general-t
+/tests/module/no-cache-t
 /tests/pam-util/args-t
 /tests/pam-util/fakepam-t
 /tests/pam-util/logging-t
