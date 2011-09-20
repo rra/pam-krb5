@@ -10,12 +10,12 @@ pam-krb5 4.5 (unreleased)
     confusingly in the middle of the password change interaction.  Based
     on a patch by William Yang.
 
-    Some old versions of Heimdal reportedly return KRB5KDC_ERR_KEY_EXP for
-    accounts with expired keys even if the supplied password is wrong.
-    Work around this by confirming that the PAM module can obtain tickets
-    for kadmin/changepw before returning a password expiration error
-    instead of an invalid password error.  Based on a patch by William
-    Yang.
+    Some old versions of Heimdal (0.7.2 in OpenBSD 4.9, specifically)
+    reportedly return KRB5KDC_ERR_KEY_EXP for accounts with expired
+    keys even if the supplied password is wrong.  Work around this by
+    confirming that the PAM module can obtain tickets for kadmin/changepw
+    before returning a password expiration error instead of an invalid
+    password error.  Based on a patch by William Yang.
 
     The location of the temporary root-owned ticket cache created during
     the authentication process is now also controlled by the ccache_dir
