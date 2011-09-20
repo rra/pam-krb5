@@ -157,11 +157,14 @@ int
 pamk5_cache_init_random(struct pam_args *args, krb5_creds *creds)
 {
     char *cache_name = NULL;
+    const char *dir;
     int pamret;
 
     /* Store the obtained credentials in a temporary cache. */
-    if (asprintf(&cache_name, "%s/krb5cc_pam_XXXXXX",
-                 args->config->ccache_dir) < 0) {
+    dir = args->config->ccache_dir;
+    if (strncmp("FILE:", args->config->ccache_dir, strlen("FILE:")) == 0)
+        dir += strlen("FILE:");
+    if (asprintf(&cache_name, "%s/krb5cc_pam_XXXXXX", dir) < 0) {
         putil_crit(args, "malloc failure: %s", strerror(errno));
         return PAM_SERVICE_ERR;
     }
