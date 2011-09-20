@@ -10,6 +10,10 @@ PAM API:
  * Tighter verification that all of our flags are valid might be a good
    idea.  (PAMKRB-6)
 
+ * For informational messages followed by a prompt, find a way to combine
+   these into one PAM conversation call for better GUI presentation
+   behavior.
+
 Functionality:
 
  * Find a way to do only PKINIT authentication with no password fallback
