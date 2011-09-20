@@ -53,11 +53,13 @@ main(void)
      * need to do this to ensure that we don't pick up unwanted configuration
      * from the system krb5.conf file.
      */
-    argv[0] = test_file_path("data/generate-krb5-conf");
-    if (argv[0] == NULL)
+    path = test_file_path("data/generate-krb5-conf");
+    if (path == NULL)
         bail("cannot find generate-krb5-conf");
+    argv[0] = path;
     argv[1] = NULL;
     run_setup(argv);
+    test_file_path_free(path);
     if (asprintf(&env, "KRB5_CONFIG=%s/krb5.conf", getenv("BUILD")) < 0)
         sysbail("cannot build KRB5_CONFIG");
     putenv(env);
@@ -69,5 +71,7 @@ main(void)
 
     if (chdir(getenv("BUILD")) == 0)
         unlink("krb5.conf");
+    putenv((char *) "KRB5_CONFIG=");
+    free(env);
     return 0;
 }

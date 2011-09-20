@@ -172,4 +172,5 @@ run_setup(const char *const argv[])
             *p = '\0';
         bail("%s", output);
     }
+    free(output);
 }

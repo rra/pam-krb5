@@ -83,6 +83,8 @@ pam_end(pam_handle_t *pamh, int status)
 
     if (pamh->environ != NULL)
         free(pamh->environ);
+    if (pamh->authtok != NULL)
+        free(pamh->authtok);
     for (item = pamh->data; item != NULL; ) {
         if (item->cleanup != NULL)
             item->cleanup (pamh, item->data, status);

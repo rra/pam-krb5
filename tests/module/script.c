@@ -726,7 +726,7 @@ run_script(const char *file, const char *user, const char *password)
     if (status != PAM_SUCCESS)
         sysbail("cannot create PAM handle");
     if (password != NULL)
-        pamh->authtok = password;
+        pamh->authtok = bstrdup(password);
 
     /* Run the actions and check their return status. */
     for (action = work->actions; action != NULL; action = action->next) {
