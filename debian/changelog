@@ -1,3 +1,13 @@
+libpam-krb5 (4.4-2) unstable; urgency=low
+
+  * Add the architecture to the library path for heimdal-multidev and
+    krb5-multidev since the *.so symlinks were moved in 1.5.dfsg.1-1 and
+    1.9.1+dfsg-2 respectively.
+  * Tighten build dependencies on heimdal-multidev and krb5-multidev
+    accordingly.
+
+ -- Russ Allbery <rra@debian.org>  Sun, 25 Sep 2011 13:57:15 -0700
+
 libpam-krb5 (4.4-1) unstable; urgency=low
 
   * New upstream release.

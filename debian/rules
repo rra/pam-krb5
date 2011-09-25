@@ -1,5 +1,7 @@
 #!/usr/bin/make -f
 
+DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+
 %:
 	dh $@
 
@@ -8,10 +10,12 @@ override_dh_auto_clean:
 
 override_dh_auto_configure:
 	mkdir build-mit build-heimdal
-	CPPFLAGS=-I/usr/include/mit-krb5 LDFLAGS=-L/usr/lib/mit-krb5 \
+	CPPFLAGS=-I/usr/include/mit-krb5 \
+	    LDFLAGS=-L/usr/lib/$(DEB_HOST_MULTIARCH)/mit-krb5 \
 	    dh_auto_configure -Bbuild-mit -- --enable-reduced-depends \
 		--libdir=/lib
-	CPPFLAGS=-I/usr/include/heimdal LDFLAGS=-L/usr/lib/heimdal \
+	CPPFLAGS=-I/usr/include/heimdal \
+	    LDFLAGS=-L/usr/lib/$(DEB_HOST_MULTIARCH)/heimdal \
 	    dh_auto_configure -Bbuild-heimdal -- --enable-reduced-depends \
 		--libdir=/lib
 
