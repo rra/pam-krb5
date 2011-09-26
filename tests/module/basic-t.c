@@ -20,9 +20,12 @@
 int
 main(void)
 {
+    struct script_config config;
+
     plan(8);
 
-    run_script("data/scripts/basic/no-krb", NULL, NULL);
+    memset(&config, 0, sizeof(config));
+    run_script("data/scripts/basic/no-krb", &config);
 
     return 0;
 }

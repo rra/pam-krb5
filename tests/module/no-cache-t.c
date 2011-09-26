@@ -24,6 +24,7 @@ main(void)
 {
     char *path;
     char principal[BUFSIZ], password[BUFSIZ];
+    struct script_config config;
     FILE *file;
     const char *argv[2];
     char *env;
@@ -47,6 +48,9 @@ main(void)
         bail("principal or password too long in %s", path);
     password[strlen(password) - 1] = '\0';
     test_file_path_free(path);
+    memset(&config, 0, sizeof(config));
+    config.user = principal;
+    config.password = password;
 
     /*
      * Generate a test krb5.conf file in the current directory and use it.  We
@@ -66,9 +70,9 @@ main(void)
 
     plan(15);
 
-    run_script("data/scripts/no-cache/basic", principal, password);
-    run_script("data/scripts/no-cache/prompt", principal, password);
-    run_script("data/scripts/no-cache/auth-only", principal, password);
+    run_script("data/scripts/no-cache/basic", &config);
+    run_script("data/scripts/no-cache/prompt", &config);
+    run_script("data/scripts/no-cache/auth-only", &config);
 
     if (chdir(getenv("BUILD")) == 0)
         unlink("krb5.conf");

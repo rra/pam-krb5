@@ -470,7 +470,7 @@ parse_run(FILE *script)
  * Returns the accumulated output as a single string.
  */
 static char *
-parse_output(FILE *script, const char *user)
+parse_output(FILE *script, const struct script_config *config)
 {
     char *line, *token, *piece, *p, *out;
     char *output = NULL;
@@ -498,7 +498,10 @@ parse_output(FILE *script, const char *user)
                 p++;
                 switch (*p) {
                 case 'u':
-                    length += strlen(user);
+                    length += strlen(config->user);
+                    break;
+                case '1':
+                    length += strlen(config->str1);
                     break;
                 default:
                     length++;
@@ -514,8 +517,12 @@ parse_output(FILE *script, const char *user)
                 p++;
                 switch (*p) {
                 case 'u':
-                    memcpy(out, user, strlen(user));
-                    out += strlen(user);
+                    memcpy(out, config->user, strlen(config->user));
+                    out += strlen(config->user);
+                    break;
+                case '1':
+                    memcpy(out, config->str1, strlen(config->str1));
+                    out += strlen(config->str1);
                     break;
                 default:
                     *out++ = *p;
@@ -547,7 +554,7 @@ parse_output(FILE *script, const char *user)
  * entire value of the response.
  */
 static struct prompts *
-parse_prompts(FILE *script, const char *user, const char *password)
+parse_prompts(FILE *script, const struct script_config *config)
 {
     struct prompts *prompts = NULL;
     struct prompt *prompt;
@@ -590,9 +597,9 @@ parse_prompts(FILE *script, const char *user, const char *password)
             bail("malformed prompt line near %s", prompt->prompt);
         token = skip_whitespace(token);
         if (strcmp(token, "%u") == 0)
-            prompt->response = bstrdup(user);
+            prompt->response = bstrdup(config->user);
         else if (strcmp(token, "%p") == 0)
-            prompt->response = bstrdup(password);
+            prompt->response = bstrdup(config->password);
         else
             prompt->response = bstrdup(token);
         prompts->size++;
@@ -612,7 +619,7 @@ parse_prompts(FILE *script, const char *user, const char *password)
  * total work to do as a work struct.
  */
 static struct work *
-parse_script(FILE *script, const char *user, const char *password)
+parse_script(FILE *script, const struct script_config *config)
 {
     struct work *work;
     char *line, *token;
@@ -629,9 +636,9 @@ parse_script(FILE *script, const char *user, const char *password)
         else if (strcmp(token, "[run]") == 0)
             work->actions = parse_run(script);
         else if (strcmp(token, "[output]") == 0)
-            work->output = parse_output(script, user);
+            work->output = parse_output(script, config);
         else if (strcmp(token, "[prompts]") == 0)
-            work->prompts = parse_prompts(script, user, password);
+            work->prompts = parse_prompts(script, config);
         else
             bail("unknown section: %s", token);
         free(line);
@@ -688,9 +695,10 @@ converse(int num_msg, const struct pam_message **msg,
  * format.
  */
 void
-run_script(const char *file, const char *user, const char *password)
+run_script(const char *file, const struct script_config *config)
 {
     char *path, *output;
+    const char *user;
     FILE *script;
     struct work *work;
     struct options *opts;
@@ -712,7 +720,7 @@ run_script(const char *file, const char *user, const char *password)
     script = fopen(path, "r");
     if (script == NULL)
         sysbail("cannot open %s", path);
-    work = parse_script(script, user, password);
+    work = parse_script(script, config);
     diag("Starting %s", file);
     if (work->prompts != NULL) {
         conv.conv = converse;
@@ -720,13 +728,14 @@ run_script(const char *file, const char *user, const char *password)
     }
 
     /* Initialize PAM. */
+    user = config->user;
     if (user == NULL)
         user = "testuser";
     status = pam_start("test", user, &conv, &pamh);
     if (status != PAM_SUCCESS)
         sysbail("cannot create PAM handle");
-    if (password != NULL)
-        pamh->authtok = bstrdup(password);
+    if (config->password != NULL)
+        pamh->authtok = bstrdup(config->password);
 
     /* Run the actions and check their return status. */
     for (action = work->actions; action != NULL; action = action->next) {

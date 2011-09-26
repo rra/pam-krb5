@@ -18,15 +18,23 @@
 
 #include <tests/tap/basic.h>
 
+/* Configuration for the PAM interaction script API. */
+struct script_config {
+    const char *user;           /* Username to pass into pam_start (%u). */
+    const char *password;       /* Substituted for %p in prompts. */
+    const char *str1;           /* Substituted for %1 in logging. */
+};
+
 BEGIN_DECLS
 
 /*
  * Given the file name of an interaction script (which may be a full path or
- * relative to SOURCE or BUILD), an optional user that may be NULL, and an
- * optional password that may be NULL, run that script, reporting the results
- * via the TAP format.
+ * relative to SOURCE or BUILD) and configuration containing other parameters
+ * such as the user, run that script, reporting the results via the TAP
+ * format.
  */
-void run_script(const char *file, const char *user, const char *password);
+void run_script(const char *file, const struct script_config *)
+    __attribute__((__nonnull__));
 
 END_DECLS
 
