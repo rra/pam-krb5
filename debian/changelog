@@ -11,7 +11,7 @@ libpam-krb5 (4.4-3) unstable; urgency=low
     install the modules into the multiarch version of /lib/security, and
     declare the packages Multi-Arch: same.
   * Update to debhelper compatibility level V9 (experimental).
-    - Build-Depend on debhelper 8.1.3 or later.
+    - Build-Depend on debhelper 8.9.4 or later for hardening flags.
     - Add Pre-Depends: ${misc:Pre-Depends}.
   * Update standards version to 3.9.2 (no changes required).
   * Fix formal name of the GPL in debian/copyright.  (This will also be
