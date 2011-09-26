@@ -134,6 +134,7 @@ pamk5_authorized(struct pam_args *args)
 {
     struct context *ctx;
     krb5_context c;
+    krb5_error_code retval;
     struct passwd *pwd;
     char kuser[65];             /* MAX_USERNAME == 65 (MIT Kerberos 1.4.1). */
 
@@ -153,22 +154,29 @@ pamk5_authorized(struct pam_args *args)
     if (args->config->alt_auth_map != NULL) {
         char *mapped;
         char *authed;
-        int retval;
         krb5_principal princ;
 
-        if (pamk5_map_principal(args, ctx->name, &mapped) != PAM_SUCCESS)
+        if (pamk5_map_principal(args, ctx->name, &mapped) != PAM_SUCCESS) {
+            putil_err(args, "cannot map principal name");
             return PAM_SERVICE_ERR;
+        }
         retval = krb5_parse_name(c, mapped, &princ);
         if (retval != 0) {
+            putil_err_krb5(args, retval,
+                           "cannot parse mapped principal name %s", mapped);
             free(mapped);
             return PAM_SERVICE_ERR;
         }
         free(mapped);
         retval = krb5_unparse_name(c, princ, &mapped);
-        if (retval != 0)
+        if (retval != 0) {
+            putil_err_krb5(args, retval,
+                           "krb5_unparse_name on mapped principal failed");
             return PAM_SERVICE_ERR;
+        }
         retval = krb5_unparse_name(c, ctx->princ, &authed);
         if (retval != 0) {
+            putil_err_krb5(args, retval, "krb5_unparse_name failed");
             free(mapped);
             return PAM_SERVICE_ERR;
         }
@@ -176,6 +184,9 @@ pamk5_authorized(struct pam_args *args)
             krb5_free_unparsed_name(c, authed);
             krb5_free_unparsed_name(c, mapped);
             return PAM_SUCCESS;
+        } else {
+            putil_debug(args, "mapped user %s does not match principal %s",
+                        mapped, authed);
         }
         krb5_free_unparsed_name(c, authed);
         krb5_free_unparsed_name(c, mapped);
@@ -187,12 +198,15 @@ pamk5_authorized(struct pam_args *args)
      */
     if (strchr(ctx->name, '@') != NULL) {
         char *principal;
-        int retval;
 
         retval = krb5_unparse_name(c, ctx->princ, &principal);
-        if (retval != 0)
+        if (retval != 0) {
+            putil_err_krb5(args, retval, "krb5_unparse_name failed");
             return PAM_SERVICE_ERR;
+        }
         if (strcmp(principal, ctx->name) != 0) {
+            putil_err(args, "user %s does not match principal %s", ctx->name,
+                      principal);
             krb5_free_unparsed_name(c, principal);
             return PAM_AUTH_ERR;
         }
@@ -206,13 +220,21 @@ pamk5_authorized(struct pam_args *args)
      */
     pwd = pam_modutil_getpwnam(args->pamh, ctx->name);
     if (args->config->ignore_k5login || pwd == NULL) {
-        if (krb5_aname_to_localname(c, ctx->princ, sizeof(kuser), kuser) != 0)
+        retval = krb5_aname_to_localname(c, ctx->princ, sizeof(kuser), kuser);
+        if (retval != 0) {
+            putil_err_krb5(args, retval, "cannot convert principal to user");
             return PAM_AUTH_ERR;
-        if (strcmp(kuser, ctx->name) != 0)
+        }
+        if (strcmp(kuser, ctx->name) != 0) {
+            putil_err(args, "user %s does not match local name %s", ctx->name,
+                      kuser);
             return PAM_AUTH_ERR;
+        }
     } else {
-        if (!krb5_kuserok(c, ctx->princ, ctx->name))
+        if (!krb5_kuserok(c, ctx->princ, ctx->name)) {
+            putil_err(args, "krb5_kuserok for user %s failed", ctx->name);
             return PAM_AUTH_ERR;
+        }
     }
 
     return PAM_SUCCESS;

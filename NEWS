@@ -24,6 +24,9 @@ pam-krb5 4.5 (unreleased)
     cache directory so that pam-krb5 can continue working when /tmp is
     full.
 
+    Report more specific errors in syslog if authorization checks (such as
+    .k5login checks) fail.
+
     When probing for Kerberos libraries, always add any supplemental
     libraries found to that point to the link command.  This will fix
     configure failures on platforms without working transitive shared
