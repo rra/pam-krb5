@@ -1,4 +1,4 @@
-libpam-krb5 (4.4-3) UNRELEASED; urgency=low
+libpam-krb5 (4.4-3) unstable; urgency=low
 
   * Change the pam-auth-update configuration to skip remaining password
     stack by default modules if the Kerberos password change succeeds.
@@ -17,7 +17,7 @@ libpam-krb5 (4.4-3) UNRELEASED; urgency=low
   * Fix formal name of the GPL in debian/copyright.  (This will also be
     done upstream in the next release.)
 
- -- Russ Allbery <rra@debian.org>  Sun, 25 Sep 2011 19:30:45 -0700
+ -- Russ Allbery <rra@debian.org>  Mon, 26 Sep 2011 08:40:43 -0700
 
 libpam-krb5 (4.4-2) unstable; urgency=low
 
