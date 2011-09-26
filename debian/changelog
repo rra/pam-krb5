@@ -1,5 +1,12 @@
 libpam-krb5 (4.4-3) UNRELEASED; urgency=low
 
+  * Change the pam-auth-update configuration to skip remaining password
+    stack by default modules if the Kerberos password change succeeds.
+    This is more useful behavior for the common case of Kerberos accounts
+    not having local passwords.  See README.Debian.gz for information
+    about how to synchronize Kerberos and local passwords.  (LP: #826989)
+  * Update README.Debian.gz documentation with more current options for
+    pam_unix and document password synchronization configuration.
   * Convert to multiarch.  Depend on the multiarch version of libpam0g,
     install the modules into the multiarch version of /lib/security, and
     declare the packages Multi-Arch: same.

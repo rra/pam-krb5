@@ -40,7 +40,7 @@ their Kerberos authentication is checked against ~/.k5login if present.)
 Finally, in /etc/pam.d/common-password:
 
     password  sufficient  pam_krb5.so minimum_uid=1000
-    password  required    pam_unix.so nullok obscure min=4 max=8 md5
+    password  required    pam_unix.so nullok obscure sha512
 
 Note the minimum_uid=1000 on all of these lines.  This is optional, but
 normally sites do not create a single root@example.com Kerberos principal
@@ -60,13 +60,20 @@ than files for your nsswitch configuration), you can mark the pam_krb5
 account module as sufficient rather than required so that pam_unix isn't
 run.  This will mean that you won't be able to disable accounts locally.
 
+If you have local passwords for Kerberos users and want to synchronize the
+local and Kerberos password on password change, instead use an
+/etc/pam.d/common-password configuration of:
+
+    password  requisite  pam_krb5.so minimum_uid=1000
+    password  required   pam_unix.so try_first_pass use_authtok obscure sha512
+
 If you regularly use ticket forwarding (such as with Kerberos rlogin or
 ssh with GSSAPI support), you may wish to add the "forwardable" option to
 the pam_krb5.so line in /etc/pam.d/common-auth or equivalently set
 forwardable in /etc/krb5.conf (in either [libdefaults] for all Kerberos
 applications or in a pam group in [appdefaults] just for the PAM module).
 
-This configuration assumes that one can generate a person's Kerberos
+The above configurations assume that one can generate a person's Kerberos
 credential by appending the default realm to the local username.  If this
 is not the case for your system, make sure that every account for which
 this is not the case has a .k5login file in their home directory listing
@@ -77,4 +84,4 @@ same name.  In this situation, you will probably also want to add the
 "search_k5login" option to the pam_krb5.so line in /etc/pam.d/common-auth;
 see the pam_krb5(5) man page for more information.
 
- -- Russ Allbery <rra@debian.org>, Sun, 31 Jan 2010 18:28:26 -0800
+ -- Russ Allbery <rra@debian.org>, Sun, 25 Sep 2011 19:42:44 -0700
