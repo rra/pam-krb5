@@ -1,6 +1,7 @@
 The pam-krb5 package as a whole is:
 
-  Copyright 2009, 2010 Board of Trustees, Leland Stanford Jr. University
+  Copyright 2009, 2010, 2011
+      The Board of Trustees of the Leland Stanford Junior University
   Copyright 2005, 2006, 2007, 2008, 2009, 2010
       Russ Allbery <rra@stanford.edu>
   Copyright (c) 2005 Andres Salomon <dilinger@debian.org>
@@ -11,35 +12,36 @@ The pam-krb5 package as a whole is:
 and covered under the following license:
 
   Redistribution and use in source and binary forms, with or without
-  modification, are permitted provided that the following conditions
-  are met:
+  modification, are permitted provided that the following conditions are
+  met:
+
   1. Redistributions of source code must retain the above copyright
-     notice, and the entire permission notice in its entirety,
-     including the disclaimer of warranties.
+     notice, and the entire permission notice in its entirety, including
+     the disclaimer of warranties.
+
   2. Redistributions in binary form must reproduce the above copyright
      notice, this list of conditions and the following disclaimer in the
      documentation and/or other materials provided with the distribution.
-  3. The name of the author may not be used to endorse or promote
-     products derived from this software without specific prior
-     written permission.
 
-  ALTERNATIVELY, this product may be distributed under the terms of
-  the GNU Public License, in which case the provisions of the GPL are
-  required INSTEAD OF the above restrictions.  (This clause is
-  necessary due to a potential bad interaction between the GPL and
-  the restrictions contained in a BSD-style copyright.)
+  3. The name of the author may not be used to endorse or promote products
+     derived from this software without specific prior written permission.
+
+  ALTERNATIVELY, this product may be distributed under the terms of the
+  GNU General Public License, in which case the provisions of the GPL are
+  required INSTEAD OF the above restrictions.  (This clause is necessary
+  due to a potential bad interaction between the GPL and the restrictions
+  contained in a BSD-style copyright.)
 
   THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
-  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-  DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
-  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-  HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-  STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
-  OF THE POSSIBILITY OF SUCH DAMAGE.
+  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN
+  NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+  USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+  ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 You can obtain a copy of the GNU General Public License on the World Wide
 Web at <http://www.gnu.org/licenses/>.
@@ -48,8 +50,8 @@ Collected copyright notices for the entire package:
 
   Copyright 2005, 2006, 2007, 2008, 2009, 2010
       Russ Allbery <rra@stanford.edu>
-  Copyright 2005, 2006, 2007, 2008, 2009, 2010
-      Board of Trustees, Leland Stanford Jr. University
+  Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2011
+      The Board of Trustees of the Leland Stanford Junior University
   Copyright 2007, 2008 Markus Moeller
   Copyright 1985-2005 Massachusetts Institute of Technology
   Copyright 2005 Andres Salomon <dilinger@debian.org>
@@ -109,35 +111,36 @@ Brashear:
   Copyright (c) Derrick J. Brashear, 1996. All rights reserved
 
   Redistribution and use in source and binary forms, with or without
-  modification, are permitted provided that the following conditions
-  are met:
+  modification, are permitted provided that the following conditions are
+  met:
+
   1. Redistributions of source code must retain the above copyright
-     notice, and the entire permission notice in its entirety,
-     including the disclaimer of warranties.
+     notice, and the entire permission notice in its entirety, including
+     the disclaimer of warranties.
+
   2. Redistributions in binary form must reproduce the above copyright
      notice, this list of conditions and the following disclaimer in the
      documentation and/or other materials provided with the distribution.
-  3. The name of the author may not be used to endorse or promote
-     products derived from this software without specific prior
-     written permission.
 
-  ALTERNATIVELY, this product may be distributed under the terms of
-  the GNU Public License, in which case the provisions of the GPL are
-  required INSTEAD OF the above restrictions.  (This clause is
-  necessary due to a potential bad interaction between the GPL and
-  the restrictions contained in a BSD-style copyright.)
+  3. The name of the author may not be used to endorse or promote products
+     derived from this software without specific prior written permission.
+
+  ALTERNATIVELY, this product may be distributed under the terms of the
+  GNU General Public License, in which case the provisions of the GPL are
+  required INSTEAD OF the above restrictions.  (This clause is necessary
+  due to a potential bad interaction between the GPL and the restrictions
+  contained in a BSD-style copyright.)
 
   THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
-  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-  DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
-  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-  HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-  STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
-  OF THE POSSIBILITY OF SUCH DAMAGE.
+  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN
+  NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+  USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+  ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 compat-aix.c is taken from the MIT Kerberos distribution and is covered by
 the following copyright and license:
