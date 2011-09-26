@@ -13,11 +13,11 @@ override_dh_auto_configure:
 	CPPFLAGS=-I/usr/include/mit-krb5 \
 	    LDFLAGS=-L/usr/lib/$(DEB_HOST_MULTIARCH)/mit-krb5 \
 	    dh_auto_configure -Bbuild-mit -- --enable-reduced-depends \
-		--libdir=/lib
+		--libdir=/lib/$(DEB_HOST_MULTIARCH)
 	CPPFLAGS=-I/usr/include/heimdal \
 	    LDFLAGS=-L/usr/lib/$(DEB_HOST_MULTIARCH)/heimdal \
 	    dh_auto_configure -Bbuild-heimdal -- --enable-reduced-depends \
-		--libdir=/lib
+		--libdir=/lib/$(DEB_HOST_MULTIARCH)
 
 override_dh_auto_build:
 	dh_auto_build -Bbuild-mit
@@ -26,8 +26,8 @@ override_dh_auto_build:
 override_dh_auto_install:
 	dh_auto_install -Bbuild-mit --destdir=debian/libpam-krb5
 	dh_auto_install -Bbuild-heimdal --destdir=debian/libpam-heimdal
-	rm debian/libpam-*/lib/security/*.la
-	chmod 644 debian/libpam-*/lib/security/*.so
+	rm debian/libpam-*/lib/*/security/*.la
+	chmod 644 debian/libpam-*/lib/*/security/*.so
 	install -d debian/libpam-krb5/usr/share/pam-configs
 	install -d debian/libpam-heimdal/usr/share/pam-configs
 	install -m 644 debian/pam-auth-update \

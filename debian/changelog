@@ -1,3 +1,14 @@
+libpam-krb5 (4.4-3) UNRELEASED; urgency=low
+
+  * Convert to multiarch.  Depend on the multiarch version of libpam0g,
+    install the modules into the multiarch version of /lib/security, and
+    declare the packages Multi-Arch: same.
+  * Update to debhelper compatibility level V9 (experimental).
+    - Build-Depend on debhelper 8.1.3 or later.
+    - Add Pre-Depends: ${misc:Pre-Depends}.
+
+ -- Russ Allbery <rra@debian.org>  Sun, 25 Sep 2011 19:30:45 -0700
+
 libpam-krb5 (4.4-2) unstable; urgency=low
 
   * Add the architecture to the library path for heimdal-multidev and
