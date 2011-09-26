@@ -46,8 +46,7 @@ awk '
     { if (skip == 0) print }
 ' "$p" > krb5.conf.tmp
 if [ -n "$realm" ] ; then
-    sed -e "/^[     ]*$realm =/,/}/d" \
-        -e "s/\\(default_realm.*=\\) .*/\\1 $realm/" \
+    sed -e "s/\\(default_realm.*=\\) .*/\\1 $realm/" \
         krb5.conf.tmp > krb5.conf
     rm krb5.conf.tmp
 else
