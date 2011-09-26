@@ -1,4 +1,5 @@
 module/basic
+module/cache
 module/no-cache
 pam-util/args
 pam-util/fakepam
