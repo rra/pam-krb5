@@ -10,7 +10,7 @@
  * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <rra@stanford.edu>
- * Copyright 2010
+ * Copyright 2010, 2011
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -55,9 +55,16 @@ struct pam_handle {
     const struct pam_conv *conversation;
     const char **environ;
     struct fakepam_data *data;
+    struct passwd *pwd;
 };
 
 BEGIN_DECLS
+
+/*
+ * Sets the struct passwd returned by getpwnam calls.  The last struct passed
+ * to this function will be returned provided the pw_name matches.
+ */
+void pam_set_pwd(struct passwd *pwd);
 
 /*
  * Returns the accumulated messages logged with pam_syslog or pam_vsyslog

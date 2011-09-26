@@ -10,7 +10,7 @@
  * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <rra@stanford.edu>
- * Copyright 2010
+ * Copyright 2010, 2011
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -39,6 +39,9 @@
 #include <pwd.h>
 
 #include <tests/fakepam/testing.h>
+
+/* Stores the static struct passwd returned by getpwnam if the name matches. */
+static struct passwd *pwd_info = NULL;
 
 /* Used for unused parameters to silence gcc warnings. */
 #define UNUSED __attribute__((__unused__))
@@ -99,13 +102,42 @@ pam_end(pam_handle_t *pamh, int status)
 
 
 /*
- * For testing purposes, pam_modutil_getpwnam can just call getpwnam.
- * (Normally, it's a thread-safe wrapper that does some data caching.
+ * Interface specific to this fake PAM library to set the struct passwd that's
+ * returned by getpwnam queries if the name matches.
+ */
+void
+pam_set_pwd(struct passwd *pwd)
+{
+    pwd_info = pwd;
+}
+
+
+/*
+ * For testing purposes, we want to be able to intercept getpwnam.  This is
+ * fairly easy on platforms that have pam_modutil_getpwnam, since then our
+ * code will always call that function and we can provide an implementation
+ * that does whatever we want.  For platforms that don't have that function,
+ * we'll try to intercept the C library getpwnam function.
+ *
+ * We store only one struct passwd data structure statically.  If the user
+ * we're looking up matches that, we return it; otherwise, we return NULL.
  */
 #ifdef HAVE_PAM_MODUTIL_GETPWNAM
 struct passwd *
 pam_modutil_getpwnam(pam_handle_t *pamh UNUSED, const char *name)
 {
-    return getpwnam(name);
+    if (pwd_info != NULL && strcmp(pwd_info->pw_name, name) == 0)
+        return pwd_info;
+    else
+        return NULL;
+}
+#else
+struct passwd *
+getpwnam(const char *name)
+{
+    if (pwd_info != NULL && strcmp(pwd_info->pw_name, name) == 0)
+        return pwd_info;
+    else
+        return NULL;
 }
 #endif
