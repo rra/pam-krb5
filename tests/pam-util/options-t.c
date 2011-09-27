@@ -36,7 +36,7 @@
 #include <pam-util/args.h>
 #include <pam-util/options.h>
 #include <pam-util/vector.h>
-#include <tests/fakepam/testing.h>
+#include <tests/fakepam/pam.h>
 #include <tests/tap/basic.h>
 
 /* The configuration struct we will use for testing. */

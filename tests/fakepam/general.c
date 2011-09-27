@@ -1,10 +1,8 @@
 /*
  * Interface for fake PAM library, used for testing.
  *
- * This contains most interfaces for the fake PAM library, used for testing.
- * It declares only the functions required to allow PAM module code to be
- * linked with this library instead of the system libpam library for testing
- * purposes.
+ * This contains the basic public interfaces for the fake PAM library, used
+ * for testing, and some general utility functions.
  *
  * The canonical version of this file is maintained in the rra-c-util package,
  * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
@@ -38,7 +36,7 @@
 
 #include <pwd.h>
 
-#include <tests/fakepam/testing.h>
+#include <tests/fakepam/pam.h>
 
 /* Stores the static struct passwd returned by getpwnam if the name matches. */
 static struct passwd *pwd_info = NULL;

@@ -32,8 +32,8 @@
  * DEALINGS IN THE SOFTWARE.
  */
  
-#ifndef FAKEPAM_TESTING_H
-#define FAKEPAM_TESTING_H 1
+#ifndef FAKEPAM_PAM_H
+#define FAKEPAM_PAM_H 1
 
 #include <config.h>
 #include <portable/pam.h>

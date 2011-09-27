@@ -11,4 +11,4 @@
     close_session = PAM_SUCCESS
 
 [output]
-    INFO user %u authenticated as %1
+    INFO user %u authenticated as %0

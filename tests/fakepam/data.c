@@ -35,7 +35,7 @@
 #include <portable/pam.h>
 #include <portable/system.h>
 
-#include <tests/fakepam/testing.h>
+#include <tests/fakepam/pam.h>
 
 /* Used for unused parameters to silence gcc warnings. */
 #define UNUSED __attribute__((__unused__))

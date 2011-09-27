@@ -22,7 +22,7 @@
 struct script_config {
     const char *user;           /* Username to pass into pam_start (%u). */
     const char *password;       /* Substituted for %p in prompts. */
-    const char *str1;           /* Substituted for %1 in logging. */
+    const char *extra[10];      /* Substituted for %0-%9 in logging. */
 };
 
 BEGIN_DECLS

@@ -35,7 +35,7 @@
 
 #include <pam-util/args.h>
 #include <pam-util/logging.h>
-#include <tests/fakepam/testing.h>
+#include <tests/fakepam/pam.h>
 #include <tests/tap/basic.h>
 
 /* Test a normal PAM logging function. */

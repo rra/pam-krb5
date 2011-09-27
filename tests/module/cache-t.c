@@ -18,7 +18,7 @@
 
 #include <pwd.h>
 
-#include <tests/fakepam/testing.h>
+#include <tests/fakepam/pam.h>
 #include <tests/module/script.h>
 #include <tests/tap/basic.h>
 #include <tests/tap/process.h>
@@ -55,7 +55,7 @@ main(void)
     password[strlen(password) - 1] = '\0';
     test_file_path_free(path);
     config.password = password;
-    config.str1 = bstrdup(principal);
+    config.extra[0] = bstrdup(principal);
 
     /*
      * Strip the realm from the principal.  We'll make the realm of the
@@ -103,6 +103,6 @@ main(void)
     putenv((char *) "KRB5_CONFIG=");
     free(env);
     free(pwd.pw_dir);
-    free((char *) config.str1);
+    free((char *) config.extra[0]);
     return 0;
 }

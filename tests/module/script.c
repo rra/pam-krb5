@@ -20,7 +20,7 @@
 #include <ctype.h>
 #include <syslog.h>
 
-#include <tests/fakepam/testing.h>
+#include <tests/fakepam/pam.h>
 #include <tests/module/script.h>
 #include <tests/tap/basic.h>
 
@@ -474,6 +474,7 @@ parse_output(FILE *script, const struct script_config *config)
 {
     char *line, *token, *piece, *p, *out;
     char *output = NULL;
+    const char *extra;
     size_t length;
     size_t total = 0;
     int priority;
@@ -500,8 +501,9 @@ parse_output(FILE *script, const struct script_config *config)
                 case 'u':
                     length += strlen(config->user);
                     break;
-                case '1':
-                    length += strlen(config->str1);
+                case '0': case '1': case '2': case '3': case '4':
+                case '5': case '6': case '7': case '8': case '9':
+                    length += strlen(config->extra[*p - '0']);
                     break;
                 default:
                     length++;
@@ -520,9 +522,11 @@ parse_output(FILE *script, const struct script_config *config)
                     memcpy(out, config->user, strlen(config->user));
                     out += strlen(config->user);
                     break;
-                case '1':
-                    memcpy(out, config->str1, strlen(config->str1));
-                    out += strlen(config->str1);
+                case '0': case '1': case '2': case '3': case '4':
+                case '5': case '6': case '7': case '8': case '9':
+                    extra = config->extra[*p - '0'];
+                    memcpy(out, extra, strlen(extra));
+                    out += strlen(extra);
                     break;
                 default:
                     *out++ = *p;

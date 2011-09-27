@@ -32,7 +32,7 @@
 #include <portable/system.h>
 
 #include <pam-util/args.h>
-#include <tests/fakepam/testing.h>
+#include <tests/fakepam/pam.h>
 #include <tests/tap/basic.h>
 
 
