@@ -84,3 +84,6 @@ Logging:
 
  * Log the information that the Kerberos library asks us to display, or
    at least the info and error messages.
+
+ * Log unknown PAM flags on module entry.  Currently, only the symbolic
+   flags we know about will be logged.
