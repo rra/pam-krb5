@@ -486,7 +486,7 @@ parse_output(FILE *script, const struct script_config *config)
         priority = string_to_priority(token);
         if (asprintf(&piece, "%d ", priority) < 0)
             sysbail("asprintf failed");
-        output = brealloc(output, total + strlen(piece));
+        output = brealloc(output, total + strlen(piece) + 1);
         memcpy(output + total, piece, strlen(piece));
         total += strlen(piece);
         free(piece);
@@ -537,7 +537,7 @@ parse_output(FILE *script, const struct script_config *config)
             }
         }
         *out = '\0';
-        total += out - output;
+        total = out - output;
         free(line);
     }
     return output;
