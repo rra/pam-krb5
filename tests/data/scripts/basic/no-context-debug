@@ -1,0 +1,40 @@
+# Test account and session behavior with no context.  -*- conf -*-
+
+[options]
+    auth    = debug
+    account = debug
+    session = debug
+
+[run]
+    acct_mgmt                  = PAM_IGNORE
+    setcred(DELETE_CRED)       = PAM_SUCCESS
+    setcred(ESTABLISH_CRED)    = PAM_SUCCESS
+    setcred(REFRESH_CRED)      = PAM_SUCCESS
+    setcred(REINITIALIZE_CRED) = PAM_SUCCESS
+    open_session               = PAM_IGNORE
+    close_session              = PAM_SUCCESS
+
+[output]
+    DEBUG pam_sm_acct_mgmt: entry (0x0)
+    DEBUG skipping non-Kerberos login
+    DEBUG pam_sm_acct_mgmt: exit (ignore)
+    DEBUG pam_sm_setcred: entry (0x4)
+    DEBUG pam_sm_setcred: exit (success)
+    DEBUG pam_sm_setcred: entry (0x2)
+    DEBUG no context found, creating one
+    DEBUG (user root) unable to get PAM_KRB5CCNAME, assuming non-Kerberos login
+    DEBUG pam_sm_setcred: exit (success)
+    DEBUG pam_sm_setcred: entry (0x10)
+    DEBUG no context found, creating one
+    DEBUG (user root) unable to get PAM_KRB5CCNAME, assuming non-Kerberos login
+    DEBUG pam_sm_setcred: exit (success)
+    DEBUG pam_sm_setcred: entry (0x8)
+    DEBUG no context found, creating one
+    DEBUG (user root) unable to get PAM_KRB5CCNAME, assuming non-Kerberos login
+    DEBUG pam_sm_setcred: exit (success)
+    DEBUG pam_sm_open_session: entry (0x0)
+    DEBUG no context found, creating one
+    DEBUG (user root) unable to get PAM_KRB5CCNAME, assuming non-Kerberos login
+    DEBUG pam_sm_open_session: exit (ignore)
+    DEBUG pam_sm_close_session: entry (0x0)
+    DEBUG pam_sm_close_session: exit (success)

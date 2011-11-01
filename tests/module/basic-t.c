@@ -22,9 +22,12 @@ main(void)
 {
     struct script_config config;
 
-    plan(8);
+    plan_lazy();
 
+    /* Attempt login as the root user to test ignore_root. */
     memset(&config, 0, sizeof(config));
+    config.user = "root";
+
     run_script_dir("data/scripts/basic", &config);
 
     return 0;
