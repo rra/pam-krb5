@@ -35,6 +35,11 @@ pam-krb5 4.5 (unreleased)
     Close some memory leaks where unparsed Kerberos principal names were
     never freed.
 
+    In debug logging, report symbolic names for PAM flags on PAM function
+    entry rather than the numeric PAM flags.  This helps with automated
+    testing and with debugging PAM problems on different operating
+    systems.
+
     Replace the Kerberos compatibility layer with equivalent but
     better-structured code from rra-c-util 3.7.
 

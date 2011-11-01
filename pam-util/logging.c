@@ -47,6 +47,28 @@
 # define LOG_AUTHPRIV LOG_AUTH
 #endif
 
+/* Used for iterating through arrays. */
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+
+/*
+ * Mappings of PAM flags to symbolic names for logging when entering a PAM
+ * module function.
+ */
+static const struct {
+    int flag;
+    const char *name;
+} FLAGS[] = {
+    { PAM_CHANGE_EXPIRED_AUTHTOK, "expired"   },
+    { PAM_DELETE_CRED,            "delete"    },
+    { PAM_DISALLOW_NULL_AUTHTOK,  "nonull"    },
+    { PAM_ESTABLISH_CRED,         "establish" },
+    { PAM_PRELIM_CHECK,           "prelim"    },
+    { PAM_REFRESH_CRED,           "refresh"   },
+    { PAM_REINITIALIZE_CRED,      "reinit"    },
+    { PAM_SILENT,                 "silent"    },
+    { PAM_UPDATE_AUTHTOK,         "update"    },
+};
+
 
 /*
  * Utility function to format a message into newly allocated memory, reporting
@@ -163,6 +185,50 @@ LOG_FUNCTION(crit,   LOG_CRIT)
 LOG_FUNCTION(err,    LOG_ERR)
 LOG_FUNCTION(notice, LOG_NOTICE)
 LOG_FUNCTION(debug,  LOG_DEBUG)
+
+
+/*
+ * Report entry into a function.  Takes the PAM arguments, the function name,
+ * and the flags and maps the flags to symbolic names.
+ */
+void
+putil_log_entry(struct pam_args *pargs, const char *func, int flags)
+{
+    size_t i, length, offset;
+    char *out = NULL, *nout;
+
+    if (!pargs->debug)
+        return;
+    if (flags != 0)
+        for (i = 0; i < ARRAY_SIZE(FLAGS); i++) {
+            if (!(flags & FLAGS[i].flag))
+                continue;
+            if (out == NULL) {
+                out = strdup(FLAGS[i].name);
+                if (out == NULL)
+                    break;
+            } else {
+                length = strlen(FLAGS[i].name);
+                nout = realloc(out, strlen(out) + length + 2);
+                if (nout == NULL) {
+                    free(out);
+                    out = NULL;
+                    break;
+                }
+                out = nout;
+                offset = strlen(out);
+                out[offset] = '|';
+                memcpy(out + offset + 1, FLAGS[i].name, length);
+                out[offset + 1 + length] = '\0';
+            }
+        }
+    if (out == NULL)
+        pam_syslog(pargs->pamh, LOG_DEBUG, "%s: entry", func);
+    else {
+        pam_syslog(pargs->pamh, LOG_DEBUG, "%s: entry (%s)", func, out);
+        free(out);
+    }
+}
 
 
 /*

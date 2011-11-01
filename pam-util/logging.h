@@ -84,9 +84,13 @@ void putil_debug_krb5(struct pam_args *, int, const char *, ...)
     __attribute__((__format__(printf, 3, 4)));
 #endif
 
+/* Log entry to a PAM function. */
+void putil_log_entry(struct pam_args *, const char *, int flags)
+    __attribute__((__nonnull__));
+
 /* Log an authentication failure. */
 void putil_log_failure(struct pam_args *, const char *, ...)
-    __attribute__((__format__(printf, 2, 3)));
+    __attribute__((__nonnull__, __format__(printf, 2, 3)));
 
 /* Undo default visibility change. */
 #pragma GCC visibility pop
@@ -105,8 +109,7 @@ END_DECLS
 /* Macros to record entry and exit from the main PAM functions. */
 #define ENTRY(args, flags)                                              \
     if (args->debug)                                                    \
-        pam_syslog((args)->pamh, LOG_DEBUG,                             \
-                   "%s: entry (0x%x)", __func__, (flags))
+        putil_log_entry((args), __func__, (flags));
 #define EXIT(args, pamret)                                              \
     if (args->debug)                                                    \
         pam_syslog((args)->pamh, LOG_DEBUG, "%s: exit (%s)", __func__,  \
