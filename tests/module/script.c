@@ -108,6 +108,7 @@ static const struct {
     { "DISALLOW_NULL_AUTHTOK",  PAM_DISALLOW_NULL_AUTHTOK  },
     { "DELETE_CRED",            PAM_DELETE_CRED            },
     { "ESTABLISH_CRED",         PAM_ESTABLISH_CRED         },
+    { "PRELIM_CHECK",           PAM_PRELIM_CHECK           },
     { "REFRESH_CRED",           PAM_REFRESH_CRED           },
     { "REINITIALIZE_CRED",      PAM_REINITIALIZE_CRED      },
     { "SILENT",                 PAM_SILENT                 },
@@ -129,8 +130,9 @@ static const struct {
     const char *name;
     int status;
 } RETURNS[] = {
-    { "PAM_IGNORE",  PAM_IGNORE  },
-    { "PAM_SUCCESS", PAM_SUCCESS },
+    { "PAM_IGNORE",       PAM_IGNORE       },
+    { "PAM_SUCCESS",      PAM_SUCCESS      },
+    { "PAM_USER_UNKNOWN", PAM_USER_UNKNOWN },
 };
 
 /* Mapping of PAM prompt styles to their values. */
