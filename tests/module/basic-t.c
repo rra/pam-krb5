@@ -25,7 +25,7 @@ main(void)
     plan(8);
 
     memset(&config, 0, sizeof(config));
-    run_script("data/scripts/basic/no-krb", &config);
+    run_script_dir("data/scripts/basic", &config);
 
     return 0;
 }

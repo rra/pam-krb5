@@ -36,6 +36,13 @@ BEGIN_DECLS
 void run_script(const char *file, const struct script_config *)
     __attribute__((__nonnull__));
 
+/*
+ * The same as run_script, but run every script found in the given directory,
+ * skipping file names that contain characters other than alphanumerics and -.
+ */
+void run_script_dir(const char *dir, const struct script_config *)
+    __attribute__((__nonnull__));
+
 END_DECLS
 
 #endif /* !TESTS_MODULE_SCRIPT_H */

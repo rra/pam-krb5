@@ -18,6 +18,8 @@
 #include <portable/system.h>
 
 #include <ctype.h>
+#include <dirent.h>
+#include <errno.h>
 #include <syslog.h>
 
 #include <tests/fakepam/pam.h>
@@ -785,4 +787,65 @@ run_script(const char *file, const struct script_config *config)
     }
     free(work);
     free(path);
+}
+
+
+/*
+ * Check a filename for acceptable characters.  Returns true if the file
+ * consists solely of [a-zA-Z0-9-] and false otherwise.
+ */
+static bool
+valid_filename(const char *filename)
+{
+    const char *p;
+
+    for (p = filename; *p != '\0'; p++) {
+        if (*p >= 'A' && *p <= 'Z')
+            continue;
+        if (*p >= 'a' && *p <= 'z')
+            continue;
+        if (*p >= '0' && *p <= '9')
+            continue;
+        if (*p == '-')
+            continue;
+        return false;
+    }
+    return true;
+}
+
+
+/*
+ * The same as run_script, but run every script found in the given directory,
+ * skipping file names that contain characters other than alphanumerics and -.
+ */
+void
+run_script_dir(const char *dir, const struct script_config *config)
+{
+    DIR *handle;
+    struct dirent *entry;
+    const char *path;
+    char *file;
+
+    if (access(dir, R_OK) == 0)
+        path = dir;
+    else
+        path = test_file_path(dir);
+    handle = opendir(path);
+    if (handle == NULL)
+        sysbail("cannot open directory %s", dir);
+    errno = 0;
+    while ((entry = readdir(handle)) != NULL) {
+        if (!valid_filename(entry->d_name))
+            continue;
+        if (asprintf(&file, "%s/%s", path, entry->d_name) < 0)
+            sysbail("cannot create path to test script");
+        run_script(file, config);
+        free(file);
+        errno = 0;
+    }
+    if (errno != 0)
+        sysbail("cannot read directory %s", dir);
+    closedir(handle);
+    if (path != dir)
+        test_file_path_free((char *) path);
 }
