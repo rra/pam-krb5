@@ -19,7 +19,7 @@
 #include <pwd.h>
 
 #include <tests/fakepam/pam.h>
-#include <tests/module/script.h>
+#include <tests/fakepam/script.h>
 #include <tests/tap/basic.h>
 #include <tests/tap/process.h>
 

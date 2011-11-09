@@ -15,7 +15,7 @@
 #include <config.h>
 #include <portable/system.h>
 
-#include <tests/module/script.h>
+#include <tests/fakepam/script.h>
 #include <tests/tap/process.h>
 
 

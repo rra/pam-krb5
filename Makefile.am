@@ -79,7 +79,8 @@ tests_runtests_CPPFLAGS = -DSOURCE='"$(abs_top_srcdir)/tests"' \
 	-DBUILD='"$(abs_top_builddir)/tests"'
 check_LIBRARIES = tests/fakepam/libfakepam.a tests/tap/libtap.a
 tests_fakepam_libfakepam_a_SOURCES = tests/fakepam/data.c		    \
-	tests/fakepam/general.c tests/fakepam/logging.c tests/fakepam/pam.h
+	tests/fakepam/general.c tests/fakepam/logging.c tests/fakepam/pam.h \
+	tests/fakepam/script.c tests/fakepam/script.h
 tests_tap_libtap_a_CPPFLAGS = -I$(abs_top_srcdir)/tests $(AM_CPPFLAGS)
 tests_tap_libtap_a_SOURCES = tests/tap/basic.c tests/tap/basic.h \
 	tests/tap/process.c tests/tap/process.h
@@ -92,16 +93,10 @@ MODULE_OBJECTS = api-account.lo api-auth.lo api-password.lo api-session.lo \
 	tests/fakepam/libfakepam.a
 
 # The test programs themselves.
-tests_module_basic_t_SOURCES = tests/module/basic-t.c tests/module/script.c \
-	tests/module/script.h
 tests_module_basic_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
 	portable/libportable.la $(KRB5_LIBS)
-tests_module_cache_t_SOURCES = tests/module/cache-t.c tests/module/script.c \
-	tests/module/script.h
 tests_module_cache_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
 	portable/libportable.la $(KRB5_LIBS)
-tests_module_no_cache_t_SOURCES = tests/module/no-cache-t.c \
-	tests/module/script.c tests/module/script.h
 tests_module_no_cache_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
 	portable/libportable.la $(KRB5_LIBS)
 tests_pam_util_args_t_LDADD = pam-util/libpamutil.la	\
