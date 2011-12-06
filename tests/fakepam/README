@@ -90,6 +90,15 @@ Scripted PAM Testing
     valid section types and the format of their contents are described
     below.
 
+    Several strings undergo %-escape expansion as mentioned below.  For
+    any such string, the following escapes are supported:
+
+        %p      Password (as set in the script_config struct)
+        %u      Username (as set in the script_config struct)
+        %0      extra[0] in script_config
+        ...
+        %9      extra[9] in script_config
+
     Blank lines and lines starting with # are ignored.
 
   The [options] Section
@@ -141,13 +150,7 @@ Scripted PAM Testing
 
     where <priority> is a syslog priority and <output> is the remaining
     output.  Valid values for <priority> are DEBUG, INFO, NOTICE, ERR, and
-    CRIT.  <output> may contain spaces and may contain replacement tokens
-    that start with %.  The following replacement tokens are recognized:
-
-        %u      Username (as set in the script_config struct)
-        %0      extra[0] in script_config
-        ...
-        %9      extra[9] in script_config
+    CRIT.  <output> may contain spaces and undergoes %-escape expansion.
 
     The replacement values are taken from the script_config struct passed
     as a parameter to run_script or run_script_dir.
@@ -169,18 +172,10 @@ Scripted PAM Testing
         <type> = <prompt>|<response>
 
     The <type> is the style of prompt, chosen from "echo_off", "echo_on",
-    "error_msg", and "info".  The <prompt> is the actual prompt sent,
-    which may contain replacement tokens that start with %.  The
-    <response> if present (and its presence is signaled by the |
-    character) contains the response sent back by the test framework,
-    which also may contain replacement tokens that start with %.  The
-    supported replacement tokens are:
-
-        %u      Username (as set in the script_config struct)
-        %p      Password (as set in the script_config struct)
-        %0      extra[0] in script_config
-        ...
-        %9      extra[9] in script_config
+    "error_msg", and "info".  The <prompt> is the actual prompt sent and
+    undergoes %-escape expansion.  The <response> if present (and its
+    presence is signaled by the | character) contains the response sent
+    back by the test framework and also undergoes %-escape expansion.
 
     If the [prompts] section is present and empty, the test harness will
     check that the PAM module does not send any prompts.  If the [prompts]

@@ -290,6 +290,80 @@ split_options(char *string, struct options *options)
 
 
 /*
+ * Given a string that may contain %-escapes, expand it into the resulting
+ * value.  The following escapes are supported:
+ *
+ *     %p   password
+ *     %u   username
+ *     %0   user-supplied string
+ *     ...
+ *     %9   user-supplied string
+ *
+ * Returns the expanded string in newly-allocated memory.
+ */
+static char *
+expand_string(const char *template, const struct script_config *config)
+{
+    size_t length = 0;
+    const char *p, *extra;
+    char *output, *out;
+
+    length = 0;
+    for (p = template; *p != '\0'; p++) {
+        if (*p != '%')
+            length++;
+        else {
+            p++;
+            switch (*p) {
+            case 'p':
+                length += strlen(config->password);
+                break;
+            case 'u':
+                length += strlen(config->user);
+                break;
+            case '0': case '1': case '2': case '3': case '4':
+            case '5': case '6': case '7': case '8': case '9':
+                length += strlen(config->extra[*p - '0']);
+                break;
+            default:
+                length++;
+                break;
+            }
+        }
+    }
+    output = bmalloc(length + 1);
+    for (p = template, out = output; *p != '\0'; p++) {
+        if (*p != '%')
+            *out++ = *p;
+        else {
+            p++;
+            switch (*p) {
+            case 'p':
+                memcpy(out, config->password, strlen(config->password));
+                out += strlen(config->password);
+                break;
+            case 'u':
+                memcpy(out, config->user, strlen(config->user));
+                out += strlen(config->user);
+                break;
+            case '0': case '1': case '2': case '3': case '4':
+            case '5': case '6': case '7': case '8': case '9':
+                extra = config->extra[*p - '0'];
+                memcpy(out, extra, strlen(extra));
+                out += strlen(extra);
+                break;
+            default:
+                *out++ = *p;
+                break;
+            }
+        }
+    }
+    *out = '\0';
+    return output;
+}
+
+
+/*
  * Parse the options section of a PAM script.  This consists of one or more
  * lines in the format:
  *
@@ -410,20 +484,14 @@ parse_run(FILE *script)
  *     PRIORITY some output information
  *
  * where PRIORITY is replaced by the numeric syslog priority corresponding to
- * that priority and the rest of the output is used as-is except for the
- * following substitutions:
- *
- *     %u full user as passed to this function
- *
+ * that priority and the rest of the output undergoes %-esacape expansion.
  * Returns the accumulated output as a single string.
  */
 static char *
 parse_output(FILE *script, const struct script_config *config)
 {
-    char *line, *token, *piece, *p, *out;
+    char *line, *token, *piece;
     char *output = NULL;
-    const char *extra;
-    size_t length;
     size_t total = 0;
     int priority;
 
@@ -439,51 +507,12 @@ parse_output(FILE *script, const struct script_config *config)
         token = strtok(NULL, "");
         if (token == NULL)
             bail("malformed line %s", line);
-        length = 0;
-        for (p = token; *p != '\0'; p++) {
-            if (*p != '%')
-                length++;
-            else {
-                p++;
-                switch (*p) {
-                case 'u':
-                    length += strlen(config->user);
-                    break;
-                case '0': case '1': case '2': case '3': case '4':
-                case '5': case '6': case '7': case '8': case '9':
-                    length += strlen(config->extra[*p - '0']);
-                    break;
-                default:
-                    length++;
-                    break;
-                }
-            }
-        }
-        output = brealloc(output, total + length + 1);
-        for (p = token, out = output + total; *p != '\0'; p++) {
-            if (*p != '%')
-                *out++ = *p;
-            else {
-                p++;
-                switch (*p) {
-                case 'u':
-                    memcpy(out, config->user, strlen(config->user));
-                    out += strlen(config->user);
-                    break;
-                case '0': case '1': case '2': case '3': case '4':
-                case '5': case '6': case '7': case '8': case '9':
-                    extra = config->extra[*p - '0'];
-                    memcpy(out, extra, strlen(extra));
-                    out += strlen(extra);
-                    break;
-                default:
-                    *out++ = *p;
-                    break;
-                }
-            }
-        }
-        *out = '\0';
-        total = out - output;
+        piece = expand_string(token, config);
+        output = brealloc(output, total + strlen(piece) + 1);
+        memcpy(output + total, piece, strlen(piece));
+        total += strlen(piece);
+        output[total] = '\0';
+        free(piece);
         free(line);
     }
     return output;
@@ -499,11 +528,7 @@ parse_output(FILE *script, const struct script_config *config)
  *
  * If the type is error_msg or info, there is no response.  Otherwise,
  * everything after a colon is taken to be the response that should be
- * provided to that prompt.
- *
- * The repsonse may be one of the special values %u (the username) or %p (the
- * password).  This is currently not a substitution; this must instead be the
- * entire value of the response.
+ * provided to that prompt.  The response undergoes %-escape expansion.
  */
 static struct prompts *
 parse_prompts(FILE *script, const struct script_config *config)
@@ -539,21 +564,16 @@ parse_prompts(FILE *script, const struct script_config *config)
         prompt->style = string_to_style(style);
         token = strtok(NULL, "");
         if (prompt->style == PAM_ERROR_MSG || prompt->style == PAM_TEXT_INFO) {
-            prompt->prompt = bstrdup(token);
+            prompt->prompt = expand_string(token, config);
             continue;
         }
         token = strtok(token, "|");
-        prompt->prompt = bstrdup(token);
+        prompt->prompt = expand_string(token, config);
         token = strtok(NULL, "");
         if (token == NULL)
             bail("malformed prompt line near %s", prompt->prompt);
         token = skip_whitespace(token);
-        if (strcmp(token, "%u") == 0)
-            prompt->response = bstrdup(config->user);
-        else if (strcmp(token, "%p") == 0)
-            prompt->response = bstrdup(config->password);
-        else
-            prompt->response = bstrdup(token);
+        prompt->response = expand_string(token, config);
         prompts->size++;
         free(line);
     }
