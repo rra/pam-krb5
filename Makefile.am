@@ -78,9 +78,10 @@ check_PROGRAMS = tests/runtests tests/module/basic-t tests/module/cache-t \
 tests_runtests_CPPFLAGS = -DSOURCE='"$(abs_top_srcdir)/tests"' \
 	-DBUILD='"$(abs_top_builddir)/tests"'
 check_LIBRARIES = tests/fakepam/libfakepam.a tests/tap/libtap.a
-tests_fakepam_libfakepam_a_SOURCES = tests/fakepam/data.c		    \
-	tests/fakepam/general.c tests/fakepam/logging.c tests/fakepam/pam.h \
-	tests/fakepam/script.c tests/fakepam/script.h
+tests_fakepam_libfakepam_a_SOURCES = tests/fakepam/config.c		  \
+	tests/fakepam/data.c tests/fakepam/general.c			  \
+	tests/fakepam/internal.h tests/fakepam/logging.c		  \
+	tests/fakepam/pam.h tests/fakepam/script.c tests/fakepam/script.h
 tests_tap_libtap_a_CPPFLAGS = -I$(abs_top_srcdir)/tests $(AM_CPPFLAGS)
 tests_tap_libtap_a_SOURCES = tests/tap/basic.c tests/tap/basic.h \
 	tests/tap/process.c tests/tap/process.h
