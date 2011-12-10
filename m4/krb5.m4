@@ -298,6 +298,17 @@ AC_DEFUN([RRA_LIB_KRB5_OPTIONAL],
  AS_IF([test x"$KRB5_LIBS" != x],
     [AC_DEFINE([HAVE_KERBEROS], 1, [Define to enable Kerberos features.])])])
 
+dnl Source used by RRA_FUNC_KRB5_GET_INIT_CREDS_OPT_FREE_ARGS.
+AC_DEFUN([_RRA_FUNC_KRB5_OPT_FREE_ARGS_SOURCE], [RRA_INCLUDES_KRB5] [[
+int
+main(void)
+{
+    krb5_get_init_creds_opt *opts;
+    krb5_context c;
+    krb5_get_init_creds_opt_free(c, opts);
+}
+]])
+
 dnl Check whether krb5_get_init_creds_opt_free takes one argument or two.
 dnl Early Heimdal used to take a single argument.  Defines
 dnl HAVE_KRB5_GET_INIT_CREDS_OPT_FREE_2_ARGS if it takes two arguments.
@@ -306,9 +317,7 @@ dnl Should be called with RRA_LIB_KRB5_SWITCH active.
 AC_DEFUN([RRA_FUNC_KRB5_GET_INIT_CREDS_OPT_FREE_ARGS],
 [AC_CACHE_CHECK([if krb5_get_init_creds_opt_free takes two arguments],
     [rra_cv_func_krb5_get_init_creds_opt_free_args],
-    [AC_TRY_COMPILE([RRA_INCLUDES_KRB5],
-        [krb5_get_init_creds_opt *opts; krb5_context c;
-         krb5_get_init_creds_opt_free(c, opts);],
+    [AC_COMPILE_IFELSE([AC_LANG_SOURCE([_RRA_FUNC_KRB5_OPT_FREE_ARGS_SOURCE])],
         [rra_cv_func_krb5_get_init_creds_opt_free_args=yes],
         [rra_cv_func_krb5_get_init_creds_opt_free_args=no])])
  AS_IF([test $rra_cv_func_krb5_get_init_creds_opt_free_args = yes],
