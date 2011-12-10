@@ -155,12 +155,13 @@ separating whitespace.  Whitespace in option arguments is not supported in
 the PAM configuration.
 
 To set an option for the PAM module in the system F<krb5.conf> file, put
-that option in the [appdefaults] section.  The Kerberos PAM module will
-look for options either at the top level of the [appdefaults] section or
-in a subsection named C<pam>, inside or outside a section for the realm.
-For example, the following fragment of a F<krb5.conf> file would set
-I<forwardable> to true, I<minimum_uid> to 1000, and set I<ignore_k5login>
-only if the realm is EXAMPLE.COM.
+that option in the [appdefaults] section.  All options must be followed by
+an equal sign (=) and a value, so for boolean options add C<= true>.  The
+Kerberos PAM module will look for options either at the top level of the
+[appdefaults] section or in a subsection named C<pam>, inside or outside a
+section for the realm.  For example, the following fragment of a
+F<krb5.conf> file would set I<forwardable> to true, I<minimum_uid> to
+1000, and set I<ignore_k5login> only if the realm is EXAMPLE.COM.
 
     [appdefaults]
         forwardable = true
