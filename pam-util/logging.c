@@ -300,6 +300,8 @@ log_krb5(struct pam_args *pargs, int priority, int status, const char *fmt,
     free(msg);
     if (pargs != NULL && pargs->ctx != NULL)
         krb5_free_error_message(pargs->ctx, k5_msg);
+    else
+        krb5_free_error_message(NULL, k5_msg);
 }
 
 
