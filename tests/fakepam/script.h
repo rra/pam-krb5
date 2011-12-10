@@ -16,13 +16,22 @@
 #ifndef TESTS_MODULE_SCRIPT_H
 #define TESTS_MODULE_SCRIPT_H 1
 
+#include <portable/pam.h>
+
 #include <tests/tap/basic.h>
+
+/* A test callback called after PAM functions are run but before pam_end. */
+struct script_config;
+typedef void (*script_callback)(pam_handle_t *, const struct script_config *,
+                                void *);
 
 /* Configuration for the PAM interaction script API. */
 struct script_config {
     const char *user;           /* Username to pass into pam_start (%u). */
     const char *password;       /* Substituted for %p in prompts. */
     const char *extra[10];      /* Substituted for %0-%9 in logging. */
+    script_callback callback;   /* Called after PAM, before pam_end. */
+    void *data;                 /* Passed to the callback function. */
 };
 
 BEGIN_DECLS

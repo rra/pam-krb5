@@ -131,6 +131,10 @@ run_script(const char *file, const struct script_config *config)
     is_string(work->output, output, "Output is correct");
     free(output);
 
+    /* If we have a test callback, call it now. */
+    if (config->callback != NULL)
+        config->callback (pamh, config, config->data);
+
     /* Free memory and return. */
     pam_end(pamh, PAM_SUCCESS);
     action = work->actions;
