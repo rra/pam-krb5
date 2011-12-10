@@ -68,5 +68,7 @@ main(void)
     is_int(args->silent, true, "...and silent is true");
     putil_args_free(args);
 
+    pam_end(pamh, 0);
+
     return 0;
 }

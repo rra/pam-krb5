@@ -121,6 +121,7 @@ main(void)
     struct passwd pwd;
 
     /* Load the Kerberos principal and password from a file. */
+    memset(&config, 0, sizeof(config));
     path = test_file_path("config/password");
     if (path == NULL)
         skip_all("Kerberos tests not configured");

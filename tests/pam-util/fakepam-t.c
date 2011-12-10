@@ -66,6 +66,9 @@ main(void)
     env = pam_getenvlist(pamh);
     ok(env != NULL, "getenvlist when NULL returns non-NULL");
     is_string(NULL, env[0], "...but first element is NULL");
+    for (i = 0; env[i] != NULL; i++)
+        free(env[i]);
+    free(env);
 
     /* putenv and getenv. */
     is_int(PAM_SUCCESS, pam_putenv(pamh, "TEST=foo"), "putenv TEST");
@@ -105,6 +108,8 @@ main(void)
     is_string("FOON=bar=n", pamh->environ[2], "pamh environ FOON");
     is_string("FOO=foo", pamh->environ[3], "pamh environ FOO");
     ok(pamh->environ[4] == NULL, "pamh environ length");
+
+    pam_end(pamh, 0);
 
     return 0;
 }

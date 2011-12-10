@@ -394,6 +394,7 @@ main(void)
     args->config = config_new();
     TEST_ERROR("expires=ft87", LOG_ERR,
                "bad time value in setting: expires=ft87");
+    config_free(args->config);
 
     /* Test error reporting from the krb5.conf parser. */
     args->config = config_new();
@@ -421,6 +422,8 @@ main(void)
     config_free(args->config);
     args->config = NULL;
 
+    test_file_path_free(krb5conf);
+
 #else /* !HAVE_KERBEROS */
 
     skip_block(37, "Kerberos support not configured");
@@ -428,5 +431,6 @@ main(void)
 #endif
 
     putil_args_free(args);
+    pam_end(pamh, 0);
     return 0;
 }

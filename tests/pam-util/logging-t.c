@@ -64,15 +64,18 @@
 /* Test a PAM Kerberos error logging function .*/
 #define TEST_KRB5(func, p, n)                                             \
     do {                                                                  \
+        const char *msg;                                                  \
+                                                                          \
         code = krb5_parse_name(args->ctx, "foo@bar@EXAMPLE.COM", &princ); \
         (func)(args, code, "%s", "krb");                                  \
         code = krb5_parse_name(args->ctx, "foo@bar@EXAMPLE.COM", &princ); \
-        asprintf(&expected, "%d %s: %s", (p), "krb",                      \
-                 krb5_get_error_message(args->ctx, code));                \
+        msg = krb5_get_error_message(args->ctx, code);                    \
+        asprintf(&expected, "%d %s: %s", (p), "krb", msg);                \
         seen = pam_output();                                              \
         is_string(expected, seen, "%s", (n));                             \
         free(seen);                                                       \
         free(expected);                                                   \
+        krb5_free_error_message(args->ctx, msg);                          \
     } while (0);
 
 
@@ -122,6 +125,9 @@ main(void)
 #else
     skip_block(4, "not built with Kerberos support");
 #endif
+
+    putil_args_free(args);
+    pam_end(pamh, 0);
 
     return 0;
 }
