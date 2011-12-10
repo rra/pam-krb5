@@ -33,6 +33,9 @@ dnl Also provides RRA_FUNC_KRB5_GET_INIT_CREDS_OPT_FREE_ARGS, which checks
 dnl whether krb5_get_init_creds_opt_free takes one argument or two.  Defines
 dnl HAVE_KRB5_GET_INIT_CREDS_OPT_FREE_2_ARGS if it takes two arguments.
 dnl
+dnl Also provides RRA_INCLUDES_KRB5, which are the headers to include when
+dnl probing the Kerberos library properties.
+dnl
 dnl The canonical version of this file is maintained in the rra-c-util
 dnl package, available at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
 dnl
@@ -43,6 +46,15 @@ dnl
 dnl This file is free software; the authors give unlimited permission to copy
 dnl and/or distribute it, with or without modifications, as long as this
 dnl notice is preserved.
+
+dnl Headers to include when probing for Kerberos library properties.
+AC_DEFUN([RRA_INCLUDES_KRB5], [[
+#if HAVE_KRB5_KRB5_H
+# include <krb5/krb5.h>
+#else
+# include <krb5.h>
+#endif
+]])
 
 dnl Save the current CPPFLAGS, LDFLAGS, and LIBS settings and switch to
 dnl versions that include the Kerberos flags.  Used as a wrapper, with
@@ -84,6 +96,7 @@ AC_DEFUN([_RRA_LIB_KRB5_REDUCED],
      [AS_IF([test x"$1" = xtrue],
          [AC_MSG_ERROR([cannot find usable Kerberos library])])])
  LIBS="$KRB5_LIBS $LIBS"
+ AC_CHECK_HEADERS([krb5/krb5.h])
  AC_CHECK_FUNCS([krb5_get_error_message],
      [AC_CHECK_FUNCS([krb5_free_error_message])],
      [AC_CHECK_FUNCS([krb5_get_error_string], [],
@@ -92,7 +105,7 @@ AC_DEFUN([_RRA_LIB_KRB5_REDUCED],
                  [KRB5_LIBS="$KRB5_LIBS -lksvc"
                   AC_DEFINE([HAVE_KRB5_SVC_GET_MSG], [1])
                   AC_CHECK_HEADERS([ibm_svc/krb5_svc.h], [], [],
-                     [#include <krb5.h>])],
+                     [RRA_INCLUDES_KRB5])],
                  [AC_CHECK_LIB([com_err], [com_err],
                      [KRB5_LIBS="$KRB5_LIBS -lcom_err"],
                      [AC_MSG_ERROR([cannot find usable com_err library])])
@@ -143,13 +156,14 @@ AC_DEFUN([_RRA_LIB_KRB5_MANUAL],
         [$rra_krb5_extra])],
     [-lasn1 -lcom_err -lcrypto $rra_krb5_extra])
  LIBS="$KRB5_LIBS $LIBS"
+ AC_CHECK_HEADERS([krb5/krb5.h])
  AC_CHECK_FUNCS([krb5_get_error_message],
      [AC_CHECK_FUNCS([krb5_free_error_message])],
      [AC_CHECK_FUNCS([krb5_get_error_string], [],
          [AC_CHECK_FUNCS([krb5_get_err_txt], [],
              [AC_CHECK_FUNCS([krb5_svc_get_msg],
                  [AC_CHECK_HEADERS([ibm_svc/krb5_svc.h], [], [],
-                     [#include <krb5.h>])],
+                     [RRA_INCLUDES_KRB5])],
                  [AC_CHECK_HEADERS([et/com_err.h])])])])])
  RRA_LIB_KRB5_RESTORE])
 
@@ -191,13 +205,14 @@ AC_DEFUN([_RRA_LIB_KRB5_CONFIG],
       KRB5_CPPFLAGS=`echo "$KRB5_CPPFLAGS" | sed 's%-I/usr/include ?%%'`
       _RRA_LIB_KRB5_CHECK([$1])
       RRA_LIB_KRB5_SWITCH
+      AC_CHECK_HEADERS([krb5/krb5.h])
       AC_CHECK_FUNCS([krb5_get_error_message],
           [AC_CHECK_FUNCS([krb5_free_error_message])],
           [AC_CHECK_FUNCS([krb5_get_error_string], [],
               [AC_CHECK_FUNCS([krb5_get_err_txt], [],
                   [AC_CHECK_FUNCS([krb5_svc_get_msg],
                       [AC_CHECK_HEADERS([ibm_svc/krb5_svc.h], [], [],
-                          [#include <krb5.h>])],
+                          [RRA_INCLUDES_KRB5])],
                       [AC_CHECK_HEADERS([et/com_err.h])])])])])
       RRA_LIB_KRB5_RESTORE],
      [_RRA_LIB_KRB5_PATHS
@@ -291,7 +306,7 @@ dnl Should be called with RRA_LIB_KRB5_SWITCH active.
 AC_DEFUN([RRA_FUNC_KRB5_GET_INIT_CREDS_OPT_FREE_ARGS],
 [AC_CACHE_CHECK([if krb5_get_init_creds_opt_free takes two arguments],
     [rra_cv_func_krb5_get_init_creds_opt_free_args],
-    [AC_TRY_COMPILE([#include <krb5.h>],
+    [AC_TRY_COMPILE([RRA_INCLUDES_KRB5],
         [krb5_get_init_creds_opt *opts; krb5_context c;
          krb5_get_init_creds_opt_free(c, opts);],
         [rra_cv_func_krb5_get_init_creds_opt_free_args=yes],

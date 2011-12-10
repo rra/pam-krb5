@@ -42,7 +42,11 @@
 #endif
 #include <portable/macros.h>
 
-#include <krb5.h>
+#ifdef HAVE_KRB5_KRB5_H
+# include <krb5/krb5.h>
+#else
+# include <krb5.h>
+#endif
 #include <stdlib.h>
 
 BEGIN_DECLS
