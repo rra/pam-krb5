@@ -229,12 +229,13 @@ fail:
 int
 pam_putenv(pam_handle_t *pamh, const char *setting)
 {
+    char *copy;
     const char *equals;
     size_t namelen;
     bool delete = false;
     bool found = false;
     size_t i, j;
-    const char **env;
+    char **env;
 
     if (setting == NULL)
         return PAM_PERM_DENIED;
@@ -245,15 +246,22 @@ pam_putenv(pam_handle_t *pamh, const char *setting)
         delete = true;
         namelen = strlen(setting);
     }
+    if (!delete) {
+        copy = strdup(setting);
+        if (copy == NULL)
+            return PAM_BUF_ERR;
+    }
 
     /* Handle the first call to pam_putenv. */
     if (pamh->environ == NULL) {
         if (delete)
             return PAM_BAD_ITEM;
         pamh->environ = malloc(2 * sizeof(char *));
-        if (pamh->environ == NULL)
+        if (pamh->environ == NULL) {
+            free(copy);
             return PAM_BUF_ERR;
-        pamh->environ[0] = setting;
+        }
+        pamh->environ[0] = copy;
         pamh->environ[1] = NULL;
         return PAM_SUCCESS;
     }
@@ -267,11 +275,13 @@ pam_putenv(pam_handle_t *pamh, const char *setting)
         if (strncmp(setting, pamh->environ[i], namelen) == 0
             && pamh->environ[i][namelen] == '=') {
             if (delete) {
+                free(pamh->environ[i]);
                 for (j = i + 1; pamh->environ[j] != NULL; i++, j++)
                     pamh->environ[i] = pamh->environ[j];
                 pamh->environ[i] = NULL;
             } else {
-                pamh->environ[i] = setting;
+                free(pamh->environ[i]);
+                pamh->environ[i] = copy;
             }
             found = true;
             break;
@@ -283,7 +293,7 @@ pam_putenv(pam_handle_t *pamh, const char *setting)
         if (env == NULL)
             return PAM_BUF_ERR;
         pamh->environ = env;
-        pamh->environ[i] = setting;
+        pamh->environ[i] = copy;
         pamh->environ[i + 1] = NULL;
     }
     return PAM_SUCCESS;

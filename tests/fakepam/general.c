@@ -81,9 +81,14 @@ int
 pam_end(pam_handle_t *pamh, int status)
 {
     struct fakepam_data *item, *next;
+    size_t i;
 
-    if (pamh->environ != NULL)
+    if (pamh->environ != NULL) {
+        for (i = 0; pamh->environ[i] != NULL; i++)
+            if (pamh->environ[i] != NULL)
+                free(pamh->environ[i]);
         free(pamh->environ);
+    }
     if (pamh->authtok != NULL)
         free(pamh->authtok);
     for (item = pamh->data; item != NULL; ) {
