@@ -99,7 +99,7 @@ END_DECLS
 
 /* __func__ is C99, but not provided by all implementations. */
 #if __STDC_VERSION__ < 199901L
-# if __GNUC__ >= 2
+# if (__GNUC__ >= 2) && !defined(__func__)
 #  define __func__ __FUNCTION__
 # else
 #  define __func__ "<unknown>"
