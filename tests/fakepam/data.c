@@ -130,6 +130,8 @@ pam_set_item(pam_handle_t *pamh, int item, PAM_CONST void *data)
 {
     switch (item) {
     case PAM_AUTHTOK:
+        if (pamh->authtok != NULL)
+            free(pamh->authtok);
         pamh->authtok = strdup(data);
         if (pamh->authtok == NULL)
             return PAM_BUF_ERR;

@@ -100,6 +100,7 @@ run_script(const char *file, const struct script_config *config)
     if (script == NULL)
         sysbail("cannot open %s", path);
     work = parse_script(script, config);
+    fclose(script);
     diag("Starting %s", file);
     if (work->prompts != NULL) {
         conv.conv = converse;
