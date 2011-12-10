@@ -341,8 +341,11 @@ default_string(struct pam_args *args, const char *section, const char *realm,
     if (value != NULL) {
         if (value[0] == '\0')
             free(value);
-        else
+        else {
+            if (*result != NULL)
+                free(*result);
             *result = value;
+        }
     }
 }
 
@@ -365,10 +368,14 @@ default_list(struct pam_args *args, const char *section, const char *realm,
     if (tmp != NULL) {
         value = vector_split_multi(tmp, " \t,", NULL);
         if (value == NULL) {
+            free(tmp);
             putil_crit(args, "cannot allocate vector: %s", strerror(errno));
             return false;
         }
+        if (*result != NULL)
+            vector_free(*result);
         *result = value;
+        free(tmp);
     }
     return true;
 }
@@ -603,6 +610,8 @@ convert_string(struct pam_args *args, const char *arg, char **setting)
         putil_crit(args, "cannot allocate memory: %s", strerror(errno));
         return false;
     }
+    if (*setting != NULL)
+        free(*setting);
     *setting = result;
     return true;
 }
