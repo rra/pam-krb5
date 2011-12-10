@@ -133,3 +133,13 @@ tests_portable_strndup_t_LDADD = tests/tap/libtap.a portable/libportable.la
 
 check-local: $(check_PROGRAMS)
 	cd tests && ./runtests $(abs_top_srcdir)/tests/TESTS
+
+# Used by maintainers to run the test suite under valgrind.
+check-valgrind: $(check_PROGRAMS)
+	rm -rf $(abs_top_builddir)/tmp-valgrind
+	mkdir $(abs_top_builddir)/tmp-valgrind
+	valgrind --leak-check=full --trace-children=yes --show-reachable=yes \
+	    --trace-children-skip="*generate-krb5-conf*,/bin/sh" \
+	    --log-file=$(abs_top_builddir)/tmp-valgrind/log.%p \
+	    --suppressions=tests/data/valgrind.supp \
+	    tests/runtests $(abs_top_srcdir)/tests/TESTS

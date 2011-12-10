@@ -1,0 +1,15 @@
+{
+   mit-krb5-pkinit-openssl-init
+   Memcheck:Leak
+   fun:*alloc
+   ...
+   fun:krb5_init_preauth_context
+}
+{
+   mit-krb5-plugin-dlerror
+   Memcheck:Leak
+   fun:calloc
+   fun:_dlerror_run
+   ...
+   fun:krb5int_open_plugin
+}
