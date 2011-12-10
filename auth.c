@@ -837,3 +837,176 @@ done:
         krb5_get_init_creds_opt_free(ctx->context, opts);
     return retval;
 }
+
+
+/*
+ * Authenticate a user via Kerberos 5.
+ *
+ * It would be nice to be able to save the ticket cache temporarily as a
+ * memory cache and then only write it out to disk during the session
+ * initialization.  Unfortunately, OpenSSH 4.2 and later do PAM authentication
+ * in a subprocess and therefore has no saved module-specific data available
+ * once it opens a session, so we have to save the ticket cache to disk and
+ * store in the environment where it is.  The alternative is to use something
+ * like System V shared memory, which seems like more trouble than it's worth.
+ */
+int
+pamk5_authenticate(struct pam_args *args)
+{
+    struct context *ctx = NULL;
+    krb5_creds *creds = NULL;
+    char *pass = NULL;
+    char *principal;
+    int pamret;
+    bool set_context = false;
+    krb5_error_code retval;
+
+    /* Temporary backward compatibility. */
+    if (args->config->use_authtok && !args->config->force_first_pass) {
+        putil_err(args, "use_authtok option in authentication group should"
+                  " be changed to force_first_pass");
+        args->config->force_first_pass = true;
+    }
+
+    /* Create a context and obtain the user. */
+    pamret = pamk5_context_new(args);
+    if (pamret != PAM_SUCCESS)
+        goto done;
+    ctx = args->config->ctx;
+
+    /* Check whether we should ignore this user. */
+    if (pamk5_should_ignore(args, ctx->name)) {
+        pamret = PAM_USER_UNKNOWN;
+        goto done;
+    }
+
+    /*
+     * Do the actual authentication.  Expiration, if we're handling this using
+     * the formally correct method (defer_pwchange), is handled specially: we
+     * set a flag in the context and return success.  That flag will later be
+     * checked by pam_sm_acct_mgmt.  If we're not handling it in the formally
+     * correct method, we try to do the password change directly now.
+     *
+     * We need to set the context as PAM data in the defer_pwchange case, but
+     * we don't want to set the PAM data until we've checked .k5login since if
+     * we've stacked multiple pam-krb5 invocations in different realms with
+     * optional, we don't want to override a previous successful
+     * authentication.
+     *
+     * This means that if authentication succeeds in one realm and is then
+     * expired in a later realm, the expiration in the latter realm wins.
+     * This isn't ideal, but avoiding that case is more complicated than it's
+     * worth.
+     *
+     * In the force_pwchange case, try to use the password the user just
+     * entered to authenticate to the password changing service, but don't
+     * throw an error if that doesn't work.  We have to move it from
+     * PAM_AUTHTOK to PAM_OLDAUTHTOK to be in the place where password
+     * changing expects, and have to unset PAM_AUTHTOK or we'll just change
+     * the password to the same thing it was.
+     */
+    pamret = pamk5_password_auth(args, NULL, &creds);
+    if (pamret == PAM_NEW_AUTHTOK_REQD) {
+        if (args->config->fail_pwchange)
+            pamret = PAM_AUTH_ERR;
+        else if (args->config->defer_pwchange) {
+            putil_debug(args, "expired account, deferring failure");
+            ctx->expired = 1;
+            pamret = PAM_SUCCESS;
+        } else if (args->config->force_pwchange) {
+            pam_syslog(args->pamh, LOG_INFO, "user %s password expired,"
+                       " forcing password change", ctx->name);
+            pamk5_conv(args, "Password expired.  You must change it now.",
+                       PAM_TEXT_INFO, NULL);
+            pamret = pam_get_item(args->pamh, PAM_AUTHTOK,
+                                  (PAM_CONST void **) &pass);
+            if (pamret == PAM_SUCCESS && pass != NULL)
+                pam_set_item(args->pamh, PAM_OLDAUTHTOK, pass);
+            pam_set_item(args->pamh, PAM_AUTHTOK, NULL);
+            args->config->use_first_pass = true;
+            pamret = pamk5_password_change(args, 0);
+            if (pamret == PAM_SUCCESS) {
+                putil_debug(args, "successfully changed expired password");
+                args->config->force_first_pass = true;
+                pamret = pamk5_password_auth(args, NULL, &creds);
+            }
+        }
+    }
+    if (pamret != PAM_SUCCESS) {
+        putil_log_failure(args, "authentication failure");
+        goto done;
+    }
+
+    /* Check .k5login and alt_auth_map. */
+    if (!ctx->expired) {
+        pamret = pamk5_authorized(args);
+        if (pamret != PAM_SUCCESS) {
+            putil_log_failure(args, "failed authorization check");
+            goto done;
+        }
+    }
+
+    /* Reset PAM_USER in case we canonicalized, but ignore errors. */
+    if (!ctx->expired) {
+        pamret = pam_set_item(args->pamh, PAM_USER, ctx->name);
+        if (pamret != PAM_SUCCESS)
+            putil_err_pam(args, pamret, "cannot set PAM_USER");
+    }
+
+    /* Log the successful authentication. */
+    retval = krb5_unparse_name(ctx->context, ctx->princ, &principal);
+    if (retval != 0) {
+        putil_err_krb5(args, retval, "krb5_unparse_name failed");
+        pam_syslog(args->pamh, LOG_INFO, "user %s authenticated as UNKNOWN",
+                   ctx->name);
+    } else {
+        pam_syslog(args->pamh, LOG_INFO, "user %s authenticated as %s",
+                   ctx->name, principal);
+        free(principal);
+    }
+
+    /* Now that we know we're successful, we can store the context. */
+    pamret = pam_set_data(args->pamh, "pam_krb5", ctx, pamk5_context_destroy);
+    if (pamret != PAM_SUCCESS) {
+        putil_err_pam(args, pamret, "cannot set context data");
+        pamk5_context_free(args);
+        pamret = PAM_SERVICE_ERR;
+        goto done;
+    }
+    set_context = true;
+
+    /*
+     * If we have an expired account or if we're not creating a ticket cache,
+     * we're done.  Otherwise, store the obtained credentials in a temporary
+     * cache.
+     */
+    if (!args->config->no_ccache && !ctx->expired)
+        pamret = pamk5_cache_init_random(args, creds);
+
+done:
+    if (creds != NULL) {
+        krb5_free_cred_contents(ctx->context, creds);
+        free(creds);
+    }
+
+    /*
+     * Don't free our Kerberos context if we set a context, since the context
+     * will take care of that.
+     */
+    if (set_context)
+        args->ctx = NULL;
+
+    /*
+     * Clear the context on failure so that the account management module
+     * knows that we didn't authenticate with Kerberos.  Only clear the
+     * context if we set it.  Otherwise, we may be blowing away the context of
+     * a previous successful authentication.
+     */
+    if (pamret != PAM_SUCCESS) {
+        if (set_context)
+            pam_set_data(args->pamh, "pam_krb5", NULL, NULL);
+        else
+            pamk5_context_free(args);
+    }
+    return pamret;
+}

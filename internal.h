@@ -113,6 +113,25 @@ struct pam_args *pamk5_init(pam_handle_t *, int flags, int, const char **);
 void pamk5_free(struct pam_args *);
 
 /*
+ * The underlying functions between several of the major PAM interfaces.
+ */
+int pamk5_account(struct pam_args *);
+int pamk5_authenticate(struct pam_args *);
+
+/*
+ * The underlying function below pam_sm_chauthtok.  If the second argument is
+ * true, we're doing the preliminary check and shouldn't actually change the
+ * password.
+ */
+int pamk5_password(struct pam_args *, bool only_auth);
+
+/*
+ * Create or refresh the user's ticket cache.  This is the underlying function
+ * beneath pam_sm_setcred and pam_sm_open_session.
+ */
+int pamk5_setcred(struct pam_args *, bool refresh);
+
+/*
  * Authenticate the user.  Prompts for the password as needed and obtains
  * tickets for in_tkt_service, krbtgt/<realm> by default.  Stores the initial
  * credentials in the final argument, allocating a new krb5_creds structure.
@@ -121,12 +140,6 @@ void pamk5_free(struct pam_args *);
  */
 int pamk5_password_auth(struct pam_args *, const char *service,
                         krb5_creds **);
-
-/*
- * Create or refresh the user's ticket cache.  This is the underlying function
- * beneath pam_sm_setcred and pam_sm_open_session.
- */
-int pamk5_setcred(struct pam_args *, int refresh);
 
 /*
  * Prompt the user for a new password, twice so that they can confirm.  Sets
@@ -140,7 +153,7 @@ int pamk5_password_prompt(struct pam_args *, char **pass);
  * the new password.  If the second argument is true, only obtains the
  * necessary credentials without changing anything.
  */
-int pamk5_password_change(struct pam_args *, int only_auth);
+int pamk5_password_change(struct pam_args *, bool only_auth);
 
 /*
  * Generic conversation function to display messages or get information from

@@ -241,7 +241,7 @@ fail:
  * should reinitialize an existing ticket cache instead of creating a new one.
  */
 int
-pamk5_setcred(struct pam_args *args, int refresh)
+pamk5_setcred(struct pam_args *args, bool refresh)
 {
     struct context *ctx = NULL;
     krb5_ccache cache = NULL;
@@ -268,7 +268,7 @@ pamk5_setcred(struct pam_args *args, int refresh)
     if (args->config->ctx == NULL) {
         putil_debug(args, "no context found, creating one");
         pamret = create_session_context(args);
-        if (args->config->ctx == NULL)
+        if (pamret != PAM_SUCCESS || args->config->ctx == NULL)
             goto done;
         set_context = true;
     }

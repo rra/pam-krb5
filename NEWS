@@ -35,6 +35,11 @@ pam-krb5 4.5 (unreleased)
     Close some memory leaks where unparsed Kerberos principal names were
     never freed.
 
+    Restructure the code to work with OpenPAM's default PAM build
+    machinery, which exports a struct containing module entry points
+    rather than public pam_sm_* functions.  Thanks to Fredrik Pettai for
+    the information.
+
     In debug logging, report symbolic names for PAM flags on PAM function
     entry rather than the numeric PAM flags.  This helps with automated
     testing and with debugging PAM problems on different operating

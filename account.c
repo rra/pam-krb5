@@ -1,5 +1,5 @@
 /*
- * Implements the PAM account group API (pam_sm_acct_mgmt).
+ * Implements the PAM authorization function (pam_acct_mgmt).
  *
  * We don't have much to do for account management, but we do recheck the
  * user's authorization against .k5login (or whatever equivalent we've been
@@ -35,40 +35,17 @@
  * most sense.
  */
 int
-pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
+pamk5_account(struct pam_args *args)
 {
-    struct pam_args *args;
     struct context *ctx;
-    int pamret, retval;
+    int retval;
     const char *name;
 
-    args = pamk5_init(pamh, flags, argc, argv);
-    if (args == NULL) {
-        pamret = PAM_AUTH_ERR;
-        goto done;
-    }
-    pamret = pamk5_context_fetch(args);
-    ENTRY(args, flags);
-
-    /*
-     * Succeed if the user did not use krb5 to login.  Ideally, we should
-     * probably fail and require that the user set up policy properly in their
-     * PAM configuration, but it's not common for the user to do so and that's
-     * not how other krb5 PAM modules work.  If we don't do this, root logins
-     * with the system root password fail, which is a bad failure mode.
-     */
-    if (pamret != PAM_SUCCESS || args->config->ctx == NULL) {
-        pamret = PAM_IGNORE;
-        putil_debug(args, "skipping non-Kerberos login");
-        goto done;
-    }
-    ctx = args->config->ctx;
-
     /* If the account was expired, here's where we actually fail. */
+    ctx = args->config->ctx;
     if (ctx->expired) {
         putil_debug(args, "account password is expired");
-        pamret = PAM_NEW_AUTHTOK_REQD;
-        goto done;
+        return PAM_NEW_AUTHTOK_REQD;
     }
 
     /*
@@ -80,11 +57,10 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
      * set by the time we get to this point.  If we would have to prompt for a
      * user, something is definitely broken and we should fail.
      */
-    retval = pam_get_item(pamh, PAM_USER, (PAM_CONST void **) &name);
+    retval = pam_get_item(args->pamh, PAM_USER, (PAM_CONST void **) &name);
     if (retval != PAM_SUCCESS || name == NULL) {
         putil_err_pam(args, retval, "unable to retrieve user");
-        pamret = PAM_AUTH_ERR;
-        goto done;
+        return PAM_AUTH_ERR;
     }
     if (ctx->name != name) {
         if (ctx->name != NULL)
@@ -107,14 +83,8 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
         retval = krb5_cc_get_principal(ctx->context, ctx->cache, &ctx->princ);
         if (retval != 0) {
             putil_err_krb5(args, retval, "cannot get principal from cache");
-            pamret = PAM_AUTH_ERR;
-            goto done;
+            return PAM_AUTH_ERR;
         }
     }
-    pamret = pamk5_authorized(args);
-
-done:
-    EXIT(args, pamret);
-    pamk5_free(args);
-    return pamret;
+    return pamk5_authorized(args);
 }
