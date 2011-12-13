@@ -264,6 +264,7 @@ putil_log_failure(struct pam_args *pargs, const char *fmt, ...)
                (tty   != NULL) ? tty   : "",
                (ruser != NULL) ? ruser : "",
                (rhost != NULL) ? rhost : "");
+    free(msg);
 }
 
 
