@@ -1,6 +1,7 @@
 module/basic
 module/cache
 module/no-cache
+module/password
 pam-util/args
 pam-util/fakepam
 pam-util/logging

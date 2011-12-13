@@ -22,6 +22,7 @@
 /tests/module/basic-t
 /tests/module/cache-t
 /tests/module/no-cache-t
+/tests/module/password-t
 /tests/pam-util/args-t
 /tests/pam-util/fakepam-t
 /tests/pam-util/logging-t
