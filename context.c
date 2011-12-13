@@ -108,7 +108,7 @@ pamk5_context_fetch(struct pam_args *args)
  * by our code) and pamk5_context_destroy (called by PAM as a data callback).
  */
 static void
-context_free(struct context *ctx)
+context_free(struct context *ctx, bool free_context)
 {
     if (ctx == NULL)
         return;
@@ -127,7 +127,8 @@ context_free(struct context *ctx)
             krb5_free_cred_contents(ctx->context, ctx->creds);
             free(ctx->creds);
         }
-        krb5_free_context(ctx->context);
+        if (free_context)
+            krb5_free_context(ctx->context);
     }
     free(ctx);
 }
@@ -144,11 +145,9 @@ pamk5_context_free(struct pam_args *args)
 {
     if (args->config->ctx == NULL)
         return;
-    if (args->ctx == args->config->ctx->context)
-        args->config->ctx->context = NULL;
     if (args->user == args->config->ctx->name)
         args->user = NULL;
-    context_free(args->config->ctx);
+    context_free(args->config->ctx, args->ctx != args->config->ctx->context);
     args->config->ctx = NULL;
 }
 
@@ -164,5 +163,5 @@ pamk5_context_destroy(pam_handle_t *pamh UNUSED, void *data,
     struct context *ctx = (struct context *) data;
 
     if (ctx != NULL)
-        context_free(ctx);
+        context_free(ctx, true);
 }
