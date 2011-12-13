@@ -68,11 +68,9 @@ main(void)
         sysbail("cannot build KRB5_CONFIG");
     putenv(env);
 
-    plan(15);
+    plan_lazy();
 
-    run_script("data/scripts/no-cache/basic", &config);
-    run_script("data/scripts/no-cache/prompt", &config);
-    run_script("data/scripts/no-cache/auth-only", &config);
+    run_script_dir("data/scripts/no-cache", &config);
 
     if (chdir(getenv("BUILD")) == 0)
         unlink("krb5.conf");
