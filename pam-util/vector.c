@@ -154,6 +154,8 @@ vector_clear(struct vector *vector)
 void
 vector_free(struct vector *vector)
 {
+    if (vector == NULL)
+        return;
     vector_clear(vector);
     free(vector->strings);
     free(vector);
