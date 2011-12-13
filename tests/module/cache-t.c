@@ -111,7 +111,7 @@ check_cache(pam_handle_t *pamh, const struct script_config *config, void *data)
 int
 main(void)
 {
-    char *path, *realm;
+    char *path, *realm, *k5login;
     char principal[BUFSIZ], password[BUFSIZ];
     struct script_config config;
     struct extra extra;
@@ -186,11 +186,27 @@ main(void)
     /* Basic test. */
     run_script("data/scripts/cache/basic", &config);
 
-    /* Don't close the session and check the cache status. */
+    /* Check the cache status before the session is closed. */
     config.callback = check_cache;
     config.data = &extra;
     run_script("data/scripts/cache/open-session", &config);
 
+    /* Change the authenticating user and test search_k5login. */
+    pwd.pw_name = (char *) "testuser";
+    config.user = "testuser";
+    if (asprintf(&k5login, "%s/.k5login", pwd.pw_dir) < 0)
+        sysbail("cannot build .k5login path");
+    file = fopen(k5login, "w");
+    if (file == NULL)
+        sysbail("cannot create %s", k5login);
+    if (fprintf(file, "%s@%s\n", principal, realm) < 0)
+        sysbail("cannot write to %s", k5login);
+    if (fclose(file) < 0)
+        sysbail("cannot flush %s", k5login);
+    run_script("data/scripts/cache/search-k5login", &config);
+
+    unlink(k5login);
+    free(k5login);
     if (chdir(getenv("BUILD")) == 0)
         unlink("krb5.conf");
     putenv((char *) "KRB5_CONFIG=");
