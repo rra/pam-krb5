@@ -93,13 +93,15 @@ Scripted PAM Testing
     Several strings undergo %-escape expansion as mentioned below.  For
     any such string, the following escapes are supported:
 
-        %p      Password (as set in the script_config struct)
-        %u      Username (as set in the script_config struct)
-        %0      extra[0] in script_config
+        %n      New password
+        %p      Password
+        %u      Username
+        %0      extra[0]
         ...
-        %9      extra[9] in script_config
+        %9      extra[9]
 
-    Blank lines and lines starting with # are ignored.
+    All of these are set in the script_config struct.  Blank lines and
+    lines starting with # are ignored.
 
   The [options] Section
 

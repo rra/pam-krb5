@@ -56,6 +56,7 @@ static const struct {
     { "REFRESH_CRED",           PAM_REFRESH_CRED           },
     { "REINITIALIZE_CRED",      PAM_REINITIALIZE_CRED      },
     { "SILENT",                 PAM_SILENT                 },
+    { "UPDATE_AUTHTOK",         PAM_UPDATE_AUTHTOK         },
 };
 
 /* Mapping of strings to PAM groups. */
@@ -293,6 +294,7 @@ split_options(char *string, struct options *options)
  * Given a string that may contain %-escapes, expand it into the resulting
  * value.  The following escapes are supported:
  *
+ *     %n   new password
  *     %p   password
  *     %u   username
  *     %0   user-supplied string
@@ -315,6 +317,9 @@ expand_string(const char *template, const struct script_config *config)
         else {
             p++;
             switch (*p) {
+            case 'n':
+                length += strlen(config->newpass);
+                break;
             case 'p':
                 length += strlen(config->password);
                 break;
@@ -338,6 +343,10 @@ expand_string(const char *template, const struct script_config *config)
         else {
             p++;
             switch (*p) {
+            case 'n':
+                memcpy(out, config->newpass, strlen(config->newpass));
+                out += strlen(config->newpass);
+                break;
             case 'p':
                 memcpy(out, config->password, strlen(config->password));
                 out += strlen(config->password);
