@@ -52,6 +52,7 @@ struct pam_handle {
     const char *service;
     const char *user;
     char *authtok;
+    char *oldauthtok;
     const struct pam_conv *conversation;
     char **environ;
     struct fakepam_data *data;

@@ -63,6 +63,7 @@ pam_start(const char *service_name, const char *user,
     handle->service = service_name;
     handle->user = user;
     handle->authtok = NULL;
+    handle->oldauthtok = NULL;
     handle->conversation = pam_conversation;
     handle->environ = NULL;
     handle->data = NULL;
@@ -91,6 +92,8 @@ pam_end(pam_handle_t *pamh, int status)
     }
     if (pamh->authtok != NULL)
         free(pamh->authtok);
+    if (pamh->oldauthtok != NULL)
+        free(pamh->oldauthtok);
     for (item = pamh->data; item != NULL; ) {
         if (item->cleanup != NULL)
             item->cleanup (pamh, item->data, status);
