@@ -204,6 +204,8 @@ main(void)
     if (fclose(file) < 0)
         sysbail("cannot flush %s", k5login);
     run_script("data/scripts/cache/search-k5login", &config);
+    config.callback = NULL;
+    run_script("data/scripts/cache/search-k5login-debug", &config);
 
     unlink(k5login);
     free(k5login);
