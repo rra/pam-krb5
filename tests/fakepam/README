@@ -93,6 +93,7 @@ Scripted PAM Testing
     Several strings undergo %-escape expansion as mentioned below.  For
     any such string, the following escapes are supported:
 
+        %i      Current UID (not the UID of the target user)
         %n      New password
         %p      Password
         %u      Username

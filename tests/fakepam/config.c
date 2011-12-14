@@ -76,6 +76,7 @@ static const struct {
     const char *name;
     int status;
 } RETURNS[] = {
+    { "PAM_AUTH_ERR",     PAM_AUTH_ERR     },
     { "PAM_IGNORE",       PAM_IGNORE       },
     { "PAM_SUCCESS",      PAM_SUCCESS      },
     { "PAM_USER_UNKNOWN", PAM_USER_UNKNOWN },
@@ -295,6 +296,7 @@ split_options(char *string, struct options *options)
  * Given a string that may contain %-escapes, expand it into the resulting
  * value.  The following escapes are supported:
  *
+ *     %i   current UID (not target user UID)
  *     %n   new password
  *     %p   password
  *     %u   username
@@ -311,6 +313,7 @@ expand_string(const char *template, const struct script_config *config)
     size_t length = 0;
     const char *p, *extra;
     char *output, *out;
+    char *uid = NULL;
 
     length = 0;
     for (p = template; *p != '\0'; p++) {
@@ -319,6 +322,12 @@ expand_string(const char *template, const struct script_config *config)
         else {
             p++;
             switch (*p) {
+            case 'i':
+                if (uid == NULL)
+                    if (asprintf(&uid, "%lu", (unsigned long) getuid()) < 0)
+                        sysbail("cannot format UID");
+                length += strlen(uid);
+                break;
             case 'n':
                 length += strlen(config->newpass);
                 break;
@@ -348,6 +357,10 @@ expand_string(const char *template, const struct script_config *config)
         else {
             p++;
             switch (*p) {
+            case 'i':
+                memcpy(out, uid, strlen(uid));
+                out += strlen(uid);
+                break;
             case 'n':
                 memcpy(out, config->newpass, strlen(config->newpass));
                 out += strlen(config->newpass);
@@ -377,6 +390,8 @@ expand_string(const char *template, const struct script_config *config)
         }
     }
     *out = '\0';
+    if (uid != NULL)
+        free(uid);
     return output;
 }
 
