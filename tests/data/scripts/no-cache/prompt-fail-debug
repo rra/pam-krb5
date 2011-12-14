@@ -16,8 +16,8 @@
 
 [output]
     DEBUG pam_sm_authenticate: entry
-    DEBUG (user thoron@heimdal.stanford.edu) attempting authentication as thoron@heimdal.stanford.edu
-    DEBUG (user thoron@heimdal.stanford.edu) krb5_get_init_creds_password: %*
+    DEBUG (user %u) attempting authentication as %u
+    DEBUG (user %u) krb5_get_init_creds_password: %*
     NOTICE authentication failure; logname=%u uid=%i euid=%i tty= ruser= rhost=
     DEBUG pam_sm_authenticate: exit (failure)
     DEBUG pam_sm_acct_mgmt: entry
