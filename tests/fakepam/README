@@ -100,6 +100,7 @@ Scripted PAM Testing
         ...
         %9      extra[9]
 
+    The PAM output (described below) also supports a special %* wildcard.
     All of these are set in the script_config struct.  Blank lines and
     lines starting with # are ignored.
 
@@ -153,6 +154,9 @@ Scripted PAM Testing
     where <priority> is a syslog priority and <output> is the remaining
     output.  Valid values for <priority> are DEBUG, INFO, NOTICE, ERR, and
     CRIT.  <output> may contain spaces and undergoes %-escape expansion.
+    <output> may also end in %*, in which case only the line up to %* is
+    required to match and anything after that in the same output message
+    is permitted.
 
     The replacement values are taken from the script_config struct passed
     as a parameter to run_script or run_script_dir.
