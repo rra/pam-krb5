@@ -94,8 +94,8 @@ const size_t optlen = sizeof(options) / sizeof(options[0]);
         ok(status, "Parse of %s", (a));                                 \
         asprintf(&expected, "%d %s", (p), (e));                         \
         seen = pam_output();                                            \
-        is_string(expected, seen, "...error for %s", (a));              \
-        free(seen);                                                     \
+        is_string(expected, seen->strings[0], "...error for %s", (a));  \
+        vector_free(seen);                                              \
         free(expected);                                                 \
     } while (0);
 
@@ -139,7 +139,8 @@ main(void)
     struct pam_conv conv = { NULL, NULL };
     bool status;
     struct vector *cells;
-    char *program, *seen, *expected;
+    char *program, *expected;
+    struct vector *seen;
     const char *argv_bool[2] = { NULL, NULL };
     const char *argv_err[2] = { NULL, NULL };
     const char *argv_empty[] = { NULL };
@@ -268,7 +269,7 @@ main(void)
     options[0].defaults.string = NULL;
 
     /* Should be no errors so far. */
-    is_string(NULL, pam_output(), "No errors so far");
+    ok(pam_output() == NULL, "No errors so far");
 
     /* Test various ways of spelling booleans. */
     args->config = config_new();
@@ -403,9 +404,9 @@ main(void)
     asprintf(&expected, "%d invalid number in krb5.conf setting for %s: %s",
              LOG_ERR, "minimum_uid", "1000foo");
     seen = pam_output();
-    is_string(expected, seen, "...and correct error reported");
+    is_string(expected, seen->strings[0], "...and correct error reported");
     free(expected);
-    free(seen);
+    vector_free(seen);
     config_free(args->config);
     args->config = NULL;
 
@@ -416,9 +417,9 @@ main(void)
     asprintf(&expected, "%d invalid time in krb5.conf setting for %s: %s",
              LOG_ERR, "expires", "ft87");
     seen = pam_output();
-    is_string(expected, seen, "...and correct error reported");
+    is_string(expected, seen->strings[0], "...and correct error reported");
     free(expected);
-    free(seen);
+    vector_free(seen);
     config_free(args->config);
     args->config = NULL;
 

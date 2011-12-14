@@ -39,6 +39,9 @@
 #include <portable/pam.h>
 #include <portable/macros.h>
 
+/* Avoid unnecessary includes. */
+struct vector;
+
 /* Used inside the fake PAM library to hold data items. */
 struct fakepam_data {
     char *name;
@@ -73,7 +76,7 @@ void pam_set_pwd(struct passwd *pwd);
  * newly allocated memory that the caller is responsible for freeing, or NULL
  * if no output has been logged since the last call or since startup.
  */
-char *pam_output(void);
+struct vector *pam_output(void);
 
 END_DECLS
 

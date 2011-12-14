@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <syslog.h>
 
+#include <pam-util/vector.h>
 #include <tests/fakepam/internal.h>
 #include <tests/fakepam/pam.h>
 #include <tests/fakepam/script.h>
@@ -65,6 +66,63 @@ converse(int num_msg, const struct pam_message **msg,
         return PAM_CONV_ERR;
     }
 }
+
+
+/*
+ * Check the actual PAM output against the expected output.  We divide the
+ * expected and seen output into separate lines and compare each one so that
+ * we can handle wildcards.
+ */
+static void
+check_output(const struct vector *wanted, const struct vector *seen)
+{
+    size_t i, length;
+
+    if (wanted == NULL && seen == NULL)
+        ok(1, "no output");
+    else if (wanted == NULL) {
+        for (i = 0; i < seen->count; i++)
+            diag("unexpected: %s", seen->strings[0]);
+        ok(0, "no output");
+    } else if (seen == NULL) {
+        for (i = 0; i < wanted->count; i++)
+            is_string(wanted->strings[i], NULL, "output line %lu",
+                      (unsigned long) i);
+    } else {
+        for (i = 0; i < wanted->count && i < seen->count; i++) {
+            length = strlen(wanted->strings[i]);
+
+            /*
+             * Handle the %* wildcard.  If this occurs in the desired string,
+             * it must be the end of the string, and it means that all output
+             * after that point is ignored.  So truncate both strings at that
+             * point so that we'll only compare the first parts.
+             *
+             * This is a hacky substitute for real regex matching, which would
+             * be a much better option.
+             */
+            if (length > 1
+                && strcmp(wanted->strings[i] + (length - 2), "%*") == 0
+                && strlen(seen->strings[i]) > (length - 2)) {
+                wanted->strings[i][length - 2] = '\0';
+                seen->strings[i][length - 2] = '\0';
+            }
+            is_string(wanted->strings[i], seen->strings[i], "output line %lu",
+                      (unsigned long) i);
+        }
+        if (wanted->count > seen->count)
+            for (i = seen->count; i < wanted->count; i++)
+                is_string(wanted->strings[i], NULL, "output line %lu",
+                          (unsigned long) i);
+        else if (seen->count > wanted->count) {
+            for (i = wanted->count; i < seen->count; i++)
+                diag("unexpected: %s", seen->strings[i]);
+            ok(0, "unexpected output lines");
+        } else {
+            ok(1, "no excess output");
+        }
+    }
+}
         
 
 /*
@@ -76,7 +134,8 @@ converse(int num_msg, const struct pam_message **msg,
 void
 run_script(const char *file, const struct script_config *config)
 {
-    char *path, *output;
+    char *path;
+    struct vector *output;
     const char *user;
     FILE *script;
     struct work *work;
@@ -129,8 +188,8 @@ run_script(const char *file, const struct script_config *config)
         is_int(action->status, status, "status for %s", action->name);
     }
     output = pam_output();
-    is_string(work->output, output, "Output is correct");
-    free(output);
+    check_output(work->output, output);
+    vector_free(output);
 
     /* If we have a test callback, call it now. */
     if (config->callback != NULL)
@@ -152,7 +211,7 @@ run_script(const char *file, const struct script_config *config)
             free(work->options[i].argv);
         }
     if (work->output)
-        free(work->output);
+        vector_free(work->output);
     if (work->prompts != NULL) {
         for (i = 0; i < work->prompts->size; i++) {
             if (work->prompts->prompts[i].prompt != NULL)

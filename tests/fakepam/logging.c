@@ -10,7 +10,7 @@
  * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <rra@stanford.edu>
- * Copyright 2010
+ * Copyright 2010, 2011
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -36,13 +36,14 @@
 #include <portable/pam.h>
 #include <portable/system.h>
 
+#include <pam-util/vector.h>
 #include <tests/fakepam/pam.h>
 
 /* Used for unused parameters to silence gcc warnings. */
 #define UNUSED __attribute__((__unused__))
 
-/* The buffer used to accumulate log messages. */
-static char *messages = NULL;
+/* The vector used to accumulate log messages. */
+static struct vector *messages = NULL;
 
 
 /*
@@ -91,44 +92,34 @@ void
 pam_vsyslog(const pam_handle_t *pamh UNUSED, int priority, const char *format,
             va_list args)
 {
-    char *prefix = NULL;
     char *message = NULL;
-    size_t size;
+    char *result = NULL;
 
-    asprintf(&prefix, "%d ", priority);
-    if (prefix == NULL)
+    if (vasprintf(&message, format, args) < 0)
         return;
-    vasprintf(&message, format, args);
-    if (message == NULL)
-        return;
+    if (asprintf(&result, "%d %s", priority, message) < 0)
+        goto done;
     if (messages == NULL) {
-        size = strlen(prefix) + strlen(message) + 1;
-        messages = malloc(size);
+        messages = vector_new();
         if (messages == NULL)
-            return;
-        strlcpy(messages, prefix, size);
-        strlcat(messages, message, size);
-    } else {
-        size = strlen(prefix) + strlen(messages) + strlen(message) + 1;
-        messages = realloc(messages, size);
-        if (messages == NULL)
-            return;
-        strlcat(messages, prefix, size);
-        strlcat(messages, message, size);
+            goto done;
     }
-    free(prefix);
+    vector_add(messages, result);
+
+done:
     free(message);
+    free(result);
 }
 
 
 /*
- * Used by test code.  Returns the accumulated messages and starts a new
- * message buffer.  Caller is responsible for freeing.
+ * Used by test code.  Returns the accumulated messages as a vector and starts
+ * a new message buffer.  Caller is responsible for freeing.
  */
-char *
+struct vector *
 pam_output(void)
 {
-    char *output;
+    struct vector *output;
 
     output = messages;
     messages = NULL;

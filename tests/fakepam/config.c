@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <syslog.h>
 
+#include <pam-util/vector.h>
 #include <tests/fakepam/internal.h>
 #include <tests/fakepam/script.h>
 #include <tests/tap/basic.h>
@@ -301,7 +302,8 @@ split_options(char *string, struct options *options)
  *     ...
  *     %9   user-supplied string
  *
- * Returns the expanded string in newly-allocated memory.
+ * The %* escape is preserved as-is, as it has to be interpreted at the time
+ * of checking output.  Returns the expanded string in newly-allocated memory.
  */
 static char *
 expand_string(const char *template, const struct script_config *config)
@@ -329,6 +331,9 @@ expand_string(const char *template, const struct script_config *config)
             case '0': case '1': case '2': case '3': case '4':
             case '5': case '6': case '7': case '8': case '9':
                 length += strlen(config->extra[*p - '0']);
+                break;
+            case '*':
+                length += 2;
                 break;
             default:
                 length++;
@@ -360,6 +365,10 @@ expand_string(const char *template, const struct script_config *config)
                 extra = config->extra[*p - '0'];
                 memcpy(out, extra, strlen(extra));
                 out += strlen(extra);
+                break;
+            case '*':
+                *out++ = '%';
+                *out++ = '*';
                 break;
             default:
                 *out++ = *p;
@@ -494,34 +503,31 @@ parse_run(FILE *script)
  *
  * where PRIORITY is replaced by the numeric syslog priority corresponding to
  * that priority and the rest of the output undergoes %-esacape expansion.
- * Returns the accumulated output as a single string.
+ * Returns the accumulated output as a vector.
  */
-static char *
+static struct vector *
 parse_output(FILE *script, const struct script_config *config)
 {
-    char *line, *token, *piece;
-    char *output = NULL;
-    size_t total = 0;
+    char *line, *token, *piece, *message;
+    struct vector *output = NULL;
     int priority;
 
+    output = vector_new();
+    if (output == NULL)
+        sysbail("cannot allocate vector");
     for (line = readline(script); line != NULL; line = readline(script)) {
         token = strtok(line, " ");
         priority = string_to_priority(token);
-        if (asprintf(&piece, "%d ", priority) < 0)
-            sysbail("asprintf failed");
-        output = brealloc(output, total + strlen(piece) + 1);
-        memcpy(output + total, piece, strlen(piece));
-        total += strlen(piece);
-        free(piece);
         token = strtok(NULL, "");
         if (token == NULL)
             bail("malformed line %s", line);
         piece = expand_string(token, config);
-        output = brealloc(output, total + strlen(piece) + 1);
-        memcpy(output + total, piece, strlen(piece));
-        total += strlen(piece);
-        output[total] = '\0';
+        if (asprintf(&message, "%d %s", priority, piece) < 0)
+            sysbail("asprintf failed");
         free(piece);
+        if (!vector_add(output, message))
+            sysbail("cannot add output to vector");
+        free(message);
         free(line);
     }
     return output;

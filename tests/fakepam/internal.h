@@ -35,6 +35,7 @@
 
 /* Forward declarations to avoid unnecessary includes. */
 struct script_config;
+struct vector;
 
 /* The type of a PAM module call. */
 typedef int (*pam_call)(pam_handle_t *, int, int, const char **);
@@ -89,7 +90,7 @@ struct work {
     struct options options[4];
     struct action *actions;
     struct prompts *prompts;
-    char *output;
+    struct vector *output;
 };
 
 BEGIN_DECLS
