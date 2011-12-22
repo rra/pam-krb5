@@ -55,8 +55,9 @@ pam-krb5 4.5 (unreleased)
     testing and with debugging PAM problems on different operating
     systems.
 
-    Prefer <krb5/krb5.h> to <krb5.h>, which permits finding the header
-    file on NetBSD systems.  Thanks to Fredrik Pettai for the report.
+    Include <krb5/krb5.h> if <krb5.h> is missing, which permits finding
+    the header file on NetBSD systems.  Thanks to Fredrik Pettai for the
+    report.
 
     Replace the Kerberos compatibility layer with equivalent but
     better-structured code from rra-c-util 3.7.
