@@ -56,12 +56,12 @@ converse(int num_msg, const struct pam_message **msg,
         while (length > 0 && message[length - 1] == '\n')
             message[length-- - 1] = '\0';
 
-        /* Check if we've gotten too many prompts and give up if so. */
+        /* Check if we've gotten too many prompts but quietly ignore them. */
         if (prompts->current >= prompts->size) {
             diag("unexpected prompt: %s", message);
             free(message);
             ok(0, "more prompts than expected");
-            return PAM_CONV_ERR;
+            continue;
         }
 
         /* Be sure everything matches and return the response, if any. */
