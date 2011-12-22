@@ -340,6 +340,8 @@ pamk5_password(struct pam_args *args, bool only_auth)
         if (pamret != PAM_SUCCESS)
             goto done;
         pamret = pamk5_cache_init_random(args, creds);
+        krb5_free_cred_contents(ctx->context, creds);
+        free(creds);
     }
 
 done:

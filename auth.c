@@ -769,6 +769,8 @@ pamk5_password_auth(struct pam_args *args, const char *service,
             if (retval == 0) {
                 retval = KRB5KDC_ERR_KEY_EXP;
                 krb5_free_cred_contents(ctx->context, *creds);
+                free(*creds);
+                *creds = NULL;
             }
         }
 
