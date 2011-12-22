@@ -112,10 +112,34 @@ change_password(struct pam_args *args, const char *pass)
         return PAM_AUTHTOK_ERR;
     ctx = args->config->ctx;
 
-    /* The actual change. */
+    /*
+     * The actual change.
+     *
+     * There are two password protocols in use: the change password protocol,
+     * which doesn't allow specification of the principal, and the newer set
+     * password protocol, which does.  For our purposes, either will do.
+     *
+     * Both Heimdal and MIT provide krb5_set_password.  With Heimdal,
+     * krb5_change_password is deprecated and krb5_set_password tries both
+     * protocols in turn, so will work with new and old servers.  With MIT,
+     * the two APIs map one-to-one to the protocols, so calling
+     * krb5_set_password will fail with old servers that don't implement that
+     * protocol.
+     *
+     * For maximum compatibility, we'd like to use krb5_change_password
+     * everywhere, since everyone implements it and we don't need to change
+     * passwords for a different principal.  However, the function is
+     * deprecated on Heimdal, so check for Heimdal and call krb5_set_password
+     * there, which will try both.
+     */
+#ifdef HAVE_KRB5_HEIMDAL
     retval = krb5_set_password(ctx->context, ctx->creds, (char *) pass,
                  ctx->princ, &result_code, &result_code_string,
                  &result_string);
+#else
+    retval = krb5_change_password(ctx->context, ctx->creds, (char *) pass,
+                 &result_code, &result_code_string, &result_string);
+#endif
 
     /* Everything from here on is just handling diagnostics and output. */
     if (retval != 0) {

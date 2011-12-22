@@ -32,6 +32,11 @@ pam-krb5 4.5 (unreleased)
     immediately call pam_chauthtok to avoid prompting again for the user's
     password.
 
+    Prefer krb5_change_password to krb5_set_password with MIT client
+    libraries to prefer the older protocol for compatibility with older
+    KDCs.  This is not necessary on Heimdal since Heimdal's
+    krb5_set_password tries both protocols.
+
     When probing for Kerberos libraries, always add any supplemental
     libraries found to that point to the link command.  This will fix
     configure failures on platforms without working transitive shared
