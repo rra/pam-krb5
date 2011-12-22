@@ -76,10 +76,11 @@ static const struct {
     const char *name;
     int status;
 } RETURNS[] = {
-    { "PAM_AUTH_ERR",     PAM_AUTH_ERR     },
-    { "PAM_IGNORE",       PAM_IGNORE       },
-    { "PAM_SUCCESS",      PAM_SUCCESS      },
-    { "PAM_USER_UNKNOWN", PAM_USER_UNKNOWN },
+    { "PAM_AUTH_ERR",         PAM_AUTH_ERR     },
+    { "PAM_IGNORE",           PAM_IGNORE       },
+    { "PAM_SUCCESS",          PAM_SUCCESS      },
+    { "PAM_USER_UNKNOWN",     PAM_USER_UNKNOWN },
+    { "PAM_NEW_AUTHTOK_REQD", PAM_NEW_AUTHTOK_REQD },
 };
 
 /* Mapping of PAM prompt styles to their values. */
