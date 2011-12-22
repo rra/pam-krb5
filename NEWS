@@ -27,18 +27,13 @@ pam-krb5 4.5 (unreleased)
     Report more specific errors in syslog if authorization checks (such as
     .k5login checks) fail.
 
-    When defering expired password errors since defer_pwchange is set, set
-    PAM_OLDAUTHTOK to the current password.  This allows applications that
-    immediately call pam_chauthtok to avoid prompting again for the user's
-    password.
-
     Prefer krb5_change_password to krb5_set_password with MIT client
     libraries to prefer the older protocol for compatibility with older
     KDCs.  This is not necessary on Heimdal since Heimdal's
     krb5_set_password tries both protocols.
 
-    Improve logging when defer_pwchange is set and a user authenticates
-    with an expired password.
+    Improve logging and authorization checks when defer_pwchange is set
+    and a user authenticates with an expired password.
 
     When probing for Kerberos libraries, always add any supplemental
     libraries found to that point to the link command.  This will fix

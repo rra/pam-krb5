@@ -883,24 +883,33 @@ pamk5_authenticate(struct pam_args *args)
     }
 
     /*
-     * Do the actual authentication.  Expiration, if we're handling this using
-     * the formally correct method (defer_pwchange), is handled specially: we
-     * set a flag in the context and return success.  That flag will later be
-     * checked by pam_sm_acct_mgmt.  If we're not handling it in the formally
-     * correct method, we try to do the password change directly now.
+     * Do the actual authentication.
      *
-     * We need to set the context as PAM data in the defer_pwchange case, but
-     * we don't want to set the PAM data until we've checked .k5login since if
-     * we've stacked multiple pam-krb5 invocations in different realms with
-     * optional, we don't want to override a previous successful
-     * authentication.  We also want to store the password as PAM_OLDAUTHTOK
-     * so that a subsequent password change won't reprompt the user for their
-     * password.
+     * The complexity arises if the password was expired (which means the
+     * Kerberos library was also unable to prompt for the password change
+     * internally).  In that case, there are three possibilities:
+     * fail_pwchange says we treat that as an authentication failure and stop,
+     * defer_pwchange says to set a flag that will result in an error at the
+     * acct_mgmt step, and force_pwchange says that we should change the
+     * password here and now.
      *
-     * This means that if authentication succeeds in one realm and is then
-     * expired in a later realm, the expiration in the latter realm wins.
-     * This isn't ideal, but avoiding that case is more complicated than it's
-     * worth.
+     * defer_pwchange is the formally correct behavior.  Set a flag in the
+     * context and return success.  That flag will later be checked by
+     * pam_sm_acct_mgmt.  We need to set the context as PAM data in the
+     * defer_pwchange case, but we don't want to set the PAM data until we've
+     * checked .k5login.  If we've stacked multiple pam-krb5 invocations in
+     * different realms as optional, we don't want to override a previous
+     * successful authentication.
+     *
+     * Note this means that, if the user can authenticate with multiple realms
+     * and authentication succeeds in one realm and is then expired in a later
+     * realm, the expiration in the latter realm wins.  This isn't ideal, but
+     * avoiding that case is more complicated than it's worth.
+     *
+     * We would like to set the current password as PAM_OLDAUTHTOK so that
+     * when the application subsequently calls pam_chauthtok, the user won't
+     * be reprompted.  However, the PAM library clears all the auth tokens
+     * when pam_authenticate exits, so this isn't possible.
      *
      * In the force_pwchange case, try to use the password the user just
      * entered to authenticate to the password changing service, but don't
@@ -916,10 +925,6 @@ pamk5_authenticate(struct pam_args *args)
         else if (args->config->defer_pwchange) {
             putil_debug(args, "expired account, deferring failure");
             ctx->expired = 1;
-            pamret = pam_get_item(args->pamh, PAM_AUTHTOK,
-                                  (PAM_CONST void **) &pass);
-            if (pamret == PAM_SUCCESS && pass != NULL)
-                pam_set_item(args->pamh, PAM_OLDAUTHTOK, pass);
             pamret = PAM_SUCCESS;
         } else if (args->config->force_pwchange) {
             pam_syslog(args->pamh, LOG_INFO, "user %s password expired,"
@@ -943,12 +948,10 @@ pamk5_authenticate(struct pam_args *args)
     }
 
     /* Check .k5login and alt_auth_map. */
-    if (!ctx->expired) {
-        pamret = pamk5_authorized(args);
-        if (pamret != PAM_SUCCESS) {
-            putil_log_failure(args, "failed authorization check");
-            goto done;
-        }
+    pamret = pamk5_authorized(args);
+    if (pamret != PAM_SUCCESS) {
+        putil_log_failure(args, "failed authorization check");
+        goto done;
     }
 
     /* Reset PAM_USER in case we canonicalized, but ignore errors. */
