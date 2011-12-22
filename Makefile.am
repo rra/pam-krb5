@@ -11,8 +11,8 @@
 
 ACLOCAL_AMFLAGS = -I m4
 EXTRA_DIST = .gitignore LICENSE autogen pam_krb5.map pam_krb5.pod	\
-	pam_krb5.sym tests/README tests/TESTS tests/data/scripts	\
-	tests/fakepam/README tests/tap/libtap.sh
+	pam_krb5.sym tests/README tests/TESTS tests/config/README	\
+	tests/data/scripts tests/fakepam/README tests/tap/libtap.sh
 
 # Everything we build needs the Kerbeors headers and library flags.
 AM_CPPFLAGS = $(KRB5_CPPFLAGS)
