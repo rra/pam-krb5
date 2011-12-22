@@ -596,6 +596,7 @@ parse_prompts(FILE *script, const struct script_config *config)
         token = strtok(NULL, "");
         if (prompt->style == PAM_ERROR_MSG || prompt->style == PAM_TEXT_INFO) {
             prompt->prompt = expand_string(token, config);
+            prompts->size++;
             continue;
         }
         token = strtok(token, "|");
