@@ -119,6 +119,23 @@ krb5_get_init_creds_opt_alloc(krb5_context ctx UNUSED,
 #endif /* !HAVE_KRB5_GET_INIT_CREDS_OPT_ALLOC */
 
 
+#ifndef HAVE_KRB5_PRINCIPAL_GET_REALM
+/*
+ * Return the realm of a principal as a const char *.
+ */
+const char *
+krb5_principal_get_realm(krb5_context ctx UNUSED, krb5_const_principal princ)
+{
+    const krb5_data *data;
+
+    data = krb5_princ_realm(ctx, princ);
+    if (data == NULL || data->data == NULL)
+        return NULL;
+    return data->data;
+}
+#endif /* !HAVE_KRB5_PRINCIPAL_GET_REALM */
+
+
 #ifndef HAVE_KRB5_VERIFY_INIT_CREDS_OPT_INIT
 /*
  * Initialize the option struct for krb5_verify_init_creds.

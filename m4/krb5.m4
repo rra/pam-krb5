@@ -49,10 +49,10 @@ dnl notice is preserved.
 
 dnl Headers to include when probing for Kerberos library properties.
 AC_DEFUN([RRA_INCLUDES_KRB5], [[
-#if HAVE_KRB5_KRB5_H
-# include <krb5/krb5.h>
-#else
+#if HAVE_KRB5_H
 # include <krb5.h>
+#else
+# include <krb5/krb5.h>
 #endif
 ]])
 
@@ -96,7 +96,7 @@ AC_DEFUN([_RRA_LIB_KRB5_REDUCED],
      [AS_IF([test x"$1" = xtrue],
          [AC_MSG_ERROR([cannot find usable Kerberos library])])])
  LIBS="$KRB5_LIBS $LIBS"
- AC_CHECK_HEADERS([krb5/krb5.h])
+ AC_CHECK_HEADERS([krb5.h krb5/krb5.h])
  AC_CHECK_FUNCS([krb5_get_error_message],
      [AC_CHECK_FUNCS([krb5_free_error_message])],
      [AC_CHECK_FUNCS([krb5_get_error_string], [],
@@ -156,7 +156,7 @@ AC_DEFUN([_RRA_LIB_KRB5_MANUAL],
         [$rra_krb5_extra])],
     [-lasn1 -lcom_err -lcrypto $rra_krb5_extra])
  LIBS="$KRB5_LIBS $LIBS"
- AC_CHECK_HEADERS([krb5/krb5.h])
+ AC_CHECK_HEADERS([krb5.h krb5/krb5.h])
  AC_CHECK_FUNCS([krb5_get_error_message],
      [AC_CHECK_FUNCS([krb5_free_error_message])],
      [AC_CHECK_FUNCS([krb5_get_error_string], [],
@@ -205,7 +205,7 @@ AC_DEFUN([_RRA_LIB_KRB5_CONFIG],
       KRB5_CPPFLAGS=`echo "$KRB5_CPPFLAGS" | sed 's%-I/usr/include ?%%'`
       _RRA_LIB_KRB5_CHECK([$1])
       RRA_LIB_KRB5_SWITCH
-      AC_CHECK_HEADERS([krb5/krb5.h])
+      AC_CHECK_HEADERS([krb5.h krb5/krb5.h])
       AC_CHECK_FUNCS([krb5_get_error_message],
           [AC_CHECK_FUNCS([krb5_free_error_message])],
           [AC_CHECK_FUNCS([krb5_get_error_string], [],
