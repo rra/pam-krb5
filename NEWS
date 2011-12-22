@@ -27,6 +27,11 @@ pam-krb5 4.5 (unreleased)
     Report more specific errors in syslog if authorization checks (such as
     .k5login checks) fail.
 
+    When defering expired password errors since defer_pwchange is set, set
+    PAM_OLDAUTHTOK to the current password.  This allows applications that
+    immediately call pam_chauthtok to avoid prompting again for the user's
+    password.
+
     When probing for Kerberos libraries, always add any supplemental
     libraries found to that point to the link command.  This will fix
     configure failures on platforms without working transitive shared

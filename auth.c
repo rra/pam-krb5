@@ -891,7 +891,9 @@ pamk5_authenticate(struct pam_args *args)
      * we don't want to set the PAM data until we've checked .k5login since if
      * we've stacked multiple pam-krb5 invocations in different realms with
      * optional, we don't want to override a previous successful
-     * authentication.
+     * authentication.  We also want to store the password as PAM_OLDAUTHTOK
+     * so that a subsequent password change won't reprompt the user for their
+     * password.
      *
      * This means that if authentication succeeds in one realm and is then
      * expired in a later realm, the expiration in the latter realm wins.
@@ -912,6 +914,10 @@ pamk5_authenticate(struct pam_args *args)
         else if (args->config->defer_pwchange) {
             putil_debug(args, "expired account, deferring failure");
             ctx->expired = 1;
+            pamret = pam_get_item(args->pamh, PAM_AUTHTOK,
+                                  (PAM_CONST void **) &pass);
+            if (pamret == PAM_SUCCESS && pass != NULL)
+                pam_set_item(args->pamh, PAM_OLDAUTHTOK, pass);
             pamret = PAM_SUCCESS;
         } else if (args->config->force_pwchange) {
             pam_syslog(args->pamh, LOG_INFO, "user %s password expired,"
