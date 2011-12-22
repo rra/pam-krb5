@@ -43,31 +43,47 @@ converse(int num_msg, const struct pam_message **msg,
 {
     struct prompts *prompts = appdata_ptr;
     struct prompt *prompt;
+    char *message;
+    size_t length;
     int i;
-    int status = PAM_SUCCESS;
-    bool newline;
 
     *resp = bcalloc(num_msg, sizeof(struct pam_response));
-    for (i = 0; i < num_msg && status == PAM_SUCCESS; i++) {
+    for (i = 0; i < num_msg; i++) {
+        message = bstrdup(msg[i]->msg);
+
+        /* Remove newlines for comparison purposes. */
+        length = strlen(message);
+        while (length > 0 && message[length - 1] == '\n')
+            message[length-- - 1] = '\0';
+
+        /* Check if we've gotten too many prompts and give up if so. */
         if (prompts->current >= prompts->size) {
-            newline = (msg[i]->msg[strlen(msg[i]->msg) - 1] == '\n');
-            fprintf(stderr, "# unexpected prompt: %s%s", msg[i]->msg,
-                    newline ? "" : "\n");
+            diag("unexpected prompt: %s", message);
+            free(message);
             ok(0, "more prompts than expected");
             return PAM_CONV_ERR;
         }
+
+        /* Be sure everything matches and return the response, if any. */
         prompt = &prompts->prompts[prompts->current];
         is_int(prompt->style, msg[i]->msg_style, "style of prompt %lu",
                (unsigned long) prompts->current);
-        is_string(prompt->prompt, msg[i]->msg, "value of prompt %lu",
+        is_string(prompt->prompt, message, "value of prompt %lu",
                   (unsigned long) prompts->current);
+        free(message);
         prompts->current++;
         if (prompt->style == msg[i]->msg_style && prompt->response != NULL) {
             (*resp)[i].resp = bstrdup(prompt->response);
             (*resp)[i].resp_retcode = 0;
         }
     }
-    return status;
+
+    /*
+     * Always return success even if the prompts don't match.  Otherwise,
+     * we're likely to abort the conversation in the middle and possibly
+     * leave passwords set incorrectly.
+     */
+    return PAM_SUCCESS;
 }
 
 
