@@ -293,13 +293,14 @@ log_krb5(struct pam_args *pargs, int priority, int status, const char *fmt,
     msg = format(fmt, args);
     if (msg == NULL)
         return;
-    if (pargs != NULL && pargs->ctx != NULL)
+    if (pargs != NULL && pargs->ctx != NULL) {
         k5_msg = krb5_get_error_message(pargs->ctx, status);
-    else
-        k5_msg = krb5_get_error_message(NULL, status);
-    log_plain(pargs, priority, "%s: %s", msg, k5_msg);
+        log_plain(pargs, priority, "%s: %s", msg, k5_msg);
+    } else {
+        log_plain(pargs, priority, "%s", msg);
+    }
     free(msg);
-    if (pargs != NULL && pargs->ctx != NULL)
+    if (pargs != NULL && pargs->ctx != NULL && k5_msg != NULL)
         krb5_free_error_message(pargs->ctx, k5_msg);
     else
         krb5_free_error_message(NULL, k5_msg);
