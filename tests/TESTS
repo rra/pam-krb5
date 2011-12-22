@@ -1,5 +1,6 @@
 module/basic
 module/cache
+module/expired
 module/no-cache
 module/password
 pam-util/args

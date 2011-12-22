@@ -18,9 +18,11 @@
 /pam-krb5-*
 /pam_krb5.5
 /stamp-h1
+/tests/config/admin-keytab
 /tests/config/password
 /tests/module/basic-t
 /tests/module/cache-t
+/tests/module/expired-t
 /tests/module/no-cache-t
 /tests/module/password-t
 /tests/pam-util/args-t
