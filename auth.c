@@ -584,7 +584,7 @@ pamk5_password_auth(struct pam_args *args, const char *service,
     krb5_get_init_creds_opt *opts = NULL;
     int retval, retry;
     int success = PAM_AUTH_ERR;
-    int creds_valid = 0;
+    bool creds_valid = false;
     int do_alt = 1;
     int do_only_alt = 0;
     char *pass = NULL;
@@ -768,9 +768,7 @@ pamk5_password_auth(struct pam_args *args, const char *service,
                          (char *) "kadmin/changepw", opts);
             if (retval == 0) {
                 retval = KRB5KDC_ERR_KEY_EXP;
-                krb5_free_cred_contents(ctx->context, *creds);
-                free(*creds);
-                *creds = NULL;
+                creds_valid = true;
             }
         }
 
@@ -789,7 +787,7 @@ pamk5_password_auth(struct pam_args *args, const char *service,
     if (retval != 0)
         putil_debug_krb5(args, retval, "krb5_get_init_creds_password");
     else
-        creds_valid = 1;
+        creds_valid = true;
 
 done:
     /*
