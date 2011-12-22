@@ -594,18 +594,17 @@ parse_prompts(FILE *script, const struct script_config *config)
             bail("malformed prompt line near %s", token);
         prompt->style = string_to_style(style);
         token = strtok(NULL, "");
-        if (prompt->style == PAM_ERROR_MSG || prompt->style == PAM_TEXT_INFO) {
+        if (prompt->style == PAM_ERROR_MSG || prompt->style == PAM_TEXT_INFO)
             prompt->prompt = expand_string(token, config);
-            prompts->size++;
-            continue;
+        else {
+            token = strtok(token, "|");
+            prompt->prompt = expand_string(token, config);
+            token = strtok(NULL, "");
+            if (token == NULL)
+                bail("malformed prompt line near %s", prompt->prompt);
+            token = skip_whitespace(token);
+            prompt->response = expand_string(token, config);
         }
-        token = strtok(token, "|");
-        prompt->prompt = expand_string(token, config);
-        token = strtok(NULL, "");
-        if (token == NULL)
-            bail("malformed prompt line near %s", prompt->prompt);
-        token = skip_whitespace(token);
-        prompt->response = expand_string(token, config);
         prompts->size++;
         free(line);
     }
