@@ -43,28 +43,31 @@ converse(int num_msg, const struct pam_message **msg,
 {
     struct prompts *prompts = appdata_ptr;
     struct prompt *prompt;
+    int i;
+    int status = PAM_SUCCESS;
+    bool newline;
 
-    if (num_msg > 1)
-        bail("only one prompt at a time currently supported");
-    if (prompts->current >= prompts->size) {
-        ok(0, "more prompts than expected");
-        return PAM_CONV_ERR;
+    *resp = bcalloc(num_msg, sizeof(struct pam_response));
+    for (i = 0; i < num_msg && status == PAM_SUCCESS; i++) {
+        if (prompts->current >= prompts->size) {
+            newline = (msg[i]->msg[strlen(msg[i]->msg) - 1] == '\n');
+            fprintf(stderr, "# unexpected prompt: %s%s", msg[i]->msg,
+                    newline ? "" : "\n");
+            ok(0, "more prompts than expected");
+            return PAM_CONV_ERR;
+        }
+        prompt = &prompts->prompts[prompts->current];
+        is_int(prompt->style, msg[i]->msg_style, "style of prompt %lu",
+               (unsigned long) prompts->current);
+        is_string(prompt->prompt, msg[i]->msg, "value of prompt %lu",
+                  (unsigned long) prompts->current);
+        prompts->current++;
+        if (prompt->style == msg[i]->msg_style && prompt->response != NULL) {
+            (*resp)[i].resp = bstrdup(prompt->response);
+            (*resp)[i].resp_retcode = 0;
+        }
     }
-    prompt = &prompts->prompts[prompts->current];
-    is_int(prompt->style, msg[0]->msg_style, "style of prompt %lu",
-           (unsigned long) prompts->current);
-    is_string(prompt->prompt, msg[0]->msg, "value of prompt %lu",
-              (unsigned long) prompts->current);
-    prompts->current++;
-    *resp = NULL;
-    if (prompt->style == msg[0]->msg_style && prompt->response != NULL) {
-        *resp = bmalloc(sizeof(struct pam_response));
-        (*resp)->resp = bstrdup(prompt->response);
-        (*resp)->resp_retcode = 0;
-        return PAM_SUCCESS;
-    } else {
-        return PAM_CONV_ERR;
-    }
+    return status;
 }
 
 
