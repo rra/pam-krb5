@@ -11,7 +11,6 @@
     acct_mgmt                 = PAM_NEW_AUTHTOK_REQD
     chauthtok(PRELIM_CHECK)   = PAM_SUCCESS
     chauthtok(UPDATE_AUTHTOK) = PAM_SUCCESS
-    authenticate              = PAM_SUCCESS
     acct_mgmt                 = PAM_SUCCESS
     open_session              = PAM_SUCCESS
     close_session             = PAM_SUCCESS
@@ -39,10 +38,6 @@
     DEBUG (user %u) attempting authentication as %0
     INFO user %u authenticated as %0
     DEBUG pam_sm_chauthtok: exit (success)
-    DEBUG pam_sm_authenticate: entry
-    DEBUG (user %u) attempting authentication as %0
-    INFO user %u authenticated as %0
-    DEBUG pam_sm_authenticate: exit (success)
     DEBUG pam_sm_acct_mgmt: entry
     DEBUG (user %u) retrieving principal from cache
     DEBUG pam_sm_acct_mgmt: exit (success)

@@ -10,7 +10,6 @@
     acct_mgmt                 = PAM_NEW_AUTHTOK_REQD
     chauthtok(PRELIM_CHECK)   = PAM_SUCCESS
     chauthtok(UPDATE_AUTHTOK) = PAM_SUCCESS
-    authenticate              = PAM_SUCCESS
     acct_mgmt                 = PAM_SUCCESS
     open_session              = PAM_SUCCESS
     close_session             = PAM_SUCCESS
@@ -23,5 +22,4 @@
     INFO user %u authenticated as %0 (expired)
     INFO user %u account password is expired
     INFO user %u changed Kerberos password
-    INFO user %u authenticated as %0
     INFO user %u authenticated as %0

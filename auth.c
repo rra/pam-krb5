@@ -932,12 +932,9 @@ pamk5_authenticate(struct pam_args *args)
                 pam_set_item(args->pamh, PAM_OLDAUTHTOK, pass);
             pam_set_item(args->pamh, PAM_AUTHTOK, NULL);
             args->config->use_first_pass = true;
-            pamret = pamk5_password_change(args, 0);
-            if (pamret == PAM_SUCCESS) {
+            pamret = pamk5_password_change(args, false);
+            if (pamret == PAM_SUCCESS)
                 putil_debug(args, "successfully changed expired password");
-                args->config->force_first_pass = true;
-                pamret = pamk5_password_auth(args, NULL, &creds);
-            }
         }
     }
     if (pamret != PAM_SUCCESS) {

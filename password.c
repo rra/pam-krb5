@@ -328,8 +328,9 @@ pamk5_password(struct pam_args *args, bool only_auth)
         goto done;
 
     /*
-     * If we were handling a password change for an expired password, now
-     * try to get a ticket cache with the new password.
+     * If we were handling a forced password change for an expired password,
+     * now try to get a ticket cache with the new password.  If this succeeds,
+     * clear the expired flag in the context.
      */
     if (pamret == PAM_SUCCESS && ctx->expired) {
         krb5_creds *creds = NULL;
@@ -351,6 +352,7 @@ pamk5_password(struct pam_args *args, bool only_auth)
                        ctx->name, principal);
             krb5_free_unparsed_name(ctx->context, principal);
         }
+        ctx->expired = false;
         pamret = pamk5_cache_init_random(args, creds);
         krb5_free_cred_contents(ctx->context, creds);
         free(creds);
