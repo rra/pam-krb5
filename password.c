@@ -124,23 +124,21 @@ change_password(struct pam_args *args, const char *pass)
      * Both Heimdal and MIT provide krb5_set_password.  With Heimdal,
      * krb5_change_password is deprecated and krb5_set_password tries both
      * protocols in turn, so will work with new and old servers.  With MIT,
-     * the two APIs map one-to-one to the protocols, so calling
-     * krb5_set_password will fail with old servers that don't implement that
-     * protocol.
+     * krb5_set_password will use the old protocol if the principal is NULL
+     * and the new protocol if it is not.
      *
-     * For maximum compatibility, we'd like to use krb5_change_password
-     * everywhere, since everyone implements it and we don't need to change
-     * passwords for a different principal.  However, the function is
-     * deprecated on Heimdal, so check for Heimdal and call krb5_set_password
-     * there, which will try both.
+     * We would like to just use krb5_set_password with a NULL principal
+     * argument, but Heimdal 1.5 uses the default principal for the local user
+     * rather than the principal from the credentials, so we need to pass in a
+     * principal for Heimdal.  So we're stuck with an #ifdef.
      */
-#ifdef HAVE_KRB5_HEIMDAL
+#ifdef HAVE_KRB5_MIT
+    retval = krb5_set_password(ctx->context, ctx->creds, (char *) pass,
+                 NULL, &result_code, &result_code_string, &result_string);
+#else
     retval = krb5_set_password(ctx->context, ctx->creds, (char *) pass,
                  ctx->princ, &result_code, &result_code_string,
                  &result_string);
-#else
-    retval = krb5_change_password(ctx->context, ctx->creds, (char *) pass,
-                 &result_code, &result_code_string, &result_string);
 #endif
 
     /* Everything from here on is just handling diagnostics and output. */
