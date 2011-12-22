@@ -7,7 +7,6 @@
     session  = debug
 
 [run]
-    authenticate  = PAM_AUTH_ERR
     authenticate  = PAM_SUCCESS
     acct_mgmt     = PAM_SUCCESS
     open_session  = PAM_SUCCESS
@@ -20,14 +19,8 @@
     echo_off = New password: : |%n
     echo_off = Repeat new password: : |%n
     info     = Success: Password changed
-    echo_off = Password: |%n
 
 [output]
-    DEBUG pam_sm_authenticate: entry
-    DEBUG (user %u) attempting authentication as %0
-    DEBUG (user %u) krb5_get_init_creds_password: %*
-    NOTICE authentication failure; logname=%u uid=%i euid=%i tty= ruser= rhost=
-    DEBUG pam_sm_authenticate: exit (failure)
     DEBUG pam_sm_authenticate: entry
     DEBUG (user %u) attempting authentication as %0
     INFO user %u authenticated as %0
