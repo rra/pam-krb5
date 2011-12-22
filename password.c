@@ -62,6 +62,8 @@ pamk5_password_prompt(struct pam_args *args, char **pass)
         if (pamret != PAM_SUCCESS) {
             putil_debug_pam(args, pamret, "error getting new password");
             pamret = PAM_AUTHTOK_ERR;
+            memset(pass1, 0, strlen(pass1));
+            free(pass1);
             goto done;
         }
         if (strcmp(pass1, pass2) != 0) {
