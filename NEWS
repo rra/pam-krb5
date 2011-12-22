@@ -37,6 +37,9 @@ pam-krb5 4.5 (unreleased)
     KDCs.  This is not necessary on Heimdal since Heimdal's
     krb5_set_password tries both protocols.
 
+    Improve logging when defer_pwchange is set and a user authenticates
+    with an expired password.
+
     When probing for Kerberos libraries, always add any supplemental
     libraries found to that point to the link command.  This will fix
     configure failures on platforms without working transitive shared

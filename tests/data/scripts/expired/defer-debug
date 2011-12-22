@@ -25,10 +25,10 @@
     DEBUG (user %u) attempting authentication as %0
     DEBUG (user %u) krb5_get_init_creds_password: Password has expired
     DEBUG (user %u) expired account, deferring failure
-    INFO user %u authenticated as %0
+    INFO user %u authenticated as %0 (expired)
     DEBUG pam_sm_authenticate: exit (success)
     DEBUG pam_sm_acct_mgmt: entry
-    DEBUG (user %u) account password is expired
+    INFO user %u account password is expired
     DEBUG pam_sm_acct_mgmt: exit (failure)
     DEBUG pam_sm_chauthtok: entry (prelim)
     DEBUG (user %u) attempting authentication as %0
@@ -37,6 +37,7 @@
     INFO user %u changed Kerberos password
     DEBUG (user %u) obtaining credentials with new password
     DEBUG (user %u) attempting authentication as %0
+    INFO user %u authenticated as %0
     DEBUG pam_sm_chauthtok: exit (success)
     DEBUG pam_sm_authenticate: entry
     DEBUG (user %u) attempting authentication as %0

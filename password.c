@@ -333,12 +333,24 @@ pamk5_password(struct pam_args *args, bool only_auth)
      */
     if (pamret == PAM_SUCCESS && ctx->expired) {
         krb5_creds *creds = NULL;
+        char *principal;
+        krb5_error_code retval;
 
         putil_debug(args, "obtaining credentials with new password");
         args->config->force_first_pass = 1;
         pamret = pamk5_password_auth(args, NULL, &creds);
         if (pamret != PAM_SUCCESS)
             goto done;
+        retval = krb5_unparse_name(ctx->context, ctx->princ, &principal);
+        if (retval != 0) {
+            putil_err_krb5(args, retval, "krb5_unparse_name failed");
+            pam_syslog(args->pamh, LOG_INFO,
+                       "user %s authenticated as UNKNOWN", ctx->name);
+        } else {
+            pam_syslog(args->pamh, LOG_INFO, "user %s authenticated as %s",
+                       ctx->name, principal);
+            krb5_free_unparsed_name(ctx->context, principal);
+        }
         pamret = pamk5_cache_init_random(args, creds);
         krb5_free_cred_contents(ctx->context, creds);
         free(creds);

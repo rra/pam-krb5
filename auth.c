@@ -968,9 +968,9 @@ pamk5_authenticate(struct pam_args *args)
         pam_syslog(args->pamh, LOG_INFO, "user %s authenticated as UNKNOWN",
                    ctx->name);
     } else {
-        pam_syslog(args->pamh, LOG_INFO, "user %s authenticated as %s",
-                   ctx->name, principal);
-        free(principal);
+        pam_syslog(args->pamh, LOG_INFO, "user %s authenticated as %s%s",
+                   ctx->name, principal, ctx->expired ? " (expired)" : "");
+        krb5_free_unparsed_name(ctx->context, principal);
     }
 
     /* Now that we know we're successful, we can store the context. */

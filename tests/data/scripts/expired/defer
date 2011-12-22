@@ -20,6 +20,8 @@
     echo_off = Retype new Kerberos password: |%n
 
 [output]
-    INFO user %u authenticated as %0
+    INFO user %u authenticated as %0 (expired)
+    INFO user %u account password is expired
     INFO user %u changed Kerberos password
+    INFO user %u authenticated as %0
     INFO user %u authenticated as %0

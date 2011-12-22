@@ -44,7 +44,8 @@ pamk5_account(struct pam_args *args)
     /* If the account was expired, here's where we actually fail. */
     ctx = args->config->ctx;
     if (ctx->expired) {
-        putil_debug(args, "account password is expired");
+        pam_syslog(args->pamh, LOG_INFO, "user %s account password is expired",
+                   ctx->name);
         return PAM_NEW_AUTHTOK_REQD;
     }
 
