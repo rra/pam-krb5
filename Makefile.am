@@ -19,8 +19,8 @@ AM_CPPFLAGS = $(KRB5_CPPFLAGS)
 AM_LDFLAGS  = $(KRB5_LDFLAGS)
 
 noinst_LTLIBRARIES = pam-util/libpamutil.la portable/libportable.la
-portable_libportable_la_SOURCES = portable/dummy.c portable/krb5.h	\
-        portable/macros.h portable/pam.h portable/stdbool.h		\
+portable_libportable_la_SOURCES = portable/dummy.c portable/kadmin.h	    \
+        portable/krb5.h portable/macros.h portable/pam.h portable/stdbool.h \
         portable/system.h
 portable_libportable_la_LIBADD = $(LTLIBOBJS)
 pam_util_libpamutil_la_SOURCES = pam-util/args.c pam-util/args.h	\

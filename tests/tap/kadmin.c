@@ -32,12 +32,12 @@
  */
 
 #include <config.h>
-#include <portable/krb5.h>
+#ifdef HAVE_KADM5CLNT
+# include <portable/kadmin.h>
+# include <portable/krb5.h>
+#endif
 #include <portable/system.h>
 
-#ifdef HAVE_KADM5CLNT
-# include <kadm5/admin.h>
-#endif
 #include <time.h>
 
 #include <tests/tap/basic.h>
@@ -101,15 +101,9 @@ kerberos_expire_password(const char *principal, time_t expires)
     memset(&params, 0, sizeof(params));
     params.realm = (char *) realm;
     params.mask = KADM5_CONFIG_REALM;
-#ifdef HAVE_KRB5_MIT
-    code = kadm5_init_with_skey(ctx, user, path, (char *) KADM5_ADMIN_SERVICE,
-                                &params, KADM5_STRUCT_VERSION,
-                                KADM5_API_VERSION_3, NULL, &handle);
-#else
     code = kadm5_init_with_skey_ctx(ctx, user, path, KADM5_ADMIN_SERVICE,
                                     &params, KADM5_STRUCT_VERSION,
-                                    KADM5_API_VERSION_2, &handle);
-#endif
+                                    KADM5_API_VERSION, &handle);
     if (code != 0) {
         diag_krb5(ctx, code, "error initializing kadmin");
         goto done;
