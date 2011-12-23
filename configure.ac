@@ -79,6 +79,12 @@ AC_CHECK_FUNCS([krb5_appdefault_string], [],
 AC_LIBOBJ([krb5-extra])
 RRA_LIB_KRB5_RESTORE
 
+dnl The kadmin client libraries are only used for the test suite.
+RRA_LIB_KADM5CLNT_OPTIONAL
+RRA_LIB_KADM5CLNT_SWITCH
+AC_CHECK_FUNCS([kadm5_init_with_skey_ctx])
+RRA_LIB_KADM5CLNT_RESTORE
+
 dnl Other probes of the system libraries.
 AC_HEADER_STDBOOL
 AC_CHECK_HEADERS([strings.h sys/bittypes.h])
