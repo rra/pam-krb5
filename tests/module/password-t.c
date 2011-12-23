@@ -34,8 +34,7 @@ main(void)
 {
     struct script_config config;
     struct kerberos_password *password;
-    char *path, *newpass, *env;
-    const char *argv[3];
+    char *newpass;
 
     /* Load the Kerberos principal and password from a file. */
     password = kerberos_config_password();
@@ -46,21 +45,8 @@ main(void)
     config.password = password->password;
     config.extra[0] = password->principal;
 
-    /*
-     * Generate a test krb5.conf file in the current directory and use it.  We
-     * need to do this to ensure that we don't pick up unwanted configuration
-     * from the system krb5.conf file.
-     */
-    path = test_file_path("data/generate-krb5-conf");
-    if (path == NULL)
-        bail("cannot find generate-krb5-conf");
-    argv[0] = path;
-    argv[1] = password->realm;
-    argv[2] = NULL;
-    run_setup(argv);
-    test_file_path_free(path);
-    basprintf(&env, "KRB5_CONFIG=%s/krb5.conf", getenv("BUILD"));
-    putenv(env);
+    /* Generate a testing krb5.conf file. */
+    kerberos_generate_conf(password->realm);
 
     plan_lazy();
 
@@ -78,10 +64,6 @@ main(void)
     run_script("data/scripts/password/basic", &config);
 
     free(newpass);
-    if (chdir(getenv("BUILD")) == 0)
-        unlink("krb5.conf");
-    putenv((char *) "KRB5_CONFIG=");
-    free(env);
     kerberos_config_password_free(password);
     return 0;
 }

@@ -113,10 +113,8 @@ main(void)
 {
     struct script_config config;
     struct kerberos_password *password;
-    char *path, *k5login;
+    char *k5login;
     struct extra extra;
-    const char *argv[3];
-    char *env;
     struct passwd pwd;
     FILE *file;
 
@@ -130,28 +128,15 @@ main(void)
     config.password = password->password;
     config.extra[0] = password->principal;
 
-    /*
-     * Generate a test krb5.conf file in the current directory and use it.  We
-     * need to do this to ensure that we don't pick up unwanted configuration
-     * from the system krb5.conf file.
-     */
-    path = test_file_path("data/generate-krb5-conf");
-    if (path == NULL)
-        bail("cannot find generate-krb5-conf");
-    argv[0] = path;
-    argv[1] = password->realm;
-    argv[2] = NULL;
-    run_setup(argv);
-    test_file_path_free(path);
-    basprintf(&env, "KRB5_CONFIG=%s/krb5.conf", getenv("BUILD"));
-    putenv(env);
+    /* Generate a testing krb5.conf file. */
+    kerberos_generate_conf(password->realm);
 
     /* Create a fake passwd struct for our user. */
     memset(&pwd, 0, sizeof(pwd));
     pwd.pw_name = password->username;
     pwd.pw_uid = getuid();
     pwd.pw_gid = getgid();
-    basprintf(&pwd.pw_dir, "%s/data", getenv("BUILD"));
+    basprintf(&pwd.pw_dir, "%s/tmp", getenv("BUILD"));
     pam_set_pwd(&pwd);
 
     plan_lazy();
@@ -178,13 +163,9 @@ main(void)
     run_script("data/scripts/cache/search-k5login", &config);
     config.callback = NULL;
     run_script("data/scripts/cache/search-k5login-debug", &config);
-
     unlink(k5login);
     free(k5login);
-    if (chdir(getenv("BUILD")) == 0)
-        unlink("krb5.conf");
-    putenv((char *) "KRB5_CONFIG=");
-    free(env);
+
     free(pwd.pw_dir);
     kerberos_config_password_free(password);
     return 0;

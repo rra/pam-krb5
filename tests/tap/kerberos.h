@@ -98,6 +98,22 @@ void kerberos_config_password_free(struct kerberos_password *)
 krb5_principal kerberos_keytab_principal(krb5_context, const char *path)
     __attribute__((__nonnull__));
 
+/*
+ * Generate a krb5.conf file for testing and set KRB5_CONFIG to point to it.
+ * The [appdefaults] section will be stripped out and the default realm will
+ * be set to the realm specified, if not NULL.  This will use config/krb5.conf
+ * in preference, so users can configure the tests by creating that file if
+ * the system file isn't suitable.
+ *
+ * Depends on data/generate-krb5-conf being present in the test suite.
+ *
+ * kerberos_cleanup_conf will clean up after this function, but usually
+ * doesn't need to be called directly since it's registered as an atexit
+ * handler.
+ */
+void kerberos_generate_conf(const char *realm);
+void kerberos_cleanup_conf(void);
+
 END_DECLS
 
 #endif /* !TAP_MESSAGES_H */
