@@ -87,7 +87,8 @@ tests_tap_libtap_a_CPPFLAGS = -I$(abs_top_srcdir)/tests	\
 	$(KADM5CLNT_CPPFLAGS) $(AM_CPPFLAGS)
 tests_tap_libtap_a_SOURCES = tests/tap/basic.c tests/tap/basic.h	\
 	tests/tap/kadmin.c tests/tap/kadmin.h tests/tap/kerberos.c	\
-	tests/tap/kerberos.h tests/tap/process.c tests/tap/process.h
+	tests/tap/kerberos.h tests/tap/process.c tests/tap/process.h	\
+	tests/tap/string.c tests/tap/string.h
 
 # The list of objects and libraries used for module testing by programs that
 # link with the fake PAM library or with both it and the module.
