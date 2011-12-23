@@ -34,8 +34,8 @@
 #include <sys/types.h>
 
 /* Forward declarations to avoid unnecessary includes. */
+struct output;
 struct script_config;
-struct vector;
 
 /* The type of a PAM module call. */
 typedef int (*pam_call)(pam_handle_t *, int, int, const char **);
@@ -90,10 +90,18 @@ struct work {
     struct options options[4];
     struct action *actions;
     struct prompts *prompts;
-    struct vector *output;
+    struct output *output;
 };
 
 BEGIN_DECLS
+
+
+/* Create a new output struct. */
+struct output *output_new(void);
+
+/* Add a new string to an output struct. */
+void output_add(struct output *, const char *);
+
 
 /*
  * Parse a PAM interaction script.  Returns the total work to do as a work

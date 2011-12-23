@@ -22,7 +22,6 @@
 #include <errno.h>
 #include <syslog.h>
 
-#include <pam-util/vector.h>
 #include <tests/fakepam/internal.h>
 #include <tests/fakepam/script.h>
 #include <tests/tap/basic.h>
@@ -521,14 +520,14 @@ parse_run(FILE *script)
  * that priority and the rest of the output undergoes %-esacape expansion.
  * Returns the accumulated output as a vector.
  */
-static struct vector *
+static struct output *
 parse_output(FILE *script, const struct script_config *config)
 {
     char *line, *token, *piece, *message;
-    struct vector *output = NULL;
+    struct output *output = NULL;
     int priority;
 
-    output = vector_new();
+    output = output_new();
     if (output == NULL)
         sysbail("cannot allocate vector");
     for (line = readline(script); line != NULL; line = readline(script)) {
@@ -540,8 +539,7 @@ parse_output(FILE *script, const struct script_config *config)
         piece = expand_string(token, config);
         basprintf(&message, "%d %s", priority, piece);
         free(piece);
-        if (!vector_add(output, message))
-            sysbail("cannot add output to vector");
+        output_add(output, message);
         free(message);
         free(line);
     }

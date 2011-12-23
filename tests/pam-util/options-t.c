@@ -96,7 +96,7 @@ const size_t optlen = sizeof(options) / sizeof(options[0]);
         basprintf(&expected, "%d %s", (p), (e));                        \
         seen = pam_output();                                            \
         is_string(expected, seen->strings[0], "...error for %s", (a));  \
-        vector_free(seen);                                              \
+        pam_output_free(seen);                                          \
         free(expected);                                                 \
     } while (0);
 
@@ -141,7 +141,7 @@ main(void)
     bool status;
     struct vector *cells;
     char *program, *expected;
-    struct vector *seen;
+    struct output *seen;
     const char *argv_bool[2] = { NULL, NULL };
     const char *argv_err[2] = { NULL, NULL };
     const char *argv_empty[] = { NULL };
@@ -407,7 +407,7 @@ main(void)
     seen = pam_output();
     is_string(expected, seen->strings[0], "...and correct error reported");
     free(expected);
-    vector_free(seen);
+    pam_output_free(seen);
     config_free(args->config);
     args->config = NULL;
 
@@ -420,7 +420,7 @@ main(void)
     seen = pam_output();
     is_string(expected, seen->strings[0], "...and correct error reported");
     free(expected);
-    vector_free(seen);
+    pam_output_free(seen);
     config_free(args->config);
     args->config = NULL;
 

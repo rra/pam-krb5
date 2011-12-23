@@ -35,7 +35,6 @@
 
 #include <pam-util/args.h>
 #include <pam-util/logging.h>
-#include <pam-util/vector.h>
 #include <tests/fakepam/pam.h>
 #include <tests/tap/basic.h>
 #include <tests/tap/string.h>
@@ -47,7 +46,7 @@
         basprintf(&expected, "%d %s", (p), "foo");              \
         seen = pam_output();                                    \
         is_string(expected, seen->strings[0], "%s", (n));       \
-        vector_free(seen);                                      \
+        pam_output_free(seen);                                  \
         free(expected);                                         \
     } while (0);
 
@@ -59,7 +58,7 @@
                   pam_strerror(args->pamh, c));                 \
         seen = pam_output();                                    \
         is_string(expected, seen->strings[0], "%s", (n));       \
-        vector_free(seen);                                      \
+        pam_output_free(seen);                                  \
         free(expected);                                         \
     } while (0);
 
@@ -75,7 +74,7 @@
         basprintf(&expected, "%d %s: %s", (p), "krb", msg);               \
         seen = pam_output();                                              \
         is_string(expected, seen->strings[0], "%s", (n));                 \
-        vector_free(seen);                                                \
+        pam_output_free(seen);                                            \
         free(expected);                                                   \
         krb5_free_error_message(args->ctx, msg);                          \
     } while (0);
@@ -88,7 +87,7 @@ main(void)
     struct pam_args *args;
     struct pam_conv conv = { NULL, NULL };
     char *expected;
-    struct vector *seen;
+    struct output *seen;
 #ifdef HAVE_KERBEROS
     krb5_error_code code;
     krb5_principal princ;

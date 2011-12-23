@@ -39,9 +39,6 @@
 #include <portable/pam.h>
 #include <portable/macros.h>
 
-/* Avoid unnecessary includes. */
-struct vector;
-
 /* Used inside the fake PAM library to hold data items. */
 struct fakepam_data {
     char *name;
@@ -62,6 +59,17 @@ struct pam_handle {
     struct passwd *pwd;
 };
 
+/*
+ * Used to accumulate output from the PAM module.  Each call to a logging
+ * function will result in an additional string added to the array, and count
+ * will hold the total.
+ */
+struct output {
+    size_t count;
+    size_t allocated;
+    char **strings;
+};
+
 BEGIN_DECLS
 
 /*
@@ -73,10 +81,12 @@ void pam_set_pwd(struct passwd *pwd);
 /*
  * Returns the accumulated messages logged with pam_syslog or pam_vsyslog
  * since the last call to pam_output and then clears the output.  Returns
- * newly allocated memory that the caller is responsible for freeing, or NULL
- * if no output has been logged since the last call or since startup.
+ * newly allocated memory that the caller is responsible for freeing with
+ * pam_output_free, or NULL if no output has been logged since the last call
+ * or since startup.
  */
-struct vector *pam_output(void);
+struct output *pam_output(void);
+void pam_output_free(struct output *);
 
 END_DECLS
 

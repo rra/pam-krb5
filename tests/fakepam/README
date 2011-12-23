@@ -69,8 +69,8 @@ Fake PAM Library
     The fakepam library intercepts the PAM functions that would normally
     log to syslog and instead accumulates the output in a static string
     variable.  To retrieve the logging output so far, call pam_output,
-    which returns the allocated string and then clears the accumulated
-    information.
+    which returns a struct of all the output strings up to that point and
+    resets the accumulated output.
 
 Scripted PAM Testing
 

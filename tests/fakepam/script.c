@@ -22,7 +22,6 @@
 #include <errno.h>
 #include <syslog.h>
 
-#include <pam-util/vector.h>
 #include <tests/fakepam/internal.h>
 #include <tests/fakepam/pam.h>
 #include <tests/fakepam/script.h>
@@ -94,7 +93,7 @@ converse(int num_msg, const struct pam_message **msg,
  * we can handle wildcards.
  */
 static void
-check_output(const struct vector *wanted, const struct vector *seen)
+check_output(const struct output *wanted, const struct output *seen)
 {
     size_t i, length;
 
@@ -155,7 +154,7 @@ void
 run_script(const char *file, const struct script_config *config)
 {
     char *path;
-    struct vector *output;
+    struct output *output;
     const char *user;
     FILE *script;
     struct work *work;
@@ -209,7 +208,7 @@ run_script(const char *file, const struct script_config *config)
     }
     output = pam_output();
     check_output(work->output, output);
-    vector_free(output);
+    pam_output_free(output);
 
     /* If we have a test callback, call it now. */
     if (config->callback != NULL)
@@ -231,7 +230,7 @@ run_script(const char *file, const struct script_config *config)
             free(work->options[i].argv);
         }
     if (work->output)
-        vector_free(work->output);
+        pam_output_free(work->output);
     if (work->prompts != NULL) {
         for (i = 0; i < work->prompts->size; i++) {
             if (work->prompts->prompts[i].prompt != NULL)

@@ -92,15 +92,9 @@ tests_tap_libtap_a_SOURCES = tests/tap/basic.c tests/tap/basic.h	\
 
 # The list of objects and libraries used for module testing by programs that
 # link with the fake PAM library or with both it and the module.
-#
-# Linking with pam-util/vector.lo twice is a hack but better than
-# duplicating the vector code in the fake PAM library.  (The fake PAM
-# library can't link with libpamutil because libpamutil needs to resolve its
-# PAM symbols against the fake PAM library.)
-FAKEPAM_OBJECTS = tests/fakepam/libfakepam.a pam-util/vector.lo
 MODULE_OBJECTS = account.lo auth.lo cache.lo context.lo options.lo	\
 	password.lo prompting.lo public.lo setcred.lo support.lo	\
-	pam-util/libpamutil.la $(FAKEPAM_OBJECTS)
+	pam-util/libpamutil.la tests/fakepam/libfakepam.a
 
 # The test programs themselves.
 tests_module_basic_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
@@ -114,16 +108,20 @@ tests_module_no_cache_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
 	portable/libportable.la $(KRB5_LIBS)
 tests_module_password_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
 	portable/libportable.la $(KRB5_LIBS)
-tests_pam_util_args_t_LDADD = pam-util/libpamutil.la $(FAKEPAM_OBJECTS)	\
-	tests/tap/libtap.a portable/libportable.la $(KRB5_LIBS)
-tests_pam_util_fakepam_t_LDADD = $(FAKEPAM_OBJECTS) tests/tap/libtap.a	\
-	portable/libportable.la
-tests_pam_util_logging_t_LDADD = pam-util/libpamutil.la $(FAKEPAM_OBJECTS) \
-	tests/tap/libtap.a portable/libportable.la $(KRB5_LIBS)
-tests_pam_util_options_t_LDADD = pam-util/libpamutil.la $(FAKEPAM_OBJECTS) \
-	tests/tap/libtap.a portable/libportable.la $(KRB5_LIBS)
-tests_pam_util_vector_t_LDADD = pam-util/libpamutil.la $(FAKEPAM_OBJECTS) \
+tests_pam_util_args_t_LDADD = pam-util/libpamutil.la	\
+	tests/fakepam/libfakepam.a tests/tap/libtap.a	\
+	portable/libportable.la $(KRB5_LIBS)
+tests_pam_util_fakepam_t_LDADD = tests/fakepam/libfakepam.a	\
 	tests/tap/libtap.a portable/libportable.la
+tests_pam_util_logging_t_LDADD = pam-util/libpamutil.la	\
+	tests/fakepam/libfakepam.a tests/tap/libtap.a	\
+	portable/libportable.la $(KRB5_LIBS)
+tests_pam_util_options_t_LDADD = pam-util/libpamutil.la	\
+	tests/fakepam/libfakepam.a tests/tap/libtap.a	\
+	portable/libportable.la $(KRB5_LIBS)
+tests_pam_util_vector_t_LDADD = pam-util/libpamutil.la	\
+	tests/fakepam/libfakepam.a tests/tap/libtap.a	\
+	portable/libportable.la
 tests_portable_asprintf_t_SOURCES = tests/portable/asprintf-t.c \
 	tests/portable/asprintf.c
 tests_portable_asprintf_t_LDADD = tests/tap/libtap.a portable/libportable.la

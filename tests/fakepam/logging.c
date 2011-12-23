@@ -36,15 +36,54 @@
 #include <portable/pam.h>
 #include <portable/system.h>
 
-#include <pam-util/vector.h>
+#include <tests/fakepam/internal.h>
 #include <tests/fakepam/pam.h>
+#include <tests/tap/basic.h>
 #include <tests/tap/string.h>
 
 /* Used for unused parameters to silence gcc warnings. */
 #define UNUSED __attribute__((__unused__))
 
-/* The vector used to accumulate log messages. */
-static struct vector *messages = NULL;
+/* The struct used to accumulate log messages. */
+static struct output *messages = NULL;
+
+
+/*
+ * Allocate a new, empty output struct and call bail if memory allocation
+ * fails.
+ */
+struct output *
+output_new(void)
+{
+    struct output *output;
+
+    output = bmalloc(sizeof(struct output));
+    output->count = 0;
+    output->allocated = 1;
+    output->strings = bmalloc(sizeof(char *));
+    output->strings[0] = NULL;
+    return output;
+}
+
+
+/*
+ * Add a new string to the output struct, resizing the string array as
+ * necessary.  Calls bail if memory allocation fails.
+ */
+void
+output_add(struct output *output, const char *string)
+{
+    size_t next = output->count;
+    size_t size;
+
+    if (output->count == output->allocated) {
+        size = output->allocated + 1;
+        output->strings = brealloc(output->strings, size * sizeof(char *));
+        output->allocated = size;
+    }
+    output->strings[next] = bstrdup(string);
+    output->count++;
+}
 
 
 /*
@@ -98,29 +137,43 @@ pam_vsyslog(const pam_handle_t *pamh UNUSED, int priority, const char *format,
 
     bvasprintf(&message, format, args);
     basprintf(&result, "%d %s", priority, message);
-    if (messages == NULL) {
-        messages = vector_new();
-        if (messages == NULL)
-            goto done;
-    }
-    vector_add(messages, result);
-
-done:
+    if (messages == NULL)
+        messages = output_new();
+    output_add(messages, result);
     free(message);
     free(result);
 }
 
 
 /*
- * Used by test code.  Returns the accumulated messages as a vector and starts
- * a new message buffer.  Caller is responsible for freeing.
+ * Used by test code.  Returns the accumulated messages in an output struct
+ * and starts a new one.  Caller is responsible for freeing with
+ * pam_output_free.
  */
-struct vector *
+struct output *
 pam_output(void)
 {
-    struct vector *output;
+    struct output *output;
 
     output = messages;
     messages = NULL;
     return output;
+}
+
+
+/*
+ * Free an output struct.
+ */
+void
+pam_output_free(struct output *output)
+{
+    size_t i;
+
+    if (output == NULL)
+        return;
+    for (i = 0; i < output->count; i++)
+        if (output->strings[i] != NULL)
+            free(output->strings[i]);
+    free(output->strings);
+    free(output);
 }
