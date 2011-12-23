@@ -38,6 +38,7 @@
 #include <pam-util/vector.h>
 #include <tests/fakepam/pam.h>
 #include <tests/tap/basic.h>
+#include <tests/tap/string.h>
 
 /* The configuration struct we will use for testing. */
 struct pam_config {
@@ -92,7 +93,7 @@ const size_t optlen = sizeof(options) / sizeof(options[0]);
         argv_err[0] = (a);                                              \
         status = putil_args_parse(args, 1, argv_err, options, optlen);  \
         ok(status, "Parse of %s", (a));                                 \
-        asprintf(&expected, "%d %s", (p), (e));                         \
+        basprintf(&expected, "%d %s", (p), (e));                        \
         seen = pam_output();                                            \
         is_string(expected, seen->strings[0], "...error for %s", (a));  \
         vector_free(seen);                                              \
@@ -401,8 +402,8 @@ main(void)
     args->config = config_new();
     status = putil_args_krb5(args, "bad-number", options, optlen);
     ok(status, "Options from krb5.conf (bad-number)");
-    asprintf(&expected, "%d invalid number in krb5.conf setting for %s: %s",
-             LOG_ERR, "minimum_uid", "1000foo");
+    basprintf(&expected, "%d invalid number in krb5.conf setting for %s: %s",
+              LOG_ERR, "minimum_uid", "1000foo");
     seen = pam_output();
     is_string(expected, seen->strings[0], "...and correct error reported");
     free(expected);
@@ -414,8 +415,8 @@ main(void)
     args->config = config_new();
     status = putil_args_krb5(args, "bad-time", options, optlen);
     ok(status, "Options from krb5.conf (bad-time)");
-    asprintf(&expected, "%d invalid time in krb5.conf setting for %s: %s",
-             LOG_ERR, "expires", "ft87");
+    basprintf(&expected, "%d invalid time in krb5.conf setting for %s: %s",
+              LOG_ERR, "expires", "ft87");
     seen = pam_output();
     is_string(expected, seen->strings[0], "...and correct error reported");
     free(expected);

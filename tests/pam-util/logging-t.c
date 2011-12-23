@@ -38,12 +38,13 @@
 #include <pam-util/vector.h>
 #include <tests/fakepam/pam.h>
 #include <tests/tap/basic.h>
+#include <tests/tap/string.h>
 
 /* Test a normal PAM logging function. */                       \
 #define TEST(func, p, n)                                        \
     do {                                                        \
         (func)(args, "%s", "foo");                              \
-        asprintf(&expected, "%d %s", (p), "foo");               \
+        basprintf(&expected, "%d %s", (p), "foo");              \
         seen = pam_output();                                    \
         is_string(expected, seen->strings[0], "%s", (n));       \
         vector_free(seen);                                      \
@@ -54,8 +55,8 @@
 #define TEST_PAM(func, c, p, n)                                 \
     do {                                                        \
         (func)(args, (c), "%s", "bar");                         \
-        asprintf(&expected, "%d %s: %s", (p), "bar",            \
-                 pam_strerror(args->pamh, c));                  \
+        basprintf(&expected, "%d %s: %s", (p), "bar",           \
+                  pam_strerror(args->pamh, c));                 \
         seen = pam_output();                                    \
         is_string(expected, seen->strings[0], "%s", (n));       \
         vector_free(seen);                                      \
@@ -71,7 +72,7 @@
         (func)(args, code, "%s", "krb");                                  \
         code = krb5_parse_name(args->ctx, "foo@bar@EXAMPLE.COM", &princ); \
         msg = krb5_get_error_message(args->ctx, code);                    \
-        asprintf(&expected, "%d %s: %s", (p), "krb", msg);                \
+        basprintf(&expected, "%d %s: %s", (p), "krb", msg);               \
         seen = pam_output();                                              \
         is_string(expected, seen->strings[0], "%s", (n));                 \
         vector_free(seen);                                                \

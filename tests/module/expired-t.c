@@ -23,6 +23,7 @@
 #include <tests/tap/basic.h>
 #include <tests/tap/kadmin.h>
 #include <tests/tap/process.h>
+#include <tests/tap/string.h>
 
 
 int
@@ -95,8 +96,7 @@ main(void)
     argv[2] = NULL;
     run_setup(argv);
     test_file_path_free(path);
-    if (asprintf(&env, "KRB5_CONFIG=%s/krb5.conf", getenv("BUILD")) < 0)
-        sysbail("cannot build KRB5_CONFIG");
+    basprintf(&env, "KRB5_CONFIG=%s/krb5.conf", getenv("BUILD"));
     putenv(env);
 
     /* Create a fake passwd struct for our user. */
@@ -104,8 +104,7 @@ main(void)
     pwd.pw_name = principal;
     pwd.pw_uid = getuid();
     pwd.pw_gid = getgid();
-    if (asprintf(&pwd.pw_dir, "%s/data", getenv("BUILD")) < 0)
-        sysbail("cannot build user home directory");
+    basprintf(&pwd.pw_dir, "%s/data", getenv("BUILD"));
     pam_set_pwd(&pwd);
 
     /*
@@ -113,8 +112,7 @@ main(void)
      * sufficiently random that it's unlikely to fall afoul of password
      * strength checking.
      */
-    if (asprintf(&newpass, "ngh1,a%lu nn9af6", (unsigned long) getpid()) < 0)
-        sysbail("asprintf failed");
+    basprintf(&newpass, "ngh1,a%lu nn9af6", (unsigned long) getpid());
     config.newpass = newpass;
 
     plan_lazy();

@@ -38,6 +38,7 @@
 
 #include <tests/tap/basic.h>
 #include <tests/tap/kerberos.h>
+#include <tests/tap/string.h>
 
 
 /*
@@ -64,8 +65,7 @@ bail_krb5(krb5_context ctx, krb5_error_code code, const char *format, ...)
     if (ctx != NULL)
         k5_msg = krb5_get_error_message(ctx, code);
     va_start(args, format);
-    if (vasprintf(&message, format, args) < 0)
-        sysbail("unable to format error message");
+    bvasprintf(&message, format, args);
     va_end(args);
     if (k5_msg == NULL)
         bail("%s", message);
@@ -87,8 +87,7 @@ diag_krb5(krb5_context ctx, krb5_error_code code, const char *format, ...)
     if (ctx != NULL)
         k5_msg = krb5_get_error_message(ctx, code);
     va_start(args, format);
-    if (vasprintf(&message, format, args) < 0)
-        sysbail("unable to format error message");
+    bvasprintf(&message, format, args);
     va_end(args);
     if (k5_msg == NULL)
         diag("%s", message);
@@ -114,12 +113,10 @@ kerberos_cleanup(void)
     build = getenv("BUILD");
     if (build == NULL)
         build = ".";
-    if (asprintf(&path, "%s/tmp/krb5cc_test", build) < 0)
-        sysbail("cannot allocate ticket cache path");
+    basprintf(&path, "%s/tmp/krb5cc_test", build);
     unlink(path);
     free(path);
-    if (asprintf(&path, "%s/tmp", build) < 0)
-        sysbail("cannot allocate tmp path");
+    basprintf(&path, "%s/tmp", build);
     rmdir(path);
     free(path);
     if (principal != NULL) {
@@ -194,10 +191,8 @@ kerberos_setup(void)
     build = getenv("BUILD");
     if (build == NULL)
         build = ".";
-    if (asprintf(&krb5ccname, "KRB5CCNAME=%s/tmp/krb5cc_test", build) < 0)
-        sysbail("cannot allocate memory for KRB5CCNAME");
-    if (asprintf(&krb5_ktname, "KRB5_KTNAME=%s", path) < 0)
-        sysbail("cannot allocate memory for KRB5_KTNAME");
+    basprintf(&krb5ccname, "KRB5CCNAME=%s/tmp/krb5cc_test", build);
+    basprintf(&krb5_ktname, "KRB5_KTNAME=%s", path);
     putenv(krb5ccname);
     putenv(krb5_ktname);
 
@@ -212,8 +207,7 @@ kerberos_setup(void)
     if (code != 0)
         bail_krb5(ctx, code, "error parsing principal %s", buffer);
     realm = krb5_principal_get_realm(ctx, kprinc);
-    if (asprintf(&krbtgt, "krbtgt/%s@%s", realm, realm) < 0)
-        sysbail("cannot allocate memory for TGT principal");
+    basprintf(&krbtgt, "krbtgt/%s@%s", realm, realm);
     code = krb5_kt_resolve(ctx, path, &keytab);
     if (code != 0)
         bail_krb5(ctx, code, "cannot open keytab %s", path);

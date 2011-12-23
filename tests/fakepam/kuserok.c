@@ -46,6 +46,7 @@
 #include <pwd.h>
 
 #include <tests/fakepam/pam.h>
+#include <tests/tap/string.h>
 
 
 /*
@@ -83,8 +84,7 @@ krb5_kuserok(krb5_context ctx, krb5_principal princ, const char *user)
 #endif
     if (pwd == NULL)
         return false;
-    if (asprintf(&path, "%s/.k5login", pwd->pw_dir) < 0)
-        return false;
+    basprintf(&path, "%s/.k5login", pwd->pw_dir);
     if (access(path, R_OK) < 0) {
         free(path);
         code = krb5_aname_to_localname(ctx, princ, sizeof(buffer), buffer);

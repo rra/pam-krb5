@@ -17,6 +17,7 @@
 
 #include <tests/fakepam/script.h>
 #include <tests/tap/process.h>
+#include <tests/tap/string.h>
 
 
 int
@@ -64,8 +65,7 @@ main(void)
     argv[1] = NULL;
     run_setup(argv);
     test_file_path_free(path);
-    if (asprintf(&env, "KRB5_CONFIG=%s/krb5.conf", getenv("BUILD")) < 0)
-        sysbail("cannot build KRB5_CONFIG");
+    basprintf(&env, "KRB5_CONFIG=%s/krb5.conf", getenv("BUILD"));
     putenv(env);
 
     plan_lazy();

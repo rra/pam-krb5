@@ -27,6 +27,7 @@
 #include <tests/fakepam/pam.h>
 #include <tests/fakepam/script.h>
 #include <tests/tap/basic.h>
+#include <tests/tap/string.h>
 
 
 /*
@@ -293,8 +294,7 @@ run_script_dir(const char *dir, const struct script_config *config)
     while ((entry = readdir(handle)) != NULL) {
         if (!valid_filename(entry->d_name))
             continue;
-        if (asprintf(&file, "%s/%s", path, entry->d_name) < 0)
-            sysbail("cannot create path to test script");
+        basprintf(&file, "%s/%s", path, entry->d_name);
         run_script(file, config);
         free(file);
         errno = 0;

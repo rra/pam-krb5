@@ -38,6 +38,7 @@
 
 #include <pam-util/vector.h>
 #include <tests/fakepam/pam.h>
+#include <tests/tap/string.h>
 
 /* Used for unused parameters to silence gcc warnings. */
 #define UNUSED __attribute__((__unused__))
@@ -95,10 +96,8 @@ pam_vsyslog(const pam_handle_t *pamh UNUSED, int priority, const char *format,
     char *message = NULL;
     char *result = NULL;
 
-    if (vasprintf(&message, format, args) < 0)
-        return;
-    if (asprintf(&result, "%d %s", priority, message) < 0)
-        goto done;
+    bvasprintf(&message, format, args);
+    basprintf(&result, "%d %s", priority, message);
     if (messages == NULL) {
         messages = vector_new();
         if (messages == NULL)

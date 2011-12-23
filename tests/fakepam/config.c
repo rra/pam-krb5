@@ -26,6 +26,7 @@
 #include <tests/fakepam/internal.h>
 #include <tests/fakepam/script.h>
 #include <tests/tap/basic.h>
+#include <tests/tap/string.h>
 
 /* Used for enumerating arrays. */
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
@@ -325,8 +326,7 @@ expand_string(const char *template, const struct script_config *config)
             switch (*p) {
             case 'i':
                 if (uid == NULL)
-                    if (asprintf(&uid, "%lu", (unsigned long) getuid()) < 0)
-                        sysbail("cannot format UID");
+                    basprintf(&uid, "%lu", (unsigned long) getuid());
                 length += strlen(uid);
                 break;
             case 'n':
@@ -538,8 +538,7 @@ parse_output(FILE *script, const struct script_config *config)
         if (token == NULL)
             bail("malformed line %s", line);
         piece = expand_string(token, config);
-        if (asprintf(&message, "%d %s", priority, piece) < 0)
-            sysbail("asprintf failed");
+        basprintf(&message, "%d %s", priority, piece);
         free(piece);
         if (!vector_add(output, message))
             sysbail("cannot add output to vector");

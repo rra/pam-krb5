@@ -25,6 +25,7 @@
 #include <tests/fakepam/script.h>
 #include <tests/tap/basic.h>
 #include <tests/tap/process.h>
+#include <tests/tap/string.h>
 
 /* Additional data used by the cache check callback. */
 struct extra {
@@ -56,9 +57,7 @@ check_cache(pam_handle_t *pamh, const struct script_config *config, void *data)
     ok(cache != NULL, "KRB5CCNAME is set in PAM environment");
     if (cache == NULL)
         return;
-    if (asprintf(&prefix, "FILE:/tmp/krb5cc_%lu_",
-                 (unsigned long) getuid()) < 0)
-        sysbail("cannot build cache prefix");
+    basprintf(&prefix, "FILE:/tmp/krb5cc_%lu_", (unsigned long) getuid());
     diag("KRB5CCNAME = %s", cache);
     ok(strncmp(prefix, cache, strlen(prefix)) == 0,
        "cache file name prefix is correct");
@@ -168,8 +167,7 @@ main(void)
     argv[2] = NULL;
     run_setup(argv);
     test_file_path_free(path);
-    if (asprintf(&env, "KRB5_CONFIG=%s/krb5.conf", getenv("BUILD")) < 0)
-        sysbail("cannot build KRB5_CONFIG");
+    basprintf(&env, "KRB5_CONFIG=%s/krb5.conf", getenv("BUILD"));
     putenv(env);
 
     /* Create a fake passwd struct for our user. */
@@ -177,8 +175,7 @@ main(void)
     pwd.pw_name = principal;
     pwd.pw_uid = getuid();
     pwd.pw_gid = getgid();
-    if (asprintf(&pwd.pw_dir, "%s/data", getenv("BUILD")) < 0)
-        sysbail("cannot build user home directory");
+    basprintf(&pwd.pw_dir, "%s/data", getenv("BUILD"));
     pam_set_pwd(&pwd);
 
     plan_lazy();
@@ -194,8 +191,7 @@ main(void)
     /* Change the authenticating user and test search_k5login. */
     pwd.pw_name = (char *) "testuser";
     config.user = "testuser";
-    if (asprintf(&k5login, "%s/.k5login", pwd.pw_dir) < 0)
-        sysbail("cannot build .k5login path");
+    basprintf(&k5login, "%s/.k5login", pwd.pw_dir);
     file = fopen(k5login, "w");
     if (file == NULL)
         sysbail("cannot create %s", k5login);
