@@ -348,7 +348,7 @@ TESTING
   against a Heimdal server, the test will be skipped; if you use the
   Heimdal library against an MIT server, the test suite may hang.
 
-  Several module/password tests are expected to fail with Heimdal 1.5 due
+  Several module/expired tests are expected to fail with Heimdal 1.5 due
   to a bug in Heimdal with reauthenticating immediately after a
   library-mediated password change of an expired password.  This will be
   fixed in an upcoming release of Heimdal.
