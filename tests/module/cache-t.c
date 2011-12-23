@@ -24,6 +24,7 @@
 #include <tests/fakepam/pam.h>
 #include <tests/fakepam/script.h>
 #include <tests/tap/basic.h>
+#include <tests/tap/kerberos.h>
 #include <tests/tap/process.h>
 #include <tests/tap/string.h>
 
@@ -110,49 +111,24 @@ check_cache(pam_handle_t *pamh, const struct script_config *config, void *data)
 int
 main(void)
 {
-    char *path, *realm, *k5login;
-    char principal[BUFSIZ], password[BUFSIZ];
     struct script_config config;
+    struct kerberos_password *password;
+    char *path, *k5login;
     struct extra extra;
-    FILE *file;
     const char *argv[3];
     char *env;
     struct passwd pwd;
+    FILE *file;
 
     /* Load the Kerberos principal and password from a file. */
-    memset(&config, 0, sizeof(config));
-    path = test_file_path("config/password");
-    if (path == NULL)
+    password = kerberos_config_password();
+    if (password == NULL)
         skip_all("Kerberos tests not configured");
-    file = fopen(path, "r");
-    if (file == NULL)
-        sysbail("cannot open %s", path);
-    if (fgets(principal, sizeof(principal), file) == NULL)
-        bail("cannot read %s", path);
-    if (fgets(password, sizeof(password), file) == NULL)
-        bail("cannot read password from %s", path);
-    fclose(file);
-    if (principal[strlen(principal) - 1] != '\n')
-        bail("no newline in %s", path);
-    principal[strlen(principal) - 1] = '\0';
-    if (password[strlen(password) - 1] != '\n')
-        bail("principal or password too long in %s", path);
-    password[strlen(password) - 1] = '\0';
-    test_file_path_free(path);
-    config.password = password;
-    config.extra[0] = bstrdup(principal);
-
-    /*
-     * Strip the realm from the principal.  We'll make the realm of the
-     * principal our default realm.
-     */
-    realm = strchr(principal, '@');
-    if (realm == NULL)
-        bail("test principal has no realm");
-    *realm = '\0';
-    realm++;
-    extra.realm = realm;
-    config.user = principal;
+    memset(&config, 0, sizeof(config));
+    config.user = password->username;
+    extra.realm = password->realm;
+    config.password = password->password;
+    config.extra[0] = password->principal;
 
     /*
      * Generate a test krb5.conf file in the current directory and use it.  We
@@ -163,7 +139,7 @@ main(void)
     if (path == NULL)
         bail("cannot find generate-krb5-conf");
     argv[0] = path;
-    argv[1] = realm;
+    argv[1] = password->realm;
     argv[2] = NULL;
     run_setup(argv);
     test_file_path_free(path);
@@ -172,7 +148,7 @@ main(void)
 
     /* Create a fake passwd struct for our user. */
     memset(&pwd, 0, sizeof(pwd));
-    pwd.pw_name = principal;
+    pwd.pw_name = password->username;
     pwd.pw_uid = getuid();
     pwd.pw_gid = getgid();
     basprintf(&pwd.pw_dir, "%s/data", getenv("BUILD"));
@@ -195,7 +171,7 @@ main(void)
     file = fopen(k5login, "w");
     if (file == NULL)
         sysbail("cannot create %s", k5login);
-    if (fprintf(file, "%s@%s\n", principal, realm) < 0)
+    if (fprintf(file, "%s\n", password->principal) < 0)
         sysbail("cannot write to %s", k5login);
     if (fclose(file) < 0)
         sysbail("cannot flush %s", k5login);
@@ -210,6 +186,6 @@ main(void)
     putenv((char *) "KRB5_CONFIG=");
     free(env);
     free(pwd.pw_dir);
-    free((char *) config.extra[0]);
+    kerberos_config_password_free(password);
     return 0;
 }

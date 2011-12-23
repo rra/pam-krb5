@@ -22,6 +22,7 @@
 #include <tests/fakepam/script.h>
 #include <tests/tap/basic.h>
 #include <tests/tap/kadmin.h>
+#include <tests/tap/kerberos.h>
 #include <tests/tap/process.h>
 #include <tests/tap/string.h>
 
@@ -29,59 +30,32 @@
 int
 main(void)
 {
-    char *path, *realm, *env, *newpass, *date;
-    char principal[BUFSIZ], password[BUFSIZ];
     struct script_config config;
-    FILE *file;
+    struct kerberos_password *password;
+    char *path, *env, *newpass, *date;
     const char *argv[3];
     struct passwd pwd;
     time_t now;
 
     /* Load the Kerberos principal and password from a file. */
-    path = test_file_path("config/password");
-    if (path == NULL)
+    password = kerberos_config_password();
+    if (password == NULL)
         skip_all("Kerberos tests not configured");
-    file = fopen(path, "r");
-    if (file == NULL)
-        sysbail("cannot open %s", path);
-    if (fgets(principal, sizeof(principal), file) == NULL)
-        bail("cannot read %s", path);
-    if (fgets(password, sizeof(password), file) == NULL)
-        bail("cannot read password from %s", path);
-    fclose(file);
-    if (principal[strlen(principal) - 1] != '\n')
-        bail("no newline in %s", path);
-    principal[strlen(principal) - 1] = '\0';
-    if (password[strlen(password) - 1] != '\n')
-        bail("principal or password too long in %s", path);
-    password[strlen(password) - 1] = '\0';
-    test_file_path_free(path);
     memset(&config, 0, sizeof(config));
-    config.user = principal;
-    config.password = password;
-    config.extra[0] = bstrdup(principal);
+    config.user = password->username;
+    config.password = password->password;
+    config.extra[0] = password->principal;
 
     /*
      * Ensure we can expire the password.  Heimdal has a prompt for the
      * expiration time, so save that to use as a substitution in the script.
      */
     now = time(NULL) - 1;
-    if (!kerberos_expire_password(principal, now))
+    if (!kerberos_expire_password(password->principal, now))
         skip_all("kadmin not configured or kadmin mismatch");
     date = bstrdup(ctime(&now));
     date[strlen(date) - 1] = '\0';
     config.extra[1] = date;
-
-    /*
-     * Strip the realm from the principal.  We'll make the realm of the
-     * principal our default realm.
-     */
-    realm = strchr(principal, '@');
-    if (realm == NULL)
-        bail("test principal has no realm");
-    *realm = '\0';
-    realm++;
-    config.user = principal;
 
     /*
      * Generate a test krb5.conf file in the current directory and use it.  We
@@ -92,7 +66,7 @@ main(void)
     if (path == NULL)
         bail("cannot find generate-krb5-conf");
     argv[0] = path;
-    argv[1] = realm;
+    argv[1] = password->realm;
     argv[2] = NULL;
     run_setup(argv);
     test_file_path_free(path);
@@ -101,7 +75,7 @@ main(void)
 
     /* Create a fake passwd struct for our user. */
     memset(&pwd, 0, sizeof(pwd));
-    pwd.pw_name = principal;
+    pwd.pw_name = password->username;
     pwd.pw_uid = getuid();
     pwd.pw_gid = getgid();
     basprintf(&pwd.pw_dir, "%s/data", getenv("BUILD"));
@@ -120,15 +94,15 @@ main(void)
     /* Default behavior. */
 #ifdef HAVE_KRB5_HEIMDAL
     run_script("data/scripts/expired/basic-heimdal", &config);
-    config.newpass = password;
+    config.newpass = password->password;
     config.password = newpass;
-    kerberos_expire_password(principal, now);
+    kerberos_expire_password(password->principal, now);
     run_script("data/scripts/expired/basic-heimdal-debug", &config);
 #else
     run_script("data/scripts/expired/basic-mit", &config);
-    config.newpass = password;
+    config.newpass = password->password;
     config.password = newpass;
-    kerberos_expire_password(principal, now);
+    kerberos_expire_password(password->principal, now);
     run_script("data/scripts/expired/basic-mit-debug", &config);
 #endif
 
@@ -145,17 +119,16 @@ main(void)
 
     /* Defer the error to the account management check. */
     config.newpass = newpass;
-    config.password = password;
-    kerberos_expire_password(principal, now);
+    config.password = password->password;
+    kerberos_expire_password(password->principal, now);
     run_script("data/scripts/expired/defer", &config);
-    config.newpass = password;
+    config.newpass = password->password;
     config.password = newpass;
-    kerberos_expire_password(principal, now);
+    kerberos_expire_password(password->principal, now);
     run_script("data/scripts/expired/defer-debug", &config);
 
 #endif /* HAVE_KRB5_GET_INIT_CREDS_OPT_SET_CHANGE_PASSWORD_PROMPT */
 
-    free((char *) config.extra[0]);
     free(date);
     free(newpass);
     free(pwd.pw_dir);
@@ -163,5 +136,6 @@ main(void)
         unlink("krb5.conf");
     putenv((char *) "KRB5_CONFIG=");
     free(env);
+    kerberos_config_password_free(password);
     return 0;
 }

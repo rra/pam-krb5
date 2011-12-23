@@ -250,6 +250,73 @@ kerberos_setup(void)
 
 
 /*
+ * Read a principal and password from config/password in the test suite
+ * configuration and return it as a newly allocated kerberos_password struct.
+ * Returns NULL if no configuration is present, and calls bail if there are
+ * errors reading the configuration.  Free the result with
+ * kerberos_config_password_free.
+ */
+struct kerberos_password *
+kerberos_config_password(void)
+{
+    char *path;
+    char buffer[BUFSIZ];
+    struct kerberos_password *config;
+    FILE *file;
+
+    config = bmalloc(sizeof(struct kerberos_password));
+    path = test_file_path("config/password");
+    if (path == NULL)
+        return NULL;
+    file = fopen(path, "r");
+    if (file == NULL)
+        sysbail("cannot open %s", path);
+    if (fgets(buffer, sizeof(buffer), file) == NULL)
+        bail("cannot read %s", path);
+    if (buffer[strlen(buffer) - 1] != '\n')
+        bail("no newline in %s", path);
+    buffer[strlen(buffer) - 1] = '\0';
+    config->principal = bstrdup(buffer);
+    if (fgets(buffer, sizeof(buffer), file) == NULL)
+        bail("cannot read password from %s", path);
+    fclose(file);
+    if (buffer[strlen(buffer) - 1] != '\n')
+        bail("password too long in %s", path);
+    buffer[strlen(buffer) - 1] = '\0';
+    config->password = bstrdup(buffer);
+    test_file_path_free(path);
+
+    /*
+     * Strip the realm from the principal and set realm and username.  This
+     * is not strictly correct; it doesn't cope with escaped @-signs.  But
+     * it's rather unlikely someone would use such a thing as a test
+     * principal.
+     */
+    config->username = bstrdup(config->principal);
+    config->realm = strchr(config->username, '@');
+    if (config->realm == NULL)
+        bail("test principal has no realm");
+    *config->realm = '\0';
+    config->realm++;
+    return config;
+}
+
+
+/*
+ * Free a kerberos_password struct.  This knows about the allocation strategy
+ * used by kerberos_config_password and frees accordingly.
+ */
+void
+kerberos_config_password_free(struct kerberos_password *config)
+{
+    free(config->principal);
+    free(config->username);
+    free(config->password);
+    free(config);
+}
+
+
+/*
  * Find the principal of the first entry of a keytab and return it.  The
  * caller is responsible for freeing the result with krb5_free_principal.
  * Exit on error.

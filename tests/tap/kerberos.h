@@ -35,6 +35,14 @@
 
 #include <portable/krb5.h>
 
+/* Holds the information parsed from a config/password configuration file. */
+struct kerberos_password {
+    char *principal;            /* The fully-qualified principal. */
+    char *username;             /* The local (non-realm) part of principal. */
+    char *realm;                /* The realm part of the principal. */
+    char *password;             /* The password. */
+};
+
 BEGIN_DECLS
 
 /* Bail out with an error, appending the Kerberos error message. */
@@ -69,6 +77,18 @@ const char *kerberos_setup(void)
  * so normally never needs to be called explicitly.
  */
 void kerberos_cleanup(void);
+
+/*
+ * Read a principal and password from config/password in the test suite
+ * configuration and return it as a newly allocated kerberos_password struct.
+ * Returns NULL if no configuration is present, and calls bail if there are
+ * errors reading the configuration.  Free the result with
+ * kerberos_config_password_free.
+ */
+struct kerberos_password *kerberos_config_password(void)
+    __attribute__((__malloc__));
+void kerberos_config_password_free(struct kerberos_password *)
+    __attribute__((__nonnull__));
 
 /*
  * Given a Kerberos context and the path to a keytab, retrieve the principal
