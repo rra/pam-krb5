@@ -7,13 +7,14 @@ dnl the library.  Uses krb5-config where available unless reduced dependencies
 dnl is requested or --with-kadm5clnt-include or --with-kadm5clnt-lib are
 dnl given.
 dnl
-dnl Provides the macro RRA_LIB_KADM5CLNT and sets the substitution variables
-dnl KADM5CLNT_CPPFLAGS, KADM5CLNT_LDFLAGS, and KADM5CLNT_LIBS.  Also provides
-dnl RRA_LIB_KADM5CLNT_SWITCH to set CPPFLAGS, LDFLAGS, and LIBS to include the
-dnl GSS-API libraries, saving the ecurrent values, and RRA_LIB_KADM5CLNT_RESTORE
-dnl to restore those settings to before the last RRA_LIB_KADM5CLNT_SWITCH.
+dnl Provides the macros RRA_LIB_KADM5CLNT and RRA_LIB_KADM5CLNT_OPTIONAL and
+dnl sets the substitution variables KADM5CLNT_CPPFLAGS, KADM5CLNT_LDFLAGS, and
+dnl KADM5CLNT_LIBS.  Also provides RRA_LIB_KADM5CLNT_SWITCH to set CPPFLAGS,
+dnl LDFLAGS, and LIBS to include the kadmin client libraries, saving the
+dnl ecurrent values, and RRA_LIB_KADM5CLNT_RESTORE to restore those settings
+dnl to before the last RRA_LIB_KADM5CLNT_SWITCH.
 dnl
-dnl Depends on RRA_ENABLE_REDUCED_DEPENDS and RRA_SET_LDFLAGS.
+dnl Depends on the RRA_LIB helper routines.
 dnl
 dnl The canonical version of this file is maintained in the rra-c-util
 dnl package, available at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
