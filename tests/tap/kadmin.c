@@ -35,12 +35,17 @@
 #include <portable/krb5.h>
 #include <portable/system.h>
 
-#include <kadm5/admin.h>
+#ifdef HAVE_KADM5CLNT
+# include <kadm5/admin.h>
+#endif
 #include <time.h>
 
 #include <tests/tap/basic.h>
 #include <tests/tap/kadmin.h>
 #include <tests/tap/kerberos.h>
+
+/* Used for unused parameters to silence gcc warnings. */
+#define UNUSED __attribute__((__unused__))
 
 
 /*
@@ -54,6 +59,7 @@
  * missing so that the caller can choose whether to call bail or skip_all.  If
  * the configuration is present but the operation fails, bails.
  */
+#ifdef HAVE_KADM5CLNT
 bool
 kerberos_expire_password(const char *principal, time_t expires)
 {
@@ -126,3 +132,10 @@ done:
     test_file_path_free(path);
     return okay;
 }
+#else /* !HAVE_KADM5CLNT */
+bool
+kerberos_expire_password(const char *principal UNUSED, time_t expires UNUSED)
+{
+    return false;
+}
+#endif /* !HAVE_KADM5CLNT */
