@@ -146,6 +146,14 @@ char *test_file_path(const char *file)
     __attribute__((__malloc__, __nonnull__));
 void test_file_path_free(char *path);
 
+/*
+ * Create a temporary directory relative to BUILD and return the path.  The
+ * returned path should be freed with test_tmpdir_free.
+ */
+char *test_tmpdir(void)
+    __attribute__((__malloc__));
+void test_tmpdir_free(char *path);
+
 END_DECLS
 
 #endif /* TAP_BASIC_H */

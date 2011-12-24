@@ -45,16 +45,18 @@
 
 
 /*
- * These variables hold the allocated strings for the principal and the
+ * These variables hold the allocated strings for the principal, the
  * environment to point to a different Kerberos ticket cache, keytab, and
- * configuration file.  We store them so that we can free them on exit for
- * cleaner valgrind output, making it easier to find real memory leaks in the
- * tested programs.
+ * configuration file, and the temporary directories used.  We store them so
+ * that we can free them on exit for cleaner valgrind output, making it easier
+ * to find real memory leaks in the tested programs.
  */
 static char *principal = NULL;
 static char *krb5ccname = NULL;
 static char *krb5_ktname = NULL;
 static char *krb5_config = NULL;
+static char *tmpdir_ticket = NULL;
+static char *tmpdir_conf = NULL;
 
 
 /*
@@ -105,46 +107,6 @@ diag_krb5(krb5_context ctx, krb5_error_code code, const char *format, ...)
 
 
 /*
- * Create the temporary directory used for test files.
- */
-static void
-create_tmp(void)
-{
-    const char *build;
-    char *tmp;
-
-    build = getenv("BUILD");
-    if (build == NULL)
-        build = ".";
-    basprintf(&tmp, "%s/tmp", build);
-    if (access(tmp, W_OK) < 0)
-        if (mkdir(tmp, 0777) < 0)
-            sysbail("error creating directory %s", tmp);
-    free(tmp);
-}
-
-
-/*
- * Try to remove the temporary directory used for test files.  We'll try this
- * multiple times until all the cleanups have run, so don't complain about
- * failure.
- */
-static void
-remove_tmp(void)
-{
-    const char *build;
-    char *tmp;
-
-    build = getenv("BUILD");
-    if (build == NULL)
-        build = ".";
-    basprintf(&tmp, "%s/tmp", build);
-    rmdir(tmp);
-    free(tmp);
-}
-
-
-/*
  * Clean up at the end of a test.  This removes the ticket cache and resets
  * and frees the memory allocated for the environment variables so that
  * valgrind output on test suites is cleaner.
@@ -152,16 +114,15 @@ remove_tmp(void)
 void
 kerberos_cleanup(void)
 {
-    const char *build;
     char *path;
 
-    build = getenv("BUILD");
-    if (build == NULL)
-        build = ".";
-    basprintf(&path, "%s/tmp/krb5cc_test", build);
-    unlink(path);
-    free(path);
-    remove_tmp();
+    if (tmpdir_ticket != NULL) {
+        basprintf(&path, "%s/krb5cc_test", tmpdir_ticket);
+        unlink(path);
+        free(path);
+        test_tmpdir_free(tmpdir_ticket);
+        tmpdir_ticket = NULL;
+    }
     if (principal != NULL) {
         free(principal);
         principal = NULL;
@@ -193,7 +154,7 @@ const char *
 kerberos_setup(void)
 {
     char *path, *krbtgt;
-    const char *build, *realm;
+    const char *realm;
     FILE *file;
     char buffer[BUFSIZ];
     krb5_error_code code;
@@ -231,11 +192,8 @@ kerberos_setup(void)
         return NULL;
 
     /* Set the KRB5CCNAME and KRB5_KTNAME environment variables. */
-    create_tmp();
-    build = getenv("BUILD");
-    if (build == NULL)
-        build = ".";
-    basprintf(&krb5ccname, "KRB5CCNAME=%s/tmp/krb5cc_test", build);
+    tmpdir_ticket = test_tmpdir();
+    basprintf(&krb5ccname, "KRB5CCNAME=%s/krb5cc_test", tmpdir_ticket);
     basprintf(&krb5_ktname, "KRB5_KTNAME=%s", path);
     putenv(krb5ccname);
     putenv(krb5_ktname);
@@ -406,16 +364,15 @@ kerberos_keytab_principal(krb5_context ctx, const char *path)
 void
 kerberos_cleanup_conf(void)
 {
-    const char *build;
     char *path;
 
-    build = getenv("BUILD");
-    if (build == NULL)
-        build = ".";
-    basprintf(&path, "%s/tmp/krb5.conf", build);
-    unlink(path);
-    free(path);
-    remove_tmp();
+    if (tmpdir_conf != NULL) {
+        basprintf(&path, "%s/krb5.conf", tmpdir_conf);
+        unlink(path);
+        free(path);
+        test_tmpdir_free(tmpdir_conf);
+        tmpdir_conf = NULL;
+    }
     putenv((char *) "KRB5_CONFIG=");
     if (krb5_config != NULL) {
         free(krb5_config);
@@ -437,7 +394,7 @@ void
 kerberos_generate_conf(const char *realm)
 {
     char *path;
-    const char *build, *argv[3];
+    const char *argv[3];
 
     path = test_file_path("data/generate-krb5-conf");
     if (path == NULL)
@@ -447,10 +404,8 @@ kerberos_generate_conf(const char *realm)
     argv[2] = NULL;
     run_setup(argv);
     test_file_path_free(path);
-    build = getenv("BUILD");
-    if (build == NULL)
-        build = ".";
-    basprintf(&krb5_config, "KRB5_CONFIG=%s/tmp/krb5.conf", getenv("BUILD"));
+    tmpdir_conf = test_tmpdir();
+    basprintf(&krb5_config, "KRB5_CONFIG=%s/krb5.conf", tmpdir_conf);
     putenv(krb5_config);
     if (atexit(kerberos_cleanup_conf) != 0)
         sysdiag("cannot register cleanup function");
