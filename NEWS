@@ -58,7 +58,7 @@ pam-krb5 4.5 (unreleased)
     report.
 
     Replace the Kerberos compatibility layer with equivalent but
-    better-structured code from rra-c-util 3.7.
+    better-structured code from rra-c-util 4.0.
 
     Avoid krb5-config and use manual library probing if --with-krb5-lib or
     --with-krb5-include were given to configure.  This avoids having to
@@ -72,7 +72,7 @@ pam-krb5 4.5 (unreleased)
     documentation.  Kerberos v5 has been the default version of Kerberos
     for over ten years now.
 
-    Update to rra-c-util 3.8:
+    Update to rra-c-util 4.0:
 
     * Add notices to all files copied over from rra-c-util.
     * Include strings.h for additional POSIX functions where found.
@@ -80,6 +80,8 @@ pam-krb5 4.5 (unreleased)
     * Update warning flags for make warnings for GCC 4.6.1.
     * Limit symbol exports even on systems without GNU ld.
     * Fix replacement mkstemp to use long long where available.
+    * Improve stripping of /usr/include from krb5-config results.
+    * Use issetugid where available, not the misnamed issetuidgid.
 
     Update to C TAP Harness 1.8:
 

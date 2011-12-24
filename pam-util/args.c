@@ -75,7 +75,7 @@ putil_args_new(pam_handle_t *pamh, int flags)
 
 #ifdef HAVE_KERBEROS
     args->realm = NULL;
-    if (issetuidgid())
+    if (issetugid())
         status = krb5_init_secure_context(&args->ctx);
     else
         status = krb5_init_context(&args->ctx);

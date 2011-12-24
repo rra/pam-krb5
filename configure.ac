@@ -90,8 +90,10 @@ AC_HEADER_STDBOOL
 AC_CHECK_HEADERS([strings.h sys/bittypes.h])
 AC_CHECK_DECLS([snprintf, vsnprintf])
 AC_TYPE_LONG_LONG_INT
+AC_CHECK_TYPES([ssize_t], [], [],
+    [#include <sys/types.h>])
 RRA_FUNC_SNPRINTF
-AC_REPLACE_FUNCS([asprintf issetuidgid mkstemp strlcat strlcpy strndup])
+AC_REPLACE_FUNCS([asprintf issetugid mkstemp strlcat strlcpy strndup])
 
 dnl Try to specify the binding so that any references within the PAM module
 dnl are resolved to the functions in that module in preference to any external

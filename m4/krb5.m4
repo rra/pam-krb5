@@ -202,7 +202,8 @@ AC_DEFUN([_RRA_LIB_KRB5_CONFIG],
            KRB5_LIBS=`"$PATH_KRB5_CONFIG" --libs krb5 2>/dev/null`],
           [KRB5_CPPFLAGS=`"$PATH_KRB5_CONFIG" --cflags 2>/dev/null`
            KRB5_LIBS=`"$PATH_KRB5_CONFIG" --libs 2>/dev/null`])
-      KRB5_CPPFLAGS=`echo "$KRB5_CPPFLAGS" | sed 's%-I/usr/include ?%%'`
+      KRB5_CPPFLAGS=`echo "$KRB5_CPPFLAGS" | sed 's%-I/usr/include %%'`
+      KRB5_CPPFLAGS=`echo "$KRB5_CPPFLAGS" | sed 's%-I/usr/include$%%'`
       _RRA_LIB_KRB5_CHECK([$1])
       RRA_LIB_KRB5_SWITCH
       AC_CHECK_HEADERS([krb5.h krb5/krb5.h])
@@ -227,7 +228,7 @@ AC_DEFUN([_RRA_LIB_KRB5_INTERNAL],
     [_RRA_LIB_KRB5_PATHS
      _RRA_LIB_KRB5_REDUCED([$1])],
     [AS_IF([test x"$rra_krb5_includedir" = x && test x"$rra_krb5_libdir" = x],
-        [_RRA_LIB_KRB5_CONFIG],
+        [_RRA_LIB_KRB5_CONFIG([$1])],
         [_RRA_LIB_KRB5_PATHS
          _RRA_LIB_KRB5_MANUAL([$1])])])
  rra_krb5_uses_com_err=false

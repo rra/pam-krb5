@@ -153,10 +153,8 @@ kerberos_cleanup(void)
 const char *
 kerberos_setup(void)
 {
-    char *path, *krbtgt;
+    char *path, *name, *krbtgt;
     const char *realm;
-    FILE *file;
-    char buffer[BUFSIZ];
     krb5_error_code code;
     krb5_context ctx;
     krb5_ccache ccache;
@@ -169,27 +167,26 @@ kerberos_setup(void)
     if (principal != NULL)
         kerberos_cleanup();
 
-    /* Read the principal name and find the keytab file. */
-    path = test_file_path("config/principal");
-    if (path == NULL)
-        return NULL;
-    file = fopen(path, "r");
-    if (file == NULL) {
-        free(path);
-        return NULL;
-    }
-    if (fgets(buffer, sizeof(buffer), file) == NULL) {
-        fclose(file);
-        bail("cannot read %s", path);
-    }
-    fclose(file);
-    if (buffer[strlen(buffer) - 1] != '\n')
-        bail("no newline in %s", path);
-    test_file_path_free(path);
-    buffer[strlen(buffer) - 1] = '\0';
+    /* Find the keytab file. */
     path = test_file_path("config/keytab");
     if (path == NULL)
         return NULL;
+
+    /*
+     * Determine the principal corresponding to that keytab.  We copy the
+     * memory to ensure that it's allocated in the right memory domain on
+     * systems where that may matter (like Windows).
+     */
+    code = krb5_init_context(&ctx);
+    if (code != 0)
+        bail_krb5(ctx, code, "error initializing Kerberos");
+    kprinc = kerberos_keytab_principal(ctx, path);
+    code = krb5_unparse_name(ctx, kprinc, &name);
+    if (code != 0)
+        bail_krb5(ctx, code, "error unparsing name");
+    krb5_free_principal(ctx, kprinc);
+    principal = bstrdup(name);
+    krb5_free_unparsed_name(ctx, name);
 
     /* Set the KRB5CCNAME and KRB5_KTNAME environment variables. */
     tmpdir_ticket = test_tmpdir();
@@ -199,15 +196,12 @@ kerberos_setup(void)
     putenv(krb5_ktname);
 
     /* Now do the Kerberos initialization. */
-    code = krb5_init_context(&ctx);
-    if (code != 0)
-        bail_krb5(ctx, code, "error initializing Kerberos");
     code = krb5_cc_default(ctx, &ccache);
     if (code != 0)
         bail_krb5(ctx, code, "error setting ticket cache");
-    code = krb5_parse_name(ctx, buffer, &kprinc);
+    code = krb5_parse_name(ctx, principal, &kprinc);
     if (code != 0)
-        bail_krb5(ctx, code, "error parsing principal %s", buffer);
+        bail_krb5(ctx, code, "error parsing principal %s", principal);
     realm = krb5_principal_get_realm(ctx, kprinc);
     basprintf(&krbtgt, "krbtgt/%s@%s", realm, realm);
     code = krb5_kt_resolve(ctx, path, &keytab);
@@ -233,8 +227,8 @@ kerberos_setup(void)
     krb5_free_cred_contents(ctx, &creds);
     krb5_kt_close(ctx, keytab);
     krb5_free_principal(ctx, kprinc);
-    krb5_free_context(ctx);
     krb5_get_init_creds_opt_free(ctx, opts);
+    krb5_free_context(ctx);
     free(krbtgt);
     test_file_path_free(path);
 
@@ -245,8 +239,7 @@ kerberos_setup(void)
     if (atexit(kerberos_cleanup) != 0)
         sysdiag("cannot register cleanup function");
 
-    /* Store the principal and return it. */
-    principal = bstrdup(buffer);
+    /* Return the principal. */
     return principal;
 }
 

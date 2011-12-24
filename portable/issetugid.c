@@ -1,7 +1,7 @@
 /*
- * Replacement for a missing issetuidgid.
+ * Replacement for a missing issetugid.
  *
- * Simulates the functionality as the Solaris function issetuidgid, which
+ * Simulates the functionality as the Solaris function issetugid, which
  * returns true if the running program was setuid or setgid.  The replacement
  * test is not quite as comprehensive as what the Solaris function does, but
  * it should be good enough.
@@ -24,7 +24,7 @@
 #include <portable/system.h>
 
 int
-issetuidgid(void)
+issetugid(void)
 {
     if (getuid() != geteuid())
         return 1;

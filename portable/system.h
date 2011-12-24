@@ -75,6 +75,11 @@
 # define snprintf _snprintf
 #endif
 
+/* Windows does not define ssize_t. */
+#ifndef HAVE_SSIZE_T
+typedef ptrdiff_t ssize_t;
+#endif
+
 /*
  * POSIX requires that these be defined in <unistd.h>.  If one of them has
  * been defined, all the rest almost certainly have.
@@ -119,8 +124,8 @@ extern int snprintf(char *, size_t, const char *, ...)
 #if !HAVE_DECL_VSNPRINTF
 extern int vsnprintf(char *, size_t, const char *, va_list);
 #endif
-#if !HAVE_ISSETUIDGID
-extern int issetuidgid(void);
+#if !HAVE_ISSETUGID
+extern int issetugid(void);
 #endif
 #if !HAVE_MKSTEMP
 extern int mkstemp(char *);
