@@ -1,3 +1,24 @@
+libpam-krb5 (4.5-1) UNRELEASED; urgency=low
+
+  * New upstream release.
+    - The temporary root-only ticket cache is now stored relative to
+      ccache_dir rather than hard-coded to be in /tmp.
+    - Suppress the notice that the password is being changed because it's
+      expired if force_first_pass or use_first_pass are set in the
+      password stack.
+    - Confirm the password can get kadmin/changepw credentials before
+      returning the status code indicating it's expired, working around a
+      bug in old Heimdal versions that return expired even for incorrect
+      passwords.
+    - Better error reporting of authorization (such as .k5login) failures.
+    - Prefer the change password protocol when linked with MIT libraries
+      for better compatibility with older KDCs.
+    - Improve logging and authorization when defer_pwchange is set.
+    - Close some memory leaks.
+    - Report symbolic names of PAM flags in debug logging.
+
+ -- Russ Allbery <rra@debian.org>  Sat, 24 Dec 2011 17:11:57 -0800
+
 libpam-krb5 (4.4-3) unstable; urgency=low
 
   * Change the pam-auth-update configuration to skip remaining password
