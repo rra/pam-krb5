@@ -17,6 +17,8 @@ libpam-krb5 (4.5-1) UNRELEASED; urgency=low
     - Close some memory leaks.
     - Report symbolic names of PAM flags in debug logging.
   * Enable compiler hardening flags.
+  * Remove "v5" from the long description.  Kerberos v5 has been the
+    default version of Kerberos for over ten years.
 
  -- Russ Allbery <rra@debian.org>  Sat, 24 Dec 2011 17:11:57 -0800
 
