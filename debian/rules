@@ -23,6 +23,10 @@ override_dh_auto_build:
 	dh_auto_build -Bbuild-mit
 	dh_auto_build -Bbuild-heimdal
 
+override_dh_auto_test:
+	dh_auto_test -Bbuild-mit
+	dh_auto_test -Bbuild-heimdal
+
 override_dh_auto_install:
 	dh_auto_install -Bbuild-mit --destdir=debian/libpam-krb5
 	dh_auto_install -Bbuild-heimdal --destdir=debian/libpam-heimdal
