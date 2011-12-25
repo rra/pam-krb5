@@ -83,10 +83,12 @@ pam-krb5 4.5 (unreleased)
     * Improve stripping of /usr/include from krb5-config results.
     * Use issetugid where available, not the misnamed issetuidgid.
 
-    Update to C TAP Harness 1.8:
+    Update to C TAP Harness 1.9:
 
     * Add bmalloc, bcalloc, brealloc, and bstrdup TAP library functions.
     * Fix runtests to honor -s even if BUILD and -b aren't given.
+    * Add test_tmpdir and test_tmpdir_free to TAP library.
+    * runtests now frees all allocated resources on exit.
 
 pam-krb5 4.4 (2010-12-31)
 

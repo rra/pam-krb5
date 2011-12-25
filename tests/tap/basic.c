@@ -12,7 +12,7 @@
  * This file is part of C TAP Harness.  The current version plus supporting
  * documentation is at <http://www.eyrie.org/~eagle/software/c-tap-harness/>.
  *
- * Copyright 2009, 2010 Russ Allbery <rra@stanford.edu>
+ * Copyright 2009, 2010, 2011 Russ Allbery <rra@stanford.edu>
  * Copyright 2001, 2002, 2004, 2005, 2006, 2007, 2008, 2011
  *     The Board of Trustees of the Leland Stanford Junior University
  *
@@ -568,9 +568,7 @@ test_file_path(const char *file)
         if (base == NULL)
             continue;
         length = strlen(base) + 1 + strlen(file) + 1;
-        path = malloc(length);
-        if (path == NULL)
-            sysbail("cannot allocate memory");
+        path = bmalloc(length);
         sprintf(path, "%s/%s", base, file);
         if (access(path, R_OK) == 0)
             break;
