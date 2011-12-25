@@ -4,6 +4,8 @@
  * Provides functions for creating ticket caches, used by pam_authenticate,
  * pam_setcred, and pam_chauthtok after changing an expired password.
  *
+ * Copyright 2011
+ *     The Board of Trustees of the Leland Stanford Junior University
  * Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@stanford.edu>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
@@ -12,16 +14,16 @@
  */
 
 #include <config.h>
+#include <portable/krb5.h>
 #include <portable/pam.h>
+#include <portable/system.h>
 
 #include <errno.h>
-#include <krb5.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 
 #include <internal.h>
+#include <pam-util/args.h>
+#include <pam-util/logging.h>
+
 
 /*
  * Get the name of a cache.  Takes the name of the environment variable that
@@ -61,13 +63,13 @@ pamk5_set_krb5ccname(struct pam_args *args, const char *name, const char *key)
     int pamret;
 
     if (asprintf(&env_name, "%s=%s", key, name) < 0) {
-        pamk5_crit(args, "asprintf failed: %s", strerror(errno));
+        putil_crit(args, "asprintf failed: %s", strerror(errno));
         pamret = PAM_BUF_ERR;
         goto done;
     }
     pamret = pam_putenv(args->pamh, env_name);
     if (pamret != PAM_SUCCESS) {
-        pamk5_err_pam(args, pamret, "pam_putenv failed");
+        putil_err_pam(args, pamret, "pam_putenv failed");
         pamret = PAM_SERVICE_ERR;
         goto done;
     }
@@ -91,7 +93,7 @@ pamk5_cache_mkstemp(struct pam_args *args, char *template)
 
     ccfd = mkstemp(template);
     if (ccfd < 0) {
-        pamk5_crit(args, "mkstemp(\"%s\") failed: %s", template,
+        putil_crit(args, "mkstemp(\"%s\") failed: %s", template,
                    strerror(errno));
         return PAM_SERVICE_ERR;
     }
@@ -112,25 +114,26 @@ pamk5_cache_init(struct pam_args *args, const char *ccname, krb5_creds *creds,
     struct context *ctx;
     int retval;
 
-    if (args == NULL || args->ctx == NULL || args->ctx->context == NULL)
+    if (args == NULL || args->config == NULL || args->config->ctx == NULL
+        || args->config->ctx->context == NULL)
         return PAM_SERVICE_ERR;
-    ctx = args->ctx;
+    ctx = args->config->ctx;
     retval = krb5_cc_resolve(ctx->context, ccname, cache);
     if (retval != 0) {
-        pamk5_err_krb5(args, retval, "cannot resolve ticket cache %s", ccname);
+        putil_err_krb5(args, retval, "cannot resolve ticket cache %s", ccname);
         retval = PAM_SERVICE_ERR;
         goto done;
     }
     retval = krb5_cc_initialize(ctx->context, *cache, ctx->princ);
     if (retval != 0) {
-        pamk5_err_krb5(args, retval, "cannot initialize ticket cache %s",
+        putil_err_krb5(args, retval, "cannot initialize ticket cache %s",
                        ccname);
         retval = PAM_SERVICE_ERR;
         goto done;
     }
     retval = krb5_cc_store_cred(ctx->context, *cache, creds);
     if (retval != 0) {
-        pamk5_err_krb5(args, retval, "cannot store credentials in %s", ccname);
+        putil_err_krb5(args, retval, "cannot store credentials in %s", ccname);
         retval = PAM_SERVICE_ERR;
         goto done;
     }
@@ -153,16 +156,28 @@ done:
 int
 pamk5_cache_init_random(struct pam_args *args, krb5_creds *creds)
 {
-    char cache_name[] = "/tmp/krb5cc_pam_XXXXXX";
+    char *cache_name = NULL;
+    const char *dir;
     int pamret;
 
     /* Store the obtained credentials in a temporary cache. */
+    dir = args->config->ccache_dir;
+    if (strncmp("FILE:", args->config->ccache_dir, strlen("FILE:")) == 0)
+        dir += strlen("FILE:");
+    if (asprintf(&cache_name, "%s/krb5cc_pam_XXXXXX", dir) < 0) {
+        putil_crit(args, "malloc failure: %s", strerror(errno));
+        return PAM_SERVICE_ERR;
+    }
     pamret = pamk5_cache_mkstemp(args, cache_name);
     if (pamret != PAM_SUCCESS)
-        return pamret;
-    pamret = pamk5_cache_init(args, cache_name, creds, &args->ctx->cache);
+        goto done;
+    pamret = pamk5_cache_init(args, cache_name, creds,
+                              &args->config->ctx->cache);
     if (pamret != PAM_SUCCESS)
-        return pamret;
+        goto done;
     pamret = pamk5_set_krb5ccname(args, cache_name, "PAM_KRB5CCNAME");
+
+done:
+    free(cache_name);
     return pamret;
 }

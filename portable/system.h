@@ -13,13 +13,24 @@
  *     #include <stddef.h>
  *     #include <stdint.h>
  *     #include <string.h>
+ *     #include <strings.h>
  *     #include <unistd.h>
  *
  * Missing functions are provided via #define or prototyped if available from
  * the portable helper library.  Also provides some standard #defines.
  *
+ * The canonical version of this file is maintained in the rra-c-util package,
+ * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
+ *
  * Written by Russ Allbery <rra@stanford.edu>
- * This work is hereby placed in the public domain by its author.
+ *
+ * The authors hereby relinquish any claim to any copyright that they may have
+ * in this work, whether granted under contract or by operation of law or
+ * international treaty, and hereby commit to the public, at large, that they
+ * shall not, at any time in the future, seek to enforce any copyright in this
+ * work against any person or entity, or prevent any person or entity from
+ * copying, publishing, distributing or creating derivative works of this
+ * work.
  */
 
 #ifndef PORTABLE_SYSTEM_H
@@ -38,6 +49,9 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <string.h>
+#if HAVE_STRINGS_H
+# include <strings.h>
+#endif
 #if HAVE_INTTYPES_H
 # include <inttypes.h>
 #endif
@@ -56,40 +70,14 @@
 /* Get the bool type. */
 #include <portable/stdbool.h>
 
-BEGIN_DECLS
-
-/* Default to a hidden visibility for all portability functions. */
-#pragma GCC visibility push(hidden)
-
-/*
- * Provide prototypes for functions not declared in system headers.  Use the
- * HAVE_DECL macros for those functions that may be prototyped but implemented
- * incorrectly or implemented without a prototype.
- */
-#if !HAVE_ASPRINTF
-extern int asprintf(char **, const char *, ...)
-    __attribute__((__format__(printf, 2, 3)));
-extern int vasprintf(char **, const char *, va_list);
-#endif
-#if !HAVE_DECL_SNPRINTF
-extern int snprintf(char *, size_t, const char *, ...)
-    __attribute__((__format__(printf, 3, 4)));
-#endif
-#if !HAVE_DECL_VSNPRINTF
-extern int vsnprintf(char *, size_t, const char *, va_list);
-#endif
-#if !HAVE_MKSTEMP
-extern int mkstemp(char *);
-#endif
-
-/* Undo default visibility change. */
-#pragma GCC visibility pop
-
-END_DECLS
-
 /* Windows provides snprintf under a different name. */
 #ifdef _WIN32
 # define snprintf _snprintf
+#endif
+
+/* Windows does not define ssize_t. */
+#ifndef HAVE_SSIZE_T
+typedef ptrdiff_t ssize_t;
 #endif
 
 /*
@@ -113,5 +101,48 @@ END_DECLS
 #  define va_copy(d, s) memcpy(&(d), &(s), sizeof(va_list))
 # endif
 #endif
+
+BEGIN_DECLS
+
+/* Default to a hidden visibility for all portability functions. */
+#pragma GCC visibility push(hidden)
+
+/*
+ * Provide prototypes for functions not declared in system headers.  Use the
+ * HAVE_DECL macros for those functions that may be prototyped but implemented
+ * incorrectly or implemented without a prototype.
+ */
+#if !HAVE_ASPRINTF
+extern int asprintf(char **, const char *, ...)
+    __attribute__((__format__(printf, 2, 3)));
+extern int vasprintf(char **, const char *, va_list);
+#endif
+#if !HAVE_DECL_SNPRINTF
+extern int snprintf(char *, size_t, const char *, ...)
+    __attribute__((__format__(printf, 3, 4)));
+#endif
+#if !HAVE_DECL_VSNPRINTF
+extern int vsnprintf(char *, size_t, const char *, va_list);
+#endif
+#if !HAVE_ISSETUGID
+extern int issetugid(void);
+#endif
+#if !HAVE_MKSTEMP
+extern int mkstemp(char *);
+#endif
+#if !HAVE_STRLCAT
+extern size_t strlcat(char *, const char *, size_t);
+#endif
+#if !HAVE_STRLCPY
+extern size_t strlcpy(char *, const char *, size_t);
+#endif
+#if !HAVE_STRNDUP
+extern char *strndup(const char *, size_t);
+#endif
+
+/* Undo default visibility change. */
+#pragma GCC visibility pop
+
+END_DECLS
 
 #endif /* !PORTABLE_SYSTEM_H */

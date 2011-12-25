@@ -5,10 +5,14 @@ PAM API:
  * Support PAM_CHANGE_EXPIRED_AUTHTOK properly in pam_chauthtok.  This
    will require prompting for the current password (if it's not already
    available in the PAM data) and trying a regular authentication first to
-   see if the account is expired.
+   see if the account is expired.  (PAMKRB-5)
 
  * Tighter verification that all of our flags are valid might be a good
-   idea.
+   idea.  (PAMKRB-6)
+
+ * For informational messages followed by a prompt, find a way to combine
+   these into one PAM conversation call for better GUI presentation
+   behavior.
 
 Functionality:
 
@@ -17,52 +21,58 @@ Functionality:
    Heimdal and MIT use the same logic for attempting PKINIT first and then
    falling back to password.  This will fix failure to store passwords in
    the PAM data with try_pkinit and MIT Kerberos on password fallback and
-   will allow implementation of use_pkinit for MIT.
+   will allow implementation of use_pkinit for MIT.  (PAMKRB-2)
+
+ * Add support for enabling trace logging if krb5_set_trace_filename() is
+   available (MIT Kerberos 1.9 and later).  (PAMKRB-4)
+
+ * Add support for obtaining a Kerberos ticket cache using anonymous
+   PKINIT and then using that cache to protect the pre-authentication
+   exchange with FAST.  (PAMKRB-1, Debian Bug#626509)
+
+ * Add a no_password PAM option to suppress the module password prompt,
+   useful with preauth mechanisms that need to do their own prompting
+   (possibly for things other than passwords).  (PAMKRB-3, Debian
+   Bug#626506)
+
+ * Add a daemon that can be used to verify TGTs that can be used when
+   pam-krb5 is run as a non-root user and hence doesn't have access to the
+   system keytab.  Jeff Hutzelman has a daemon and protocol for doing this
+   developed for a different PAM authentication module, and it would be
+   good to stay consistent with that protocol if possible.  (PAMKRB-10,
+   Debian Bug#399001)
 
 Code Cleanup:
 
- * The PAM option parsing is repetitive code that involves counting the
-   lengths of strings.  It should be possible to replace most of it with
-   some carefully-chosen macros.
-
- * The PAM option parsing code could do a binary search on a table of
-   option strings rather than checking each one in turn, although the
-   performance and cleanliness gain may not be worth the effort.
-
  * The PKINIT code for Heimdal involves too many #ifdefs right now for my
    taste.  Find a way to restructure it to only wrap the main PKINIT
-   function for Heimdal.
-
- * All of the option parsing code does not deal clealy with failure to
-   allocate memory.  Generally, we just don't set the parameter.  This may
-   not always be safe, or may lead to unexpected behavior.  We should
-   always check memory allocation failures and abort PAM if we see any.
-   Unfortunately, the profile library doesn't return errors on memory
-   allocation failure, which makes this mostly futile until there's a
-   better profile library API.
+   function for Heimdal.  (PAMKRB-11)
 
  * The current handling of error return codes is a mess.  We need to find
    a way to return a rich set of error codes from the underlying functions
    and then map error codes appropriately in the interface functions.
    Helpful for this would be improved documentation of what error codes
-   are permitted and where.
+   are permitted and where.  (PAMKRB-12)
 
 Documentation:
 
  * Document PKINIT configuration with MIT in krb5.conf.  It looks like the
    library supports configuration in [realms] with similar names to the
-   PAM module configuration.
+   PAM module configuration.  (PAMKRB-13)
 
  * Note the version number when options were added.  It helps people
    looking at the documentation on-line and writing portable
-   configurations.
-
-Tests:
-
- * Add support for running an automated test suite using a user-configured
-   test account with a known password.
+   configurations.  (PAMKRB-14)
 
 Portability:
 
  * If pam_modutil_getpwnam is not available but getpwnam_r is, roll our
-   own using getpwnam_r.
+   own using getpwnam_r.  (PAMKRB-15)
+
+Logging:
+
+ * Log the information that the Kerberos library asks us to display, or
+   at least the info and error messages.
+
+ * Log unknown PAM flags on module entry.  Currently, only the symbolic
+   flags we know about will be logged.

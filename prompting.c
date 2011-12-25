@@ -4,6 +4,8 @@
  * Handles all interaction with the PAM conversation, either directly or
  * indirectly through the Kerberos libraries.
  *
+ * Copyright 2011
+ *     The Board of Trustees of the Leland Stanford Junior University
  * Copyright 2005, 2006, 2007, 2009 Russ Allbery <rra@stanford.edu>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
@@ -12,15 +14,16 @@
  */
 
 #include <config.h>
+#include <portable/krb5.h>
 #include <portable/pam.h>
+#include <portable/system.h>
 
 #include <errno.h>
-#include <krb5.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include <internal.h>
+#include <pam-util/args.h>
+#include <pam-util/logging.h>
+
 
 /*
  * Prompt for a password.
@@ -36,8 +39,8 @@
  * where <prefix> is the argument passed and <banner> is the value of
  * args->banner (defaulting to "Kerberos").
  *
- * If args->expose_account is set, we append the principal name (taken from
- * args->ctx->princ) before the colon, so the prompts are:
+ * If args->config->expose_account is set, we append the principal name (taken
+ * from args->config->ctx->princ) before the colon, so the prompts are:
  *
  *     Password for <principal>:
  *     <prefix> <banner> password for <principal>:
@@ -55,46 +58,55 @@
 int
 pamk5_get_password(struct pam_args *args, const char *prefix, char **password)
 {
-    struct context *ctx = args->ctx;
+    struct context *ctx = args->config->ctx;
     char *prompt = NULL;
     char *principal = NULL;
     krb5_error_code k5_errno;
     int retval;
 
-    if (args->expose_account || prefix != NULL)
+    if (args->config->expose_account || prefix != NULL)
         if (ctx != NULL && ctx->context != NULL && ctx->princ != NULL) {
             k5_errno = krb5_unparse_name(ctx->context, ctx->princ, &principal);
             if (k5_errno != 0)
-                pamk5_debug_krb5(args, k5_errno, "krb5_unparse_name failed");
+                putil_debug_krb5(args, k5_errno, "krb5_unparse_name failed");
         }
     if (prefix == NULL) {
-        if (args->expose_account && principal != NULL) {
+        if (args->config->expose_account && principal != NULL) {
             if (asprintf(&prompt, "Password for %s: ", principal) < 0)
-                return PAM_BUF_ERR;
+                goto fail;
         } else {
             prompt = strdup("Password: ");
             if (prompt == NULL)
-                return PAM_BUF_ERR;
+                goto fail;
         }
     } else {
-        if (args->expose_account && principal != NULL) {
+        const char *banner;
+        const char *bspace;
+
+        banner = (args->config->banner == NULL) ? "" : args->config->banner;
+        bspace = (args->config->banner == NULL) ? "" : " ";
+        if (args->config->expose_account && principal != NULL) {
             retval = asprintf(&prompt, "%s%s%s password for %s: ", prefix,
-                              (args->banner == NULL) ? "" : " ",
-                              (args->banner == NULL) ? "" : args->banner,
-                              principal);
+                              bspace, banner, principal);
             if (retval < 0)
-                return PAM_BUF_ERR;
+                goto fail;
         } else {
-            retval = asprintf(&prompt, "%s%s%s password: ", prefix,
-                              (args->banner == NULL) ? "" : " ",
-                              (args->banner == NULL) ? "" : args->banner);
+            retval = asprintf(&prompt, "%s%s%s password: ", prefix, bspace,
+                              banner);
             if (retval < 0)
-                return PAM_BUF_ERR;
+                goto fail;
         }
     }
+    if (principal != NULL)
+        krb5_free_unparsed_name(ctx->context, principal);
     retval = pamk5_conv(args, prompt, PAM_PROMPT_ECHO_OFF, password);
     free(prompt);
     return retval;
+
+fail:
+    if (principal != NULL)
+        krb5_free_unparsed_name(ctx->context, principal);
+    return PAM_BUF_ERR;
 }
 
 
