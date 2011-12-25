@@ -138,6 +138,11 @@ putil_args_defaults(struct pam_args *args, const struct option options[],
     for (opt = 0; opt < optlen; opt++) {
         bool *bp;
         long *lp;
+#ifdef HAVE_KERBEROS
+        krb5_deltat *tp;
+#else
+        long *tp;
+#endif
         char **sp;
         struct vector **vp;
 
@@ -147,9 +152,12 @@ putil_args_defaults(struct pam_args *args, const struct option options[],
             *bp = options[opt].defaults.boolean;
             break;
         case TYPE_NUMBER:
-        case TYPE_TIME:
             lp = CONF_NUMBER(args->config, options[opt].location);
             *lp = options[opt].defaults.number;
+            break;
+        case TYPE_TIME:
+            tp = CONF_TIME(args->config, options[opt].location);
+            *tp = options[opt].defaults.number;
             break;
         case TYPE_STRING:
             sp = CONF_STRING(args->config, options[opt].location);

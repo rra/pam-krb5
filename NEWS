@@ -1,5 +1,10 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 4.6 (unreleased)
+
+    Fix initialization of time values in the module configuration on
+    platforms (like S/390X) where krb5_deltat is not equivalent to long.
+
 pam-krb5 4.5 (2011-12-24)
 
     Suppress the notice that the password is being changed because it's
