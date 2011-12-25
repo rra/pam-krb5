@@ -188,3 +188,15 @@ Scripted PAM Testing
     check that the PAM module does not send any prompts.  If the [prompts]
     section is absent entirely, the conversation function passed to the
     PAM module will be NULL.
+
+License
+
+    This file is part of the documentation of rra-c-util, which can be
+    found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
+
+    Copyright 2011 Russ Allbery <rra@stanford.edu>
+
+    Copying and distribution of this file, with or without modification,
+    are permitted in any medium without royalty provided the copyright
+    notice and this notice are preserved.  This file is offered as-is,
+    without any warranty.
