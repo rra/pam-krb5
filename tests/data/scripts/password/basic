@@ -1,0 +1,13 @@
+# Test password change with prompting.  -*- conf -*-
+
+[run]
+    chauthtok(PRELIM_CHECK)   = PAM_SUCCESS
+    chauthtok(UPDATE_AUTHTOK) = PAM_SUCCESS
+
+[prompts]
+    echo_off = Current Kerberos password: |%p
+    echo_off = Enter new Kerberos password: |%n
+    echo_off = Retype new Kerberos password: |%n
+
+[output]
+    INFO user %u changed Kerberos password

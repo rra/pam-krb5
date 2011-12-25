@@ -3,6 +3,10 @@
 /* Define to 1 if you have the `asprintf' function. */
 #undef HAVE_ASPRINTF
 
+/* Define to 1 if you have the declaration of `krb5_kt_free_entry', and to 0
+   if you don't. */
+#undef HAVE_DECL_KRB5_KT_FREE_ENTRY
+
 /* Define to 1 if you have the declaration of `snprintf', and to 0 if you
    don't. */
 #undef HAVE_DECL_SNPRINTF
@@ -32,8 +36,23 @@
 /* Define to 1 if you have the <k5profile.h> header file. */
 #undef HAVE_K5PROFILE_H
 
+/* Define to enable kadmin client features. */
+#undef HAVE_KADM5CLNT
+
+/* Define to 1 if you have the `kadm5_init_with_skey_ctx' function. */
+#undef HAVE_KADM5_INIT_WITH_SKEY_CTX
+
+/* Define to enable Kerberos features. */
+#undef HAVE_KERBEROS
+
 /* Define to 1 if you have the `krb5_appdefault_string' function. */
 #undef HAVE_KRB5_APPDEFAULT_STRING
+
+/* Define to 1 if you have the `krb5_data_free' function. */
+#undef HAVE_KRB5_DATA_FREE
+
+/* Define to 1 if you have the `krb5_free_default_realm' function. */
+#undef HAVE_KRB5_FREE_DEFAULT_REALM
 
 /* Define to 1 if you have the `krb5_free_error_message' function. */
 #undef HAVE_KRB5_FREE_ERROR_MESSAGE
@@ -49,6 +68,9 @@
 
 /* Define to 1 if you have the `krb5_get_init_creds_opt_alloc' function. */
 #undef HAVE_KRB5_GET_INIT_CREDS_OPT_ALLOC
+
+/* Define to 1 if you have the `krb5_get_init_creds_opt_free' function. */
+#undef HAVE_KRB5_GET_INIT_CREDS_OPT_FREE
 
 /* Define if krb5_get_init_creds_opt_free takes two arguments. */
 #undef HAVE_KRB5_GET_INIT_CREDS_OPT_FREE_2_ARGS
@@ -72,8 +94,14 @@
    */
 #undef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT
 
-/* Define if krb5_get_init_creds_opt_set_pkinit takes 11 arguments. */
-#undef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT_11_ARGS
+/* Define if krb5_get_init_creds_opt_set_pkinit takes 9 arguments. */
+#undef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT_9_ARGS
+
+/* Define to 1 if you have the `krb5_get_profile' function. */
+#undef HAVE_KRB5_GET_PROFILE
+
+/* Define to 1 if you have the <krb5.h> header file. */
+#undef HAVE_KRB5_H
 
 /* Define if your Kerberos implementation is Heimdal. */
 #undef HAVE_KRB5_HEIMDAL
@@ -81,14 +109,29 @@
 /* Define to 1 if you have the `krb5_init_secure_context' function. */
 #undef HAVE_KRB5_INIT_SECURE_CONTEXT
 
+/* Define to 1 if you have the <krb5/krb5.h> header file. */
+#undef HAVE_KRB5_KRB5_H
+
 /* Define if your Kerberos implementation is MIT. */
 #undef HAVE_KRB5_MIT
+
+/* Define to 1 if you have the `krb5_principal_get_realm' function. */
+#undef HAVE_KRB5_PRINCIPAL_GET_REALM
+
+/* Define to 1 if the system has the type `krb5_realm'. */
+#undef HAVE_KRB5_REALM
+
+/* Define to 1 if you have the `krb5_set_password' function. */
+#undef HAVE_KRB5_SET_PASSWORD
 
 /* Define to 1 if you have the `krb5_svc_get_msg' function. */
 #undef HAVE_KRB5_SVC_GET_MSG
 
 /* Define to 1 if you have the `krb5_verify_init_creds_opt_init' function. */
 #undef HAVE_KRB5_VERIFY_INIT_CREDS_OPT_INIT
+
+/* Define to 1 if you have the `krb5_xfree' function. */
+#undef HAVE_KRB5_XFREE
 
 /* Define to 1 if the system has the type `long long int'. */
 #undef HAVE_LONG_LONG_INT
@@ -98,6 +141,9 @@
 
 /* Define to 1 if you have the `mkstemp' function. */
 #undef HAVE_MKSTEMP
+
+/* Define to 1 if you have the `pam_getenv' function. */
+#undef HAVE_PAM_GETENV
 
 /* Define to 1 if you have the `pam_modutil_getpwnam' function. */
 #undef HAVE_PAM_MODUTIL_GETPWNAM
@@ -117,6 +163,9 @@
 /* Define to 1 if you have the `pam_vsyslog' function. */
 #undef HAVE_PAM_VSYSLOG
 
+/* Define to 1 if you have the <profile.h> header file. */
+#undef HAVE_PROFILE_H
+
 /* Define to 1 if you have the <security/pam_appl.h> header file. */
 #undef HAVE_SECURITY_PAM_APPL_H
 
@@ -128,6 +177,9 @@
 
 /* Define if your system has a working snprintf function. */
 #undef HAVE_SNPRINTF
+
+/* Define to 1 if the system has the type `ssize_t'. */
+#undef HAVE_SSIZE_T
 
 /* Define to 1 if stdbool.h conforms to C99. */
 #undef HAVE_STDBOOL_H
@@ -143,6 +195,15 @@
 
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
+
+/* Define to 1 if you have the `strlcat' function. */
+#undef HAVE_STRLCAT
+
+/* Define to 1 if you have the `strlcpy' function. */
+#undef HAVE_STRLCPY
+
+/* Define to 1 if you have the `strndup' function. */
+#undef HAVE_STRNDUP
 
 /* Define to 1 if you have the <sys/bittypes.h> header file. */
 #undef HAVE_SYS_BITTYPES_H

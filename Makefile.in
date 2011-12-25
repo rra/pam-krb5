@@ -18,7 +18,8 @@
 # Automake makefile for pam-krb5.
 #
 # Written by Russ Allbery <rra@stanford.edu>
-# Copyright 2009 Board of Trustees, Leland Stanford Jr. University
+# Copyright 2009, 2011
+#     The Board of Trustees of the Leland Stanford Junior University
 # Copyright 2005, 2006, 2007 Russ Allbery <rra@stanford.edu>
 # Copyright 2005 Andres Salomon <dilinger@debian.org>
 # Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
@@ -44,18 +45,38 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+check_PROGRAMS = tests/runtests$(EXEEXT) tests/module/basic-t$(EXEEXT) \
+	tests/module/cache-t$(EXEEXT) tests/module/expired-t$(EXEEXT) \
+	tests/module/no-cache-t$(EXEEXT) \
+	tests/module/password-t$(EXEEXT) \
+	tests/pam-util/args-t$(EXEEXT) \
+	tests/pam-util/fakepam-t$(EXEEXT) \
+	tests/pam-util/logging-t$(EXEEXT) \
+	tests/pam-util/options-t$(EXEEXT) \
+	tests/pam-util/vector-t$(EXEEXT) \
+	tests/portable/asprintf-t$(EXEEXT) \
+	tests/portable/mkstemp-t$(EXEEXT) \
+	tests/portable/snprintf-t$(EXEEXT) \
+	tests/portable/strlcat-t$(EXEEXT) \
+	tests/portable/strlcpy-t$(EXEEXT) \
+	tests/portable/strndup-t$(EXEEXT)
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(dist_man_MANS) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(srcdir)/config.h.in $(top_srcdir)/configure NEWS TODO \
 	build-aux/compile build-aux/config.guess build-aux/config.sub \
 	build-aux/depcomp build-aux/install-sh build-aux/ltmain.sh \
-	build-aux/missing portable/asprintf.c portable/mkstemp.c \
-	portable/pam_syslog.c portable/pam_vsyslog.c \
-	portable/snprintf.c
+	build-aux/missing portable/asprintf.c portable/issetugid.c \
+	portable/krb5-extra.c portable/krb5-profile.c \
+	portable/mkstemp.c portable/pam_syslog.c \
+	portable/pam_vsyslog.c portable/snprintf.c portable/strlcat.c \
+	portable/strlcpy.c portable/strndup.c
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/m4/krb5-pkinit.m4 \
-	$(top_srcdir)/m4/krb5.m4 $(top_srcdir)/m4/lib-depends.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/m4/kadm5clnt.m4 \
+	$(top_srcdir)/m4/krb5-config.m4 \
+	$(top_srcdir)/m4/krb5-pkinit.m4 $(top_srcdir)/m4/krb5.m4 \
+	$(top_srcdir)/m4/ld-version.m4 $(top_srcdir)/m4/lib-depends.m4 \
+	$(top_srcdir)/m4/lib-helper.m4 \
 	$(top_srcdir)/m4/lib-pathname.m4 $(top_srcdir)/m4/libtool.m4 \
 	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
 	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
@@ -69,6 +90,32 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
+ARFLAGS = cru
+AM_V_AR = $(am__v_AR_$(V))
+am__v_AR_ = $(am__v_AR_$(AM_DEFAULT_VERBOSITY))
+am__v_AR_0 = @echo "  AR    " $@;
+AM_V_at = $(am__v_at_$(V))
+am__v_at_ = $(am__v_at_$(AM_DEFAULT_VERBOSITY))
+am__v_at_0 = @
+tests_fakepam_libfakepam_a_AR = $(AR) $(ARFLAGS)
+tests_fakepam_libfakepam_a_LIBADD =
+am__dirstamp = $(am__leading_dot)dirstamp
+am_tests_fakepam_libfakepam_a_OBJECTS =  \
+	tests/fakepam/config.$(OBJEXT) tests/fakepam/data.$(OBJEXT) \
+	tests/fakepam/general.$(OBJEXT) \
+	tests/fakepam/kuserok.$(OBJEXT) \
+	tests/fakepam/logging.$(OBJEXT) tests/fakepam/script.$(OBJEXT)
+tests_fakepam_libfakepam_a_OBJECTS =  \
+	$(am_tests_fakepam_libfakepam_a_OBJECTS)
+tests_tap_libtap_a_AR = $(AR) $(ARFLAGS)
+tests_tap_libtap_a_LIBADD =
+am_tests_tap_libtap_a_OBJECTS =  \
+	tests/tap/tests_tap_libtap_a-basic.$(OBJEXT) \
+	tests/tap/tests_tap_libtap_a-kadmin.$(OBJEXT) \
+	tests/tap/tests_tap_libtap_a-kerberos.$(OBJEXT) \
+	tests/tap/tests_tap_libtap_a-process.$(OBJEXT) \
+	tests/tap/tests_tap_libtap_a-string.$(OBJEXT)
+tests_tap_libtap_a_OBJECTS = $(am_tests_tap_libtap_a_OBJECTS)
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -92,26 +139,123 @@ am__base_list = \
   sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
 am__installdirs = "$(DESTDIR)$(pamdir)" "$(DESTDIR)$(man5dir)"
 LTLIBRARIES = $(noinst_LTLIBRARIES) $(pam_LTLIBRARIES)
-am__DEPENDENCIES_1 =
-pam_krb5_la_DEPENDENCIES = portable/libportable.la \
-	$(am__DEPENDENCIES_1)
-am_pam_krb5_la_OBJECTS = api-account.lo api-auth.lo api-password.lo \
-	api-session.lo auth.lo cache.lo compat.lo context.lo \
-	logging.lo options.lo password.lo prompting.lo setcred.lo \
-	support.lo
-pam_krb5_la_OBJECTS = $(am_pam_krb5_la_OBJECTS)
+pam_util_libpamutil_la_LIBADD =
+am_pam_util_libpamutil_la_OBJECTS = pam-util/args.lo \
+	pam-util/logging.lo pam-util/options.lo pam-util/vector.lo
+pam_util_libpamutil_la_OBJECTS = $(am_pam_util_libpamutil_la_OBJECTS)
 AM_V_lt = $(am__v_lt_$(V))
 am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
 am__v_lt_0 = --silent
+am__DEPENDENCIES_1 =
+pam_krb5_la_DEPENDENCIES = pam-util/libpamutil.la \
+	portable/libportable.la $(am__DEPENDENCIES_1)
+am_pam_krb5_la_OBJECTS = account.lo auth.lo cache.lo context.lo \
+	options.lo password.lo prompting.lo public.lo setcred.lo \
+	support.lo
+pam_krb5_la_OBJECTS = $(am_pam_krb5_la_OBJECTS)
 pam_krb5_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(pam_krb5_la_LDFLAGS) $(LDFLAGS) -o $@
 LIBOBJDIR = portable/
 portable_libportable_la_DEPENDENCIES = $(LTLIBOBJS)
-am__dirstamp = $(am__leading_dot)dirstamp
 am_portable_libportable_la_OBJECTS = portable/dummy.lo
 portable_libportable_la_OBJECTS =  \
 	$(am_portable_libportable_la_OBJECTS)
+tests_module_basic_t_SOURCES = tests/module/basic-t.c
+tests_module_basic_t_OBJECTS = tests/module/basic-t.$(OBJEXT)
+tests_module_basic_t_DEPENDENCIES = $(MODULE_OBJECTS) \
+	tests/tap/libtap.a portable/libportable.la \
+	$(am__DEPENDENCIES_1)
+tests_module_cache_t_SOURCES = tests/module/cache-t.c
+tests_module_cache_t_OBJECTS = tests/module/cache-t.$(OBJEXT)
+tests_module_cache_t_DEPENDENCIES = $(MODULE_OBJECTS) \
+	tests/tap/libtap.a portable/libportable.la \
+	$(am__DEPENDENCIES_1)
+tests_module_expired_t_SOURCES = tests/module/expired-t.c
+tests_module_expired_t_OBJECTS = tests/module/expired-t.$(OBJEXT)
+tests_module_expired_t_DEPENDENCIES = $(MODULE_OBJECTS) \
+	tests/tap/libtap.a portable/libportable.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+tests_module_no_cache_t_SOURCES = tests/module/no-cache-t.c
+tests_module_no_cache_t_OBJECTS = tests/module/no-cache-t.$(OBJEXT)
+tests_module_no_cache_t_DEPENDENCIES = $(MODULE_OBJECTS) \
+	tests/tap/libtap.a portable/libportable.la \
+	$(am__DEPENDENCIES_1)
+tests_module_password_t_SOURCES = tests/module/password-t.c
+tests_module_password_t_OBJECTS = tests/module/password-t.$(OBJEXT)
+tests_module_password_t_DEPENDENCIES = $(MODULE_OBJECTS) \
+	tests/tap/libtap.a portable/libportable.la \
+	$(am__DEPENDENCIES_1)
+tests_pam_util_args_t_SOURCES = tests/pam-util/args-t.c
+tests_pam_util_args_t_OBJECTS = tests/pam-util/args-t.$(OBJEXT)
+tests_pam_util_args_t_DEPENDENCIES = pam-util/libpamutil.la \
+	tests/fakepam/libfakepam.a tests/tap/libtap.a \
+	portable/libportable.la $(am__DEPENDENCIES_1)
+tests_pam_util_fakepam_t_SOURCES = tests/pam-util/fakepam-t.c
+tests_pam_util_fakepam_t_OBJECTS = tests/pam-util/fakepam-t.$(OBJEXT)
+tests_pam_util_fakepam_t_DEPENDENCIES = tests/fakepam/libfakepam.a \
+	tests/tap/libtap.a portable/libportable.la
+tests_pam_util_logging_t_SOURCES = tests/pam-util/logging-t.c
+tests_pam_util_logging_t_OBJECTS = tests/pam-util/logging-t.$(OBJEXT)
+tests_pam_util_logging_t_DEPENDENCIES = pam-util/libpamutil.la \
+	tests/fakepam/libfakepam.a tests/tap/libtap.a \
+	portable/libportable.la $(am__DEPENDENCIES_1)
+tests_pam_util_options_t_SOURCES = tests/pam-util/options-t.c
+tests_pam_util_options_t_OBJECTS = tests/pam-util/options-t.$(OBJEXT)
+tests_pam_util_options_t_DEPENDENCIES = pam-util/libpamutil.la \
+	tests/fakepam/libfakepam.a tests/tap/libtap.a \
+	portable/libportable.la $(am__DEPENDENCIES_1)
+tests_pam_util_vector_t_SOURCES = tests/pam-util/vector-t.c
+tests_pam_util_vector_t_OBJECTS = tests/pam-util/vector-t.$(OBJEXT)
+tests_pam_util_vector_t_DEPENDENCIES = pam-util/libpamutil.la \
+	tests/fakepam/libfakepam.a tests/tap/libtap.a \
+	portable/libportable.la
+am_tests_portable_asprintf_t_OBJECTS =  \
+	tests/portable/asprintf-t.$(OBJEXT) \
+	tests/portable/asprintf.$(OBJEXT)
+tests_portable_asprintf_t_OBJECTS =  \
+	$(am_tests_portable_asprintf_t_OBJECTS)
+tests_portable_asprintf_t_DEPENDENCIES = tests/tap/libtap.a \
+	portable/libportable.la
+am_tests_portable_mkstemp_t_OBJECTS =  \
+	tests/portable/mkstemp-t.$(OBJEXT) \
+	tests/portable/mkstemp.$(OBJEXT)
+tests_portable_mkstemp_t_OBJECTS =  \
+	$(am_tests_portable_mkstemp_t_OBJECTS)
+tests_portable_mkstemp_t_DEPENDENCIES = tests/tap/libtap.a \
+	portable/libportable.la
+am_tests_portable_snprintf_t_OBJECTS =  \
+	tests/portable/snprintf-t.$(OBJEXT) \
+	tests/portable/snprintf.$(OBJEXT)
+tests_portable_snprintf_t_OBJECTS =  \
+	$(am_tests_portable_snprintf_t_OBJECTS)
+tests_portable_snprintf_t_DEPENDENCIES = tests/tap/libtap.a \
+	portable/libportable.la
+am_tests_portable_strlcat_t_OBJECTS =  \
+	tests/portable/strlcat-t.$(OBJEXT) \
+	tests/portable/strlcat.$(OBJEXT)
+tests_portable_strlcat_t_OBJECTS =  \
+	$(am_tests_portable_strlcat_t_OBJECTS)
+tests_portable_strlcat_t_DEPENDENCIES = tests/tap/libtap.a \
+	portable/libportable.la
+am_tests_portable_strlcpy_t_OBJECTS =  \
+	tests/portable/strlcpy-t.$(OBJEXT) \
+	tests/portable/strlcpy.$(OBJEXT)
+tests_portable_strlcpy_t_OBJECTS =  \
+	$(am_tests_portable_strlcpy_t_OBJECTS)
+tests_portable_strlcpy_t_DEPENDENCIES = tests/tap/libtap.a \
+	portable/libportable.la
+am_tests_portable_strndup_t_OBJECTS =  \
+	tests/portable/strndup-t.$(OBJEXT) \
+	tests/portable/strndup.$(OBJEXT)
+tests_portable_strndup_t_OBJECTS =  \
+	$(am_tests_portable_strndup_t_OBJECTS)
+tests_portable_strndup_t_DEPENDENCIES = tests/tap/libtap.a \
+	portable/libportable.la
+tests_runtests_SOURCES = tests/runtests.c
+tests_runtests_OBJECTS = tests/tests_runtests-runtests.$(OBJEXT)
+tests_runtests_LDADD = $(LDADD)
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/build-aux/depcomp
 am__depfiles_maybe = depfiles
@@ -125,9 +269,6 @@ LTCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 AM_V_CC = $(am__v_CC_$(V))
 am__v_CC_ = $(am__v_CC_$(AM_DEFAULT_VERBOSITY))
 am__v_CC_0 = @echo "  CC    " $@;
-AM_V_at = $(am__v_at_$(V))
-am__v_at_ = $(am__v_at_$(AM_DEFAULT_VERBOSITY))
-am__v_at_0 = @
 CCLD = $(CC)
 LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -138,9 +279,34 @@ am__v_CCLD_0 = @echo "  CCLD  " $@;
 AM_V_GEN = $(am__v_GEN_$(V))
 am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))
 am__v_GEN_0 = @echo "  GEN   " $@;
-SOURCES = $(pam_krb5_la_SOURCES) $(portable_libportable_la_SOURCES)
-DIST_SOURCES = $(pam_krb5_la_SOURCES) \
-	$(portable_libportable_la_SOURCES)
+SOURCES = $(tests_fakepam_libfakepam_a_SOURCES) \
+	$(tests_tap_libtap_a_SOURCES) \
+	$(pam_util_libpamutil_la_SOURCES) $(pam_krb5_la_SOURCES) \
+	$(portable_libportable_la_SOURCES) tests/module/basic-t.c \
+	tests/module/cache-t.c tests/module/expired-t.c \
+	tests/module/no-cache-t.c tests/module/password-t.c \
+	tests/pam-util/args-t.c tests/pam-util/fakepam-t.c \
+	tests/pam-util/logging-t.c tests/pam-util/options-t.c \
+	tests/pam-util/vector-t.c $(tests_portable_asprintf_t_SOURCES) \
+	$(tests_portable_mkstemp_t_SOURCES) \
+	$(tests_portable_snprintf_t_SOURCES) \
+	$(tests_portable_strlcat_t_SOURCES) \
+	$(tests_portable_strlcpy_t_SOURCES) \
+	$(tests_portable_strndup_t_SOURCES) tests/runtests.c
+DIST_SOURCES = $(tests_fakepam_libfakepam_a_SOURCES) \
+	$(tests_tap_libtap_a_SOURCES) \
+	$(pam_util_libpamutil_la_SOURCES) $(pam_krb5_la_SOURCES) \
+	$(portable_libportable_la_SOURCES) tests/module/basic-t.c \
+	tests/module/cache-t.c tests/module/expired-t.c \
+	tests/module/no-cache-t.c tests/module/password-t.c \
+	tests/pam-util/args-t.c tests/pam-util/fakepam-t.c \
+	tests/pam-util/logging-t.c tests/pam-util/options-t.c \
+	tests/pam-util/vector-t.c $(tests_portable_asprintf_t_SOURCES) \
+	$(tests_portable_mkstemp_t_SOURCES) \
+	$(tests_portable_snprintf_t_SOURCES) \
+	$(tests_portable_strlcat_t_SOURCES) \
+	$(tests_portable_strlcpy_t_SOURCES) \
+	$(tests_portable_strndup_t_SOURCES) tests/runtests.c
 man5dir = $(mandir)/man5
 NROFF = nroff
 MANS = $(dist_man_MANS)
@@ -159,9 +325,7 @@ distuninstallcheck_listfiles = find . -type f -print
 distcleancheck_listfiles = find . -type f -print
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
-AM_CPPFLAGS = @AM_CPPFLAGS@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
-AM_LDFLAGS = @AM_LDFLAGS@
 AR = @AR@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
@@ -175,6 +339,7 @@ CPPFLAGS = @CPPFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
+DLLTOOL = @DLLTOOL@
 DSYMUTIL = @DSYMUTIL@
 DUMPBIN = @DUMPBIN@
 ECHO_C = @ECHO_C@
@@ -189,7 +354,9 @@ INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
-KRB5_CONFIG = @KRB5_CONFIG@
+KADM5CLNT_CPPFLAGS = @KADM5CLNT_CPPFLAGS@
+KADM5CLNT_LDFLAGS = @KADM5CLNT_LDFLAGS@
+KADM5CLNT_LIBS = @KADM5CLNT_LIBS@
 KRB5_CPPFLAGS = @KRB5_CPPFLAGS@
 KRB5_LDFLAGS = @KRB5_LDFLAGS@
 KRB5_LIBS = @KRB5_LIBS@
@@ -203,6 +370,7 @@ LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
+MANIFEST_TOOL = @MANIFEST_TOOL@
 MKDIR_P = @MKDIR_P@
 NM = @NM@
 NMEDIT = @NMEDIT@
@@ -217,6 +385,7 @@ PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
+PATH_KRB5_CONFIG = @PATH_KRB5_CONFIG@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 RANLIB = @RANLIB@
 SED = @SED@
@@ -228,6 +397,7 @@ abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
+ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_DUMPBIN = @ac_ct_DUMPBIN@
 am__include = @am__include@
@@ -260,7 +430,6 @@ libdir = @libdir@
 libexecdir = @libexecdir@
 localedir = @localedir@
 localstatedir = @localstatedir@
-lt_ECHO = @lt_ECHO@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
 oldincludedir = @oldincludedir@
@@ -276,24 +445,40 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-AUTOMAKE_OPTIONS = foreign subdir-objects
 ACLOCAL_AMFLAGS = -I m4
-EXTRA_DIST = .gitignore LICENSE autogen compat-aix.c compat-heimdal.c	\
-	compat-mit.c pam_krb5.map pam_krb5.pod
+EXTRA_DIST = .gitignore LICENSE autogen pam_krb5.map pam_krb5.pod	 \
+	pam_krb5.sym tests/README tests/TESTS tests/config/README	 \
+	tests/data/generate-krb5-conf tests/data/krb5.conf		 \
+	tests/data/scripts tests/data/valgrind.supp tests/fakepam/README \
+	tests/tap/libtap.sh
 
-noinst_LTLIBRARIES = portable/libportable.la
-portable_libportable_la_SOURCES = portable/dummy.c portable/macros.h \
-        portable/pam.h portable/stdbool.h portable/system.h
+
+# Everything we build needs the Kerbeors headers and library flags.
+AM_CPPFLAGS = $(KRB5_CPPFLAGS)
+AM_LDFLAGS = $(KRB5_LDFLAGS)
+noinst_LTLIBRARIES = pam-util/libpamutil.la portable/libportable.la
+portable_libportable_la_SOURCES = portable/dummy.c portable/kadmin.h	    \
+        portable/krb5.h portable/macros.h portable/pam.h portable/stdbool.h \
+        portable/system.h
 
 portable_libportable_la_LIBADD = $(LTLIBOBJS)
+pam_util_libpamutil_la_SOURCES = pam-util/args.c pam-util/args.h	\
+	pam-util/logging.c pam-util/logging.h pam-util/options.c	\
+	pam-util/options.h pam-util/vector.c pam-util/vector.h
+
+@HAVE_LD_VERSION_SCRIPT_FALSE@VERSION_LDFLAGS = -export-symbols ${srcdir}/pam_krb5.sym
+@HAVE_LD_VERSION_SCRIPT_TRUE@VERSION_LDFLAGS = -Wl,--version-script=${srcdir}/pam_krb5.map
 pamdir = $(libdir)/security
 pam_LTLIBRARIES = pam_krb5.la
-pam_krb5_la_SOURCES = api-account.c api-auth.c api-password.c api-session.c \
-	auth.c cache.c compat.c context.c internal.h logging.c options.c    \
-	password.c prompting.c setcred.c support.c
+pam_krb5_la_SOURCES = account.c auth.c cache.c context.c internal.h	\
+	options.c password.c prompting.c public.c setcred.c support.c
 
-pam_krb5_la_LDFLAGS = -module -shared -avoid-version $(AM_LDFLAGS)
-pam_krb5_la_LIBADD = portable/libportable.la $(KRB5_LIBS)
+pam_krb5_la_LDFLAGS = -module -shared -avoid-version $(VERSION_LDFLAGS) \
+	$(AM_LDFLAGS)
+
+pam_krb5_la_LIBADD = pam-util/libpamutil.la portable/libportable.la \
+	$(KRB5_LIBS)
+
 dist_man_MANS = pam_krb5.5
 MAINTAINERCLEANFILES = Makefile.in aclocal.m4 build-aux/compile		 \
 	build-aux/config.guess build-aux/config.sub build-aux/depcomp	 \
@@ -302,13 +487,105 @@ MAINTAINERCLEANFILES = Makefile.in aclocal.m4 build-aux/compile		 \
 	m4/ltsugar.m4 m4/ltversion.m4 m4/lt~obsolete.m4 pam_krb5.5
 
 
-# A set of flags for warnings.	Add -O because gcc won't find some warnings
-# without optimization turned on, and add -DDEBUG=1 so we'll also compile all
-# debugging code and test it.
-WARNINGS = -g -O -DDEBUG=1 -Wall -W -Wendif-labels -Wpointer-arith \
-	-Wbad-function-cast -Wwrite-strings -Wstrict-prototypes \
-	-Wmissing-prototypes -Wnested-externs -Werror
+# A set of flags for warnings.  Add -O because gcc won't find some warnings
+# without optimization turned on.  Desirable warnings that can't be turned
+# on due to other problems:
+#
+#     -Wconversion      http://bugs.debian.org/488884 (htons warnings)
+#
+# Last checked against gcc 4.6.1 (2011-05-04).
+WARNINGS = -g -O -Wall -Wextra -Wendif-labels -Wformat=2 -Winit-self	\
+	-Wswitch-enum -Wdeclaration-after-statement -Wshadow		\
+	-Wpointer-arith -Wbad-function-cast -Wwrite-strings		\
+	-Wjump-misses-init -Wlogical-op -Wstrict-prototypes		\
+	-Wmissing-prototypes -Wredundant-decls -Wnested-externs -Werror
 
+tests_runtests_CPPFLAGS = -DSOURCE='"$(abs_top_srcdir)/tests"' \
+	-DBUILD='"$(abs_top_builddir)/tests"'
+
+check_LIBRARIES = tests/fakepam/libfakepam.a tests/tap/libtap.a
+tests_fakepam_libfakepam_a_SOURCES = tests/fakepam/config.c		   \
+	tests/fakepam/data.c tests/fakepam/general.c			   \
+	tests/fakepam/internal.h tests/fakepam/kuserok.c		   \
+	tests/fakepam/logging.c tests/fakepam/pam.h tests/fakepam/script.c \
+	tests/fakepam/script.h
+
+tests_tap_libtap_a_CPPFLAGS = -I$(abs_top_srcdir)/tests	\
+	$(KADM5CLNT_CPPFLAGS) $(AM_CPPFLAGS)
+
+tests_tap_libtap_a_SOURCES = tests/tap/basic.c tests/tap/basic.h	\
+	tests/tap/kadmin.c tests/tap/kadmin.h tests/tap/kerberos.c	\
+	tests/tap/kerberos.h tests/tap/process.c tests/tap/process.h	\
+	tests/tap/string.c tests/tap/string.h
+
+
+# The list of objects and libraries used for module testing by programs that
+# link with the fake PAM library or with both it and the module.
+MODULE_OBJECTS = account.lo auth.lo cache.lo context.lo options.lo	\
+	password.lo prompting.lo public.lo setcred.lo support.lo	\
+	pam-util/libpamutil.la tests/fakepam/libfakepam.a
+
+
+# The test programs themselves.
+tests_module_basic_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
+	portable/libportable.la $(KRB5_LIBS)
+
+tests_module_cache_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
+	portable/libportable.la $(KRB5_LIBS)
+
+tests_module_expired_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a	\
+	portable/libportable.la $(KADM5CLNT_LDFLAGS) $(KADM5CLNT_LIBS)	\
+	$(KRB5_LIBS)
+
+tests_module_no_cache_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
+	portable/libportable.la $(KRB5_LIBS)
+
+tests_module_password_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
+	portable/libportable.la $(KRB5_LIBS)
+
+tests_pam_util_args_t_LDADD = pam-util/libpamutil.la	\
+	tests/fakepam/libfakepam.a tests/tap/libtap.a	\
+	portable/libportable.la $(KRB5_LIBS)
+
+tests_pam_util_fakepam_t_LDADD = tests/fakepam/libfakepam.a	\
+	tests/tap/libtap.a portable/libportable.la
+
+tests_pam_util_logging_t_LDADD = pam-util/libpamutil.la	\
+	tests/fakepam/libfakepam.a tests/tap/libtap.a	\
+	portable/libportable.la $(KRB5_LIBS)
+
+tests_pam_util_options_t_LDADD = pam-util/libpamutil.la	\
+	tests/fakepam/libfakepam.a tests/tap/libtap.a	\
+	portable/libportable.la $(KRB5_LIBS)
+
+tests_pam_util_vector_t_LDADD = pam-util/libpamutil.la	\
+	tests/fakepam/libfakepam.a tests/tap/libtap.a	\
+	portable/libportable.la
+
+tests_portable_asprintf_t_SOURCES = tests/portable/asprintf-t.c \
+	tests/portable/asprintf.c
+
+tests_portable_asprintf_t_LDADD = tests/tap/libtap.a portable/libportable.la
+tests_portable_mkstemp_t_SOURCES = tests/portable/mkstemp-t.c \
+	tests/portable/mkstemp.c
+
+tests_portable_mkstemp_t_LDADD = tests/tap/libtap.a portable/libportable.la
+tests_portable_snprintf_t_SOURCES = tests/portable/snprintf-t.c \
+	tests/portable/snprintf.c
+
+tests_portable_snprintf_t_LDADD = tests/tap/libtap.a portable/libportable.la
+tests_portable_strlcat_t_SOURCES = tests/portable/strlcat-t.c \
+        tests/portable/strlcat.c
+
+tests_portable_strlcat_t_LDADD = tests/tap/libtap.a portable/libportable.la
+tests_portable_strlcpy_t_SOURCES = tests/portable/strlcpy-t.c \
+        tests/portable/strlcpy.c
+
+tests_portable_strlcpy_t_LDADD = tests/tap/libtap.a portable/libportable.la
+tests_portable_strndup_t_SOURCES = tests/portable/strndup-t.c \
+	tests/portable/strndup.c
+
+tests_portable_strndup_t_LDADD = tests/tap/libtap.a portable/libportable.la
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
@@ -366,6 +643,51 @@ $(srcdir)/config.h.in: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 distclean-hdr:
 	-rm -f config.h stamp-h1
 
+clean-checkLIBRARIES:
+	-test -z "$(check_LIBRARIES)" || rm -f $(check_LIBRARIES)
+tests/fakepam/$(am__dirstamp):
+	@$(MKDIR_P) tests/fakepam
+	@: > tests/fakepam/$(am__dirstamp)
+tests/fakepam/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) tests/fakepam/$(DEPDIR)
+	@: > tests/fakepam/$(DEPDIR)/$(am__dirstamp)
+tests/fakepam/config.$(OBJEXT): tests/fakepam/$(am__dirstamp) \
+	tests/fakepam/$(DEPDIR)/$(am__dirstamp)
+tests/fakepam/data.$(OBJEXT): tests/fakepam/$(am__dirstamp) \
+	tests/fakepam/$(DEPDIR)/$(am__dirstamp)
+tests/fakepam/general.$(OBJEXT): tests/fakepam/$(am__dirstamp) \
+	tests/fakepam/$(DEPDIR)/$(am__dirstamp)
+tests/fakepam/kuserok.$(OBJEXT): tests/fakepam/$(am__dirstamp) \
+	tests/fakepam/$(DEPDIR)/$(am__dirstamp)
+tests/fakepam/logging.$(OBJEXT): tests/fakepam/$(am__dirstamp) \
+	tests/fakepam/$(DEPDIR)/$(am__dirstamp)
+tests/fakepam/script.$(OBJEXT): tests/fakepam/$(am__dirstamp) \
+	tests/fakepam/$(DEPDIR)/$(am__dirstamp)
+tests/fakepam/libfakepam.a: $(tests_fakepam_libfakepam_a_OBJECTS) $(tests_fakepam_libfakepam_a_DEPENDENCIES) tests/fakepam/$(am__dirstamp)
+	$(AM_V_at)-rm -f tests/fakepam/libfakepam.a
+	$(AM_V_AR)$(tests_fakepam_libfakepam_a_AR) tests/fakepam/libfakepam.a $(tests_fakepam_libfakepam_a_OBJECTS) $(tests_fakepam_libfakepam_a_LIBADD)
+	$(AM_V_at)$(RANLIB) tests/fakepam/libfakepam.a
+tests/tap/$(am__dirstamp):
+	@$(MKDIR_P) tests/tap
+	@: > tests/tap/$(am__dirstamp)
+tests/tap/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) tests/tap/$(DEPDIR)
+	@: > tests/tap/$(DEPDIR)/$(am__dirstamp)
+tests/tap/tests_tap_libtap_a-basic.$(OBJEXT):  \
+	tests/tap/$(am__dirstamp) tests/tap/$(DEPDIR)/$(am__dirstamp)
+tests/tap/tests_tap_libtap_a-kadmin.$(OBJEXT):  \
+	tests/tap/$(am__dirstamp) tests/tap/$(DEPDIR)/$(am__dirstamp)
+tests/tap/tests_tap_libtap_a-kerberos.$(OBJEXT):  \
+	tests/tap/$(am__dirstamp) tests/tap/$(DEPDIR)/$(am__dirstamp)
+tests/tap/tests_tap_libtap_a-process.$(OBJEXT):  \
+	tests/tap/$(am__dirstamp) tests/tap/$(DEPDIR)/$(am__dirstamp)
+tests/tap/tests_tap_libtap_a-string.$(OBJEXT):  \
+	tests/tap/$(am__dirstamp) tests/tap/$(DEPDIR)/$(am__dirstamp)
+tests/tap/libtap.a: $(tests_tap_libtap_a_OBJECTS) $(tests_tap_libtap_a_DEPENDENCIES) tests/tap/$(am__dirstamp)
+	$(AM_V_at)-rm -f tests/tap/libtap.a
+	$(AM_V_AR)$(tests_tap_libtap_a_AR) tests/tap/libtap.a $(tests_tap_libtap_a_OBJECTS) $(tests_tap_libtap_a_LIBADD)
+	$(AM_V_at)$(RANLIB) tests/tap/libtap.a
+
 clean-noinstLTLIBRARIES:
 	-test -z "$(noinst_LTLIBRARIES)" || rm -f $(noinst_LTLIBRARIES)
 	@list='$(noinst_LTLIBRARIES)'; for p in $$list; do \
@@ -405,6 +727,22 @@ clean-pamLTLIBRARIES:
 	  echo "rm -f \"$${dir}/so_locations\""; \
 	  rm -f "$${dir}/so_locations"; \
 	done
+pam-util/$(am__dirstamp):
+	@$(MKDIR_P) pam-util
+	@: > pam-util/$(am__dirstamp)
+pam-util/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) pam-util/$(DEPDIR)
+	@: > pam-util/$(DEPDIR)/$(am__dirstamp)
+pam-util/args.lo: pam-util/$(am__dirstamp) \
+	pam-util/$(DEPDIR)/$(am__dirstamp)
+pam-util/logging.lo: pam-util/$(am__dirstamp) \
+	pam-util/$(DEPDIR)/$(am__dirstamp)
+pam-util/options.lo: pam-util/$(am__dirstamp) \
+	pam-util/$(DEPDIR)/$(am__dirstamp)
+pam-util/vector.lo: pam-util/$(am__dirstamp) \
+	pam-util/$(DEPDIR)/$(am__dirstamp)
+pam-util/libpamutil.la: $(pam_util_libpamutil_la_OBJECTS) $(pam_util_libpamutil_la_DEPENDENCIES) pam-util/$(am__dirstamp)
+	$(AM_V_CCLD)$(LINK)  $(pam_util_libpamutil_la_OBJECTS) $(pam_util_libpamutil_la_LIBADD) $(LIBS)
 pam_krb5.la: $(pam_krb5_la_OBJECTS) $(pam_krb5_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(pam_krb5_la_LINK) -rpath $(pamdir) $(pam_krb5_la_OBJECTS) $(pam_krb5_la_LIBADD) $(LIBS)
 portable/$(am__dirstamp):
@@ -418,34 +756,246 @@ portable/dummy.lo: portable/$(am__dirstamp) \
 portable/libportable.la: $(portable_libportable_la_OBJECTS) $(portable_libportable_la_DEPENDENCIES) portable/$(am__dirstamp)
 	$(AM_V_CCLD)$(LINK)  $(portable_libportable_la_OBJECTS) $(portable_libportable_la_LIBADD) $(LIBS)
 
+clean-checkPROGRAMS:
+	@list='$(check_PROGRAMS)'; test -n "$$list" || exit 0; \
+	echo " rm -f" $$list; \
+	rm -f $$list || exit $$?; \
+	test -n "$(EXEEXT)" || exit 0; \
+	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
+	echo " rm -f" $$list; \
+	rm -f $$list
+tests/module/$(am__dirstamp):
+	@$(MKDIR_P) tests/module
+	@: > tests/module/$(am__dirstamp)
+tests/module/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) tests/module/$(DEPDIR)
+	@: > tests/module/$(DEPDIR)/$(am__dirstamp)
+tests/module/basic-t.$(OBJEXT): tests/module/$(am__dirstamp) \
+	tests/module/$(DEPDIR)/$(am__dirstamp)
+tests/module/basic-t$(EXEEXT): $(tests_module_basic_t_OBJECTS) $(tests_module_basic_t_DEPENDENCIES) tests/module/$(am__dirstamp)
+	@rm -f tests/module/basic-t$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(tests_module_basic_t_OBJECTS) $(tests_module_basic_t_LDADD) $(LIBS)
+tests/module/cache-t.$(OBJEXT): tests/module/$(am__dirstamp) \
+	tests/module/$(DEPDIR)/$(am__dirstamp)
+tests/module/cache-t$(EXEEXT): $(tests_module_cache_t_OBJECTS) $(tests_module_cache_t_DEPENDENCIES) tests/module/$(am__dirstamp)
+	@rm -f tests/module/cache-t$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(tests_module_cache_t_OBJECTS) $(tests_module_cache_t_LDADD) $(LIBS)
+tests/module/expired-t.$(OBJEXT): tests/module/$(am__dirstamp) \
+	tests/module/$(DEPDIR)/$(am__dirstamp)
+tests/module/expired-t$(EXEEXT): $(tests_module_expired_t_OBJECTS) $(tests_module_expired_t_DEPENDENCIES) tests/module/$(am__dirstamp)
+	@rm -f tests/module/expired-t$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(tests_module_expired_t_OBJECTS) $(tests_module_expired_t_LDADD) $(LIBS)
+tests/module/no-cache-t.$(OBJEXT): tests/module/$(am__dirstamp) \
+	tests/module/$(DEPDIR)/$(am__dirstamp)
+tests/module/no-cache-t$(EXEEXT): $(tests_module_no_cache_t_OBJECTS) $(tests_module_no_cache_t_DEPENDENCIES) tests/module/$(am__dirstamp)
+	@rm -f tests/module/no-cache-t$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(tests_module_no_cache_t_OBJECTS) $(tests_module_no_cache_t_LDADD) $(LIBS)
+tests/module/password-t.$(OBJEXT): tests/module/$(am__dirstamp) \
+	tests/module/$(DEPDIR)/$(am__dirstamp)
+tests/module/password-t$(EXEEXT): $(tests_module_password_t_OBJECTS) $(tests_module_password_t_DEPENDENCIES) tests/module/$(am__dirstamp)
+	@rm -f tests/module/password-t$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(tests_module_password_t_OBJECTS) $(tests_module_password_t_LDADD) $(LIBS)
+tests/pam-util/$(am__dirstamp):
+	@$(MKDIR_P) tests/pam-util
+	@: > tests/pam-util/$(am__dirstamp)
+tests/pam-util/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) tests/pam-util/$(DEPDIR)
+	@: > tests/pam-util/$(DEPDIR)/$(am__dirstamp)
+tests/pam-util/args-t.$(OBJEXT): tests/pam-util/$(am__dirstamp) \
+	tests/pam-util/$(DEPDIR)/$(am__dirstamp)
+tests/pam-util/args-t$(EXEEXT): $(tests_pam_util_args_t_OBJECTS) $(tests_pam_util_args_t_DEPENDENCIES) tests/pam-util/$(am__dirstamp)
+	@rm -f tests/pam-util/args-t$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(tests_pam_util_args_t_OBJECTS) $(tests_pam_util_args_t_LDADD) $(LIBS)
+tests/pam-util/fakepam-t.$(OBJEXT): tests/pam-util/$(am__dirstamp) \
+	tests/pam-util/$(DEPDIR)/$(am__dirstamp)
+tests/pam-util/fakepam-t$(EXEEXT): $(tests_pam_util_fakepam_t_OBJECTS) $(tests_pam_util_fakepam_t_DEPENDENCIES) tests/pam-util/$(am__dirstamp)
+	@rm -f tests/pam-util/fakepam-t$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(tests_pam_util_fakepam_t_OBJECTS) $(tests_pam_util_fakepam_t_LDADD) $(LIBS)
+tests/pam-util/logging-t.$(OBJEXT): tests/pam-util/$(am__dirstamp) \
+	tests/pam-util/$(DEPDIR)/$(am__dirstamp)
+tests/pam-util/logging-t$(EXEEXT): $(tests_pam_util_logging_t_OBJECTS) $(tests_pam_util_logging_t_DEPENDENCIES) tests/pam-util/$(am__dirstamp)
+	@rm -f tests/pam-util/logging-t$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(tests_pam_util_logging_t_OBJECTS) $(tests_pam_util_logging_t_LDADD) $(LIBS)
+tests/pam-util/options-t.$(OBJEXT): tests/pam-util/$(am__dirstamp) \
+	tests/pam-util/$(DEPDIR)/$(am__dirstamp)
+tests/pam-util/options-t$(EXEEXT): $(tests_pam_util_options_t_OBJECTS) $(tests_pam_util_options_t_DEPENDENCIES) tests/pam-util/$(am__dirstamp)
+	@rm -f tests/pam-util/options-t$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(tests_pam_util_options_t_OBJECTS) $(tests_pam_util_options_t_LDADD) $(LIBS)
+tests/pam-util/vector-t.$(OBJEXT): tests/pam-util/$(am__dirstamp) \
+	tests/pam-util/$(DEPDIR)/$(am__dirstamp)
+tests/pam-util/vector-t$(EXEEXT): $(tests_pam_util_vector_t_OBJECTS) $(tests_pam_util_vector_t_DEPENDENCIES) tests/pam-util/$(am__dirstamp)
+	@rm -f tests/pam-util/vector-t$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(tests_pam_util_vector_t_OBJECTS) $(tests_pam_util_vector_t_LDADD) $(LIBS)
+tests/portable/$(am__dirstamp):
+	@$(MKDIR_P) tests/portable
+	@: > tests/portable/$(am__dirstamp)
+tests/portable/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) tests/portable/$(DEPDIR)
+	@: > tests/portable/$(DEPDIR)/$(am__dirstamp)
+tests/portable/asprintf-t.$(OBJEXT): tests/portable/$(am__dirstamp) \
+	tests/portable/$(DEPDIR)/$(am__dirstamp)
+tests/portable/asprintf.$(OBJEXT): tests/portable/$(am__dirstamp) \
+	tests/portable/$(DEPDIR)/$(am__dirstamp)
+tests/portable/asprintf-t$(EXEEXT): $(tests_portable_asprintf_t_OBJECTS) $(tests_portable_asprintf_t_DEPENDENCIES) tests/portable/$(am__dirstamp)
+	@rm -f tests/portable/asprintf-t$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(tests_portable_asprintf_t_OBJECTS) $(tests_portable_asprintf_t_LDADD) $(LIBS)
+tests/portable/mkstemp-t.$(OBJEXT): tests/portable/$(am__dirstamp) \
+	tests/portable/$(DEPDIR)/$(am__dirstamp)
+tests/portable/mkstemp.$(OBJEXT): tests/portable/$(am__dirstamp) \
+	tests/portable/$(DEPDIR)/$(am__dirstamp)
+tests/portable/mkstemp-t$(EXEEXT): $(tests_portable_mkstemp_t_OBJECTS) $(tests_portable_mkstemp_t_DEPENDENCIES) tests/portable/$(am__dirstamp)
+	@rm -f tests/portable/mkstemp-t$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(tests_portable_mkstemp_t_OBJECTS) $(tests_portable_mkstemp_t_LDADD) $(LIBS)
+tests/portable/snprintf-t.$(OBJEXT): tests/portable/$(am__dirstamp) \
+	tests/portable/$(DEPDIR)/$(am__dirstamp)
+tests/portable/snprintf.$(OBJEXT): tests/portable/$(am__dirstamp) \
+	tests/portable/$(DEPDIR)/$(am__dirstamp)
+tests/portable/snprintf-t$(EXEEXT): $(tests_portable_snprintf_t_OBJECTS) $(tests_portable_snprintf_t_DEPENDENCIES) tests/portable/$(am__dirstamp)
+	@rm -f tests/portable/snprintf-t$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(tests_portable_snprintf_t_OBJECTS) $(tests_portable_snprintf_t_LDADD) $(LIBS)
+tests/portable/strlcat-t.$(OBJEXT): tests/portable/$(am__dirstamp) \
+	tests/portable/$(DEPDIR)/$(am__dirstamp)
+tests/portable/strlcat.$(OBJEXT): tests/portable/$(am__dirstamp) \
+	tests/portable/$(DEPDIR)/$(am__dirstamp)
+tests/portable/strlcat-t$(EXEEXT): $(tests_portable_strlcat_t_OBJECTS) $(tests_portable_strlcat_t_DEPENDENCIES) tests/portable/$(am__dirstamp)
+	@rm -f tests/portable/strlcat-t$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(tests_portable_strlcat_t_OBJECTS) $(tests_portable_strlcat_t_LDADD) $(LIBS)
+tests/portable/strlcpy-t.$(OBJEXT): tests/portable/$(am__dirstamp) \
+	tests/portable/$(DEPDIR)/$(am__dirstamp)
+tests/portable/strlcpy.$(OBJEXT): tests/portable/$(am__dirstamp) \
+	tests/portable/$(DEPDIR)/$(am__dirstamp)
+tests/portable/strlcpy-t$(EXEEXT): $(tests_portable_strlcpy_t_OBJECTS) $(tests_portable_strlcpy_t_DEPENDENCIES) tests/portable/$(am__dirstamp)
+	@rm -f tests/portable/strlcpy-t$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(tests_portable_strlcpy_t_OBJECTS) $(tests_portable_strlcpy_t_LDADD) $(LIBS)
+tests/portable/strndup-t.$(OBJEXT): tests/portable/$(am__dirstamp) \
+	tests/portable/$(DEPDIR)/$(am__dirstamp)
+tests/portable/strndup.$(OBJEXT): tests/portable/$(am__dirstamp) \
+	tests/portable/$(DEPDIR)/$(am__dirstamp)
+tests/portable/strndup-t$(EXEEXT): $(tests_portable_strndup_t_OBJECTS) $(tests_portable_strndup_t_DEPENDENCIES) tests/portable/$(am__dirstamp)
+	@rm -f tests/portable/strndup-t$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(tests_portable_strndup_t_OBJECTS) $(tests_portable_strndup_t_LDADD) $(LIBS)
+tests/$(am__dirstamp):
+	@$(MKDIR_P) tests
+	@: > tests/$(am__dirstamp)
+tests/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) tests/$(DEPDIR)
+	@: > tests/$(DEPDIR)/$(am__dirstamp)
+tests/tests_runtests-runtests.$(OBJEXT): tests/$(am__dirstamp) \
+	tests/$(DEPDIR)/$(am__dirstamp)
+tests/runtests$(EXEEXT): $(tests_runtests_OBJECTS) $(tests_runtests_DEPENDENCIES) tests/$(am__dirstamp)
+	@rm -f tests/runtests$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(tests_runtests_OBJECTS) $(tests_runtests_LDADD) $(LIBS)
+
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
+	-rm -f pam-util/args.$(OBJEXT)
+	-rm -f pam-util/args.lo
+	-rm -f pam-util/logging.$(OBJEXT)
+	-rm -f pam-util/logging.lo
+	-rm -f pam-util/options.$(OBJEXT)
+	-rm -f pam-util/options.lo
+	-rm -f pam-util/vector.$(OBJEXT)
+	-rm -f pam-util/vector.lo
 	-rm -f portable/dummy.$(OBJEXT)
 	-rm -f portable/dummy.lo
+	-rm -f tests/fakepam/config.$(OBJEXT)
+	-rm -f tests/fakepam/data.$(OBJEXT)
+	-rm -f tests/fakepam/general.$(OBJEXT)
+	-rm -f tests/fakepam/kuserok.$(OBJEXT)
+	-rm -f tests/fakepam/logging.$(OBJEXT)
+	-rm -f tests/fakepam/script.$(OBJEXT)
+	-rm -f tests/module/basic-t.$(OBJEXT)
+	-rm -f tests/module/cache-t.$(OBJEXT)
+	-rm -f tests/module/expired-t.$(OBJEXT)
+	-rm -f tests/module/no-cache-t.$(OBJEXT)
+	-rm -f tests/module/password-t.$(OBJEXT)
+	-rm -f tests/pam-util/args-t.$(OBJEXT)
+	-rm -f tests/pam-util/fakepam-t.$(OBJEXT)
+	-rm -f tests/pam-util/logging-t.$(OBJEXT)
+	-rm -f tests/pam-util/options-t.$(OBJEXT)
+	-rm -f tests/pam-util/vector-t.$(OBJEXT)
+	-rm -f tests/portable/asprintf-t.$(OBJEXT)
+	-rm -f tests/portable/asprintf.$(OBJEXT)
+	-rm -f tests/portable/mkstemp-t.$(OBJEXT)
+	-rm -f tests/portable/mkstemp.$(OBJEXT)
+	-rm -f tests/portable/snprintf-t.$(OBJEXT)
+	-rm -f tests/portable/snprintf.$(OBJEXT)
+	-rm -f tests/portable/strlcat-t.$(OBJEXT)
+	-rm -f tests/portable/strlcat.$(OBJEXT)
+	-rm -f tests/portable/strlcpy-t.$(OBJEXT)
+	-rm -f tests/portable/strlcpy.$(OBJEXT)
+	-rm -f tests/portable/strndup-t.$(OBJEXT)
+	-rm -f tests/portable/strndup.$(OBJEXT)
+	-rm -f tests/tap/tests_tap_libtap_a-basic.$(OBJEXT)
+	-rm -f tests/tap/tests_tap_libtap_a-kadmin.$(OBJEXT)
+	-rm -f tests/tap/tests_tap_libtap_a-kerberos.$(OBJEXT)
+	-rm -f tests/tap/tests_tap_libtap_a-process.$(OBJEXT)
+	-rm -f tests/tap/tests_tap_libtap_a-string.$(OBJEXT)
+	-rm -f tests/tests_runtests-runtests.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/api-account.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/api-auth.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/api-password.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/api-session.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/account.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/auth.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cache.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/compat.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/context.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/logging.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/options.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/password.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/prompting.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/public.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/setcred.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/support.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@pam-util/$(DEPDIR)/args.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@pam-util/$(DEPDIR)/logging.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@pam-util/$(DEPDIR)/options.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@pam-util/$(DEPDIR)/vector.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@portable/$(DEPDIR)/asprintf.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@portable/$(DEPDIR)/dummy.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@portable/$(DEPDIR)/issetugid.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@portable/$(DEPDIR)/krb5-extra.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@portable/$(DEPDIR)/krb5-profile.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@portable/$(DEPDIR)/mkstemp.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@portable/$(DEPDIR)/pam_syslog.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@portable/$(DEPDIR)/pam_vsyslog.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@portable/$(DEPDIR)/snprintf.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@portable/$(DEPDIR)/strlcat.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@portable/$(DEPDIR)/strlcpy.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@portable/$(DEPDIR)/strndup.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/tests_runtests-runtests.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/fakepam/$(DEPDIR)/config.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/fakepam/$(DEPDIR)/data.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/fakepam/$(DEPDIR)/general.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/fakepam/$(DEPDIR)/kuserok.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/fakepam/$(DEPDIR)/logging.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/fakepam/$(DEPDIR)/script.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/module/$(DEPDIR)/basic-t.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/module/$(DEPDIR)/cache-t.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/module/$(DEPDIR)/expired-t.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/module/$(DEPDIR)/no-cache-t.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/module/$(DEPDIR)/password-t.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/pam-util/$(DEPDIR)/args-t.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/pam-util/$(DEPDIR)/fakepam-t.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/pam-util/$(DEPDIR)/logging-t.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/pam-util/$(DEPDIR)/options-t.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/pam-util/$(DEPDIR)/vector-t.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/portable/$(DEPDIR)/asprintf-t.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/portable/$(DEPDIR)/asprintf.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/portable/$(DEPDIR)/mkstemp-t.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/portable/$(DEPDIR)/mkstemp.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/portable/$(DEPDIR)/snprintf-t.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/portable/$(DEPDIR)/snprintf.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/portable/$(DEPDIR)/strlcat-t.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/portable/$(DEPDIR)/strlcat.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/portable/$(DEPDIR)/strlcpy-t.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/portable/$(DEPDIR)/strlcpy.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/portable/$(DEPDIR)/strndup-t.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/portable/$(DEPDIR)/strndup.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/tap/$(DEPDIR)/tests_tap_libtap_a-basic.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/tap/$(DEPDIR)/tests_tap_libtap_a-kadmin.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/tap/$(DEPDIR)/tests_tap_libtap_a-kerberos.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/tap/$(DEPDIR)/tests_tap_libtap_a-process.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/tap/$(DEPDIR)/tests_tap_libtap_a-string.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -474,12 +1024,113 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
 
+tests/tap/tests_tap_libtap_a-basic.o: tests/tap/basic.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tests_tap_libtap_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tests/tap/tests_tap_libtap_a-basic.o -MD -MP -MF tests/tap/$(DEPDIR)/tests_tap_libtap_a-basic.Tpo -c -o tests/tap/tests_tap_libtap_a-basic.o `test -f 'tests/tap/basic.c' || echo '$(srcdir)/'`tests/tap/basic.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) tests/tap/$(DEPDIR)/tests_tap_libtap_a-basic.Tpo tests/tap/$(DEPDIR)/tests_tap_libtap_a-basic.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='tests/tap/basic.c' object='tests/tap/tests_tap_libtap_a-basic.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tests_tap_libtap_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tests/tap/tests_tap_libtap_a-basic.o `test -f 'tests/tap/basic.c' || echo '$(srcdir)/'`tests/tap/basic.c
+
+tests/tap/tests_tap_libtap_a-basic.obj: tests/tap/basic.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tests_tap_libtap_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tests/tap/tests_tap_libtap_a-basic.obj -MD -MP -MF tests/tap/$(DEPDIR)/tests_tap_libtap_a-basic.Tpo -c -o tests/tap/tests_tap_libtap_a-basic.obj `if test -f 'tests/tap/basic.c'; then $(CYGPATH_W) 'tests/tap/basic.c'; else $(CYGPATH_W) '$(srcdir)/tests/tap/basic.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) tests/tap/$(DEPDIR)/tests_tap_libtap_a-basic.Tpo tests/tap/$(DEPDIR)/tests_tap_libtap_a-basic.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='tests/tap/basic.c' object='tests/tap/tests_tap_libtap_a-basic.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tests_tap_libtap_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tests/tap/tests_tap_libtap_a-basic.obj `if test -f 'tests/tap/basic.c'; then $(CYGPATH_W) 'tests/tap/basic.c'; else $(CYGPATH_W) '$(srcdir)/tests/tap/basic.c'; fi`
+
+tests/tap/tests_tap_libtap_a-kadmin.o: tests/tap/kadmin.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tests_tap_libtap_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tests/tap/tests_tap_libtap_a-kadmin.o -MD -MP -MF tests/tap/$(DEPDIR)/tests_tap_libtap_a-kadmin.Tpo -c -o tests/tap/tests_tap_libtap_a-kadmin.o `test -f 'tests/tap/kadmin.c' || echo '$(srcdir)/'`tests/tap/kadmin.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) tests/tap/$(DEPDIR)/tests_tap_libtap_a-kadmin.Tpo tests/tap/$(DEPDIR)/tests_tap_libtap_a-kadmin.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='tests/tap/kadmin.c' object='tests/tap/tests_tap_libtap_a-kadmin.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tests_tap_libtap_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tests/tap/tests_tap_libtap_a-kadmin.o `test -f 'tests/tap/kadmin.c' || echo '$(srcdir)/'`tests/tap/kadmin.c
+
+tests/tap/tests_tap_libtap_a-kadmin.obj: tests/tap/kadmin.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tests_tap_libtap_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tests/tap/tests_tap_libtap_a-kadmin.obj -MD -MP -MF tests/tap/$(DEPDIR)/tests_tap_libtap_a-kadmin.Tpo -c -o tests/tap/tests_tap_libtap_a-kadmin.obj `if test -f 'tests/tap/kadmin.c'; then $(CYGPATH_W) 'tests/tap/kadmin.c'; else $(CYGPATH_W) '$(srcdir)/tests/tap/kadmin.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) tests/tap/$(DEPDIR)/tests_tap_libtap_a-kadmin.Tpo tests/tap/$(DEPDIR)/tests_tap_libtap_a-kadmin.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='tests/tap/kadmin.c' object='tests/tap/tests_tap_libtap_a-kadmin.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tests_tap_libtap_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tests/tap/tests_tap_libtap_a-kadmin.obj `if test -f 'tests/tap/kadmin.c'; then $(CYGPATH_W) 'tests/tap/kadmin.c'; else $(CYGPATH_W) '$(srcdir)/tests/tap/kadmin.c'; fi`
+
+tests/tap/tests_tap_libtap_a-kerberos.o: tests/tap/kerberos.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tests_tap_libtap_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tests/tap/tests_tap_libtap_a-kerberos.o -MD -MP -MF tests/tap/$(DEPDIR)/tests_tap_libtap_a-kerberos.Tpo -c -o tests/tap/tests_tap_libtap_a-kerberos.o `test -f 'tests/tap/kerberos.c' || echo '$(srcdir)/'`tests/tap/kerberos.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) tests/tap/$(DEPDIR)/tests_tap_libtap_a-kerberos.Tpo tests/tap/$(DEPDIR)/tests_tap_libtap_a-kerberos.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='tests/tap/kerberos.c' object='tests/tap/tests_tap_libtap_a-kerberos.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tests_tap_libtap_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tests/tap/tests_tap_libtap_a-kerberos.o `test -f 'tests/tap/kerberos.c' || echo '$(srcdir)/'`tests/tap/kerberos.c
+
+tests/tap/tests_tap_libtap_a-kerberos.obj: tests/tap/kerberos.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tests_tap_libtap_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tests/tap/tests_tap_libtap_a-kerberos.obj -MD -MP -MF tests/tap/$(DEPDIR)/tests_tap_libtap_a-kerberos.Tpo -c -o tests/tap/tests_tap_libtap_a-kerberos.obj `if test -f 'tests/tap/kerberos.c'; then $(CYGPATH_W) 'tests/tap/kerberos.c'; else $(CYGPATH_W) '$(srcdir)/tests/tap/kerberos.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) tests/tap/$(DEPDIR)/tests_tap_libtap_a-kerberos.Tpo tests/tap/$(DEPDIR)/tests_tap_libtap_a-kerberos.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='tests/tap/kerberos.c' object='tests/tap/tests_tap_libtap_a-kerberos.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tests_tap_libtap_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tests/tap/tests_tap_libtap_a-kerberos.obj `if test -f 'tests/tap/kerberos.c'; then $(CYGPATH_W) 'tests/tap/kerberos.c'; else $(CYGPATH_W) '$(srcdir)/tests/tap/kerberos.c'; fi`
+
+tests/tap/tests_tap_libtap_a-process.o: tests/tap/process.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tests_tap_libtap_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tests/tap/tests_tap_libtap_a-process.o -MD -MP -MF tests/tap/$(DEPDIR)/tests_tap_libtap_a-process.Tpo -c -o tests/tap/tests_tap_libtap_a-process.o `test -f 'tests/tap/process.c' || echo '$(srcdir)/'`tests/tap/process.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) tests/tap/$(DEPDIR)/tests_tap_libtap_a-process.Tpo tests/tap/$(DEPDIR)/tests_tap_libtap_a-process.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='tests/tap/process.c' object='tests/tap/tests_tap_libtap_a-process.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tests_tap_libtap_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tests/tap/tests_tap_libtap_a-process.o `test -f 'tests/tap/process.c' || echo '$(srcdir)/'`tests/tap/process.c
+
+tests/tap/tests_tap_libtap_a-process.obj: tests/tap/process.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tests_tap_libtap_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tests/tap/tests_tap_libtap_a-process.obj -MD -MP -MF tests/tap/$(DEPDIR)/tests_tap_libtap_a-process.Tpo -c -o tests/tap/tests_tap_libtap_a-process.obj `if test -f 'tests/tap/process.c'; then $(CYGPATH_W) 'tests/tap/process.c'; else $(CYGPATH_W) '$(srcdir)/tests/tap/process.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) tests/tap/$(DEPDIR)/tests_tap_libtap_a-process.Tpo tests/tap/$(DEPDIR)/tests_tap_libtap_a-process.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='tests/tap/process.c' object='tests/tap/tests_tap_libtap_a-process.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tests_tap_libtap_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tests/tap/tests_tap_libtap_a-process.obj `if test -f 'tests/tap/process.c'; then $(CYGPATH_W) 'tests/tap/process.c'; else $(CYGPATH_W) '$(srcdir)/tests/tap/process.c'; fi`
+
+tests/tap/tests_tap_libtap_a-string.o: tests/tap/string.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tests_tap_libtap_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tests/tap/tests_tap_libtap_a-string.o -MD -MP -MF tests/tap/$(DEPDIR)/tests_tap_libtap_a-string.Tpo -c -o tests/tap/tests_tap_libtap_a-string.o `test -f 'tests/tap/string.c' || echo '$(srcdir)/'`tests/tap/string.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) tests/tap/$(DEPDIR)/tests_tap_libtap_a-string.Tpo tests/tap/$(DEPDIR)/tests_tap_libtap_a-string.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='tests/tap/string.c' object='tests/tap/tests_tap_libtap_a-string.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tests_tap_libtap_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tests/tap/tests_tap_libtap_a-string.o `test -f 'tests/tap/string.c' || echo '$(srcdir)/'`tests/tap/string.c
+
+tests/tap/tests_tap_libtap_a-string.obj: tests/tap/string.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tests_tap_libtap_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tests/tap/tests_tap_libtap_a-string.obj -MD -MP -MF tests/tap/$(DEPDIR)/tests_tap_libtap_a-string.Tpo -c -o tests/tap/tests_tap_libtap_a-string.obj `if test -f 'tests/tap/string.c'; then $(CYGPATH_W) 'tests/tap/string.c'; else $(CYGPATH_W) '$(srcdir)/tests/tap/string.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) tests/tap/$(DEPDIR)/tests_tap_libtap_a-string.Tpo tests/tap/$(DEPDIR)/tests_tap_libtap_a-string.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='tests/tap/string.c' object='tests/tap/tests_tap_libtap_a-string.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tests_tap_libtap_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tests/tap/tests_tap_libtap_a-string.obj `if test -f 'tests/tap/string.c'; then $(CYGPATH_W) 'tests/tap/string.c'; else $(CYGPATH_W) '$(srcdir)/tests/tap/string.c'; fi`
+
+tests/tests_runtests-runtests.o: tests/runtests.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tests_runtests_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tests/tests_runtests-runtests.o -MD -MP -MF tests/$(DEPDIR)/tests_runtests-runtests.Tpo -c -o tests/tests_runtests-runtests.o `test -f 'tests/runtests.c' || echo '$(srcdir)/'`tests/runtests.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/tests_runtests-runtests.Tpo tests/$(DEPDIR)/tests_runtests-runtests.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='tests/runtests.c' object='tests/tests_runtests-runtests.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tests_runtests_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tests/tests_runtests-runtests.o `test -f 'tests/runtests.c' || echo '$(srcdir)/'`tests/runtests.c
+
+tests/tests_runtests-runtests.obj: tests/runtests.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tests_runtests_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tests/tests_runtests-runtests.obj -MD -MP -MF tests/$(DEPDIR)/tests_runtests-runtests.Tpo -c -o tests/tests_runtests-runtests.obj `if test -f 'tests/runtests.c'; then $(CYGPATH_W) 'tests/runtests.c'; else $(CYGPATH_W) '$(srcdir)/tests/runtests.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/tests_runtests-runtests.Tpo tests/$(DEPDIR)/tests_runtests-runtests.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='tests/runtests.c' object='tests/tests_runtests-runtests.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tests_runtests_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tests/tests_runtests-runtests.obj `if test -f 'tests/runtests.c'; then $(CYGPATH_W) 'tests/runtests.c'; else $(CYGPATH_W) '$(srcdir)/tests/runtests.c'; fi`
+
 mostlyclean-libtool:
 	-rm -f *.lo
 
 clean-libtool:
 	-rm -rf .libs _libs
+	-rm -rf pam-util/.libs pam-util/_libs
 	-rm -rf portable/.libs portable/_libs
+	-rm -rf tests/.libs tests/_libs
+	-rm -rf tests/module/.libs tests/module/_libs
+	-rm -rf tests/pam-util/.libs tests/pam-util/_libs
+	-rm -rf tests/portable/.libs tests/portable/_libs
 
 distclean-libtool:
 	-rm -f libtool config.lt
@@ -741,6 +1392,8 @@ distcleancheck: distclean
 	       $(distcleancheck_listfiles) ; \
 	       exit 1; } >&2
 check-am: all-am
+	$(MAKE) $(AM_MAKEFLAGS) $(check_LIBRARIES) $(check_PROGRAMS)
+	$(MAKE) $(AM_MAKEFLAGS) check-local
 check: check-am
 all-am: Makefile $(LTLIBRARIES) $(MANS) config.h
 installdirs:
@@ -770,8 +1423,22 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-rm -f pam-util/$(DEPDIR)/$(am__dirstamp)
+	-rm -f pam-util/$(am__dirstamp)
 	-rm -f portable/$(DEPDIR)/$(am__dirstamp)
 	-rm -f portable/$(am__dirstamp)
+	-rm -f tests/$(DEPDIR)/$(am__dirstamp)
+	-rm -f tests/$(am__dirstamp)
+	-rm -f tests/fakepam/$(DEPDIR)/$(am__dirstamp)
+	-rm -f tests/fakepam/$(am__dirstamp)
+	-rm -f tests/module/$(DEPDIR)/$(am__dirstamp)
+	-rm -f tests/module/$(am__dirstamp)
+	-rm -f tests/pam-util/$(DEPDIR)/$(am__dirstamp)
+	-rm -f tests/pam-util/$(am__dirstamp)
+	-rm -f tests/portable/$(DEPDIR)/$(am__dirstamp)
+	-rm -f tests/portable/$(am__dirstamp)
+	-rm -f tests/tap/$(DEPDIR)/$(am__dirstamp)
+	-rm -f tests/tap/$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -779,12 +1446,13 @@ maintainer-clean-generic:
 	-test -z "$(MAINTAINERCLEANFILES)" || rm -f $(MAINTAINERCLEANFILES)
 clean: clean-am
 
-clean-am: clean-generic clean-libtool clean-noinstLTLIBRARIES \
-	clean-pamLTLIBRARIES mostlyclean-am
+clean-am: clean-checkLIBRARIES clean-checkPROGRAMS clean-generic \
+	clean-libtool clean-noinstLTLIBRARIES clean-pamLTLIBRARIES \
+	mostlyclean-am
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-	-rm -rf ./$(DEPDIR) portable/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) pam-util/$(DEPDIR) portable/$(DEPDIR) tests/$(DEPDIR) tests/fakepam/$(DEPDIR) tests/module/$(DEPDIR) tests/pam-util/$(DEPDIR) tests/portable/$(DEPDIR) tests/tap/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-libtool distclean-tags
@@ -832,7 +1500,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-	-rm -rf ./$(DEPDIR) portable/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) pam-util/$(DEPDIR) portable/$(DEPDIR) tests/$(DEPDIR) tests/fakepam/$(DEPDIR) tests/module/$(DEPDIR) tests/pam-util/$(DEPDIR) tests/portable/$(DEPDIR) tests/tap/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
@@ -853,13 +1521,14 @@ uninstall-am: uninstall-man uninstall-pamLTLIBRARIES
 
 uninstall-man: uninstall-man5
 
-.MAKE: all install-am install-strip
+.MAKE: all check-am install-am install-strip
 
-.PHONY: CTAGS GTAGS all all-am am--refresh check check-am clean \
-	clean-generic clean-libtool clean-noinstLTLIBRARIES \
-	clean-pamLTLIBRARIES ctags dist dist-all dist-bzip2 dist-gzip \
-	dist-lzma dist-shar dist-tarZ dist-xz dist-zip distcheck \
-	distclean distclean-compile distclean-generic distclean-hdr \
+.PHONY: CTAGS GTAGS all all-am am--refresh check check-am check-local \
+	clean clean-checkLIBRARIES clean-checkPROGRAMS clean-generic \
+	clean-libtool clean-noinstLTLIBRARIES clean-pamLTLIBRARIES \
+	ctags dist dist-all dist-bzip2 dist-gzip dist-lzma dist-shar \
+	dist-tarZ dist-xz dist-zip distcheck distclean \
+	distclean-compile distclean-generic distclean-hdr \
 	distclean-libtool distclean-tags distcleancheck distdir \
 	distuninstallcheck dvi dvi-am html html-am info info-am \
 	install install-am install-data install-data-am install-dvi \
@@ -876,6 +1545,20 @@ uninstall-man: uninstall-man5
 
 warnings:
 	$(MAKE) V=0 CFLAGS='$(WARNINGS)'
+	$(MAKE) V=0 CFLAGS='$(WARNINGS)' $(check_PROGRAMS)
+
+check-local: $(check_PROGRAMS)
+	cd tests && ./runtests $(abs_top_srcdir)/tests/TESTS
+
+# Used by maintainers to run the test suite under valgrind.
+check-valgrind: $(check_PROGRAMS)
+	rm -rf $(abs_top_builddir)/tmp-valgrind
+	mkdir $(abs_top_builddir)/tmp-valgrind
+	valgrind --leak-check=full --trace-children=yes --show-reachable=yes \
+	    --trace-children-skip="*generate-krb5-conf*,/bin/sh" \
+	    --log-file=$(abs_top_builddir)/tmp-valgrind/log.%p \
+	    --suppressions=tests/data/valgrind.supp \
+	    tests/runtests $(abs_top_srcdir)/tests/TESTS
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
