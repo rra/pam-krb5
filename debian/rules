@@ -1,5 +1,8 @@
 #!/usr/bin/make -f
 
+# Enable compiler hardening flags.
+export DEB_BUILD_MAINT_OPTIONS = all
+
 DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
 
 %:

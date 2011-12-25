@@ -16,6 +16,7 @@ libpam-krb5 (4.5-1) UNRELEASED; urgency=low
     - Improve logging and authorization when defer_pwchange is set.
     - Close some memory leaks.
     - Report symbolic names of PAM flags in debug logging.
+  * Enable compiler hardening flags.
 
  -- Russ Allbery <rra@debian.org>  Sat, 24 Dec 2011 17:11:57 -0800
 
