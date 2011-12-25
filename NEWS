@@ -1,6 +1,6 @@
                       User-Visible pam-krb5 Changes
 
-pam-krb5 4.5 (unreleased)
+pam-krb5 4.5 (2011-12-24)
 
     Suppress the notice that the password is being changed because it's
     expired if force_first_pass or use_first_pass is set in the password
