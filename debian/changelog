@@ -1,3 +1,11 @@
+libpam-krb5 (4.5-2) unstable; urgency=low
+
+  * Cherry-pick upstream patch to fix initialization of krb5_deltat
+    defaults on systems where krb5_deltat is not a long.  Should fix FTBFS
+    on s390x.
+
+ -- Russ Allbery <rra@debian.org>  Mon, 26 Dec 2011 16:36:21 -0800
+
 libpam-krb5 (4.5-1) unstable; urgency=low
 
   * New upstream release.
