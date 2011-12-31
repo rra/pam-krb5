@@ -12,7 +12,7 @@ PAM API:
 
  * For informational messages followed by a prompt, find a way to combine
    these into one PAM conversation call for better GUI presentation
-   behavior.
+   behavior.  (PAMKRB-16)
 
 Functionality:
 
@@ -72,7 +72,7 @@ Portability:
 Logging:
 
  * Log the information that the Kerberos library asks us to display, or
-   at least the info and error messages.
+   at least the info and error messages.  (PAMKRB-17)
 
  * Log unknown PAM flags on module entry.  Currently, only the symbolic
-   flags we know about will be logged.
+   flags we know about will be logged.  (PAMKRB-18)
