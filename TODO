@@ -76,3 +76,13 @@ Logging:
 
  * Log unknown PAM flags on module entry.  Currently, only the symbolic
    flags we know about will be logged.  (PAMKRB-18)
+
+Test suite:
+
+ * Add tests for PKINIT.  (PAMKRB-19)
+
+ * Add tests for PAM prompting options.  (PAMKRB-20)
+
+ * Add tests for other PAM options.  (PAMKRB-21)
+
+ * Integrate and automate valgrind testing.  (PAMKRB-22)
