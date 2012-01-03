@@ -1,3 +1,12 @@
+libpam-krb5 (4.5-3) unstable; urgency=low
+
+  * Fix build rule to not override CPPFLAGS, which deactivates some of the
+    options passed in by dpkg-buildflags.  Instead, use --with-krb5-lib
+    and --with-krb5-include to locate the Kerberos headers and libraries.
+    Thanks, Moritz Muehlenhoff.  (Closes: #654293)
+
+ -- Russ Allbery <rra@debian.org>  Tue, 03 Jan 2012 13:38:12 -0800
+
 libpam-krb5 (4.5-2) unstable; urgency=low
 
   * Cherry-pick upstream patch to fix initialization of krb5_deltat

@@ -13,14 +13,14 @@ override_dh_auto_clean:
 
 override_dh_auto_configure:
 	mkdir build-mit build-heimdal
-	CPPFLAGS=-I/usr/include/mit-krb5 \
-	    LDFLAGS=-L/usr/lib/$(DEB_HOST_MULTIARCH)/mit-krb5 \
-	    dh_auto_configure -Bbuild-mit -- --enable-reduced-depends \
-		--libdir=/lib/$(DEB_HOST_MULTIARCH)
-	CPPFLAGS=-I/usr/include/heimdal \
-	    LDFLAGS=-L/usr/lib/$(DEB_HOST_MULTIARCH)/heimdal \
-	    dh_auto_configure -Bbuild-heimdal -- --enable-reduced-depends \
-		--libdir=/lib/$(DEB_HOST_MULTIARCH)
+	dh_auto_configure -Bbuild-mit -- --enable-reduced-depends \
+	    --libdir=/lib/$(DEB_HOST_MULTIARCH) \
+	    --with-krb5-include=/usr/include/mit-krb5 \
+	    --with-krb5-lib=/usr/lib/$(DEB_HOST_MULTIARCH)/mit-krb5
+	dh_auto_configure -Bbuild-heimdal -- --enable-reduced-depends \
+	    --libdir=/lib/$(DEB_HOST_MULTIARCH) \
+	    --with-krb5-include=/usr/include/heimdal \
+	    --with-krb5-lib=/usr/lib/$(DEB_HOST_MULTIARCH)/heimdal
 
 override_dh_auto_build:
 	dh_auto_build -Bbuild-mit
