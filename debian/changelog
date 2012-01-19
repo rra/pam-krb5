@@ -1,3 +1,10 @@
+libpam-krb5 (4.5-4) UNRELEASED; urgency=low
+
+  * Bump debhelper dependency to 9 now that compatibility mode V9 is no
+    longer experimental.
+
+ -- Russ Allbery <rra@debian.org>  Wed, 18 Jan 2012 18:56:22 -0800
+
 libpam-krb5 (4.5-3) unstable; urgency=low
 
   * Fix build rule to not override CPPFLAGS, which deactivates some of the
