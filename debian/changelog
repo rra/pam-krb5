@@ -1,4 +1,4 @@
-libpam-krb5 (4.5-4) UNRELEASED; urgency=low
+libpam-krb5 (4.5-4) unstable; urgency=low
 
   * Enable bindnow hardening flags and fix the syntax of the
     DEB_BUILD_MAINT_OPTIONS setting.
@@ -8,7 +8,7 @@ libpam-krb5 (4.5-4) UNRELEASED; urgency=low
     local-patch-header so that they only apply to the packages I build and
     NMUs get regular version-numbered patches.
 
- -- Russ Allbery <rra@debian.org>  Wed, 18 Jan 2012 18:56:22 -0800
+ -- Russ Allbery <rra@debian.org>  Sat, 04 Feb 2012 13:27:02 -0800
 
 libpam-krb5 (4.5-3) unstable; urgency=low
 
