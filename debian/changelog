@@ -1,5 +1,7 @@
 libpam-krb5 (4.5-4) UNRELEASED; urgency=low
 
+  * Enable bindnow hardening flags and fix the syntax of the
+    DEB_BUILD_MAINT_OPTIONS setting.
   * Bump debhelper dependency to 9 now that compatibility mode V9 is no
     longer experimental.
 
