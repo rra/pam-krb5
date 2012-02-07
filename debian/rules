@@ -6,7 +6,7 @@ export DEB_BUILD_MAINT_OPTIONS = hardening=+bindnow
 DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
 
 %:
-	dh $@
+	dh $@ --with autoreconf
 
 override_dh_auto_clean:
 	rm -rf build-mit build-heimdal

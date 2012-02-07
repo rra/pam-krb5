@@ -4,8 +4,9 @@ Priority: optional
 Maintainer: Russ Allbery <rra@debian.org>
 Uploaders: Sam Hartman <hartmans@debian.org>
 Standards-Version: 3.9.2
-Build-Depends: debhelper (>= 9), heimdal-multidev (>= 1.5.dfsg.1-1~),
- krb5-multidev (>= 1.9.1+dfsg-2~), libpam0g-dev
+Build-Depends: debhelper (>= 9), dh-autoreconf,
+ heimdal-multidev (>= 1.5.dfsg.1-1~), krb5-multidev (>= 1.9.1+dfsg-2~),
+ libpam0g-dev
 Homepage: http://www.eyrie.org/~eagle/software/pam-krb5/
 Vcs-Git: git://git.debian.org/git/pkg-k5-afs/pam-krb5.git
 Vcs-Browser: http://git.debian.org/?p=pkg-k5-afs/pam-krb5.git

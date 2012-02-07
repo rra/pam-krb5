@@ -1,3 +1,9 @@
+libpam-krb5 (4.5-5) UNRELEASED; urgency=low
+
+  * Regenerate the Autotools build system with dh-autoreconf.
+
+ -- Russ Allbery <rra@debian.org>  Mon, 06 Feb 2012 18:29:47 -0800
+
 libpam-krb5 (4.5-4) unstable; urgency=low
 
   * Enable bindnow hardening flags and fix the syntax of the
