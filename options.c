@@ -31,7 +31,7 @@
 #define K(name) (#name), offsetof(struct pam_config, name)
 static const struct option options[] = {
     { K(alt_auth_map),       true,  STRING (NULL)  },
-    { K(anon_fast),          true,  BOOl   (false)  },
+    { K(anon_fast),          true,  BOOL   (false) },
     { K(banner),             true,  STRING ("Kerberos") },
     { K(ccache),             true,  STRING (NULL)  },
     { K(ccache_dir),         true,  STRING ("FILE:/tmp") },

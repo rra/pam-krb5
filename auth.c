@@ -137,7 +137,7 @@ set_fast_options(struct pam_args *args, krb5_get_init_creds_opt *opts)
     krb5_ccache fast_ccache = NULL;
     krb5_creds *fast_creds = NULL;
     char armor_name[] = "/tmp/krb5cc_pam_armor_XXXXXX";
-    const char *cache = args->config->fast_ccache;
+    char *cache = args->config->fast_ccache;
     int pamret;
     krb5_get_init_creds_opt *fast_opts = NULL;
 
@@ -145,10 +145,10 @@ set_fast_options(struct pam_args *args, krb5_get_init_creds_opt *opts)
      * If fast_ccache was given, we don't need anonymous.
      */
     if (cache == NULL) {
-        if (args->config->anon_fast == NULL)
+        if (!args->config->anon_fast)
             return;
 
-        cache = &armor_name;
+        cache = armor_name;
         fast_creds = calloc(1, sizeof(krb5_creds));
         if (fast_creds == NULL) {
             pamk5_err(args, "cannot allocate memory: %s, not using fast",
@@ -196,14 +196,14 @@ set_fast_options(struct pam_args *args, krb5_get_init_creds_opt *opts)
             goto done;
 
         /*
-         * write cache file. pamk5_cache_init uses args->ctx->princ to
+         * write cache file. pamk5_cache_init uses args->config->ctx->princ to
          * initialize the cache, so it is temporarily swapped.
          */
-        princ2 = args->ctx->princ;
-        args->ctx->princ = fast_creds->client;
+        princ2 = args->config->ctx->princ;
+        args->config->ctx->princ = fast_creds->client;
         pamret = pamk5_cache_init(args, cache, fast_creds,
                                   &fast_ccache);
-        args->ctx->princ = princ2;
+        args->config->ctx->princ = princ2;
         if (pamret != PAM_SUCCESS)
             goto done;
 
@@ -242,7 +242,7 @@ done:
         free(fast_creds);
     }
     if (fast_ccache != NULL) {
-        if (args->anon_fast && k5_errno != 0)
+        if (args->config->anon_fast && k5_errno != 0)
             krb5_cc_destroy(c, fast_ccache);
         else
             krb5_cc_close(c, fast_ccache);
@@ -932,7 +932,7 @@ done:
     /*
      * Whatever the results, destroy the anonymous fast armor cache
      */
-    if (args->anon_fast) {
+    if (args->config->anon_fast) {
         fast_cache_name = pamk5_get_krb5ccname(args, "PAM_FAST_KRB5CCNAME");
         if (fast_cache_name != NULL) {
 
