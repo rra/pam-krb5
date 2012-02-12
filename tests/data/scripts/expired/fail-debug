@@ -1,0 +1,17 @@
+# Test default handling of expired passwords.  -*- conf -*-
+
+[options]
+    auth = ignore_k5login fail_pwchange debug
+
+[run]
+    authenticate = PAM_AUTH_ERR
+
+[prompts]
+    echo_off = Password: |%p
+
+[output]
+    DEBUG pam_sm_authenticate: entry
+    DEBUG (user %u) attempting authentication as %0
+    DEBUG (user %u) krb5_get_init_creds_password: %*
+    NOTICE authentication failure; logname=%u uid=%i euid=%i tty= ruser= rhost=
+    DEBUG pam_sm_authenticate: exit (failure)

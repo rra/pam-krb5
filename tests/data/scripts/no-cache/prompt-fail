@@ -1,0 +1,18 @@
+# Test failed password authentication.  -*- conf -*-
+
+[options]
+    auth    = no_ccache
+    account = no_ccache
+    session = no_ccache
+
+[run]
+    authenticate  = PAM_AUTH_ERR
+    acct_mgmt     = PAM_IGNORE
+    open_session  = PAM_SUCCESS
+    close_session = PAM_SUCCESS
+
+[prompts]
+    echo_off = Password: |BAD%p
+
+[output]
+    NOTICE authentication failure; logname=%u uid=%i euid=%i tty= ruser= rhost=

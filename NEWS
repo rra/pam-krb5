@@ -1,5 +1,95 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 4.5 (2011-12-24)
+
+    Suppress the notice that the password is being changed because it's
+    expired if force_first_pass or use_first_pass is set in the password
+    stack, indicating that it's stacked with another module that's also
+    doing password changes.  This is arguable, but without this change the
+    notification message of why the password is being changed shows up
+    confusingly in the middle of the password change interaction.  Based
+    on a patch by William Yang.
+
+    Some old versions of Heimdal (0.7.2 in OpenBSD 4.9, specifically)
+    reportedly return KRB5KDC_ERR_KEY_EXP for accounts with expired
+    keys even if the supplied password is wrong.  Work around this by
+    confirming that the PAM module can obtain tickets for kadmin/changepw
+    before returning a password expiration error instead of an invalid
+    password error.  Based on a patch by William Yang.
+
+    The location of the temporary root-owned ticket cache created during
+    the authentication process is now also controlled by the ccache_dir
+    option (but not the ccache option) rather than forced to be in /tmp.
+    This will allow system administrators to configure an alternative
+    cache directory so that pam-krb5 can continue working when /tmp is
+    full.
+
+    Report more specific errors in syslog if authorization checks (such as
+    .k5login checks) fail.
+
+    Pass a NULL principal to krb5_set_password with MIT client libraries
+    to prefer the older change password protocol for compatibility with
+    older KDCs.  This is not necessary on Heimdal since Heimdal's
+    krb5_set_password tries both protocols.
+
+    Improve logging and authorization checks when defer_pwchange is set
+    and a user authenticates with an expired password.
+
+    When probing for Kerberos libraries, always add any supplemental
+    libraries found to that point to the link command.  This will fix
+    configure failures on platforms without working transitive shared
+    library dependencies.
+
+    Close some memory leaks where unparsed Kerberos principal names were
+    never freed.
+
+    Restructure the code to work with OpenPAM's default PAM build
+    machinery, which exports a struct containing module entry points
+    rather than public pam_sm_* functions.  Thanks to Fredrik Pettai for
+    the information.
+
+    In debug logging, report symbolic names for PAM flags on PAM function
+    entry rather than the numeric PAM flags.  This helps with automated
+    testing and with debugging PAM problems on different operating
+    systems.
+
+    Include <krb5/krb5.h> if <krb5.h> is missing, which permits finding
+    the header file on NetBSD systems.  Thanks to Fredrik Pettai for the
+    report.
+
+    Replace the Kerberos compatibility layer with equivalent but
+    better-structured code from rra-c-util 4.0.
+
+    Avoid krb5-config and use manual library probing if --with-krb5-lib or
+    --with-krb5-include were given to configure.  This avoids having to
+    point configure at a nonexistent krb5-config to override its results.
+
+    Use PATH_KRB5_CONFIG instead of KRB5_CONFIG to locate krb5-config in
+    configure, to avoid a conflict with the variable used by the Kerberos
+    libraries to find krb5.conf.
+
+    Change references to Kerberos v5 to just Kerberos in the
+    documentation.  Kerberos v5 has been the default version of Kerberos
+    for over ten years now.
+
+    Update to rra-c-util 4.0:
+
+    * Add notices to all files copied over from rra-c-util.
+    * Include strings.h for additional POSIX functions where found.
+    * Fix detection of whether PAM uses const on FreeBSD.
+    * Update warning flags for make warnings for GCC 4.6.1.
+    * Limit symbol exports even on systems without GNU ld.
+    * Fix replacement mkstemp to use long long where available.
+    * Improve stripping of /usr/include from krb5-config results.
+    * Use issetugid where available, not the misnamed issetuidgid.
+
+    Update to C TAP Harness 1.9:
+
+    * Add bmalloc, bcalloc, brealloc, and bstrdup TAP library functions.
+    * Fix runtests to honor -s even if BUILD and -b aren't given.
+    * Add test_tmpdir and test_tmpdir_free to TAP library.
+    * runtests now frees all allocated resources on exit.
+
 pam-krb5 4.4 (2010-12-31)
 
     Do not prompt for a password when try_pkinit is set and the module is
@@ -130,10 +220,10 @@ pam-krb5 4.0 (2009-11-13)
 
     Stop returning PAM_IGNORE from pam_setcred if the user is ignored or
     didn't log in via Kerberos and instead return PAM_USER_UNKNOWN.  This
-    problems with the Linux PAM library where returning PAM_IGNORE would
-    cause pam_setcred to fail even if other modules succeeded.  Since
-    pam_authenticate never returned PAM_IGNORE, this change should not
-    cause any differences in behavior.
+    fixes problems with the Linux PAM library where returning PAM_IGNORE
+    would cause pam_setcred to fail even if other modules succeeded.
+    Since pam_authenticate never returned PAM_IGNORE, this change should
+    not cause any differences in behavior.
 
     Do not use issetugid on Solaris to determine when to avoid refreshing
     the ticket cache named in KRB5CCNAME during pam_setcred.  Instead,

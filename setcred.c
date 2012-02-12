@@ -1,10 +1,12 @@
 /*
- * Ticket creation routines for pam_krb5.
+ * Ticket creation routines for pam-krb5.
  *
  * pam_setcred and pam_open_session need to do similar but not identical work
  * to create the user's ticket cache.  The shared code is abstracted here into
  * the pamk5_setcred function.
  *
+ * Copyright 2011
+ *     The Board of Trustees of the Leland Stanford Junior University
  * Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@stanford.edu>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
@@ -13,18 +15,17 @@
  */
 
 #include <config.h>
+#include <portable/krb5.h>
 #include <portable/pam.h>
+#include <portable/system.h>
 
 #include <errno.h>
-#include <krb5.h>
 #include <pwd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
-#include <unistd.h>
 
 #include <internal.h>
+#include <pam-util/args.h>
+#include <pam-util/logging.h>
+
 
 /*
  * Given a cache name and an existing cache, initialize a new cache, store the
@@ -44,19 +45,20 @@ cache_init_from_cache(struct pam_args *args, const char *ccname,
 
     *cache = NULL;
     memset(&creds, 0, sizeof(creds));
-    if (args == NULL || args->ctx == NULL || args->ctx->context == NULL)
+    if (args == NULL || args->config == NULL || args->config->ctx == NULL
+        || args->config->ctx->context == NULL)
         return PAM_SERVICE_ERR;
     if (old == NULL)
         return PAM_SERVICE_ERR;
-    ctx = args->ctx;
+    ctx = args->config->ctx;
     status = krb5_cc_start_seq_get(ctx->context, old, &cursor);
     if (status != 0) {
-        pamk5_err_krb5(args, status, "cannot open new credentials");
+        putil_err_krb5(args, status, "cannot open new credentials");
         return PAM_SERVICE_ERR;
     }
     status = krb5_cc_next_cred(ctx->context, old, &cursor, &creds);
     if (status != 0) {
-        pamk5_err_krb5(args, status, "cannot read new credentials");
+        putil_err_krb5(args, status, "cannot read new credentials");
         pamret = PAM_SERVICE_ERR;
         goto done;
     }
@@ -76,7 +78,7 @@ cache_init_from_cache(struct pam_args *args, const char *ccname,
         status = krb5_cc_store_cred(ctx->context, *cache, &creds);
         krb5_free_cred_contents(ctx->context, &creds);
         if (status != 0) {
-            pamk5_err_krb5(args, status, "cannot store additional credentials"
+            putil_err_krb5(args, status, "cannot store additional credentials"
                            " in %s", ccname);
             pamret = PAM_SERVICE_ERR;
             goto done;
@@ -108,18 +110,18 @@ build_ccache_name(struct pam_args *args, uid_t uid)
     char *cache_name = NULL;
     int retval;
 
-    if (args->ccache == NULL) {
+    if (args->config->ccache == NULL) {
         retval = asprintf(&cache_name, "%s/krb5cc_%d_XXXXXX",
-                          args->ccache_dir, (int) uid);
+                          args->config->ccache_dir, (int) uid);
         if (retval < 0) {
-            pamk5_crit(args, "malloc failure: %s", strerror(errno));
+            putil_crit(args, "malloc failure: %s", strerror(errno));
             return NULL;
         }
     } else {
         size_t len = 0, delta;
         char *p, *q;
 
-        for (p = args->ccache; *p != '\0'; p++) {
+        for (p = args->config->ccache; *p != '\0'; p++) {
             if (p[0] == '%' && p[1] == 'u') {
                 len += snprintf(NULL, 0, "%ld", (long) uid);
                 p++;
@@ -133,10 +135,10 @@ build_ccache_name(struct pam_args *args, uid_t uid)
         len++;
         cache_name = malloc(len);
         if (cache_name == NULL) {
-            pamk5_crit(args, "malloc failure: %s", strerror(errno));
+            putil_crit(args, "malloc failure: %s", strerror(errno));
             return NULL;
         }
-        for (p = args->ccache, q = cache_name; *p != '\0'; p++) {
+        for (p = args->config->ccache, q = cache_name; *p != '\0'; p++) {
             if (p[0] == '%' && p[1] == 'u') {
                 delta = snprintf(q, len, "%ld", (long) uid);
                 q += delta;
@@ -174,7 +176,7 @@ create_session_context(struct pam_args *args)
     int status, pamret;
 
     /* If we're going to ignore the user anyway, don't even bother. */
-    if (args->ignore_root || args->minimum_uid > 0) {
+    if (args->config->ignore_root || args->config->minimum_uid > 0) {
         pamret = pam_get_user(args->pamh, &user, NULL);
         if (pamret == PAM_SUCCESS && pamk5_should_ignore(args, user)) {
             pamret = PAM_IGNORE;
@@ -189,27 +191,27 @@ create_session_context(struct pam_args *args)
      */
     pamret = pamk5_context_new(args);
     if (pamret != PAM_SUCCESS) {
-        pamk5_crit_pam(args, pamret, "creating session context failed");
+        putil_crit_pam(args, pamret, "creating session context failed");
         goto fail;
     }
-    ctx = args->ctx;
+    ctx = args->config->ctx;
     tmpname = pamk5_get_krb5ccname(args, "PAM_KRB5CCNAME");
     if (tmpname == NULL) {
-        pamk5_debug(args, "unable to get PAM_KRB5CCNAME, assuming"
+        putil_debug(args, "unable to get PAM_KRB5CCNAME, assuming"
                     " non-Kerberos login");
         pamret = PAM_IGNORE;
         goto fail;
     }
-    pamk5_debug(args, "found initial ticket cache at %s", tmpname);
+    putil_debug(args, "found initial ticket cache at %s", tmpname);
     status = krb5_cc_resolve(ctx->context, tmpname, &ctx->cache);
     if (status != 0) {
-        pamk5_err_krb5(args, status, "cannot resolve cache %s", tmpname);
+        putil_err_krb5(args, status, "cannot resolve cache %s", tmpname);
         pamret = PAM_SERVICE_ERR;
         goto fail;
     }
     status = krb5_cc_get_principal(ctx->context, ctx->cache, &ctx->princ);
     if (status != 0) {
-        pamk5_err_krb5(args, status, "cannot retrieve principal");
+        putil_err_krb5(args, status, "cannot retrieve principal");
         pamret = PAM_SERVICE_ERR;
         goto fail;
     }
@@ -221,15 +223,13 @@ create_session_context(struct pam_args *args)
      */
     pamret = pam_set_data(args->pamh, "pam_krb5", ctx, pamk5_context_destroy);
     if (pamret != PAM_SUCCESS) {
-        pamk5_err_pam(args, pamret, "cannot set context data");
+        putil_err_pam(args, pamret, "cannot set context data");
         goto fail;
     }
     return PAM_SUCCESS;
 
 fail:
-    if (args->ctx != NULL)
-        pamk5_context_free(args->ctx);
-    args->ctx = NULL;
+    pamk5_context_free(args);
     return pamret;
 }
 
@@ -241,11 +241,12 @@ fail:
  * should reinitialize an existing ticket cache instead of creating a new one.
  */
 int
-pamk5_setcred(struct pam_args *args, int refresh)
+pamk5_setcred(struct pam_args *args, bool refresh)
 {
     struct context *ctx = NULL;
     krb5_ccache cache = NULL;
     char *cache_name = NULL;
+    bool set_context = false;
     int status = 0;
     int pamret;
     struct passwd *pw = NULL;
@@ -253,7 +254,7 @@ pamk5_setcred(struct pam_args *args, int refresh)
     gid_t gid;
 
     /* If configured not to create a cache, we have nothing to do. */
-    if (args->no_ccache) {
+    if (args->config->no_ccache) {
         pamret = PAM_SUCCESS;
         goto done;
     }
@@ -264,13 +265,14 @@ pamk5_setcred(struct pam_args *args, int refresh)
      * for ourselves.
      */
     pamret = pamk5_context_fetch(args);
-    if (args->ctx == NULL) {
-        pamk5_debug(args, "no context found, creating one");
+    if (args->config->ctx == NULL) {
+        putil_debug(args, "no context found, creating one");
         pamret = create_session_context(args);
-        if (args->ctx == NULL)
+        if (pamret != PAM_SUCCESS || args->config->ctx == NULL)
             goto done;
+        set_context = true;
     }
-    ctx = args->ctx;
+    ctx = args->config->ctx;
 
     /*
      * Some programs (xdm, for instance) appear to call setcred over and over
@@ -288,7 +290,7 @@ pamk5_setcred(struct pam_args *args, int refresh)
      */
     pw = pam_modutil_getpwnam(args->pamh, ctx->name);
     if (pw == NULL) {
-        pamk5_err(args, "getpwnam failed for %s", ctx->name);
+        putil_err(args, "getpwnam failed for %s", ctx->name);
         pamret = PAM_USER_UNKNOWN;
         goto done;
     }
@@ -324,19 +326,18 @@ pamk5_setcred(struct pam_args *args, int refresh)
          * missing feature.  We therefore log an error and exit with
          * PAM_SUCCESS for the setuid case.
          *
-         * We do not use pamk5_compat_issetugid here since it always returns
-         * true if setuid was was involved anywhere in the process of running
-         * the binary.  This would prevent a setuid screensaver that drops
-         * permissions from refreshing a credential cache.  The issetugid
-         * behavior is safer, since the environment should ideally not be
-         * trusted even if the binary completely changed users away from the
-         * original user, but in that case the binary needs to take some
-         * responsibility for either sanitizing the environment or being
-         * certain that the calling user is permitted to act as the target
-         * user.
+         * We do not use issetugid here since it always returns true if setuid
+         * was was involved anywhere in the process of running the binary.
+         * This would prevent a setuid screensaver that drops permissions from
+         * refreshing a credential cache.  The issetugid behavior is safer,
+         * since the environment should ideally not be trusted even if the
+         * binary completely changed users away from the original user, but in
+         * that case the binary needs to take some responsibility for either
+         * sanitizing the environment or being certain that the calling user
+         * is permitted to act as the target user.
          */
         if (getuid() != geteuid() || getgid() != getegid()) {
-            pamk5_err(args, "credential reinitialization in a setuid context"
+            putil_err(args, "credential reinitialization in a setuid context"
                       " ignored");
             pamret = PAM_SUCCESS;
             goto done;
@@ -345,7 +346,7 @@ pamk5_setcred(struct pam_args *args, int refresh)
         if (name == NULL)
             name = krb5_cc_default_name(ctx->context);
         if (name == NULL) {
-            pamk5_err(args, "unable to get ticket cache name");
+            putil_err(args, "unable to get ticket cache name");
             pamret = PAM_SERVICE_ERR;
             goto done;
         }
@@ -373,11 +374,11 @@ pamk5_setcred(struct pam_args *args, int refresh)
 
         cache_name = strdup(name);
         if (cache_name == NULL) {
-            pamk5_crit(args, "malloc failure: %s", strerror(errno));
+            putil_crit(args, "malloc failure: %s", strerror(errno));
             pamret = PAM_BUF_ERR;
             goto done;
         }
-        pamk5_debug(args, "refreshing ticket cache %s", cache_name);
+        putil_debug(args, "refreshing ticket cache %s", cache_name);
 
         /*
          * If we're refreshing the cache, we didn't really create it and the
@@ -404,7 +405,7 @@ pamk5_setcred(struct pam_args *args, int refresh)
             if (pamret != PAM_SUCCESS)
                 goto done;
         }
-        pamk5_debug(args, "initializing ticket cache %s", cache_name);
+        putil_debug(args, "initializing ticket cache %s", cache_name);
     }
 
     /*
@@ -421,13 +422,13 @@ pamk5_setcred(struct pam_args *args, int refresh)
     else if (strchr(cache_name, ':') == NULL)
         status = chown(cache_name, uid, gid);
     if (status == -1) {
-        pamk5_crit(args, "chown of ticket cache failed: %s", strerror(errno));
+        putil_crit(args, "chown of ticket cache failed: %s", strerror(errno));
         pamret = PAM_SERVICE_ERR;       
         goto done;
     }
     pamret = pamk5_set_krb5ccname(args, cache_name, "KRB5CCNAME");
     if (pamret != PAM_SUCCESS) {
-        pamk5_crit(args, "setting KRB5CCNAME failed: %s", strerror(errno));
+        putil_crit(args, "setting KRB5CCNAME failed: %s", strerror(errno));
         goto done;
     }
 
@@ -454,7 +455,7 @@ pamk5_setcred(struct pam_args *args, int refresh)
     ctx->cache = cache;
     cache = NULL;
     ctx->initialized = 1;
-    if (args->retain)
+    if (args->config->retain_after_close)
         ctx->dont_destroy_cache = 1;
 
 done:
@@ -462,5 +463,10 @@ done:
         krb5_cc_destroy(ctx->context, cache);
     if (cache_name != NULL)
         free(cache_name);
+
+    /* If we stored our Kerberos context in PAM data, don't free it. */
+    if (set_context)
+        args->ctx = NULL;
+
     return pamret;
 }

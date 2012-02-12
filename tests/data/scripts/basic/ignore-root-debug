@@ -1,0 +1,17 @@
+# Test account and session behavior for ignored root user.  -*- conf -*-
+
+[options]
+    auth     = ignore_root debug
+    password = ignore_root debug
+
+[run]
+    authenticate            = PAM_USER_UNKNOWN
+    chauthtok(PRELIM_CHECK) = PAM_IGNORE
+
+[output]
+    DEBUG pam_sm_authenticate: entry
+    DEBUG (user root) ignoring root user
+    DEBUG pam_sm_authenticate: exit (failure)
+    DEBUG pam_sm_chauthtok: entry (prelim)
+    DEBUG ignoring root user
+    DEBUG pam_sm_chauthtok: exit (ignore)
