@@ -291,6 +291,7 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
             krb5_get_default_realm(c, &args->realm);
         if (args->realm != NULL)
             pamk5_compat_set_realm(args, args->realm);
+        default_boolean(args, c, "anon_fast", 0, &args->anon_fast);
         default_string(args, c, "alt_auth_map", NULL, &args->alt_auth_map);
         default_string(args, c, "banner", "Kerberos", &args->banner);
         default_string(args, c, "ccache", NULL, &args->ccache);
@@ -336,6 +337,8 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
      * sense in krb5.conf.
      */
     for (i = 0; i < argc; i++) {
+        if (strcmp(argv[i], "anon_fast") == 0)
+            args->anon_fast = 1;
         if (strncmp(argv[i], "alt_auth_map=", 12) == 0) {
             if (args->alt_auth_map != NULL)
                 free(args->alt_auth_map);
@@ -502,9 +505,9 @@ pamk5_args_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
     /* Warn if the FAST option was set and FAST isn't supported. */
 #ifndef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_FAST_CCACHE_NAME
-    if (args->fast_ccache)
-        pamk5_err(args, "fast_ccache requested but FAST not supported by"
-                  " Kerberos libraries");
+    if (args->fast_ccache || args->anon_fast)
+        pamk5_err(args, "fast_ccache or anon_fast requested but FAST not"
+                  " supported by Kerberos libraries");
 #endif
 
     return args;

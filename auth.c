@@ -131,34 +131,127 @@ set_fast_options(struct pam_args *args, krb5_get_init_creds_opt *opts)
     krb5_context c = args->ctx->context;
     krb5_error_code k5_errno;
     krb5_principal princ = NULL;
+    krb5_principal princ2 = NULL;
     krb5_ccache fast_ccache = NULL;
+    krb5_creds *fast_creds = NULL;
+    char armor_name[] = "/tmp/krb5cc_pam_armor_XXXXXX";
+    char* fast_cache_name = (char*)&armor_name;
+    int pamret;
+    krb5_get_init_creds_opt *fast_opts = NULL;
 
-    if (!args->fast_ccache)
-        return;
-    k5_errno = krb5_cc_resolve(c, args->fast_ccache, &fast_ccache);
-    if (k5_errno != 0) {
-        pamk5_debug_krb5(args, k5_errno, "failed resolving fast ccache %s",
-                         args->fast_ccache);
-        goto done;
+    /*
+     * If fast_ccache was given, we don't need anonymous.
+     */
+    if (!args->fast_ccache) {
+        if (!args->anon_fast)
+            return;
+
+        fast_creds = calloc(1, sizeof(krb5_creds));
+        if (fast_creds == NULL) {
+            pamk5_err(args, "cannot allocate memory: %s, not using fast",
+                      strerror(errno));
+            goto done;
+        }
+
+        k5_errno = krb5_build_principal_ext(c, &princ,
+                                            strlen(args->realm), args->realm,
+                                            strlen(KRB5_WELLKNOWN_NAMESTR),
+                                            KRB5_WELLKNOWN_NAMESTR,
+                                            strlen(KRB5_ANONYMOUS_PRINCSTR),
+                                            KRB5_ANONYMOUS_PRINCSTR,
+                                            NULL);
+        if (k5_errno != 0) {
+            pamk5_debug_krb5(args, k5_errno,
+                             "cannot create anonymous principal");
+            goto done;
+        }
+
+        k5_errno = krb5_get_init_creds_opt_alloc(c, &fast_opts);
+        if (k5_errno != 0) {
+            pamk5_err_krb5(args, k5_errno,
+                           "cannot allocate memory, not using fast");
+            goto done;
+        }
+        
+        krb5_get_init_creds_opt_set_anonymous(fast_opts, 1);
+        
+        k5_errno = krb5_get_init_creds_password(c, fast_creds, princ, NULL,
+                                                NULL, NULL, 0, NULL,
+                                                fast_opts);
+        if (k5_errno != 0) {
+            pamk5_debug_krb5(args, k5_errno, "failed getting initial "
+                             "credentials for anonymous user");
+            goto done;
+        }
+
+        /*
+         * same as pamk5_cache_init_random, but differnt name and different
+         * environment, and need to swap principals
+         */
+        pamret = pamk5_cache_mkstemp(args, fast_cache_name);
+        if (pamret != PAM_SUCCESS)
+            goto done;
+        
+        /*
+         * write cache file. pamk5_cache_init uses args->ctx->princ to
+         * initialize the cache, so it is temporarily swapped.
+         */
+        princ2 = args->ctx->princ;
+        args->ctx->princ = fast_creds->client;
+        pamret = pamk5_cache_init(args, fast_cache_name, fast_creds,
+                                  &fast_ccache);
+        args->ctx->princ = princ2;
+        if (pamret != PAM_SUCCESS)
+            goto done;
+
+        pamret = pamk5_set_krb5ccname(args, fast_cache_name,
+                                      "PAM_FAST_KRB5CCNAME");
+        if (pamret != PAM_SUCCESS) {
+            pamk5_debug_pam(args, pamret,
+                            "cannot save temporary fast cache name");
+        }
+        
+        
+        krb5_free_principal(c, princ);
+        princ = NULL;
+    } else {
+        fast_cache_name = args->fast_ccache;
+        k5_errno = krb5_cc_resolve(c, fast_cache_name, &fast_ccache);
+        if (k5_errno != 0) {
+            pamk5_debug_krb5(args, k5_errno, "failed resolving fast ccache %s",
+                             fast_cache_name);
+            goto done;
+        }
     }
+    
     k5_errno = krb5_cc_get_principal(c, fast_ccache, &princ);
     if (k5_errno != 0) {
         pamk5_debug_krb5(args, k5_errno,
                          "failed to get principal from fast ccache %s",
-                         args->fast_ccache);
+                         fast_cache_name);
         goto done;
     }
     k5_errno = krb5_get_init_creds_opt_set_fast_ccache_name(c, opts,
-                                                            args->fast_ccache);
+                                                            fast_cache_name);
     if (k5_errno != 0)
         pamk5_err_krb5(args, k5_errno, "failed setting fast ccache to %s",
-                       args->fast_ccache);
+                       fast_cache_name);
 
 done:
-    if (fast_ccache != NULL)
-        krb5_cc_close(c, fast_ccache);
+    if (fast_creds != NULL) {
+        krb5_free_cred_contents(c, fast_creds);
+        free(fast_creds);
+    }
+    if (fast_ccache != NULL) {
+        if (args->anon_fast && k5_errno != 0)
+            krb5_cc_destroy(c, fast_ccache);
+        else
+            krb5_cc_close(c, fast_ccache);
+    }
     if (princ != NULL)
         krb5_free_principal(c, princ);
+    if (fast_opts != NULL)
+        krb5_get_init_creds_opt_free(c, fast_opts);
 }
 #else /* !HAVE_KRB5_GET_INIT_CREDS_OPT_SET_FAST_CCACHE_NAME */
 # define set_fast_options(a, o) /* empty */
@@ -596,6 +689,8 @@ pamk5_password_auth(struct pam_args *args, const char *service,
     int do_only_alt = 0;
     char *pass = NULL;
     int authtok = (service == NULL) ? PAM_AUTHTOK : PAM_OLDAUTHTOK;
+    const char* fast_cache_name;
+    krb5_ccache fast_cache;
 
     /* Sanity check and initialization. */
     if (args->ctx == NULL)
@@ -823,5 +918,30 @@ done:
     }
     if (opts != NULL)
         pamk5_compat_opt_free(ctx->context, opts);
+
+    /*
+     * Whatever the results, destroy the anonymous fast armor cache
+     */
+    if (args->anon_fast) {
+        fast_cache_name = pamk5_get_krb5ccname(args, "PAM_FAST_KRB5CCNAME");
+        if (fast_cache_name != NULL) {
+
+            success = krb5_cc_resolve(ctx->context, fast_cache_name,
+                                      &fast_cache);
+            if (success != 0) {
+                pamk5_debug_krb5(args, success,
+                                 "cannot resolve temporary fast cache %s",
+                                 fast_cache_name);
+            } else {
+
+                krb5_cc_destroy(ctx->context, fast_cache);
+            
+                if (pam_putenv(args->pamh, "PAM_FAST_KRB5CCNAME") !=
+                    PAM_SUCCESS)
+                    pam_putenv(args->pamh, "PAM_FAST_KRB5CCNAME=");
+            }
+        }
+    }
+    
     return retval;
 }

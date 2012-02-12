@@ -58,6 +58,7 @@ struct context {
  * functions.
  */
 struct pam_args {
+    int anon_fast;              /* sets up an anonymous fast armor cache */
     char *banner;               /* Addition to password changing prompts. */
     char *ccache;               /* Path to write ticket cache to. */
     char *ccache_dir;           /* Directory for ticket cache. */
