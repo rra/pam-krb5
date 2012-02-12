@@ -140,6 +140,7 @@ set_fast_options(struct pam_args *args, krb5_get_init_creds_opt *opts)
     char *cache = args->config->fast_ccache;
     int pamret;
     krb5_get_init_creds_opt *fast_opts = NULL;
+    char* realm = NULL;
 
     /*
      * If fast_ccache was given, we don't need anonymous.
@@ -151,27 +152,43 @@ set_fast_options(struct pam_args *args, krb5_get_init_creds_opt *opts)
         cache = armor_name;
         fast_creds = calloc(1, sizeof(krb5_creds));
         if (fast_creds == NULL) {
-            pamk5_err(args, "cannot allocate memory: %s, not using fast",
-                      strerror(errno));
+            putil_err_pam(args, errno, "cannot allocate memory: %s, not using fast",
+                          strerror(errno));
             goto done;
         }
 
+        /*
+         * I don't know yet why, but args->realm, if not specified, is currently not set to to
+         * default realm, so it might be empty.
+         */
+        if (args->realm != NULL) {
+            realm = args->realm;
+        } else {
+            k5_errno = krb5_get_default_realm(args->ctx, &realm);
+            if (k5_errno != 0) {
+                putil_debug_krb5(args, k5_errno,
+                                 "Can't find a realm for anonymous user");
+                goto done;
+            }
+        }
         k5_errno = krb5_build_principal_ext(c, &princ,
-                                            strlen(args->realm), args->realm,
+                                            strlen(realm), realm,
                                             strlen(KRB5_WELLKNOWN_NAMESTR),
                                             KRB5_WELLKNOWN_NAMESTR,
                                             strlen(KRB5_ANONYMOUS_PRINCSTR),
                                             KRB5_ANONYMOUS_PRINCSTR,
                                             NULL);
+        if (args->realm == NULL)
+            krb5_free_default_realm(args->ctx, realm);
         if (k5_errno != 0) {
-            pamk5_debug_krb5(args, k5_errno,
+            putil_debug_krb5(args, k5_errno,
                              "cannot create anonymous principal");
             goto done;
         }
 
         k5_errno = krb5_get_init_creds_opt_alloc(c, &fast_opts);
         if (k5_errno != 0) {
-            pamk5_err_krb5(args, k5_errno,
+            putil_err_krb5(args, k5_errno,
                            "cannot allocate memory, not using fast");
             goto done;
         }
@@ -182,7 +199,7 @@ set_fast_options(struct pam_args *args, krb5_get_init_creds_opt *opts)
                                                 NULL, NULL, 0, NULL,
                                                 fast_opts);
         if (k5_errno != 0) {
-            pamk5_debug_krb5(args, k5_errno, "failed getting initial "
+            putil_debug_krb5(args, k5_errno, "failed getting initial "
                              "credentials for anonymous user");
             goto done;
         }
@@ -210,7 +227,7 @@ set_fast_options(struct pam_args *args, krb5_get_init_creds_opt *opts)
         pamret = pamk5_set_krb5ccname(args, cache,
                                       "PAM_FAST_KRB5CCNAME");
         if (pamret != PAM_SUCCESS) {
-            pamk5_debug_pam(args, pamret,
+            putil_debug_pam(args, pamret,
                             "cannot save temporary fast cache name");
         }
 
@@ -219,7 +236,7 @@ set_fast_options(struct pam_args *args, krb5_get_init_creds_opt *opts)
     } else {
         k5_errno = krb5_cc_resolve(c, cache, &fast_ccache);
         if (k5_errno != 0) {
-            pamk5_debug_krb5(args, k5_errno, "failed resolving fast ccache %s",
+            putil_debug_krb5(args, k5_errno, "failed resolving fast ccache %s",
                              cache);
             goto done;
         }
@@ -939,7 +956,7 @@ done:
             success = krb5_cc_resolve(ctx->context, fast_cache_name,
                                       &fast_cache);
             if (success != 0) {
-                pamk5_debug_krb5(args, success,
+                putil_debug_krb5(args, success,
                                  "cannot resolve temporary fast cache %s",
                                  fast_cache_name);
             } else {
