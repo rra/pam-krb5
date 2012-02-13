@@ -44,6 +44,7 @@ struct context {
     int dont_destroy_cache;     /* If set, don't destroy cache on shutdown. */
     int initialized;            /* If set, ticket cache initialized. */
     krb5_creds *creds;          /* Credentials for password changing. */
+    krb5_ccache anon_fast_ccache; /* the anonymous ccache (to destory) */
 };
 
 /*
@@ -64,7 +65,7 @@ struct pam_config {
 
     /* Kerberos behavior. */
     char *fast_ccache;          /* Cache containing armor ticket. */
-    int anon_fast;              /* sets up an anonymous fast armor cache */
+    bool anon_fast;             /* sets up an anonymous fast armor cache */
     bool forwardable;           /* Obtain forwardable tickets. */
     char *keytab;               /* Keytab for credential validation. */
     krb5_deltat renew_lifetime; /* Renewable lifetime of credentials. */
@@ -220,6 +221,8 @@ int pamk5_cache_init_random(struct pam_args *, krb5_creds *);
  */
 krb5_error_code pamk5_compat_set_realm(struct pam_config *, const char *);
 void pamk5_compat_free_realm(struct pam_config *);
+
+krb5_error_code pamk5_cache_init_anon_fast(struct pam_args *args, krb5_ccache* ccache);
 
 /* Undo default visibility change. */
 #pragma GCC visibility pop
