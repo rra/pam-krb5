@@ -1,7 +1,7 @@
 # Automake makefile for pam-krb5.
 #
 # Written by Russ Allbery <rra@stanford.edu>
-# Copyright 2009, 2011
+# Copyright 2009, 2011, 2012
 #     The Board of Trustees of the Leland Stanford Junior University
 # Copyright 2005, 2006, 2007 Russ Allbery <rra@stanford.edu>
 # Copyright 2005 Andres Salomon <dilinger@debian.org>
@@ -69,13 +69,14 @@ warnings:
 	$(MAKE) V=0 CFLAGS='$(WARNINGS)' $(check_PROGRAMS)
 
 # The bits below are for the test suite, not for the main package.
-check_PROGRAMS = tests/runtests tests/module/basic-t tests/module/cache-t \
-	tests/module/expired-t tests/module/no-cache-t			  \
-	tests/module/password-t tests/pam-util/args-t			  \
-	tests/pam-util/fakepam-t tests/pam-util/logging-t		  \
-	tests/pam-util/options-t tests/pam-util/vector-t		  \
-	tests/portable/asprintf-t tests/portable/mkstemp-t		  \
-	tests/portable/snprintf-t tests/portable/strlcat-t		  \
+check_PROGRAMS = tests/runtests tests/module/basic-t		\
+	tests/module/cache-cleanup-t tests/module/cache-t	\
+	tests/module/expired-t tests/module/no-cache-t		\
+	tests/module/password-t tests/pam-util/args-t		\
+	tests/pam-util/fakepam-t tests/pam-util/logging-t	\
+	tests/pam-util/options-t tests/pam-util/vector-t	\
+	tests/portable/asprintf-t tests/portable/mkstemp-t	\
+	tests/portable/snprintf-t tests/portable/strlcat-t	\
 	tests/portable/strlcpy-t tests/portable/strndup-t
 tests_runtests_CPPFLAGS = -DSOURCE='"$(abs_top_srcdir)/tests"' \
 	-DBUILD='"$(abs_top_builddir)/tests"'
@@ -100,6 +101,8 @@ MODULE_OBJECTS = account.lo auth.lo cache.lo context.lo options.lo	\
 
 # The test programs themselves.
 tests_module_basic_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
+	portable/libportable.la $(KRB5_LIBS)
+tests_module_cache_cleanup_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
 	portable/libportable.la $(KRB5_LIBS)
 tests_module_cache_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
 	portable/libportable.la $(KRB5_LIBS)
