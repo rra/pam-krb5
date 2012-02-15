@@ -38,6 +38,7 @@
     DEBUG (user %u) obtaining credentials with new password
     DEBUG (user %u) attempting authentication as %0
     INFO user %u authenticated as %0
+    DEBUG (user %u) temporarily storing credentials in /tmp/krb5cc_pam_%*
     DEBUG pam_sm_chauthtok: exit (success)
     DEBUG pam_sm_acct_mgmt: entry
     DEBUG (user %u) retrieving principal from cache

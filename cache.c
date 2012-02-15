@@ -4,7 +4,7 @@
  * Provides functions for creating ticket caches, used by pam_authenticate,
  * pam_setcred, and pam_chauthtok after changing an expired password.
  *
- * Copyright 2011
+ * Copyright 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  * Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@stanford.edu>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
@@ -175,6 +175,7 @@ pamk5_cache_init_random(struct pam_args *args, krb5_creds *creds)
                               &args->config->ctx->cache);
     if (pamret != PAM_SUCCESS)
         goto done;
+    putil_debug(args, "temporarily storing credentials in %s", cache_name);
     pamret = pamk5_set_krb5ccname(args, cache_name, "PAM_KRB5CCNAME");
 
 done:
