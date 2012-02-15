@@ -10,7 +10,7 @@
  * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <rra@stanford.edu>
- * Copyright 2011
+ * Copyright 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -286,33 +286,6 @@ rewind_section(FILE *script, size_t length)
 
 
 /*
- * Given a whitespace-delimited string of PAM options, split it into an argv
- * array and argc count and store it in the provided option struct.
- */
-static void
-split_options(char *string, struct options *options)
-{
-    char *opt;
-    size_t size;
-
-    for (opt = strtok(string, " "); opt != NULL; opt = strtok(NULL, " ")) {
-        if (options->argv == NULL) {
-            options->argv = bmalloc(sizeof(const char *) * 2);
-            options->argv[0] = bstrdup(opt);
-            options->argv[1] = NULL;
-            options->argc = 1;
-        } else {
-            size = sizeof(const char *) * (options->argc + 2);
-            options->argv = brealloc(options->argv, size);
-            options->argv[options->argc] = bstrdup(opt);
-            options->argv[options->argc + 1] = NULL;
-            options->argc++;
-        }
-    }
-}
-
-
-/*
  * Given a string that may contain %-escapes, expand it into the resulting
  * value.  The following escapes are supported:
  *
@@ -416,6 +389,34 @@ expand_string(const char *template, const struct script_config *config)
 
 
 /*
+ * Given a whitespace-delimited string of PAM options, split it into an argv
+ * array and argc count and store it in the provided option struct.
+ */
+static void
+split_options(char *string, struct options *options,
+              const struct script_config *config)
+{
+    char *opt;
+    size_t size;
+
+    for (opt = strtok(string, " "); opt != NULL; opt = strtok(NULL, " ")) {
+        if (options->argv == NULL) {
+            options->argv = bmalloc(sizeof(const char *) * 2);
+            options->argv[0] = expand_string(opt, config);
+            options->argv[1] = NULL;
+            options->argc = 1;
+        } else {
+            size = sizeof(const char *) * (options->argc + 2);
+            options->argv = brealloc(options->argv, size);
+            options->argv[options->argc] = expand_string(opt, config);
+            options->argv[options->argc + 1] = NULL;
+            options->argc++;
+        }
+    }
+}
+
+
+/*
  * Parse the options section of a PAM script.  This consists of one or more
  * lines in the format:
  *
@@ -428,7 +429,8 @@ expand_string(const char *template, const struct script_config *config)
  * Takes the work struct as an argument and puts values into its array.
  */
 static void
-parse_options(FILE *script, struct work *work)
+parse_options(FILE *script, struct work *work,
+              const struct script_config *config)
 {
     char *line, *group, *token;
     size_t length;
@@ -446,7 +448,7 @@ parse_options(FILE *script, struct work *work)
         if (token == NULL || strcmp(token, "=") != 0)
             bail("malformed action line near %s", token);
         token = strtok(NULL, "");
-        split_options(token, &work->options[type]);
+        split_options(token, &work->options[type], config);
         free(line);
     }
     if (line != NULL) {
@@ -651,7 +653,7 @@ parse_script(FILE *script, const struct script_config *config)
         if (token[0] != '[')
             bail("line outside of section: %s", line);
         if (strcmp(token, "[options]") == 0)
-            parse_options(script, work);
+            parse_options(script, work, config);
         else if (strcmp(token, "[run]") == 0)
             work->actions = parse_run(script);
         else if (strcmp(token, "[output]") == 0)
