@@ -75,6 +75,8 @@ struct pam_config {
     bool defer_pwchange;        /* Defer expired account fail to account. */
     bool fail_pwchange;         /* Treat expired password as auth failure. */
     bool force_pwchange;        /* Change expired passwords in auth. */
+    bool silent;                /* Don't show text and errors to user
+                                   (PAM_SILENT) */
 
     /* PKINIT. */
     char *pkinit_anchors;       /* Trusted certificates, usually per realm. */
