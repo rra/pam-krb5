@@ -5,7 +5,7 @@
  * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <rra@stanford.edu>
- * Copyright 2006, 2007, 2008, 2009, 2010
+ * Copyright 2006, 2007, 2008, 2009, 2010, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -47,9 +47,10 @@ BEGIN_DECLS
 #pragma GCC visibility push(hidden)
 
 /*
- * Error reporting and debugging functions.  For each log level, there are
- * two functions.  The _log function just prints out the message it's given.
- * The _log_pam function reports a PAM error using pam_strerror.
+ * Error reporting and debugging functions.  For each log level, there are two
+ * functions.  The _log function just prints out the message it's given.  The
+ * _log_pam function does the same but appends the pam_strerror results for
+ * the provided status code if it is not PAM_SUCCESS.
  */
 void putil_crit(struct pam_args *, const char *, ...)
     __attribute__((__format__(printf, 2, 3)));

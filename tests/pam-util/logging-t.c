@@ -5,7 +5,7 @@
  * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <rra@stanford.edu>
- * Copyright 2010, 2011
+ * Copyright 2010, 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -54,8 +54,11 @@
 #define TEST_PAM(func, c, p, n)                                 \
     do {                                                        \
         (func)(args, (c), "%s", "bar");                         \
-        basprintf(&expected, "%d %s: %s", (p), "bar",           \
-                  pam_strerror(args->pamh, c));                 \
+        if ((c) == PAM_SUCCESS)                                 \
+            basprintf(&expected, "%d %s", (p), "bar");          \
+        else                                                    \
+            basprintf(&expected, "%d %s: %s", (p), "bar",       \
+                      pam_strerror(args->pamh, c));             \
         seen = pam_output();                                    \
         is_string(expected, seen->strings[0], "%s", (n));       \
         pam_output_free(seen);                                  \
@@ -93,7 +96,7 @@ main(void)
     krb5_principal princ;
 #endif
 
-    plan(13);
+    plan(15);
 
     if (pam_start("test", NULL, &conv, &pamh) != PAM_SUCCESS)
         sysbail("Fake PAM initialization failed");
@@ -108,11 +111,13 @@ main(void)
 
     TEST_PAM(putil_crit_pam,  PAM_SYSTEM_ERR, LOG_CRIT,  "putil_crit_pam S");
     TEST_PAM(putil_crit_pam,  PAM_BUF_ERR,    LOG_CRIT,  "putil_crit_pam B");
+    TEST_PAM(putil_crit_pam,  PAM_SUCCESS,    LOG_CRIT,  "putil_crit_pam ok");
     TEST_PAM(putil_err_pam,   PAM_SYSTEM_ERR, LOG_ERR,   "putil_err_pam");
     putil_debug_pam(args, PAM_SYSTEM_ERR, "%s", "bar");
     ok(pam_output() == NULL, "putil_debug_pam without debug on");
     args->debug = true;
     TEST_PAM(putil_debug_pam, PAM_SYSTEM_ERR, LOG_DEBUG, "putil_debug_pam");
+    TEST_PAM(putil_debug_pam, PAM_SUCCESS,    LOG_DEBUG, "putil_debug_pam ok");
     args->debug = false;
 
 #ifdef HAVE_KERBEROS
