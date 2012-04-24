@@ -60,6 +60,13 @@ Fake PAM Library
     user, call the pam_set_pwd function and provide a struct passwd that
     will be returned by pam_modutil_getpwnam.
 
+    The fakepam library also provides a replacement krb5_kuserok function
+    for testing PAM modules that use Kerberos.  This source file should
+    only be included in packages that are building with Kerberos.  It
+    implements the same functionality as the default krb5_kuserok
+    function, but looks for .k5login in the home directory configured by
+    the test framework instead of using getpwnam.
+
     Only those two functions are intercepted, so if the module looks up
     users in other ways, it may still bypass the fakepam library and look
     at system users.
@@ -194,7 +201,7 @@ License
     This file is part of the documentation of rra-c-util, which can be
     found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
 
-    Copyright 2011 Russ Allbery <rra@stanford.edu>
+    Copyright 2011, 2012 Russ Allbery <rra@stanford.edu>
 
     Copying and distribution of this file, with or without modification,
     are permitted in any medium without royalty provided the copyright
