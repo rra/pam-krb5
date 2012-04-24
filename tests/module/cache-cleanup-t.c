@@ -36,7 +36,7 @@ main(void)
     krbconf = kerberos_setup(TAP_KRB_NEEDS_PASSWORD);
     memset(&config, 0, sizeof(config));
     config.user = krbconf->username;
-    config.password = krbconf->password;
+    config.authtok = krbconf->password;
     config.extra[0] = krbconf->userprinc;
 
     /* Generate a testing krb5.conf file. */

@@ -86,6 +86,47 @@ Scripted PAM Testing
     process to be encapsulated in a text configuration file per test,
     rather than in a tedious set of checks and calls written in C.
 
+  Test API
+
+    The basic test API is to call either run_script (to run a single test
+    script) or run_script_dir (to run all scripts in a particular
+    directory).  Both take a configuration struct that controls how the
+    PAM library is set up and called.
+
+    That configuration struct takes the following elements:
+
+    user
+        The user as which to authenticate, passed into pam_start and also
+        substituted for the %u escape.  This should match the user whose
+        home directory information is configured using pam_set_pwd if that
+        function is in use.
+
+    password
+        Only used for the %p escape.  This is not used to set the
+        authentication token in the PAM library (see authtok below).
+
+    newpass
+        Only used for the %n escape.
+
+    extra
+        An array of up to 10 additional strings used by the %0 through %9
+        escapes when parsing the configuration file, as discussed below.
+
+    authtok
+        Sets the default value of the PAM_AUTHTOK data item.  This will be
+        set immediately after initializing the PAM library and before
+        calling any PAM module functions.
+
+    authtok
+        Like authtok, but for the PAM_OLDAUTHTOK data item.
+
+    callback
+        This, and the associated data element, specifies a callback that's
+        called at the end of processing of the script before calling
+        pam_end.  This can be used to inspect and verify the internal
+        state of PAM.  The data element is an opaque pointer passed into
+        the callback.
+
   Test Script Basic Format
 
     Test scripts are composed of one or more sections.  Each section

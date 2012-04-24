@@ -211,8 +211,10 @@ run_script(const char *file, const struct script_config *config)
     status = pam_start("test", user, &conv, &pamh);
     if (status != PAM_SUCCESS)
         sysbail("cannot create PAM handle");
-    if (config->password != NULL)
-        pamh->authtok = bstrdup(config->password);
+    if (config->authtok != NULL)
+        pamh->authtok = bstrdup(config->authtok);
+    if (config->oldauthtok != NULL)
+        pamh->oldauthtok = bstrdup(config->oldauthtok);
 
     /* Run the actions and check their return status. */
     for (action = work->actions; action != NULL; action = action->next) {

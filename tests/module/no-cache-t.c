@@ -32,6 +32,7 @@ main(void)
     memset(&config, 0, sizeof(config));
     config.user = krbconf->userprinc;
     config.password = krbconf->password;
+    config.authtok = krbconf->password;
 
     /*
      * Generate a testing krb5.conf file with a nonexistent default realm so

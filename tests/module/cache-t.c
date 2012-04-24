@@ -123,7 +123,7 @@ main(void)
     memset(&config, 0, sizeof(config));
     config.user = krbconf->username;
     extra.realm = krbconf->realm;
-    config.password = krbconf->password;
+    config.authtok = krbconf->password;
     config.extra[0] = krbconf->userprinc;
 
     /* Generate a testing krb5.conf file. */

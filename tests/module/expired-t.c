@@ -104,10 +104,12 @@ main(void)
     /* Defer the error to the account management check. */
     config.newpass = newpass;
     config.password = krbconf->password;
+    config.authtok = krbconf->password;
     kerberos_expire_password(krbconf->userprinc, now);
     run_script("data/scripts/expired/defer", &config);
     config.newpass = krbconf->password;
     config.password = newpass;
+    config.authtok = newpass;
     kerberos_expire_password(krbconf->userprinc, now);
     run_script("data/scripts/expired/defer-debug", &config);
 

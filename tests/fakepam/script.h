@@ -50,6 +50,8 @@ struct script_config {
     const char *password;       /* Substituted for %p in prompts. */
     const char *newpass;        /* Substituted for %n in prompts. */
     const char *extra[10];      /* Substituted for %0-%9 in logging. */
+    const char *authtok;        /* Stored as AUTHTOK before PAM. */
+    const char *oldauthtok;     /* Stored as OLDAUTHTOK before PAM. */
     script_callback callback;   /* Called after PAM, before pam_end. */
     void *data;                 /* Passed to the callback function. */
 };
