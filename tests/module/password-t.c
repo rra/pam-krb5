@@ -61,6 +61,17 @@ main(void)
     config.newpass = krbconf->password;
     run_script("data/scripts/password/basic", &config);
 
+    /*
+     * Test two banner settings by changing the password and then changing it
+     * back again.
+     */
+    config.password = krbconf->password;
+    config.newpass = newpass;
+    run_script("data/scripts/password/banner", &config);
+    config.password = newpass;
+    config.newpass = krbconf->password;
+    run_script("data/scripts/password/no-banner", &config);
+
     free(newpass);
     return 0;
 }
