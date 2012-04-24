@@ -57,11 +57,13 @@ MAINTAINERCLEANFILES = Makefile.in aclocal.m4 build-aux/compile		 \
 #
 #     -Wconversion      http://bugs.debian.org/488884 (htons warnings)
 #
-# Last checked against gcc 4.6.1 (2011-05-04).
-WARNINGS = -g -O -Wall -Wextra -Wendif-labels -Wformat=2 -Winit-self	\
-	-Wswitch-enum -Wdeclaration-after-statement -Wshadow		\
-	-Wpointer-arith -Wbad-function-cast -Wwrite-strings		\
-	-Wjump-misses-init -Wlogical-op -Wstrict-prototypes		\
+# Last checked against gcc 4.6.1 (2011-05-04).  -D_FORTIFY_SOURCE=2 enables
+# warn_unused_result attribute markings on glibc functions on Linux, which
+# catches a few more issues.
+WARNINGS = -g -O -D_FORTIFY_SOURCE=2 -Wall -Wextra -Wendif-labels	   \
+	-Wformat=2 -Winit-self -Wswitch-enum -Wdeclaration-after-statement \
+	-Wshadow -Wpointer-arith -Wbad-function-cast -Wwrite-strings	   \
+	-Wjump-misses-init -Wlogical-op -Wstrict-prototypes		   \
 	-Wmissing-prototypes -Wredundant-decls -Wnested-externs -Werror
 
 warnings:
@@ -86,8 +88,7 @@ tests_fakepam_libfakepam_a_SOURCES = tests/fakepam/config.c		   \
 	tests/fakepam/internal.h tests/fakepam/kuserok.c		   \
 	tests/fakepam/logging.c tests/fakepam/pam.h tests/fakepam/script.c \
 	tests/fakepam/script.h
-tests_tap_libtap_a_CPPFLAGS = -I$(abs_top_srcdir)/tests	\
-	$(KADM5CLNT_CPPFLAGS) $(AM_CPPFLAGS)
+tests_tap_libtap_a_CPPFLAGS = $(KADM5CLNT_CPPFLAGS) $(AM_CPPFLAGS)
 tests_tap_libtap_a_SOURCES = tests/tap/basic.c tests/tap/basic.h	\
 	tests/tap/kadmin.c tests/tap/kadmin.h tests/tap/kerberos.c	\
 	tests/tap/kerberos.h tests/tap/process.c tests/tap/process.h	\

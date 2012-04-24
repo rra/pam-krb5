@@ -7,7 +7,7 @@
  * created (so without setuid and with chown doing nothing).
  *
  * Written by Russ Allbery <rra@stanford.edu>
- * Copyright 2011
+ * Copyright 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * See LICENSE for licensing terms.
@@ -112,28 +112,26 @@ int
 main(void)
 {
     struct script_config config;
-    struct kerberos_password *password;
+    struct kerberos_config *krbconf;
     char *k5login;
     struct extra extra;
     struct passwd pwd;
     FILE *file;
 
     /* Load the Kerberos principal and password from a file. */
-    password = kerberos_config_password();
-    if (password == NULL)
-        skip_all("Kerberos tests not configured");
+    krbconf = kerberos_setup(TAP_KRB_NEEDS_PASSWORD);
     memset(&config, 0, sizeof(config));
-    config.user = password->username;
-    extra.realm = password->realm;
-    config.password = password->password;
-    config.extra[0] = password->principal;
+    config.user = krbconf->username;
+    extra.realm = krbconf->realm;
+    config.password = krbconf->password;
+    config.extra[0] = krbconf->userprinc;
 
     /* Generate a testing krb5.conf file. */
-    kerberos_generate_conf(password->realm);
+    kerberos_generate_conf(krbconf->realm);
 
     /* Create a fake passwd struct for our user. */
     memset(&pwd, 0, sizeof(pwd));
-    pwd.pw_name = password->username;
+    pwd.pw_name = krbconf->username;
     pwd.pw_uid = getuid();
     pwd.pw_gid = getgid();
     basprintf(&pwd.pw_dir, "%s/tmp", getenv("BUILD"));
@@ -156,7 +154,7 @@ main(void)
     file = fopen(k5login, "w");
     if (file == NULL)
         sysbail("cannot create %s", k5login);
-    if (fprintf(file, "%s\n", password->principal) < 0)
+    if (fprintf(file, "%s\n", krbconf->userprinc) < 0)
         sysbail("cannot write to %s", k5login);
     if (fclose(file) < 0)
         sysbail("cannot flush %s", k5login);
@@ -167,6 +165,5 @@ main(void)
     free(k5login);
 
     free(pwd.pw_dir);
-    kerberos_config_password_free(password);
     return 0;
 }

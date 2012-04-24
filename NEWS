@@ -5,6 +5,20 @@ pam-krb5 4.6 (unreleased)
     Fix initialization of time values in the module configuration on
     platforms (like S/390X) where krb5_deltat is not equivalent to long.
 
+    Update to rra-c-util 4.3:
+
+    * Replacement strndup now works with non-nul-terminated strings.
+    * New Kerberos test setup that simplifies writing tests.
+    * Add -D_FORTIFY_SOURCE=2 to the make warnings flags.
+
+    Update to C TAP Harness 1.11:
+
+    * Add bstrndup to the basic C TAP library.
+    * Only use feature-test macros when requested or built with gcc -ansi.
+    * New tests/tap/macros.h header with some common definitions.
+    * Drop is_double from the C TAP library to avoid requiring -lm.
+    * Avoid using local in the shell libtap.sh library.
+
 pam-krb5 4.5 (2011-12-24)
 
     Suppress the notice that the password is being changed because it's

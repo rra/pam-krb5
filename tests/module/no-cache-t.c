@@ -6,7 +6,7 @@
  * cache (which requires additional work to test the cache ownership).
  *
  * Written by Russ Allbery <rra@stanford.edu>
- * Copyright 2011
+ * Copyright 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * See LICENSE for licensing terms.
@@ -25,15 +25,13 @@ int
 main(void)
 {
     struct script_config config;
-    struct kerberos_password *password;
+    struct kerberos_config *krbconf;
 
     /* Load the Kerberos principal and password from a file. */
-    password = kerberos_config_password();
-    if (password == NULL)
-        skip_all("Kerberos tests not configured");
+    krbconf = kerberos_setup(TAP_KRB_NEEDS_PASSWORD);
     memset(&config, 0, sizeof(config));
-    config.user = password->principal;
-    config.password = password->password;
+    config.user = krbconf->userprinc;
+    config.password = krbconf->password;
 
     /*
      * Generate a testing krb5.conf file with a nonexistent default realm so
@@ -45,6 +43,5 @@ main(void)
     plan_lazy();
     run_script_dir("data/scripts/no-cache", &config);
 
-    kerberos_config_password_free(password);
     return 0;
 }

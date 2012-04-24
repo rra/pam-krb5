@@ -27,22 +27,20 @@ int
 main(void)
 {
     struct script_config config;
-    struct kerberos_password *password;
+    struct kerberos_config *krbconf;
     DIR *tmpdir;
     struct dirent *file;
     char *tmppath, *path;
 
     /* Load the Kerberos principal and password from a file. */
-    password = kerberos_config_password();
-    if (password == NULL)
-        skip_all("Kerberos tests not configured");
+    krbconf = kerberos_setup(TAP_KRB_NEEDS_PASSWORD);
     memset(&config, 0, sizeof(config));
-    config.user = password->username;
-    config.password = password->password;
-    config.extra[0] = password->principal;
+    config.user = krbconf->username;
+    config.password = krbconf->password;
+    config.extra[0] = krbconf->userprinc;
 
     /* Generate a testing krb5.conf file. */
-    kerberos_generate_conf(password->realm);
+    kerberos_generate_conf(krbconf->realm);
 
     /* Get the temporary directory and store that as the %1 substitution. */
     tmppath = test_tmpdir();
@@ -97,6 +95,5 @@ main(void)
         free(path);
 
     test_tmpdir_free(tmppath);
-    kerberos_config_password_free(password);
     return 0;
 }

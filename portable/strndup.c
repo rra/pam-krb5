@@ -33,6 +33,7 @@ char *test_strndup(const char *, size_t);
 char *
 strndup(const char *s, size_t n)
 {
+    const char *p;
     size_t length;
     char *copy;
 
@@ -40,9 +41,11 @@ strndup(const char *s, size_t n)
         errno = EINVAL;
         return NULL;
     }
-    length = strlen(s);
-    if (length > n)
-        length = n;
+
+    /* Don't assume that the source string is nul-terminated. */
+    for (p = s; (size_t) (p - s) < n && *p != '\0'; p++)
+        ;
+    length = p - s;
     copy = malloc(length + 1);
     if (copy == NULL)
         return NULL;
