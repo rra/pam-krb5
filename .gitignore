@@ -20,6 +20,7 @@
 /stamp-h1
 /tests/config/admin-keytab
 /tests/config/password
+/tests/module/bad-authtok-t
 /tests/module/basic-t
 /tests/module/cache-cleanup-t
 /tests/module/cache-t

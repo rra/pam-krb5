@@ -71,15 +71,15 @@ warnings:
 	$(MAKE) V=0 CFLAGS='$(WARNINGS)' $(check_PROGRAMS)
 
 # The bits below are for the test suite, not for the main package.
-check_PROGRAMS = tests/runtests tests/module/basic-t		\
-	tests/module/cache-cleanup-t tests/module/cache-t	\
-	tests/module/expired-t tests/module/no-cache-t		\
-	tests/module/stacked-t tests/module/password-t		\
-	tests/pam-util/args-t tests/pam-util/fakepam-t		\
-	tests/pam-util/logging-t tests/pam-util/options-t	\
-	tests/pam-util/vector-t tests/portable/asprintf-t	\
-	tests/portable/mkstemp-t tests/portable/snprintf-t	\
-	tests/portable/strlcat-t tests/portable/strlcpy-t	\
+check_PROGRAMS = tests/runtests tests/module/bad-authtok-t		    \
+	tests/module/basic-t tests/module/cache-cleanup-t		    \
+	tests/module/cache-t tests/module/expired-t tests/module/no-cache-t \
+	tests/module/stacked-t tests/module/password-t			    \
+	tests/pam-util/args-t tests/pam-util/fakepam-t			    \
+	tests/pam-util/logging-t tests/pam-util/options-t		    \
+	tests/pam-util/vector-t tests/portable/asprintf-t		    \
+	tests/portable/mkstemp-t tests/portable/snprintf-t		    \
+	tests/portable/strlcat-t tests/portable/strlcpy-t		    \
 	tests/portable/strndup-t
 tests_runtests_CPPFLAGS = -DSOURCE='"$(abs_top_srcdir)/tests"' \
 	-DBUILD='"$(abs_top_builddir)/tests"'
@@ -102,6 +102,8 @@ MODULE_OBJECTS = account.lo auth.lo cache.lo context.lo options.lo	\
 	pam-util/libpamutil.la tests/fakepam/libfakepam.a
 
 # The test programs themselves.
+tests_module_bad_authtok_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
+	portable/libportable.la $(KRB5_LIBS)
 tests_module_basic_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
 	portable/libportable.la $(KRB5_LIBS)
 tests_module_cache_cleanup_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
