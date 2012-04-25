@@ -10,7 +10,7 @@
  * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <rra@stanford.edu>
- * Copyright 2011
+ * Copyright 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -86,9 +86,9 @@ converse(int num_msg, const struct pam_message **msg,
         /* Be sure everything matches and return the response, if any. */
         prompt = &prompts->prompts[prompts->current];
         is_int(prompt->style, msg[i]->msg_style, "style of prompt %lu",
-               (unsigned long) prompts->current);
+               (unsigned long) prompts->current + 1);
         is_string(prompt->prompt, message, "value of prompt %lu",
-                  (unsigned long) prompts->current);
+                  (unsigned long) prompts->current + 1);
         free(message);
         prompts->current++;
         if (prompt->style == msg[i]->msg_style && prompt->response != NULL) {
@@ -125,7 +125,7 @@ check_output(const struct output *wanted, const struct output *seen)
     } else if (seen == NULL) {
         for (i = 0; i < wanted->count; i++)
             is_string(wanted->strings[i], NULL, "output line %lu",
-                      (unsigned long) i);
+                      (unsigned long) i + 1);
     } else {
         for (i = 0; i < wanted->count && i < seen->count; i++) {
             length = strlen(wanted->strings[i]);
@@ -146,12 +146,12 @@ check_output(const struct output *wanted, const struct output *seen)
                 seen->strings[i][length - 2] = '\0';
             }
             is_string(wanted->strings[i], seen->strings[i], "output line %lu",
-                      (unsigned long) i);
+                      (unsigned long) i + 1);
         }
         if (wanted->count > seen->count)
             for (i = seen->count; i < wanted->count; i++)
                 is_string(wanted->strings[i], NULL, "output line %lu",
-                          (unsigned long) i);
+                          (unsigned long) i + 1);
         else if (seen->count > wanted->count) {
             for (i = wanted->count; i < seen->count; i++)
                 diag("unexpected: %s", seen->strings[i]);
