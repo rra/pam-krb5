@@ -223,7 +223,7 @@ kerberos_cleanup(void)
             free(config->principal);
             free(config->cache);
         }
-        if (config->principal != NULL) {
+        if (config->userprinc != NULL) {
             free(config->userprinc);
             free(config->username);
             free(config->password);
