@@ -80,6 +80,18 @@ main(void)
     config.newpass = krbconf->password;
     run_script("data/scripts/password/no-banner-expose", &config);
 
+    /* Test use_authtok. */
+    config.password = krbconf->password;
+    config.newpass = NULL;
+    config.authtok = newpass;
+    run_script("data/scripts/password/authtok", &config);
+
+    /* Test use_authtok with force_first_pass. */
+    config.password = NULL;
+    config.authtok = krbconf->password;
+    config.oldauthtok = newpass;
+    run_script("data/scripts/password/authtok-force", &config);
+
     free(newpass);
     return 0;
 }
