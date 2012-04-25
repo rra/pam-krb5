@@ -275,15 +275,12 @@ k5login_password_auth(struct pam_args *args, krb5_creds *creds,
      * and assume ctx->princ is already set properly.
      */
     pwd = pam_modutil_getpwnam(args->pamh, ctx->name);
-    if (pwd != NULL) {
-        len = strlen(pwd->pw_dir) + strlen("/.k5login");
-        filename = malloc(len + 1);
-    }
-    if (filename != NULL) {
-        strncpy(filename, pwd->pw_dir, len);
-        filename[len] = '\0';
-        strncat(filename, "/.k5login", len - strlen(pwd->pw_dir));
-    }
+    if (pwd != NULL)
+        if (asprintf(&filename, "%s/.k5login", pwd->pw_dir) < 0) {
+            putil_crit(args, "malloc failure: %s", strerror(errno));
+            *retval = errno;
+            return PAM_AUTH_ERR;
+        }
     if (pwd == NULL || filename == NULL || access(filename, R_OK) != 0) {
         *retval = krb5_get_init_creds_password(ctx->context, creds,
                      ctx->princ, pass, pamk5_prompter_krb5, args, 0,
@@ -359,6 +356,7 @@ fail:
     fclose(k5login);
     return PAM_AUTH_ERR;
 }
+
 
 /*
  * Authenticate using an alternative principal mapping.

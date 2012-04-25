@@ -257,18 +257,16 @@ pamk5_prompter_krb5(krb5_context context UNUSED, void *data, const char *name,
     /* pam_prompts is an index into msg and a count when we're done. */
     pam_prompts = 0;
     if (name != NULL && !args->silent) {
-       msg[pam_prompts]->msg = malloc(strlen(name) + 1);
-       if (msg[pam_prompts]->msg == NULL)
-           goto cleanup;
-       strcpy((char *) msg[pam_prompts]->msg, name);
-       msg[pam_prompts]->msg_style = PAM_TEXT_INFO;
-       pam_prompts++;
-    }
-    if (banner != NULL && !args->silent) {
-        msg[pam_prompts]->msg = malloc(strlen(banner) + 1);
+        msg[pam_prompts]->msg = strdup(name);
         if (msg[pam_prompts]->msg == NULL)
             goto cleanup;
-        strcpy((char *) msg[pam_prompts]->msg, banner);
+        msg[pam_prompts]->msg_style = PAM_TEXT_INFO;
+        pam_prompts++;
+    }
+    if (banner != NULL && !args->silent) {
+        msg[pam_prompts]->msg = strdup(banner);
+        if (msg[pam_prompts]->msg == NULL)
+            goto cleanup;
         msg[pam_prompts]->msg_style = PAM_TEXT_INFO;
         pam_prompts++;
     }
