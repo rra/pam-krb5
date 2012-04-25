@@ -56,10 +56,10 @@ main(void)
     config.newpass = newpass;
     run_script("data/scripts/password/basic", &config);
 
-    /* Change the password back. */
+    /* Change the password back and test expose-account. */
     config.password = newpass;
     config.newpass = krbconf->password;
-    run_script("data/scripts/password/basic", &config);
+    run_script("data/scripts/password/expose", &config);
 
     /*
      * Test two banner settings by changing the password and then changing it
@@ -71,6 +71,14 @@ main(void)
     config.password = newpass;
     config.newpass = krbconf->password;
     run_script("data/scripts/password/no-banner", &config);
+
+    /* Do the same, but with expose_account set as well. */
+    config.password = krbconf->password;
+    config.newpass = newpass;
+    run_script("data/scripts/password/banner-expose", &config);
+    config.password = newpass;
+    config.newpass = krbconf->password;
+    run_script("data/scripts/password/no-banner-expose", &config);
 
     free(newpass);
     return 0;
