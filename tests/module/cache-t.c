@@ -164,6 +164,12 @@ main(void)
     unlink(k5login);
     free(k5login);
 
+    /* Test search_k5login when no .k5login file exists. */
+    pwd.pw_name = krbconf->username;
+    config.user = krbconf->username;
+    diag("testing search_k5login with no .k5login file");
+    run_script("data/scripts/cache/search-k5login", &config);
+
     free(pwd.pw_dir);
     return 0;
 }
