@@ -113,6 +113,11 @@ main(void)
     kerberos_expire_password(krbconf->userprinc, now);
     run_script("data/scripts/expired/defer-debug", &config);
 
+#else /* !HAVE_KRB5_GET_INIT_CREDS_OPT_SET_CHANGE_PASSWORD_PROMPT */
+
+    /* Mention that we skipped something for the record. */
+    skip("cannot disable library password prompting");
+
 #endif /* HAVE_KRB5_GET_INIT_CREDS_OPT_SET_CHANGE_PASSWORD_PROMPT */
 
     free(date);
