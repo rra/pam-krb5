@@ -42,6 +42,11 @@ Functionality:
    good to stay consistent with that protocol if possible.  (PAMKRB-10,
    Debian Bug#399001)
 
+ * If using alt_auth and the password on the alternative principal is
+   expired, we don't do proper expired password handling because we don't
+   change the principal in the context.  We also don't log the correct
+   principal as which we're trying to authenticate.
+
 Code Cleanup:
 
  * The PKINIT code for Heimdal involves too many #ifdefs right now for my
