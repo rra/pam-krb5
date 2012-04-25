@@ -73,7 +73,7 @@ warnings:
 # The bits below are for the test suite, not for the main package.
 check_PROGRAMS = tests/runtests tests/module/basic-t		\
 	tests/module/cache-cleanup-t tests/module/cache-t	\
-	tests/module/expired-t tests/module/no-cache-t		\
+	tests/module/expired-t tests/module/stacked-t		\
 	tests/module/password-t tests/pam-util/args-t		\
 	tests/pam-util/fakepam-t tests/pam-util/logging-t	\
 	tests/pam-util/options-t tests/pam-util/vector-t	\
@@ -110,9 +110,9 @@ tests_module_cache_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
 tests_module_expired_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a	\
 	portable/libportable.la $(KADM5CLNT_LDFLAGS) $(KADM5CLNT_LIBS)	\
 	$(KRB5_LIBS)
-tests_module_no_cache_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
-	portable/libportable.la $(KRB5_LIBS)
 tests_module_password_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
+	portable/libportable.la $(KRB5_LIBS)
+tests_module_stacked_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
 	portable/libportable.la $(KRB5_LIBS)
 tests_pam_util_args_t_LDADD = pam-util/libpamutil.la	\
 	tests/fakepam/libfakepam.a tests/tap/libtap.a	\

@@ -1,9 +1,10 @@
 /*
- * Authentication tests for the pam-krb5 module without a ticket cache.
+ * Authentication tests for the pam-krb5 module with an existing AUTHTOK.
  *
- * This test case includes all tests that require Kerberos to be configured
- * and a username and password available, but which don't write a ticket
- * cache (which requires additional work to test the cache ownership).
+ * This test case includes tests that require Kerberos to be configured and a
+ * username and password available and that run with AUTHTOK already set, but
+ * which don't write a ticket cache (which requires additional work to test
+ * the cache ownership).
  *
  * Written by Russ Allbery <rra@stanford.edu>
  * Copyright 2011, 2012
@@ -42,7 +43,7 @@ main(void)
     kerberos_generate_conf("bogus.example.com");
 
     plan_lazy();
-    run_script_dir("data/scripts/no-cache", &config);
+    run_script_dir("data/scripts/stacked", &config);
 
     return 0;
 }
