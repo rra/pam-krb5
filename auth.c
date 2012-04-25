@@ -575,7 +575,6 @@ pamk5_password_auth(struct pam_args *args, const char *service,
     struct context *ctx;
     krb5_get_init_creds_opt *opts = NULL;
     int retval, retry;
-    int success = PAM_AUTH_ERR;
     bool creds_valid = false;
     int do_alt = 1;
     int do_only_alt = 0;
@@ -713,8 +712,7 @@ pamk5_password_auth(struct pam_args *args, const char *service,
          */
         if (args->config->alt_auth_map != NULL && do_alt) {
             retval = alt_password_auth(args, *creds, opts, service, pass);
-            success = (retval == 0) ? PAM_SUCCESS : PAM_AUTH_ERR;
-            if (success == PAM_SUCCESS)
+            if (retval == 0)
                 break;
 
             /*
@@ -736,15 +734,15 @@ pamk5_password_auth(struct pam_args *args, const char *service,
             }
         }
         if (!do_only_alt) {
-            if (args->config->search_k5login) {
+            if (args->config->search_k5login)
                 retval = k5login_password_auth(args, *creds, opts, service,
                              pass);
-            } else {
+            else
                 retval = krb5_get_init_creds_password(ctx->context, *creds,
                              ctx->princ, pass, pamk5_prompter_krb5, args, 0,
                              (char *) service, opts);
-            }
-            success = (retval == 0) ? PAM_SUCCESS : PAM_AUTH_ERR;
+            if (retval != 0)
+                putil_debug_krb5(args, retval, "krb5_get_init_creds_password");
         }
 
         /*
@@ -766,20 +764,14 @@ pamk5_password_auth(struct pam_args *args, const char *service,
 
         /*
          * If we succeeded, we're done.  Otherwise, clear the password and
-         * then see if we should try again after prompting for a password.  If
-         * we failed, make sure retval is not 0 out of paranoia, since later
-         * on all we care about is retval.
+         * then see if we should try again after prompting for a password.
          */
-        if (success == PAM_SUCCESS)
+        if (retval == 0) {
+            creds_valid = true;
             break;
-        else if (retval == 0)
-            retval = PAM_SERVICE_ERR;
+        }
         pass = NULL;
     } while (retry && retval == KRB5KRB_AP_ERR_BAD_INTEGRITY);
-    if (retval != 0)
-        putil_debug_krb5(args, retval, "krb5_get_init_creds_password");
-    else
-        creds_valid = true;
 
 done:
     /*
