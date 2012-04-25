@@ -247,16 +247,13 @@ set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
  * Read through each line that parses correctly as a principal and use the
  * provided password to try to authenticate as that user.  If at any point we
  * succeed, fill out creds, set princ to the successful principal in the
- * context, and return PAM_SUCCESS.  Otherwise, return PAM_AUTH_ERR for a
- * general authentication error or PAM_SERVICE_ERR for a system error.
- *
- * If PAM_AUTH_ERR is returned, retval will be filled in with the Kerberos
- * error if available, 0 otherwise.
+ * context, and return 0.  Otherwise, return either a Kerberos error code or
+ * errno for a system error.
  */
-static int
+static krb5_error_code
 k5login_password_auth(struct pam_args *args, krb5_creds *creds,
                       krb5_get_init_creds_opt *opts, const char *service,
-                      char *pass, int *retval)
+                      char *pass)
 {
     struct context *ctx = args->config->ctx;
     char *filename = NULL;
@@ -265,7 +262,7 @@ k5login_password_auth(struct pam_args *args, krb5_creds *creds,
     FILE *k5login;
     struct passwd *pwd;
     struct stat st;
-    int k5_errno;
+    krb5_error_code k5_errno, retval;
     krb5_principal princ;
 
     /*
@@ -278,14 +275,13 @@ k5login_password_auth(struct pam_args *args, krb5_creds *creds,
     if (pwd != NULL)
         if (asprintf(&filename, "%s/.k5login", pwd->pw_dir) < 0) {
             putil_crit(args, "malloc failure: %s", strerror(errno));
-            *retval = errno;
-            return PAM_AUTH_ERR;
+            return errno;
         }
     if (pwd == NULL || filename == NULL || access(filename, R_OK) != 0) {
-        *retval = krb5_get_init_creds_password(ctx->context, creds,
-                     ctx->princ, pass, pamk5_prompter_krb5, args, 0,
-                     (char *) service, opts);
-        return (*retval == 0) ? PAM_SUCCESS : PAM_AUTH_ERR;
+        if (filename != NULL)
+            free(filename);
+        return krb5_get_init_creds_password(ctx->context, creds, ctx->princ,
+                   pass, pamk5_prompter_krb5, args, 0, (char *) service, opts);
     }
 
     /*
@@ -295,17 +291,17 @@ k5login_password_auth(struct pam_args *args, krb5_creds *creds,
      */
     k5login = fopen(filename, "r");
     if (k5login == NULL) {
-        *retval = errno;
+        retval = errno;
         free(filename);
-        return PAM_AUTH_ERR;
+        return retval;
     }
     free(filename);
     if (fstat(fileno(k5login), &st) != 0) {
-        *retval = errno;
+        retval = errno;
         goto fail;
     }
     if (st.st_uid != 0 && (st.st_uid != pwd->pw_uid)) {
-        *retval = EACCES;
+        retval = EACCES;
         putil_err(args, "unsafe .k5login ownership (saw %lu, expected %lu)",
                   (unsigned long) st.st_uid, (unsigned long) pwd->pw_uid);
         goto fail;
@@ -317,7 +313,7 @@ k5login_password_auth(struct pam_args *args, krb5_creds *creds,
      * principal.  Assume an invalid password error if there are no valid
      * lines in .k5login.
      */
-    *retval = KRB5KRB_AP_ERR_BAD_INTEGRITY;
+    retval = KRB5KRB_AP_ERR_BAD_INTEGRITY;
     while (fgets(line, BUFSIZ, k5login) != NULL) {
         len = strlen(line);
         if (line[len - 1] != '\n') {
@@ -334,27 +330,27 @@ k5login_password_auth(struct pam_args *args, krb5_creds *creds,
             continue;
 
         /* Now, attempt to authenticate as that user. */
-        *retval = krb5_get_init_creds_password(ctx->context, creds,
-                     princ, pass, pamk5_prompter_krb5, args, 0,
-                     (char *) service, opts);
+        retval = krb5_get_init_creds_password(ctx->context, creds, princ,
+                    pass, pamk5_prompter_krb5, args, 0, (char *) service,
+                    opts);
 
         /*
          * If that worked, update ctx->princ and return success.  Otherwise,
          * continue on to the next line.
          */
-        if (*retval == 0) {
+        if (retval == 0) {
             if (ctx->princ != NULL)
                 krb5_free_principal(ctx->context, ctx->princ);
             ctx->princ = princ;
             fclose(k5login);
-            return PAM_SUCCESS;
+            return 0;
         }
         krb5_free_principal(ctx->context, princ);
     }
 
 fail:
     fclose(k5login);
-    return PAM_AUTH_ERR;
+    return retval;
 }
 
 
@@ -743,14 +739,14 @@ pamk5_password_auth(struct pam_args *args, const char *service,
         }
         if (!do_only_alt) {
             if (args->config->search_k5login) {
-                success = k5login_password_auth(args, *creds, opts, service,
-                              pass, &retval);
+                retval = k5login_password_auth(args, *creds, opts, service,
+                             pass);
             } else {
                 retval = krb5_get_init_creds_password(ctx->context, *creds,
-                              ctx->princ, pass, pamk5_prompter_krb5, args, 0,
-                              (char *) service, opts);
-                success = (retval == 0) ? PAM_SUCCESS : PAM_AUTH_ERR;
+                             ctx->princ, pass, pamk5_prompter_krb5, args, 0,
+                             (char *) service, opts);
             }
+            success = (retval == 0) ? PAM_SUCCESS : PAM_AUTH_ERR;
         }
 
         /*

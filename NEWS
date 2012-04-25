@@ -5,6 +5,9 @@ pam-krb5 4.6 (unreleased)
     Fix initialization of time values in the module configuration on
     platforms (like S/390X) where krb5_deltat is not equivalent to long.
 
+    Close a memory leak when search_k5login is set but the user has no
+    .k5login file.
+
     Update to rra-c-util 4.3:
 
     * Replacement strndup now works with non-nul-terminated strings.
