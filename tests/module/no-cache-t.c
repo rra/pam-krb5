@@ -33,6 +33,8 @@ main(void)
     memset(&config, 0, sizeof(config));
     config.user = krbconf->userprinc;
     config.password = krbconf->password;
+    config.extra[0] = krbconf->username;
+    config.extra[1] = "bogus.example.com";
 
     /*
      * Generate a testing krb5.conf file with a nonexistent default realm so
