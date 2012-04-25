@@ -115,6 +115,12 @@ pamk5_map_principal(struct pam_args *args, const char *username,
             offset++;
         }
     }
+    if (realm != NULL) {
+        (*principal)[offset] = '@';
+        offset++;
+        memcpy(*principal + offset, realm, strlen(realm));
+        offset += strlen(realm);
+    }
     (*principal)[offset] = '\0';
     return 0;
 

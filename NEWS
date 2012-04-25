@@ -2,6 +2,10 @@
 
 pam-krb5 4.6 (unreleased)
 
+    Fix alt_auth_map support to preserve the realm of the authentication
+    identity when forming the alternate authentication principal, matching
+    the documentation.
+
     Fix initialization of time values in the module configuration on
     platforms (like S/390X) where krb5_deltat is not equivalent to long.
 

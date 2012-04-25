@@ -197,9 +197,11 @@ configuration that was turned on in F<krb5.conf>.
 
 This functions similarly to the I<search_k5login> option.  The <format>
 argument is used as the authentication Kerberos principal, with any C<%s>
-in <format> replaced with the username.  If the username contains an C<@>,
-only the part of the username before the realm is used to replace C<%s>
-and the realm is appended to the result.  There is no quote removal.
+in <format> replaced with the username.  <format> should not contain a
+realm; instead, set the I<realm> option to change the default realm.  If
+the username contains an C<@>, only the part of the username before the
+realm is used to replace C<%s> and the realm of the username is appended
+to the result.  There is no quote removal.
 
 If this option is present, the default behavior is to try this alternate
 principal first and then fall back to the standard behavior if it fails.
