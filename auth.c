@@ -771,7 +771,10 @@ pamk5_password_auth(struct pam_args *args, const char *service,
             break;
         }
         pass = NULL;
-    } while (retry && retval == KRB5KRB_AP_ERR_BAD_INTEGRITY);
+    } while (retry
+             && (retval == KRB5KRB_AP_ERR_BAD_INTEGRITY
+                 || retval == KRB5KRB_AP_ERR_MODIFIED
+                 || retval == KRB5KDC_ERR_PREAUTH_FAILED));
 
 done:
     /*
