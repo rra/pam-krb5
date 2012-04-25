@@ -360,30 +360,25 @@ fail:
  * Create a principal based on the principal mapping and the user, and use the
  * provided password to try to authenticate as that user.  If we succeed, fill
  * out creds, set princ to the successful principal in the context, and return
- * PAM_SUCCESS.  Otherwise, return PAM_AUTH_ERR for a general authentication
- * error or PAM_SERVICE_ERR for a system error.
- *
- * If PAM_AUTH_ERR is returned, retval will be filled in with the Kerberos
- * error if available, 0 otherwise.
+ * 0.  Otherwise, return a Kerberos error code or an errno value.
  */
-static int
+static krb5_error_code
 alt_password_auth(struct pam_args *args, krb5_creds *creds,
                   krb5_get_init_creds_opt *opts, const char *service,
-                  char *pass, int *retval)
+                  char *pass)
 {
     struct context *ctx = args->config->ctx;
     char *kuser;
     krb5_principal princ;
-    int ret, k5_errno;
+    krb5_error_code retval;
 
-    ret = pamk5_map_principal(args, ctx->name, &kuser);
-    if (ret != PAM_SUCCESS)
-        return ret;
-    k5_errno = krb5_parse_name(ctx->context, kuser, &princ);
-    if (k5_errno != 0) {
-        *retval = k5_errno;
+    retval = pamk5_map_principal(args, ctx->name, &kuser);
+    if (retval != 0)
+        return retval;
+    retval = krb5_parse_name(ctx->context, kuser, &princ);
+    if (retval != 0) {
         free(kuser);
-        return PAM_AUTH_ERR;
+        return retval;
     }
     free(kuser);
 
@@ -391,27 +386,30 @@ alt_password_auth(struct pam_args *args, krb5_creds *creds,
     if (args->debug) {
         char *principal;
 
-        k5_errno = krb5_unparse_name(ctx->context, princ, &principal);
-        if (k5_errno != 0)
-            putil_debug_krb5(args, k5_errno, "krb5_unparse_name failed");
+        retval = krb5_unparse_name(ctx->context, princ, &principal);
+        if (retval != 0)
+            putil_debug_krb5(args, retval, "krb5_unparse_name failed");
         else {
             putil_debug(args, "mapping %s to %s", ctx->name, principal);
             free(principal);
         }
     }
 
-    /* Now, attempt to authenticate as that user. */
-    *retval = krb5_get_init_creds_password(ctx->context, creds, princ, pass,
-                 pamk5_prompter_krb5, args, 0, (char *) service, opts);
-    if (*retval != 0) {
-        putil_debug_krb5(args, *retval, "alternate authentication failed");
-        return PAM_AUTH_ERR;
+    /*
+     * Now, attempt to authenticate as that user.  On success, save the
+     * principal.
+     */
+    retval = krb5_get_init_creds_password(ctx->context, creds, princ, pass,
+                pamk5_prompter_krb5, args, 0, (char *) service, opts);
+    if (retval != 0) {
+        putil_debug_krb5(args, retval, "alternate authentication failed");
+        return retval;
     } else {
         putil_debug(args, "alternate authentication successful");
         if (ctx->princ != NULL)
             krb5_free_principal(ctx->context, ctx->princ);
         ctx->princ = princ;
-        return PAM_SUCCESS;
+        return 0;
     }
 }
 
@@ -714,8 +712,8 @@ pamk5_password_auth(struct pam_args *args, const char *service,
          * attempted.
          */
         if (args->config->alt_auth_map != NULL && do_alt) {
-            success = alt_password_auth(args, *creds, opts, service, pass,
-                          &retval);
+            retval = alt_password_auth(args, *creds, opts, service, pass);
+            success = (retval == 0) ? PAM_SUCCESS : PAM_AUTH_ERR;
             if (success == PAM_SUCCESS)
                 break;
 

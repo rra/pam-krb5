@@ -4,7 +4,7 @@
  * Some general utility functions used by multiple PAM groups that aren't
  * associated with any particular chunk of functionality.
  *
- * Copyright 2011
+ * Copyright 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  * Copyright 2005, 2006, 2007, 2009 Russ Allbery <rra@stanford.edu>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
@@ -18,6 +18,7 @@
 #include <portable/pam.h>
 #include <portable/system.h>
 
+#include <errno.h>
 #include <pwd.h>
 
 #include <internal.h>
@@ -53,10 +54,10 @@ pamk5_should_ignore(struct pam_args *args, PAM_CONST char *username)
 }
 
 /*
- * Map the user to a Kerberos principal according to alt_auth_map.  Returns
- * PAM_SUCCESS on success, storing the mapped principal name in newly
- * allocated memory in principal.  The caller is responsible for freeing.
- * Returns PAM_SERVICE_ERROR on any error.
+ * Map the user to a Kerberos principal according to alt_auth_map.  Returns 0
+ * on success, storing the mapped principal name in newly allocated memory in
+ * principal.  The caller is responsible for freeing.  Returns an errno value
+ * on any error.
  */
 int
 pamk5_map_principal(struct pam_args *args, const char *username,
@@ -66,10 +67,11 @@ pamk5_map_principal(struct pam_args *args, const char *username,
     char *realm;
     const char *i;
     size_t needed, offset;
+    int oerrno;
 
     /* Makes no sense if alt_auth_map isn't set. */
     if (args->config->alt_auth_map == NULL)
-        return PAM_SERVICE_ERR;
+        return EINVAL;
 
     /* Need to split off the realm if it is present. */
     realm = strchr(username, '@');
@@ -78,7 +80,7 @@ pamk5_map_principal(struct pam_args *args, const char *username,
     else {
         user = strdup(username);
         if (user == NULL)
-            return PAM_SERVICE_ERR;
+            return errno;
         realm = strchr(user, '@');
         if (realm == NULL)
             goto fail;
@@ -114,12 +116,15 @@ pamk5_map_principal(struct pam_args *args, const char *username,
         }
     }
     (*principal)[offset] = '\0';
-    return PAM_SUCCESS;
+    return 0;
 
 fail:
-    if (user != NULL && user != username)
+    if (user != NULL && user != username) {
+        oerrno = errno;
         free(user);
-    return PAM_SERVICE_ERR;
+        errno = oerrno;
+    }
+    return errno;
 }
 
 
@@ -156,7 +161,7 @@ pamk5_authorized(struct pam_args *args)
         char *authed;
         krb5_principal princ;
 
-        if (pamk5_map_principal(args, ctx->name, &mapped) != PAM_SUCCESS) {
+        if (pamk5_map_principal(args, ctx->name, &mapped) != 0) {
             putil_err(args, "cannot map principal name");
             return PAM_SERVICE_ERR;
         }
