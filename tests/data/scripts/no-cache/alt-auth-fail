@@ -1,8 +1,8 @@
 # Test alternative authentication principal.  -*- conf -*-
 
 [options]
-    auth    = alt_auth_map=%s/unknown-user no_ccache
-    account = alt_auth_map=%s/unknown-user no_ccache
+    auth    = alt_auth_map=%%s/unknown-user no_ccache
+    account = alt_auth_map=%%s/unknown-user no_ccache
     session = no_ccache
 
 [run]

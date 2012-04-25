@@ -1,8 +1,8 @@
 # Test alternative authentication principal with debug logging.  -*- conf -*-
 
 [options]
-    auth    = alt_auth_map=%s/unknown-user no_ccache debug
-    account = alt_auth_map=%s/unknown-user no_ccache debug
+    auth    = alt_auth_map=%%s/unknown-user no_ccache debug
+    account = alt_auth_map=%%s/unknown-user no_ccache debug
     session = no_ccache debug
 
 [run]
