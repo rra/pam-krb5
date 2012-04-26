@@ -12,6 +12,9 @@ pam-krb5 4.6 (unreleased)
     Close a memory leak when search_k5login is set but the user has no
     .k5login file.
 
+    Suppress bogus error messages about unknown option for the realm
+    option.  The option was being parsed and honored despite the error.
+
     Retry authentication under try_first_pass on several other errors in
     addition to decrypt integrity check errors to handle a wider array of
     possible "password incorrect" error messages from the KDC.

@@ -66,6 +66,7 @@ struct pam_config {
     char *fast_ccache;          /* Cache containing armor ticket. */
     bool forwardable;           /* Obtain forwardable tickets. */
     char *keytab;               /* Keytab for credential validation. */
+    char *realm;                /* Default realm for Kerberos. */
     krb5_deltat renew_lifetime; /* Renewable lifetime of credentials. */
     krb5_deltat ticket_lifetime; /* Lifetime of credentials. */
 

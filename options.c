@@ -55,6 +55,7 @@ static const struct option options[] = {
     { K(pkinit_user),        true,  STRING (NULL)  },
     { K(preauth_opt),        true,  LIST   (NULL)  },
     { K(prompt_principal),   true,  BOOL   (false) },
+    { K(realm),              false, STRING (NULL)  },
     { K(renew_lifetime),     true,  TIME   (0)     },
     { K(retain_after_close), true,  BOOL   (false) },
     { K(search_k5login),     true,  BOOL   (false) },
@@ -92,6 +93,10 @@ pamk5_init(pam_handle_t *pamh, int flags, int argc, const char **argv)
      * Do an initial scan to see if the realm is already set in our options.
      * If so, make sure that's set before we start loading option values,
      * since it affects what comes out of krb5.conf.
+     *
+     * We will then ignore args->config->realm, set later by option parsing,
+     * in favor of using args->realm extracted here.  However, the latter must
+     * exist to avoid throwing unknown option errors.
      */
     for (i = 0; i < argc; i++) {
         if (strncmp(argv[i], "realm=", 6) != 0)
