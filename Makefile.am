@@ -74,7 +74,7 @@ warnings:
 check_PROGRAMS = tests/runtests tests/module/bad-authtok-t		    \
 	tests/module/basic-t tests/module/cache-cleanup-t		    \
 	tests/module/cache-t tests/module/expired-t tests/module/no-cache-t \
-	tests/module/stacked-t tests/module/password-t			    \
+	tests/module/password-t tests/module/realm-t tests/module/stacked-t \
 	tests/pam-util/args-t tests/pam-util/fakepam-t			    \
 	tests/pam-util/logging-t tests/pam-util/options-t		    \
 	tests/pam-util/vector-t tests/portable/asprintf-t		    \
@@ -116,6 +116,8 @@ tests_module_expired_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a	\
 tests_module_no_cache_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
 	portable/libportable.la $(KRB5_LIBS)
 tests_module_password_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
+	portable/libportable.la $(KRB5_LIBS)
+tests_module_realm_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
 	portable/libportable.la $(KRB5_LIBS)
 tests_module_stacked_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
 	portable/libportable.la $(KRB5_LIBS)

@@ -27,6 +27,7 @@
 /tests/module/expired-t
 /tests/module/no-cache-t
 /tests/module/password-t
+/tests/module/realm-t
 /tests/module/stacked-t
 /tests/pam-util/args-t
 /tests/pam-util/fakepam-t
