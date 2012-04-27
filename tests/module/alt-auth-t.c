@@ -59,6 +59,14 @@ main(void)
     run_script("data/scripts/alt-auth/only", &config);
 
     /*
+     * If the alternate account exists but the password is incorrect, we
+     * should not fall back to the regular account.  Test with debug so that
+     * we don't need two principals configured.
+     */
+    config.authtok = "bogus incorrect password";
+    run_script("data/scripts/alt-auth/force-fail-debug", &config);
+
+    /*
      * Add the password and make the user match our authentication principal,
      * and then test fallback to normal authentication when alternative
      * authentication fails.
