@@ -122,6 +122,8 @@ pamk5_map_principal(struct pam_args *args, const char *username,
         offset += strlen(realm);
     }
     (*principal)[offset] = '\0';
+    if (user != username)
+        free(user);
     return 0;
 
 fail:
@@ -183,8 +185,10 @@ pamk5_authorized(struct pam_args *args)
         if (retval != 0) {
             putil_err_krb5(args, retval,
                            "krb5_unparse_name on mapped principal failed");
+            krb5_free_principal(c, princ);
             return PAM_SERVICE_ERR;
         }
+        krb5_free_principal(c, princ);
         retval = krb5_unparse_name(c, ctx->princ, &authed);
         if (retval != 0) {
             putil_err_krb5(args, retval, "krb5_unparse_name failed");

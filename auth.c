@@ -403,6 +403,7 @@ alt_password_auth(struct pam_args *args, krb5_creds *creds,
                 pamk5_prompter_krb5, args, 0, (char *) service, opts);
     if (retval != 0) {
         putil_debug_krb5(args, retval, "alternate authentication failed");
+        krb5_free_principal(ctx->context, princ);
         return retval;
     } else {
         putil_debug(args, "alternate authentication successful");

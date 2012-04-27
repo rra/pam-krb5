@@ -12,6 +12,8 @@ pam-krb5 4.6 (unreleased)
     Close a memory leak when search_k5login is set but the user has no
     .k5login file.
 
+    Close several memory leaks in alt_auth_map support.
+
     Suppress bogus error messages about unknown option for the realm
     option.  The option was being parsed and honored despite the error.
 
