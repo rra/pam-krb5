@@ -379,6 +379,8 @@ kerberos_generate_conf(const char *realm)
     char *path;
     const char *argv[3];
 
+    if (tmpdir_conf != NULL)
+        kerberos_cleanup_conf();
     path = test_file_path("data/generate-krb5-conf");
     if (path == NULL)
         bail("cannot find generate-krb5-conf");

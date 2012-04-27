@@ -47,7 +47,6 @@ main(void)
     run_script("data/scripts/realm/pass-realm", &config);
 
     /* Switch to the correct realm, but set the wrong realm in PAM. */
-    kerberos_cleanup_conf();
     kerberos_generate_conf(krbconf->realm);
     config.extra[0] = "bogus.example.com";
     run_script("data/scripts/realm/fail-realm", &config);
