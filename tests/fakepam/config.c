@@ -322,9 +322,13 @@ expand_string(const char *template, const struct script_config *config)
                 length += strlen(uid);
                 break;
             case 'n':
+                if (config->newpass == NULL)
+                    bail("new password not set");
                 length += strlen(config->newpass);
                 break;
             case 'p':
+                if (config->password == NULL)
+                    bail("password not set");
                 length += strlen(config->password);
                 break;
             case 'u':
@@ -332,6 +336,8 @@ expand_string(const char *template, const struct script_config *config)
                 break;
             case '0': case '1': case '2': case '3': case '4':
             case '5': case '6': case '7': case '8': case '9':
+                if (config->extra[*p - '0'] == NULL)
+                    bail("extra script parameter %%%c not set", *p);
                 length += strlen(config->extra[*p - '0']);
                 break;
             case '*':
