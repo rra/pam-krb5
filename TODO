@@ -48,6 +48,11 @@ Functionality:
  * The alt_auth_map parsing to find realms doesn't take into account
    escaped @-signs and doesn't do proper principal parsing.
 
+ * Fix password expiration handling for the search_k5login and
+   alt_auth_map cases.  Right now, we may return expired password errors
+   that would trigger password expiration handling, which probably isn't
+   correct.
+
 Code Cleanup:
 
  * The PKINIT code for Heimdal involves too many #ifdefs right now for my
