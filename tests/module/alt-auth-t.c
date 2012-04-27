@@ -27,6 +27,7 @@ main(void)
 {
     struct script_config config;
     struct kerberos_config *krbconf;
+    char *user;
 
     /*
      * Load the Kerberos principal and password from a file, but set the
@@ -68,19 +69,35 @@ main(void)
 
     /*
      * Switch to our correct user (but wrong realm) realm to test username
-     * mapping.  The second test splits the username into two parts, one in
-     * the PAM configuration and one in the real username, so that we can test
-     * interpolation of the username when %s isn't the first token.
+     * mapping to a different realm.
      */
     config.authtok = krbconf->password;
     config.user = krbconf->username;
     config.extra[2] = krbconf->realm;
     run_script("data/scripts/alt-auth/username-map", &config);
+
+    /*
+     * Split the username into two parts, one in the PAM configuration and one
+     * in the real username, so that we can test interpolation of the username
+     * when %s isn't the first token.
+     */
     config.user = &krbconf->username[1];
-    config.extra[3] = bstrndup(krbconf->username, 1);
+    user = bstrndup(krbconf->username, 1);
+    config.extra[3] = user;
     run_script("data/scripts/alt-auth/username-map-prefix", &config);
-    free((char *) config.extra[3]);
+    free(user);
     config.extra[3] = NULL;
+
+    /*
+     * Ensure that we don't add the realm of the authentication username when
+     * the alt_auth_map already includes a realm.
+     */
+    basprintf(&user, "%s@foo.example.com", krbconf->username);
+    config.user = user;
+    diag("re-running username-map with fully-qualified PAM user");
+    run_script("data/scripts/alt-auth/username-map", &config);
+    free(user);
+    config.user = krbconf->username;
 
     /*
      * Add the password and make the user match our authentication principal,
@@ -92,6 +109,7 @@ main(void)
     config.extra[2] = krbconf->realm;
     run_script("data/scripts/alt-auth/fallback", &config);
     run_script("data/scripts/alt-auth/fallback-debug", &config);
+    run_script("data/scripts/alt-auth/fallback-realm", &config);
     run_script("data/scripts/alt-auth/force-fallback", &config);
     run_script("data/scripts/alt-auth/only-fail", &config);
 

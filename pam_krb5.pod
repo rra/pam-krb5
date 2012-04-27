@@ -197,11 +197,11 @@ configuration that was turned on in F<krb5.conf>.
 
 This functions similarly to the I<search_k5login> option.  The <format>
 argument is used as the authentication Kerberos principal, with any C<%s>
-in <format> replaced with the username.  <format> should not contain a
-realm; instead, set the I<realm> option to change the default realm.  If
-the username contains an C<@>, only the part of the username before the
-realm is used to replace C<%s> and the realm of the username is appended
-to the result.  There is no quote removal.
+in <format> replaced with the username.  If the username contains an C<@>,
+only the part of the username before the realm is used to replace C<%s>.
+If <format> contains a realm, it will be used; otherwise, the realm of the
+username (if any) will be appended to the result.  There is no quote
+removal.
 
 If this option is present, the default behavior is to try this alternate
 principal first and then fall back to the standard behavior if it fails.
@@ -213,6 +213,18 @@ authentication in programs like B<sudo>.  Most examples will look like:
 which attempts authentication as the root instance of the username first
 and then falls back to the regular username (but see I<force_alt_auth> and
 I<only_alt_auth>).
+
+This option also allows a cheap way to attempt authentication in an
+alternative realm first and then fall back to the primary realm.  A
+setting like:
+
+    alt_auth_map=%s@EXAMPLE.COM
+
+will attempt authentication in the EXAMPLE.COM realm first and then fall
+back on the local default realm.  This is more convenient than running the
+module multiple times with multiple default realms set with I<realm>, but
+it is very limited: only two realms can be tried, and the alternate realm
+is always tried first.
 
 This option can be set in F<krb5.conf>, although normally it doesn't make
 sense to do that; normally it is used in the PAM options of configuration

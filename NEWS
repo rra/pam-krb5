@@ -6,6 +6,14 @@ pam-krb5 4.6 (unreleased)
     identity when forming the alternate authentication principal, matching
     the documentation.
 
+    Document that the alt_auth_map format may contain a realm to force all
+    mapped principals to be in that realm.  In that case, don't add the
+    realm of the authentication identity.  Note that this can be used as a
+    simple way to attempt authentication in an alternate realm first and
+    then fall back to the local realm, although any complex attempt at
+    authentication in multiple realms should instead run the module
+    multiple times with different realm settings.
+
     Fix initialization of time values in the module configuration on
     platforms (like S/390X) where krb5_deltat is not equivalent to long.
 

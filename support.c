@@ -98,7 +98,7 @@ pamk5_map_principal(struct pam_args *args, const char *username,
             needed++;
         }
     }
-    if (realm != NULL)
+    if (realm != NULL && strchr(args->config->alt_auth_map, '@') == NULL)
         needed += 1 + strlen(realm);
     needed++;
     *principal = malloc(needed);
@@ -115,7 +115,7 @@ pamk5_map_principal(struct pam_args *args, const char *username,
             offset++;
         }
     }
-    if (realm != NULL) {
+    if (realm != NULL && strchr(args->config->alt_auth_map, '@') == NULL) {
         (*principal)[offset] = '@';
         offset++;
         memcpy(*principal + offset, realm, strlen(realm));
