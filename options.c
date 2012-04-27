@@ -219,6 +219,8 @@ pamk5_free(struct pam_args *args)
             free(config->pkinit_user);
         if (config->preauth_opt != NULL)
             vector_free(config->preauth_opt);
+        if (config->realm != NULL)
+            free(config->realm);
         free(args->config);
         args->config = NULL;
     }
