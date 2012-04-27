@@ -53,6 +53,8 @@ main(void)
     plan_lazy();
     run_script("data/scripts/alt-auth/basic", &config);
     run_script("data/scripts/alt-auth/basic-debug", &config);
+    run_script("data/scripts/alt-auth/fail", &config);
+    run_script("data/scripts/alt-auth/fail-debug", &config);
 
     /*
      * Add the password and make the user match our authentication principal,
