@@ -1,3 +1,4 @@
+module/alt-auth
 module/bad-authtok
 module/basic
 module/cache
