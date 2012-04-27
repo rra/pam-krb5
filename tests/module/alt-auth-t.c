@@ -55,6 +55,8 @@ main(void)
     run_script("data/scripts/alt-auth/basic-debug", &config);
     run_script("data/scripts/alt-auth/fail", &config);
     run_script("data/scripts/alt-auth/fail-debug", &config);
+    run_script("data/scripts/alt-auth/force", &config);
+    run_script("data/scripts/alt-auth/only", &config);
 
     /*
      * Add the password and make the user match our authentication principal,
@@ -66,6 +68,7 @@ main(void)
     config.extra[2] = krbconf->realm;
     run_script("data/scripts/alt-auth/fallback", &config);
     run_script("data/scripts/alt-auth/fallback-debug", &config);
+    run_script("data/scripts/alt-auth/force-fallback", &config);
 
     return 0;
 }
