@@ -34,10 +34,6 @@ main(void)
     config.user = krbconf->userprinc;
     config.password = krbconf->password;
 
-    /* %0 is the username and %1 is the realm, for alt_auth_map tests. */
-    config.extra[0] = krbconf->username;
-    config.extra[1] = krbconf->realm;
-
     /*
      * Generate a testing krb5.conf file with a nonexistent default realm so
      * that we can be sure that our principals will stay fully-qualified in

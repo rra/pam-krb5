@@ -17,13 +17,13 @@
 [output]
     DEBUG pam_sm_authenticate: entry
     DEBUG (user %u) attempting authentication as %u
-    DEBUG (user %u) mapping %u to %0/unknown-user@%1
+    DEBUG (user %u) mapping %u to %0/unknown-user@%2
     DEBUG (user %u) alternate authentication failed: %*
-    DEBUG (user %u) mapped user %0/unknown-user@%1 does not match principal %u
+    DEBUG (user %u) mapped user %0/unknown-user@%2 does not match principal %u
     INFO user %u authenticated as %u
     DEBUG pam_sm_authenticate: exit (success)
     DEBUG pam_sm_acct_mgmt: entry
-    DEBUG (user %u) mapped user %0/unknown-user@%1 does not match principal %u
+    DEBUG (user %u) mapped user %0/unknown-user@%2 does not match principal %u
     DEBUG pam_sm_acct_mgmt: exit (success)
     DEBUG pam_sm_open_session: entry
     DEBUG pam_sm_open_session: exit (success)
