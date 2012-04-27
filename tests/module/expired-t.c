@@ -116,7 +116,7 @@ main(void)
 #else /* !HAVE_KRB5_GET_INIT_CREDS_OPT_SET_CHANGE_PASSWORD_PROMPT */
 
     /* Mention that we skipped something for the record. */
-    skip("cannot disable library password prompting");
+    skip_block(4, "cannot disable library password prompting");
 
 #endif /* HAVE_KRB5_GET_INIT_CREDS_OPT_SET_CHANGE_PASSWORD_PROMPT */
 
