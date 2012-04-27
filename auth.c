@@ -354,67 +354,6 @@ fail:
 }
 
 
-/*
- * Authenticate using an alternative principal mapping.
- *
- * Create a principal based on the principal mapping and the user, and use the
- * provided password to try to authenticate as that user.  If we succeed, fill
- * out creds, set princ to the successful principal in the context, and return
- * 0.  Otherwise, return a Kerberos error code or an errno value.
- */
-static krb5_error_code
-alt_password_auth(struct pam_args *args, krb5_creds *creds,
-                  krb5_get_init_creds_opt *opts, const char *service,
-                  char *pass)
-{
-    struct context *ctx = args->config->ctx;
-    char *kuser;
-    krb5_principal princ;
-    krb5_error_code retval;
-
-    retval = pamk5_map_principal(args, ctx->name, &kuser);
-    if (retval != 0)
-        return retval;
-    retval = krb5_parse_name(ctx->context, kuser, &princ);
-    if (retval != 0) {
-        free(kuser);
-        return retval;
-    }
-    free(kuser);
-
-    /* Log the principal we're attempting to authenticate as. */
-    if (args->debug) {
-        char *principal;
-
-        retval = krb5_unparse_name(ctx->context, princ, &principal);
-        if (retval != 0)
-            putil_debug_krb5(args, retval, "krb5_unparse_name failed");
-        else {
-            putil_debug(args, "mapping %s to %s", ctx->name, principal);
-            free(principal);
-        }
-    }
-
-    /*
-     * Now, attempt to authenticate as that user.  On success, save the
-     * principal.
-     */
-    retval = krb5_get_init_creds_password(ctx->context, creds, princ, pass,
-                pamk5_prompter_krb5, args, 0, (char *) service, opts);
-    if (retval != 0) {
-        putil_debug_krb5(args, retval, "alternate authentication failed");
-        krb5_free_principal(ctx->context, princ);
-        return retval;
-    } else {
-        putil_debug(args, "alternate authentication successful");
-        if (ctx->princ != NULL)
-            krb5_free_principal(ctx->context, ctx->princ);
-        ctx->princ = princ;
-        return 0;
-    }
-}
-
-
 #if HAVE_KRB5_HEIMDAL && HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT
 /*
  * Attempt authentication via PKINIT.  Currently, this uses an API specific to
@@ -712,7 +651,7 @@ pamk5_password_auth(struct pam_args *args, const char *service,
          * attempted.
          */
         if (args->config->alt_auth_map != NULL && do_alt) {
-            retval = alt_password_auth(args, *creds, opts, service, pass);
+            retval = pamk5_alt_auth(args, service, opts, pass, *creds);
             if (retval == 0)
                 break;
 

@@ -178,11 +178,24 @@ krb5_error_code pamk5_prompter_krb5(krb5_context, void *data,
 /* Check the user with krb5_kuserok or the configured equivalent. */
 int pamk5_authorized(struct pam_args *);
 
-/* Map username to principal using alt_auth_map. */
-int pamk5_map_principal(struct pam_args *args, const char *, char **);
-
 /* Returns true if we should ignore this user (root or low UID). */
 int pamk5_should_ignore(struct pam_args *, PAM_CONST char *);
+
+/*
+ * alt_auth_map support.
+ *
+ * pamk5_alt_auth attempts an authentication to the given service with the
+ * given options and password and returns a Kerberos error code.  On success,
+ * the new credentials are stored in krb5_creds.
+ *
+ * pamk5_alt_auth_verify verifies that Kerberos credentials are authorized to
+ * access the account given the configured alt_auth_map and is meant to be
+ * called from pamk5_authorized.  It returns a PAM status code.
+ */
+krb5_error_code pamk5_alt_auth(struct pam_args *, const char *service,
+                               krb5_get_init_creds_opt *, char *pass,
+                               krb5_creds *);
+int pamk5_alt_auth_verify(struct pam_args *);
 
 /* Context management. */
 int pamk5_context_new(struct pam_args *);
