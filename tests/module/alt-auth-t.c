@@ -77,6 +77,7 @@ main(void)
     run_script("data/scripts/alt-auth/fallback", &config);
     run_script("data/scripts/alt-auth/fallback-debug", &config);
     run_script("data/scripts/alt-auth/force-fallback", &config);
+    run_script("data/scripts/alt-auth/only-fail", &config);
 
     return 0;
 }
