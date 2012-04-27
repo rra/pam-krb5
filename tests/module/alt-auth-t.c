@@ -67,6 +67,22 @@ main(void)
     run_script("data/scripts/alt-auth/force-fail-debug", &config);
 
     /*
+     * Switch to our correct user (but wrong realm) realm to test username
+     * mapping.  The second test splits the username into two parts, one in
+     * the PAM configuration and one in the real username, so that we can test
+     * interpolation of the username when %s isn't the first token.
+     */
+    config.authtok = krbconf->password;
+    config.user = krbconf->username;
+    config.extra[2] = krbconf->realm;
+    run_script("data/scripts/alt-auth/username-map", &config);
+    config.user = &krbconf->username[1];
+    config.extra[3] = bstrndup(krbconf->username, 1);
+    run_script("data/scripts/alt-auth/username-map-prefix", &config);
+    free((char *) config.extra[3]);
+    config.extra[3] = NULL;
+
+    /*
      * Add the password and make the user match our authentication principal,
      * and then test fallback to normal authentication when alternative
      * authentication fails.

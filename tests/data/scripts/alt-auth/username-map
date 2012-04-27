@@ -1,0 +1,12 @@
+# Test username mapping of alternative authentication principal.  -*- conf -*-
+
+[options]
+    auth    = alt_auth_map=%%s@%2 force_first_pass no_ccache
+    account = alt_auth_map=%%s@%2 no_ccache
+
+[run]
+    authenticate  = PAM_SUCCESS
+    acct_mgmt     = PAM_SUCCESS
+
+[output]
+    INFO user %u authenticated as %1
