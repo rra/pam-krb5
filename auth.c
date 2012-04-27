@@ -242,6 +242,58 @@ set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
 
 
 /*
+ * Authenticate via password.
+ *
+ * This is our basic authentication function.  Log what principal we're
+ * attempting to authenticate with and then attempt password authentication.
+ * Returns 0 on success or a Kerberos error on failure.
+ */
+static krb5_error_code
+password_auth(struct pam_args *args, krb5_creds *creds,
+              krb5_get_init_creds_opt *opts, const char *service, char *pass)
+{
+    struct context *ctx = args->config->ctx;
+    krb5_error_code retval;
+
+    /* Log the principal as which we're attempting authentication. */
+    if (args->debug) {
+        char *principal;
+
+        retval = krb5_unparse_name(ctx->context, ctx->princ, &principal);
+        if (retval != 0)
+            putil_debug_krb5(args, retval, "krb5_unparse_name failed");
+        else {
+            putil_debug(args, "attempting authentication as %s", principal);
+            free(principal);
+        }
+    }
+
+    /* Do thet authentication. */
+    retval = krb5_get_init_creds_password(ctx->context, creds, ctx->princ,
+                 pass, pamk5_prompter_krb5, args, 0, (char *) service, opts);
+
+    /*
+     * Heimdal may return an expired key error even if the password is
+     * incorrect.  To avoid accepting any incorrect password for the user
+     * in the fully correct password change case, confirm that we can get
+     * a password change ticket for the user using this password, and
+     * otherwise change the error to invalid password.
+     */
+    if (retval == KRB5KDC_ERR_KEY_EXP) {
+        retval = krb5_get_init_creds_password(ctx->context, creds,
+                     ctx->princ, pass, pamk5_prompter_krb5, args, 0,
+                     (char *) "kadmin/changepw", opts);
+        if (retval == 0) {
+            retval = KRB5KDC_ERR_KEY_EXP;
+            krb5_free_cred_contents(ctx->context, creds);
+            memset(creds, 0, sizeof(krb5_creds));
+        }
+    }
+    return retval;
+}
+
+
+/*
  * Authenticate by trying each principal in the .k5login file.
  *
  * Read through each line that parses correctly as a principal and use the
@@ -526,25 +578,15 @@ pamk5_password_auth(struct pam_args *args, const char *service,
         return PAM_SERVICE_ERR;
     ctx = args->config->ctx;
 
-    /* Fill in the principal to authenticate as. */
+    /*
+     * Fill in the default principal to authenticate as.  alt_auth_map or
+     * search_k5login may change this later.
+     */
     if (ctx->princ == NULL) {
         retval = parse_name(args);
         if (retval != 0) {
             putil_err_krb5(args, retval, "krb5_parse_name failed");
             return PAM_SERVICE_ERR;
-        }
-    }
-
-    /* Log the principal we're attempting to authenticate as. */
-    if (args->debug && !args->config->search_k5login) {
-        char *principal;
-
-        retval = krb5_unparse_name(ctx->context, ctx->princ, &principal);
-        if (retval != 0)
-            putil_debug_krb5(args, retval, "krb5_unparse_name failed");
-        else {
-            putil_debug(args, "attempting authentication as %s", principal);
-            free(principal);
         }
     }
 
@@ -678,28 +720,9 @@ pamk5_password_auth(struct pam_args *args, const char *service,
                 retval = k5login_password_auth(args, *creds, opts, service,
                              pass);
             else
-                retval = krb5_get_init_creds_password(ctx->context, *creds,
-                             ctx->princ, pass, pamk5_prompter_krb5, args, 0,
-                             (char *) service, opts);
+                retval = password_auth(args, *creds, opts, service, pass);
             if (retval != 0)
                 putil_debug_krb5(args, retval, "krb5_get_init_creds_password");
-        }
-
-        /*
-         * Heimdal may return an expired key error even if the password is
-         * incorrect.  To avoid accepting any incorrect password for the user
-         * in the fully correct password change case, confirm that we can get
-         * a password change ticket for the user using this password, and
-         * otherwise change the error to invalid password.
-         */
-        if (retval == KRB5KDC_ERR_KEY_EXP) {
-            retval = krb5_get_init_creds_password(ctx->context, *creds,
-                         ctx->princ, pass, pamk5_prompter_krb5, args, 0,
-                         (char *) "kadmin/changepw", opts);
-            if (retval == 0) {
-                retval = KRB5KDC_ERR_KEY_EXP;
-                creds_valid = true;
-            }
         }
 
         /*

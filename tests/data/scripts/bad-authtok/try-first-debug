@@ -18,6 +18,7 @@
     DEBUG pam_sm_authenticate: entry
     DEBUG (user %u) attempting authentication as %u
     DEBUG (user %u) krb5_get_init_creds_password: %*
+    DEBUG (user %u) attempting authentication as %u
     INFO user %u authenticated as %u
     DEBUG pam_sm_authenticate: exit (success)
     DEBUG pam_sm_acct_mgmt: entry

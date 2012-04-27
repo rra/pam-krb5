@@ -10,7 +10,6 @@
 
 [output]
     DEBUG pam_sm_authenticate: entry
-    DEBUG (user %u) attempting authentication as %u@%2
     DEBUG (user %u) mapping bogus-nonexistent-account to %1
     DEBUG (user %u) alternate authentication failed: %*
     NOTICE authentication failure; logname=%u uid=%i euid=%i tty= ruser= rhost=

@@ -10,9 +10,9 @@
 
 [output]
     DEBUG pam_sm_authenticate: entry
-    DEBUG (user %u) attempting authentication as %u@%2
     DEBUG (user %u) mapping bogus-nonexistent-account to bogus@%2
     DEBUG (user %u) alternate authentication failed: %*
+    DEBUG (user %u) attempting authentication as %u@%2
     DEBUG (user %u) krb5_get_init_creds_password: %*
     NOTICE authentication failure; logname=%u uid=%i euid=%i tty= ruser= rhost=
     DEBUG pam_sm_authenticate: exit (failure)

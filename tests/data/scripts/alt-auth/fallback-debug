@@ -16,9 +16,9 @@
 
 [output]
     DEBUG pam_sm_authenticate: entry
-    DEBUG (user %u) attempting authentication as %u
     DEBUG (user %u) mapping %u to %0/unknown-user@%2
     DEBUG (user %u) alternate authentication failed: %*
+    DEBUG (user %u) attempting authentication as %u
     DEBUG (user %u) mapped user %0/unknown-user@%2 does not match principal %u
     INFO user %u authenticated as %u
     DEBUG pam_sm_authenticate: exit (success)
