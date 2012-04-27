@@ -1,4 +1,4 @@
-# Test alternative authentication principal.  -*- conf -*-
+# Test forced alternative authentication with fallback.  -*- conf -*-
 
 [options]
     auth    = alt_auth_map=%%s/unknown-user force_alt_auth no_ccache

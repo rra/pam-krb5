@@ -1,4 +1,4 @@
-# Test simplest case of alternative authentication principal.  -*- conf -*-
+# Test forced alternative authentication principal.  -*- conf -*-
 
 [options]
     auth    = alt_auth_map=%1 force_alt_auth force_first_pass no_ccache
