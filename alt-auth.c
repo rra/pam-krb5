@@ -146,7 +146,7 @@ pamk5_alt_auth(struct pam_args *args, const char *service,
             putil_debug_krb5(args, retval, "krb5_unparse_name failed");
         else {
             putil_debug(args, "mapping %s to %s", ctx->name, principal);
-            free(principal);
+            krb5_free_unparsed_name(ctx->context, principal);
         }
     }
 
