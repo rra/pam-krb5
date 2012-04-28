@@ -193,7 +193,7 @@ int pamk5_should_ignore(struct pam_args *, PAM_CONST char *);
  * called from pamk5_authorized.  It returns a PAM status code.
  */
 krb5_error_code pamk5_alt_auth(struct pam_args *, const char *service,
-                               krb5_get_init_creds_opt *, char *pass,
+                               krb5_get_init_creds_opt *, const char *pass,
                                krb5_creds *);
 int pamk5_alt_auth_verify(struct pam_args *);
 

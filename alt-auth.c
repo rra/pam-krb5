@@ -120,7 +120,8 @@ fail:
  */
 krb5_error_code
 pamk5_alt_auth(struct pam_args *args, const char *service,
-               krb5_get_init_creds_opt *opts, char *pass, krb5_creds *creds)
+               krb5_get_init_creds_opt *opts, const char *pass,
+               krb5_creds *creds)
 {
     struct context *ctx = args->config->ctx;
     char *kuser;

@@ -242,6 +242,104 @@ set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
 
 
 /*
+ * Retrieve the existing password (authtok) stored in the PAM data if
+ * appropriate and if available.  We decide whether to retrieve it based on
+ * the PAM configuration, and also decied whether failing to retrieve it is a
+ * fatal error.  Takes the PAM arguments, the PAM authtok code to retrieve
+ * (may be PAM_AUTHTOK or PAM_OLDAUTHTOK depending on whether we're
+ * authenticating or changing the password), and the place to store the
+ * password.  Returns a PAM status code.
+ *
+ * If try_first_pass, use_first_pass, or force_first_pass is set, grab the old
+ * password (if set).  If force_first_pass is set, fail if the password is not
+ * already set.
+ *
+ * The empty password has to be handled separately, since the Kerberos
+ * libraries may treat it as equivalent to no password and prompt when we
+ * don't want them to.  We make the assumption here that the empty password is
+ * always invalid and is an authentication failure.
+ */
+static int
+maybe_retrieve_password(struct pam_args *args, int authtok, const char **pass)
+{
+    int status;
+    const bool try = args->config->try_first_pass;
+    const bool use = args->config->use_first_pass;
+    const bool force = args->config->force_first_pass;
+
+    *pass = NULL;
+    if (!try && !use && !force)
+        return PAM_SUCCESS;
+    status = pam_get_item(args->pamh, authtok, (PAM_CONST void **) pass);
+    if (*pass != NULL && **pass == '\0') {
+        if (use || force) {
+            putil_debug(args, "rejecting empty password");
+            return PAM_AUTH_ERR;
+        }
+        *pass = NULL;
+    }
+    if (force && (status != PAM_SUCCESS || *pass == NULL)) {
+        putil_debug_pam(args, status, "no stored password");
+        return PAM_AUTH_ERR;
+    }
+    return PAM_SUCCESS;
+}
+
+
+/*
+ * Prompt for the password.  Takes the PAM arguments, the authtok for which
+ * we're prompting (may be PAM_AUTHTOK or PAM_OLDAUTHTOK depending on whether
+ * we're authenticating or changing the password), and the place to store the
+ * password.  Returns a PAM status code.
+ *
+ * If we successfully get a password, store it in the PAM data, free it, and
+ * then return the password as retrieved from the PAM data so that we don't
+ * have to worry about memory allocation later.
+ *
+ * The empty password has to be handled separately, since the Kerberos
+ * libraries may treat it as equivalent to no password and prompt when we
+ * don't want them to.  We make the assumption here that the empty password is
+ * always invalid and is an authentication failure.
+ */
+static int
+prompt_password(struct pam_args *args, int authtok, const char **pass)
+{
+    char *password;
+    int status;
+    const char *prompt = (authtok == PAM_AUTHTOK) ? NULL : "Current";
+
+    *pass = NULL;
+    status = pamk5_get_password(args, prompt, &password);
+    if (status != PAM_SUCCESS) {
+        putil_debug_pam(args, status, "error getting password");
+        return PAM_AUTH_ERR;
+    }
+    if (password[0] == '\0') {
+        putil_debug(args, "rejecting empty password");
+        free(password);
+        return PAM_AUTH_ERR;
+    }
+
+    /* Set this for the next PAM module. */
+    status = pam_set_item(args->pamh, authtok, password);
+    memset(password, 0, strlen(password));
+    free(password);
+    if (status != PAM_SUCCESS) {
+        putil_err_pam(args, status, "error storing password");
+        return PAM_AUTH_ERR;
+    }
+
+    /* Return the password retrieved from PAM. */
+    status = pam_get_item(args->pamh, authtok, (PAM_CONST void **) pass);
+    if (status != PAM_SUCCESS) {
+        putil_err_pam(args, status, "error retrieving password");
+        status = PAM_AUTH_ERR;
+    }
+    return status;
+}
+
+
+/*
  * Authenticate via password.
  *
  * This is our basic authentication function.  Log what principal we're
@@ -250,7 +348,8 @@ set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
  */
 static krb5_error_code
 password_auth(struct pam_args *args, krb5_creds *creds,
-              krb5_get_init_creds_opt *opts, const char *service, char *pass)
+              krb5_get_init_creds_opt *opts, const char *service,
+              const char *pass)
 {
     struct context *ctx = args->config->ctx;
     krb5_error_code retval;
@@ -310,7 +409,7 @@ password_auth(struct pam_args *args, krb5_creds *creds,
 static krb5_error_code
 k5login_password_auth(struct pam_args *args, krb5_creds *creds,
                       krb5_get_init_creds_opt *opts, const char *service,
-                      char *pass)
+                      const char *pass)
 {
     struct context *ctx = args->config->ctx;
     char *filename = NULL;
@@ -500,6 +599,56 @@ done:
 
 
 /*
+ * Attempt authentication once with a given password.  This is the core of the
+ * authentication loop, and handles alt_auth_map and search_k5login.  It takes
+ * the PAM arguments, the service for which to get tickets (NULL for the
+ * default TGT), the initial credential options, and the password, and returns
+ * a Kerberos status code or errno.  On success (return status 0), it stores
+ * the obtained credentials in the provided creds argument.
+ */
+static krb5_error_code
+password_auth_attempt(struct pam_args *args, const char *service,
+                      krb5_get_init_creds_opt *opts, const char *pass,
+                      krb5_creds *creds)
+{
+    krb5_error_code retval;
+
+    /*
+     * First, try authenticating as the alternate principal if one were
+     * configured.  If that fails or wasn't configured, continue on to trying
+     * search_k5login or a regular authentication unless configuration
+     * indicates that regular authentication should not be attempted.
+     */
+    if (args->config->alt_auth_map != NULL) {
+        retval = pamk5_alt_auth(args, service, opts, pass, creds);
+        if (retval == 0)
+            return retval;
+
+        /* If only_alt_auth is set, we cannot continue. */
+        if (args->config->only_alt_auth)
+            return retval;
+
+        /*
+         * If force_alt_auth is set, skip attempting normal authentication iff
+         * the alternate principal exists.
+         */
+        if (args->config->force_alt_auth)
+            if (retval != KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN)
+                return retval;
+    }
+
+    /* Attempt regular authentication, via either search_k5login or normal. */
+    if (args->config->search_k5login)
+        retval = k5login_password_auth(args, creds, opts, service, pass);
+    else
+        retval = password_auth(args, creds, opts, service, pass);
+    if (retval != 0)
+        putil_debug_krb5(args, retval, "krb5_get_init_creds_password");
+    return retval;
+}
+
+
+/*
  * Try to verify credentials by obtaining and checking a service ticket.  This
  * is required to verify that no one is spoofing the KDC, but requires read
  * access to a keytab with a valid key.  By default, the Kerberos library will
@@ -576,11 +725,11 @@ pamk5_password_auth(struct pam_args *args, const char *service,
 {
     struct context *ctx;
     krb5_get_init_creds_opt *opts = NULL;
-    int retval, retry;
+    krb5_error_code retval;
+    int status = PAM_SUCCESS;
+    bool retry;
     bool creds_valid = false;
-    int do_alt = 1;
-    int do_only_alt = 0;
-    char *pass = NULL;
+    const char *pass = NULL;
     int authtok = (service == NULL) ? PAM_AUTHTOK : PAM_OLDAUTHTOK;
 
     /* Sanity check and initialization. */
@@ -610,7 +759,7 @@ pamk5_password_auth(struct pam_args *args, const char *service,
     if (args->config->use_pkinit || args->config->try_pkinit) {
         retval = pkinit_auth(args, service, creds);
         if (retval == 0)
-            goto done;
+            goto verify;
         putil_debug_krb5(args, retval, "pkinit failed");
         if (retval != HX509_PKCS11_NO_TOKEN && retval != HX509_PKCS11_NO_SLOT)
             goto done;
@@ -628,7 +777,8 @@ pamk5_password_auth(struct pam_args *args, const char *service,
     *creds = calloc(1, sizeof(krb5_creds));
     if (*creds == NULL) {
         putil_crit(args, "cannot allocate memory: %s", strerror(errno));
-        return PAM_SERVICE_ERR;
+        status = PAM_SERVICE_ERR;
+        goto done;
     }
     retval = krb5_get_init_creds_opt_alloc(ctx->context, &opts);
     if (retval != 0) {
@@ -638,107 +788,48 @@ pamk5_password_auth(struct pam_args *args, const char *service,
     set_credential_options(args, opts, service != NULL);
 
     /*
-     * If try_first_pass, use_first_pass, or force_first_pass is set, grab the
-     * old password (if set) instead of prompting.  If try_first_pass is set,
-     * and the old password doesn't work, prompt for the password (loop).  If
-     * use_first_pass is set, only prompt if there's no existing password.  If
-     * force_first_pass is set, fail if the password is not already set.
-     *
-     * The empty password has to be handled separately, since the Kerberos
-     * libraries may treat it as equivalent to no password and prompt when
-     * we don't want them to.  We make the assumption here that the empty
-     * password is always invalid and is an authentication failure.
+     * Obtain the saved password, if appropriate and available, and determine
+     * our retry strategy.  If try_first_pass is set, we will prompt for a
+     * password and retry the authentication if the stored password didn't
+     * work.
      */
-    retry = args->config->try_first_pass ? 1 : 0;
-    if (args->config->try_first_pass || args->config->use_first_pass
-        || args->config->force_first_pass)
-        retval = pam_get_item(args->pamh, authtok, (PAM_CONST void **) &pass);
-    if (args->config->use_first_pass || args->config->force_first_pass) {
-        if (pass != NULL && *pass == '\0') {
-            putil_debug(args, "rejecting empty password");
-            retval = PAM_AUTH_ERR;
-            goto done;
-        }
-    }
-    if (args->config->force_first_pass
-        && (retval != PAM_SUCCESS || pass == NULL)) {
-        putil_debug_pam(args, retval, "no stored password");
-        retval = PAM_SERVICE_ERR;
+    status = maybe_retrieve_password(args, authtok, &pass);
+    if (status != PAM_SUCCESS)
         goto done;
-    }
+
+    /*
+     * Main authentication loop.
+     *
+     * If we had no stored password, we prompt for a password the first time
+     * through.  If try_first_pass is set and we had an old password, we try
+     * with it.  If the old password doesn't work, we loop once, prompt for a
+     * password, and retry.  If use_first_pass is set, we'll prompt once if
+     * the password isn't already set but won't retry.
+     *
+     * If we don't have a password but try_pkinit is true, we don't attempt to
+     * prompt for a password and we go into the Kerberos libraries with no
+     * password.  We rely on the Kerberos libraries to do the prompting if
+     * PKINIT fails.  In this case, make sure we don't retry.
+     *
+     * We've already handled empty passwords in our other functions.
+     */
+    retry = args->config->try_first_pass ? true : false;
+    if (pass == NULL && args->config->try_pkinit)
+        retry = false;
     do {
-        if ((pass == NULL || *pass == '\0') && !args->config->try_pkinit) {
-            const char *prompt = (service == NULL) ? NULL : "Current";
-
-            retry = 0;
-            retval = pamk5_get_password(args, prompt, &pass);
-            if (retval != PAM_SUCCESS) {
-                putil_debug_pam(args, retval, "error getting password");
-                retval = PAM_SERVICE_ERR;
+        if (pass == NULL) {
+            status = prompt_password(args, authtok, &pass);
+            if (status != PAM_SUCCESS)
                 goto done;
-            }
-            if (*pass == '\0') {
-                putil_debug(args, "rejecting empty password");
-                retval = PAM_AUTH_ERR;
-                goto done;
-            }
-
-            /* Set this for the next PAM module's try_first_pass. */
-            retval = pam_set_item(args->pamh, authtok, pass);
-            memset(pass, 0, strlen(pass));
-            free(pass);
-            if (retval != PAM_SUCCESS) {
-                putil_err_pam(args, retval, "error storing password");
-                retval = PAM_SERVICE_ERR;
-                goto done;
-            }
-            pam_get_item(args->pamh, authtok, (PAM_CONST void **) &pass);
+            retry = false;
         }
 
         /*
-         * Get a TGT.  First, try authenticating as the alternate principal if
-         * one were configured.  If that fails or wasn't configured, continue
-         * on to trying search_k5login or a regular authentication unless
-         * configuration indicates that regular authentication should not be
-         * attempted.
+         * Attempt authentication.  If we succeeded, we're done.  Otherwise,
+         * clear the password and then see if we should try again after
+         * prompting for a password.
          */
-        if (args->config->alt_auth_map != NULL && do_alt) {
-            retval = pamk5_alt_auth(args, service, opts, pass, *creds);
-            if (retval == 0)
-                break;
-
-            /*
-             * If principal doesn't exist and alternate authentication is
-             * required (only_alt_auth), bail, since we'll never succeed.  If
-             * force_alt_auth is set, skip attempting normal authentication
-             * iff the alternate principal exists.
-             */
-            if (args->config->only_alt_auth) {
-                if (retval == KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN)
-                    goto done;
-                else
-                    do_only_alt = 1;
-            } else if (args->config->force_alt_auth) {
-                if (retval == KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN)
-                    do_alt = 0;
-                else
-                    do_only_alt = 1;
-            }
-        }
-        if (!do_only_alt) {
-            if (args->config->search_k5login)
-                retval = k5login_password_auth(args, *creds, opts, service,
-                             pass);
-            else
-                retval = password_auth(args, *creds, opts, service, pass);
-            if (retval != 0)
-                putil_debug_krb5(args, retval, "krb5_get_init_creds_password");
-        }
-
-        /*
-         * If we succeeded, we're done.  Otherwise, clear the password and
-         * then see if we should try again after prompting for a password.
-         */
+        retval = password_auth_attempt(args, service, opts, pass, *creds);
         if (retval == 0) {
             creds_valid = true;
             break;
@@ -749,7 +840,7 @@ pamk5_password_auth(struct pam_args *args, const char *service,
                  || retval == KRB5KRB_AP_ERR_MODIFIED
                  || retval == KRB5KDC_ERR_PREAUTH_FAILED));
 
-done:
+verify:
     /*
      * If we think we succeeded, whether through the regular path or via
      * PKINIT, try to verify the credentials.  Don't do this if we're
@@ -760,42 +851,46 @@ done:
     if (retval == 0 && service == NULL)
         retval = verify_creds(args, *creds);
 
+done:
     /*
-     * If we failed, free any credentials we have sitting around and return
-     * the appropriate PAM error code.  If we succeeded and debug is enabled,
-     * log the successful authentication.
+     * Free resources, including any credentials we have sitting around if we
+     * failed, and return the appropriate PAM error code.  If status is
+     * already set to something other than PAM_SUCCESS, we encountered a PAM
+     * error and will just return that code.  Otherwise, we need to map the
+     * Kerberos status code in retval to a PAM error code.
      */ 
-    if (retval == 0)
-        retval = PAM_SUCCESS;
-    else {
-        if (*creds != NULL) {
-            if (creds_valid)
-                krb5_free_cred_contents(ctx->context, *creds);
-            free(*creds);
-            *creds = NULL;
-        }
+    if (status == PAM_SUCCESS) {
         switch (retval) {
+        case 0:
+            status = PAM_SUCCESS;
+            break;
         case KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN:
-            retval = PAM_USER_UNKNOWN;
+            status = PAM_USER_UNKNOWN;
             break;
         case KRB5KDC_ERR_KEY_EXP:
-            retval = PAM_NEW_AUTHTOK_REQD;
+            status = PAM_NEW_AUTHTOK_REQD;
             break;
         case KRB5KDC_ERR_NAME_EXP:
-            retval = PAM_ACCT_EXPIRED;
+            status = PAM_ACCT_EXPIRED;
             break;
         case KRB5_KDC_UNREACH:
         case KRB5_REALM_CANT_RESOLVE:
-            retval = PAM_AUTHINFO_UNAVAIL;
+            status = PAM_AUTHINFO_UNAVAIL;
             break;
         default:
-            retval = PAM_AUTH_ERR;
+            status = PAM_AUTH_ERR;
             break;
         }
     }
+    if (status != PAM_SUCCESS && *creds != NULL) {
+        if (creds_valid)
+            krb5_free_cred_contents(ctx->context, *creds);
+        free(*creds);
+        *creds = NULL;
+    }
     if (opts != NULL)
         krb5_get_init_creds_opt_free(ctx->context, opts);
-    return retval;
+    return status;
 }
 
 
