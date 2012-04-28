@@ -387,6 +387,11 @@ k5login_password_auth(struct pam_args *args, krb5_creds *creds,
             continue;
 
         /* Now, attempt to authenticate as that user. */
+        if (service == NULL)
+            putil_debug(args, "attempting authentication as %s", line);
+        else
+            putil_debug(args, "attempting authentication as %s for %s",
+                        line, service);
         retval = krb5_get_init_creds_password(ctx->context, creds, princ,
                     pass, pamk5_prompter_krb5, args, 0, (char *) service,
                     opts);
