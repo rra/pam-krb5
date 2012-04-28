@@ -263,7 +263,12 @@ password_auth(struct pam_args *args, krb5_creds *creds,
         if (retval != 0)
             putil_debug_krb5(args, retval, "krb5_unparse_name failed");
         else {
-            putil_debug(args, "attempting authentication as %s", principal);
+            if (service == NULL)
+                putil_debug(args, "attempting authentication as %s",
+                            principal);
+            else
+                putil_debug(args, "attempting authentication as %s for %s",
+                            principal, service);
             free(principal);
         }
     }

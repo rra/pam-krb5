@@ -55,6 +55,14 @@ main(void)
     basprintf(&newpass, "ngh1,a%lu nn9af6", (unsigned long) getpid());
     config.newpass = newpass;
     run_script("data/scripts/password/basic", &config);
+    config.password = newpass;
+    config.newpass = krbconf->password;
+    run_script("data/scripts/password/basic-debug", &config);
+
+    /* Test prompt_principal with password change. */
+    config.password = krbconf->password;
+    config.newpass = newpass;
+    run_script("data/scripts/password/prompt-principal", &config);
 
     /* Change the password back and test expose-account. */
     config.password = newpass;
