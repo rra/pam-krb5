@@ -31,7 +31,7 @@
     INFO user %u account password is expired
     DEBUG pam_sm_acct_mgmt: exit (failure)
     DEBUG pam_sm_chauthtok: entry (prelim)
-    DEBUG (user %u) attempting authentication as %0
+    DEBUG (user %u) attempting authentication as %0 for kadmin/changepw
     DEBUG pam_sm_chauthtok: exit (success)
     DEBUG pam_sm_chauthtok: entry (update)
     INFO user %u changed Kerberos password
