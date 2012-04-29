@@ -1,7 +1,7 @@
 /*
  * Internal prototypes and structures for pam-krb5.
  *
- * Copyright 2011
+ * Copyright 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  * Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@stanford.edu>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
@@ -89,6 +89,7 @@ struct pam_config {
     char *banner;               /* Addition to password changing prompts. */
     bool expose_account;        /* Display principal in password prompts. */
     bool force_first_pass;      /* Require a previous password be stored. */
+    bool no_prompt;             /* Let Kerberos handle password prompting. */
     bool prompt_principal;      /* Prompt for the Kerberos principal. */
     bool try_first_pass;        /* Try the previously entered password. */
     bool use_authtok;           /* Use the stored new password for changes. */

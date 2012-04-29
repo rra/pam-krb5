@@ -2,6 +2,15 @@
 
 pam-krb5 4.6 (unreleased)
 
+    Add a new option no_prompt, which suppresses the PAM module's prompt
+    for the user's password and defers all prompting to the Kerberos
+    library.  This allows the Kerberos library to have complete control of
+    the prompting process, which may be desireable if authentication
+    mechanisms other than password are in use.  Be aware that, with this
+    option set, the PAM module has no control over the contents of the
+    prompt and cannot store the user's password in the PAM data.  Based on
+    a patch by Yair Yarom.
+
     MIT Kerberos does not add a colon and space to its password prompts,
     but Heimdal does.  pam-krb5 previously unconditionally added a colon
     and space, resulting in doubled colons with Heimdal.  Work around this

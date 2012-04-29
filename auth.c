@@ -729,7 +729,7 @@ pamk5_password_auth(struct pam_args *args, const char *service,
     krb5_get_init_creds_opt *opts = NULL;
     krb5_error_code retval;
     int status = PAM_SUCCESS;
-    bool retry;
+    bool retry, prompt;
     bool creds_valid = false;
     const char *pass = NULL;
     int authtok = (service == NULL) ? PAM_AUTHTOK : PAM_OLDAUTHTOK;
@@ -808,22 +808,25 @@ pamk5_password_auth(struct pam_args *args, const char *service,
      * password, and retry.  If use_first_pass is set, we'll prompt once if
      * the password isn't already set but won't retry.
      *
-     * If we don't have a password but try_pkinit is true, we don't attempt to
-     * prompt for a password and we go into the Kerberos libraries with no
-     * password.  We rely on the Kerberos libraries to do the prompting if
-     * PKINIT fails.  In this case, make sure we don't retry.
+     * If we don't have a password but try_pkinit or no_prompt are true, we
+     * don't attempt to prompt for a password and we go into the Kerberos
+     * libraries with no password.  We rely on the Kerberos libraries to do
+     * the prompting if PKINIT fails.  In this case, make sure we don't retry.
+     * Be aware that in this case, we also have no way of saving whatever
+     * password or other credentials the user might enter, so subsequent PAM
+     * modules will not see a stored authtok.
      *
      * We've already handled empty passwords in our other functions.
      */
-    retry = args->config->try_first_pass ? true : false;
-    if (pass == NULL && args->config->try_pkinit)
-        retry = false;
+    retry = args->config->try_first_pass;
+    prompt = !(args->config->try_pkinit || args->config->no_prompt);
     do {
-        if (pass == NULL) {
+        if (pass == NULL)
+            retry = false;
+        if (pass == NULL && prompt) {
             status = prompt_password(args, authtok, &pass);
             if (status != PAM_SUCCESS)
                 goto done;
-            retry = false;
         }
 
         /*

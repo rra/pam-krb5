@@ -652,6 +652,33 @@ This option is only applicable to the auth and password groups.  For the
 password group, it applies only to the old password.  See I<use_authtok>
 for a similar setting for the new password.
 
+=item no_prompt
+
+Never prompt for the current password.  Instead, pass in a NULL password
+to the Kerberos library and let the Kerberos library do the prompting.
+This may be needed if, for example, the Kerberos library is configured to
+use other authentication mechanisms than passwords and needs full control
+over the prompting process.
+
+The major disadvantage of this option is that it means the PAM module will
+never see the user's password and therefore cannot save it in the PAM
+module data for any subsequent modules.  In other words, this option
+cannot be used if another module is in the stack behind the Kerberos PAM
+module and wants to use I<use_first_pass>.  The Kerberos library also
+usually includes the principal in the prompt, and therefore this option
+implies behavior similar to I<expose_account>.  Similar to
+I<expose_account>, this can cause problems with OpenSSH if
+ChallengeResponseAuthentication is enabled, since clients may not
+recognize password prompts other than "Password:".
+
+Using this option with I<search_k5login> would result in a password prompt
+for every principal listed in the user's F<.k5login> file.  This is
+probably not desired behavior, although it's not prohibited by the module.
+
+This option is only applicable to the auth and password groups.  For the
+password group, it applies only to the authentication process; the user
+will still be prompted for a new password.
+
 =item prompt_principal
 
 Before prompting for the user's password (or using the previously entered

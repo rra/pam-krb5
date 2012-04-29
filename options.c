@@ -5,7 +5,7 @@
  * internal functions.  Retrieves configuration information from krb5.conf and
  * parses the PAM configuration.
  *
- * Copyright 2011
+ * Copyright 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  * Copyright 2005, 2006, 2007, 2008, 2009, 2010
  *     Russ Allbery <rra@stanford.edu>
@@ -49,6 +49,7 @@ static const struct option options[] = {
     { K(keytab),             true,  STRING (NULL)  },
     { K(minimum_uid),        true,  NUMBER (0)     },
     { K(no_ccache),          false, BOOL   (false) },
+    { K(no_prompt),          true,  BOOL   (false) },
     { K(only_alt_auth),      true,  BOOL   (false) },
     { K(pkinit_anchors),     true,  STRING (NULL)  },
     { K(pkinit_prompt),      true,  BOOL   (false) },
