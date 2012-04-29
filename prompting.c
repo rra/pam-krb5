@@ -285,7 +285,7 @@ pamk5_prompter_krb5(krb5_context context UNUSED, void *data, const char *name,
                      && prompts[i].prompt[len - 1] == ' '
                      && prompts[i].prompt[len - 2] == ':');
         status = asprintf((char **) &msg[pam_prompts]->msg, "%s%s",
-                          has_colon ? "" : ": ", prompts[i].prompt);
+                          prompts[i].prompt, has_colon ? "" : ": ");
         if (status < 0)
             goto cleanup;
         msg[pam_prompts]->msg_style = prompts[i].hidden ? PAM_PROMPT_ECHO_OFF
