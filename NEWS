@@ -2,6 +2,11 @@
 
 pam-krb5 4.6 (unreleased)
 
+    MIT Kerberos does not add a colon and space to its password prompts,
+    but Heimdal does.  pam-krb5 previously unconditionally added a colon
+    and space, resulting in doubled colons with Heimdal.  Work around this
+    inconsistency by not adding the colon and space if already present.
+
     Fix alt_auth_map support to preserve the realm of the authentication
     identity when forming the alternate authentication principal, matching
     the documentation.

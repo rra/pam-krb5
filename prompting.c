@@ -4,7 +4,7 @@
  * Handles all interaction with the PAM conversation, either directly or
  * indirectly through the Kerberos libraries.
  *
- * Copyright 2011
+ * Copyright 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  * Copyright 2005, 2006, 2007, 2009 Russ Allbery <rra@stanford.edu>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
@@ -272,9 +272,20 @@ pamk5_prompter_krb5(krb5_context context UNUSED, void *data, const char *name,
     }
     for (i = 0; i < num_prompts; i++) {
         int status;
+        size_t len;
+        bool has_colon;
 
-        status = asprintf((char **) &msg[pam_prompts]->msg, "%s: ",
-                          prompts[i].prompt);
+        /*
+         * Heimdal adds the trailing colon and space, while MIT does not.
+         * Work around the difference by looking to see if there's a trailing
+         * colon and space already and only adding it if there is not.
+         */
+        len = strlen(prompts[i].prompt);
+        has_colon = (len > 2
+                     && prompts[i].prompt[len - 1] == ' '
+                     && prompts[i].prompt[len - 2] == ':');
+        status = asprintf((char **) &msg[pam_prompts]->msg, "%s%s",
+                          has_colon ? "" : ": ", prompts[i].prompt);
         if (status < 0)
             goto cleanup;
         msg[pam_prompts]->msg_style = prompts[i].hidden ? PAM_PROMPT_ECHO_OFF
