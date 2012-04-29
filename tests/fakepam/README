@@ -138,6 +138,8 @@ Scripted PAM Testing
     valid section types and the format of their contents are described
     below.
 
+    Blank lines and lines starting with # are ignored.
+
     Several strings undergo %-escape expansion as mentioned below.  For
     any such string, the following escapes are supported:
 
@@ -149,9 +151,15 @@ Scripted PAM Testing
         ...
         %9      extra[9]
 
+    All of these are set in the script_config struct.
+
+    Regular expression matching is supported for output lines and for
+    prompts.  To mark an expected prompt or output line as a regular
+    expression, it must begin and end with a slash (/).  If regular
+    expression support is not available in the C library, those matching
+    tests will be skipped.
+
     The PAM output (described below) also supports a special %* wildcard.
-    All of these are set in the script_config struct.  Blank lines and
-    lines starting with # are ignored.
 
   The [options] Section
 
@@ -199,13 +207,15 @@ Scripted PAM Testing
     module.  It consists of zero or more lines in the format:
 
         <priority> <output>
+        <priority> /<regex>/
 
     where <priority> is a syslog priority and <output> is the remaining
-    output.  Valid values for <priority> are DEBUG, INFO, NOTICE, ERR, and
-    CRIT.  <output> may contain spaces and undergoes %-escape expansion.
-    <output> may also end in %*, in which case only the line up to %* is
-    required to match and anything after that in the same output message
-    is permitted.
+    output or a regular expression to match against the output.  Valid
+    values for <priority> are DEBUG, INFO, NOTICE, ERR, and CRIT.
+    <output> and <regex> may contain spaces and undergoes %-escape
+    expansion.  <output> may also end in %*, in which case only the line
+    up to %* is required to match and anything after that in the same
+    output message is permitted.
 
     The replacement values are taken from the script_config struct passed
     as a parameter to run_script or run_script_dir.
@@ -224,13 +234,19 @@ Scripted PAM Testing
     more lines in one of the following formats:
 
         <type> = <prompt>
+        <type> = /<prompt>/
         <type> = <prompt>|<response>
+        <type> = /<prompt>/|<response>
 
     The <type> is the style of prompt, chosen from "echo_off", "echo_on",
     "error_msg", and "info".  The <prompt> is the actual prompt sent and
-    undergoes %-escape expansion.  The <response> if present (and its
-    presence is signaled by the | character) contains the response sent
-    back by the test framework and also undergoes %-escape expansion.
+    undergoes %-escape expansion.  It may be enclosed in slashes (/) to
+    indicate that it's a regular expression instead of literal text.  The
+    <response> if present (and its presence is signaled by the |
+    character) contains the response sent back by the test framework and
+    also undergoes %-escape expansion.  The response starts with the final
+    | character on the line, so <prompt> regular expressions may freely
+    use | inside the regular expression.
 
     If the [prompts] section is present and empty, the test harness will
     check that the PAM module does not send any prompts.  If the [prompts]

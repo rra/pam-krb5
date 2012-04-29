@@ -39,6 +39,9 @@
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
+#ifdef HAVE_REGCOMP
+# include <regex.h>
+#endif
 #include <syslog.h>
 
 #include <tests/fakepam/internal.h>
@@ -46,6 +49,113 @@
 #include <tests/fakepam/script.h>
 #include <tests/tap/basic.h>
 #include <tests/tap/string.h>
+
+
+/*
+ * Compare a regex to a string.  If regular expression support isn't
+ * available, we skip this test.
+ */
+#ifdef HAVE_REGCOMP
+static void
+like(const char *wanted, const char *seen, const char *format, ...)
+{
+    va_list args;
+    regex_t regex;
+    char err[BUFSIZ];
+    int status;
+
+    if (seen == NULL) {
+        fflush(stderr);
+        printf("# wanted: /%s/\n#   seen: %s\n", wanted, seen);
+        va_start(args, format);
+        okv(0, format, args);
+        va_end(args);
+        return;
+    }
+    memset(&regex, 0, sizeof(regex));
+    status = regcomp(&regex, wanted, REG_EXTENDED | REG_NOSUB);
+    if (status != 0) {
+        regerror(status, &regex, err, sizeof(err));
+        bail("invalid regex /%s/: %s", wanted, err);
+    }
+    status = regexec(&regex, seen, 0, NULL, 0);
+    switch (status) {
+    case 0:
+        va_start(args, format);
+        okv(1, format, args);
+        va_end(args);
+        break;
+    case REG_NOMATCH:
+        printf("# wanted: /%s/\n#   seen: %s\n", wanted, seen);
+        va_start(args, format);
+        okv(0, format, args);
+        va_end(args);
+        break;
+    default:
+        regerror(status, &regex, err, sizeof(err));
+        bail("regexec failed for regex /%s/: %s", wanted, err);
+    }
+    regfree(&regex);
+}
+#else /* !HAVE_REGCOMP */
+static void
+like(const char *wanted, const char *seen, const char *format UNUSED, ...)
+{
+    diag("wanted /%s/", wanted);
+    diag("  seen %s", seen);
+    skip("regex support not available");
+}
+#endif /* !HAVE_REGCOMP */
+
+
+/*
+ * Compare an expected string with a seen string, used by both output checking
+ * and prompt checking.  This is a separate function because the expected
+ * string may be a regex, determined by seeing if it starts and ends with a
+ * slash (/), which may require a regex comparison.
+ *
+ * Eventually calls either is_string or ok to report results via TAP.
+ */
+static void
+compare_string(char *wanted, char *seen, const char *format, ...)
+{
+    va_list args;
+    char *comment, *regex;
+    size_t length;
+
+    /* Format the comment since we need it regardless. */
+    va_start(args, format);
+    bvasprintf(&comment, format, args);
+    va_end(args);
+
+    /* Check whether the wanted string is a regex. */
+    length = strlen(wanted);
+    if (wanted[0] == '/' && wanted[length - 1] == '/') {
+        regex = bstrndup(wanted + 1, length - 2);
+        like(regex, seen, comment);
+        free(regex);
+        free(comment);
+        return;
+    }
+
+    /*
+     * Handle the %* wildcard.  If this occurs in the desired string, it must
+     * be the end of the string, and it means that all output after that point
+     * is ignored.  So truncate both strings at that point so that we'll only
+     * compare the first parts.
+     *
+     * This is a hacky substitute for real regex matching, which would be a
+     * much better option.
+     */
+    if (length > 1
+        && strcmp(wanted + (length - 2), "%*") == 0
+        && strlen(seen) > (length - 2)) {
+        wanted[length - 2] = '\0';
+        seen[length - 2] = '\0';
+    }
+    is_string(wanted, seen, "%s", comment);
+    free(comment);
+}
 
 
 /*
@@ -87,8 +197,8 @@ converse(int num_msg, const struct pam_message **msg,
         prompt = &prompts->prompts[prompts->current];
         is_int(prompt->style, msg[i]->msg_style, "style of prompt %lu",
                (unsigned long) prompts->current + 1);
-        is_string(prompt->prompt, message, "value of prompt %lu",
-                  (unsigned long) prompts->current + 1);
+        compare_string(prompt->prompt, message, "value of prompt %lu",
+                       (unsigned long) prompts->current + 1);
         free(message);
         prompts->current++;
         if (prompt->style == msg[i]->msg_style && prompt->response != NULL) {
@@ -114,7 +224,7 @@ converse(int num_msg, const struct pam_message **msg,
 static void
 check_output(const struct output *wanted, const struct output *seen)
 {
-    size_t i, length;
+    size_t i;
 
     if (wanted == NULL && seen == NULL)
         ok(1, "no output");
@@ -127,32 +237,14 @@ check_output(const struct output *wanted, const struct output *seen)
             is_string(wanted->strings[i], NULL, "output line %lu",
                       (unsigned long) i + 1);
     } else {
-        for (i = 0; i < wanted->count && i < seen->count; i++) {
-            length = strlen(wanted->strings[i]);
-
-            /*
-             * Handle the %* wildcard.  If this occurs in the desired string,
-             * it must be the end of the string, and it means that all output
-             * after that point is ignored.  So truncate both strings at that
-             * point so that we'll only compare the first parts.
-             *
-             * This is a hacky substitute for real regex matching, which would
-             * be a much better option.
-             */
-            if (length > 1
-                && strcmp(wanted->strings[i] + (length - 2), "%*") == 0
-                && strlen(seen->strings[i]) > (length - 2)) {
-                wanted->strings[i][length - 2] = '\0';
-                seen->strings[i][length - 2] = '\0';
-            }
-            is_string(wanted->strings[i], seen->strings[i], "output line %lu",
-                      (unsigned long) i + 1);
-        }
+        for (i = 0; i < wanted->count && i < seen->count; i++)
+            compare_string(wanted->strings[i], seen->strings[i],
+                           "output line %lu", (unsigned long) i + 1);
         if (wanted->count > seen->count)
             for (i = seen->count; i < wanted->count; i++)
                 is_string(wanted->strings[i], NULL, "output line %lu",
                           (unsigned long) i + 1);
-        else if (seen->count > wanted->count) {
+        if (seen->count > wanted->count) {
             for (i = wanted->count; i < seen->count; i++)
                 diag("unexpected: %s", seen->strings[i]);
             ok(0, "unexpected output lines");

@@ -543,6 +543,7 @@ parse_run(FILE *script)
  * lines in the format:
  *
  *     PRIORITY some output information
+ *     PRIORITY /output regex/
  *
  * where PRIORITY is replaced by the numeric syslog priority corresponding to
  * that priority and the rest of the output undergoes %-esacape expansion.
@@ -580,10 +581,12 @@ parse_output(FILE *script, const struct script_config *config)
  * lines in one of the formats:
  *
  *     type = prompt
+ *     type = /prompt/
  *     type = prompt|response
+ *     type = /prompt/|response
  *
  * If the type is error_msg or info, there is no response.  Otherwise,
- * everything after a colon is taken to be the response that should be
+ * everything after the last | is taken to be the response that should be
  * provided to that prompt.  The response undergoes %-escape expansion.
  */
 static struct prompts *
@@ -591,7 +594,7 @@ parse_prompts(FILE *script, const struct script_config *config)
 {
     struct prompts *prompts = NULL;
     struct prompt *prompt;
-    char *line, *token, *style;
+    char *line, *token, *style, *end;
     size_t size, i, length;
 
     for (line = readline(script); line != NULL; line = readline(script)) {
@@ -622,12 +625,12 @@ parse_prompts(FILE *script, const struct script_config *config)
         if (prompt->style == PAM_ERROR_MSG || prompt->style == PAM_TEXT_INFO)
             prompt->prompt = expand_string(token, config);
         else {
-            token = strtok(token, "|");
-            prompt->prompt = expand_string(token, config);
-            token = strtok(NULL, "");
-            if (token == NULL)
+            end = strrchr(token, '|');
+            if (end == NULL)
                 bail("malformed prompt line near %s", prompt->prompt);
-            token = skip_whitespace(token);
+            *end = '\0';
+            prompt->prompt = expand_string(token, config);
+            token = end + 1;
             prompt->response = expand_string(token, config);
         }
         prompts->size++;
