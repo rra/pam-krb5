@@ -155,8 +155,9 @@ pamk5_alt_auth(struct pam_args *args, const char *service,
      * Now, attempt to authenticate as that user.  On success, save the
      * principal.  Return the Kerberos status code.
      */
-    retval = krb5_get_init_creds_password(ctx->context, creds, princ, pass,
-                pamk5_prompter_krb5, args, 0, (char *) service, opts);
+    retval = krb5_get_init_creds_password(ctx->context, creds, princ,
+                (char *) pass, pamk5_prompter_krb5, args, 0,
+                (char *) service, opts);
     if (retval != 0) {
         putil_debug_krb5(args, retval, "alternate authentication failed");
         krb5_free_principal(ctx->context, princ);

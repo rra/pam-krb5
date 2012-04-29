@@ -6,7 +6,7 @@
  * the appropriate internal functions.  This interface is used by both the
  * authentication and the password groups.
  *
- * Copyright 2010, 2011
+ * Copyright 2010, 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  * Copyright 2005, 2006, 2007, 2008, 2009, 2010
  *     Russ Allbery <rra@stanford.edu>
@@ -374,7 +374,8 @@ password_auth(struct pam_args *args, krb5_creds *creds,
 
     /* Do thet authentication. */
     retval = krb5_get_init_creds_password(ctx->context, creds, ctx->princ,
-                 pass, pamk5_prompter_krb5, args, 0, (char *) service, opts);
+                 (char *) pass, pamk5_prompter_krb5, args, 0,
+                 (char *) service, opts);
 
     /*
      * Heimdal may return an expired key error even if the password is
@@ -385,7 +386,7 @@ password_auth(struct pam_args *args, krb5_creds *creds,
      */
     if (retval == KRB5KDC_ERR_KEY_EXP) {
         retval = krb5_get_init_creds_password(ctx->context, creds,
-                     ctx->princ, pass, pamk5_prompter_krb5, args, 0,
+                     ctx->princ, (char *) pass, pamk5_prompter_krb5, args, 0,
                      (char *) "kadmin/changepw", opts);
         if (retval == 0) {
             retval = KRB5KDC_ERR_KEY_EXP;
@@ -437,7 +438,8 @@ k5login_password_auth(struct pam_args *args, krb5_creds *creds,
         if (filename != NULL)
             free(filename);
         return krb5_get_init_creds_password(ctx->context, creds, ctx->princ,
-                   pass, pamk5_prompter_krb5, args, 0, (char *) service, opts);
+                   (char *) pass, pamk5_prompter_krb5, args, 0,
+                   (char *) service, opts);
     }
 
     /*
@@ -492,8 +494,8 @@ k5login_password_auth(struct pam_args *args, krb5_creds *creds,
             putil_debug(args, "attempting authentication as %s for %s",
                         line, service);
         retval = krb5_get_init_creds_password(ctx->context, creds, princ,
-                    pass, pamk5_prompter_krb5, args, 0, (char *) service,
-                    opts);
+                    (char *) pass, pamk5_prompter_krb5, args, 0,
+                    (char *) service, opts);
 
         /*
          * If that worked, update ctx->princ and return success.  Otherwise,
