@@ -842,7 +842,7 @@ pamk5_password_auth(struct pam_args *args, const char *service,
                  || retval == KRB5KRB_AP_ERR_MODIFIED
                  || retval == KRB5KDC_ERR_PREAUTH_FAILED));
 
-verify:
+verify: UNUSED
     /*
      * If we think we succeeded, whether through the regular path or via
      * PKINIT, try to verify the credentials.  Don't do this if we're
