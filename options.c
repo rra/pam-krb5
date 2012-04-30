@@ -121,6 +121,8 @@ pamk5_init(pam_handle_t *pamh, int flags, int argc, const char **argv)
         goto fail;
     if (config->debug)
         args->debug = true;
+    if (config->silent)
+        args->silent = true;
 
     /* An empty banner should be treated the same as not having one. */
     if (config->banner != NULL && config->banner[0] == '\0') {
@@ -176,8 +178,6 @@ pamk5_init(pam_handle_t *pamh, int flags, int argc, const char **argv)
                   " Kerberos libraries");
 #endif
 
-    if (config->silent)
-        args->silent = 1;
     return args;
 
 nomem:

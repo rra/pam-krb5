@@ -496,7 +496,12 @@ group.
 
 =item silent
 
-Like PAM_SILENT. Don't show text and error messages when prompting.
+Don't show messages and errors from Kerberos, such as warnings of expiring
+passwords, to the user via the prompter.  This is equivalent to the
+behavior when the application passes in PAM_SILENT, but can be set in the
+PAM configuration.
+
+This option is only applicable to the auth and password groups.
 
 =back
 

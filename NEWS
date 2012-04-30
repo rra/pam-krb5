@@ -2,14 +2,18 @@
 
 pam-krb5 4.6 (unreleased)
 
-    Add a new option no_prompt, which suppresses the PAM module's prompt
-    for the user's password and defers all prompting to the Kerberos
-    library.  This allows the Kerberos library to have complete control of
-    the prompting process, which may be desireable if authentication
-    mechanisms other than password are in use.  Be aware that, with this
-    option set, the PAM module has no control over the contents of the
-    prompt and cannot store the user's password in the PAM data.  Based on
-    a patch by Yair Yarom.
+    Add a no_prompt option to suppress the PAM module's prompt for the
+    user's password and defer all prompting to the Kerberos library.  This
+    allows the Kerberos library to have complete control of the prompting
+    process, which may be desireable if authentication mechanisms other
+    than password are in use.  Be aware that, with this option set, the
+    PAM module has no control over the contents of the prompt and cannot
+    store the user's password in the PAM data.  Based on a patch by Yair
+    Yarom.
+
+    Add a silent option to force the module to behave as if the
+    application had passed in PAM_SILENT and suppress text messages and
+    errors from the Kerberos library.  Patch from Yair Yarom.
 
     MIT Kerberos does not add a colon and space to its password prompts,
     but Heimdal does.  pam-krb5 previously unconditionally added a colon
@@ -173,7 +177,7 @@ pam-krb5 4.4 (2010-12-31)
 
 pam-krb5 4.3 (2010-06-09)
 
-    Add a new option fast_ccache, which if set points to a Kerberos ticket
+    Add a fast_ccache option that, if set, points to a Kerberos ticket
     cache used for Flexible Authentication Secure Tunneling (FAST) to
     protect the authentication.  FAST is a mechanism to protect Kerberos
     against password guessing attacks and provide other security
