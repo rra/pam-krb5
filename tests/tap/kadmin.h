@@ -31,8 +31,8 @@
 #define TAP_KADMIN_H 1
 
 #include <config.h>
-#include <portable/macros.h>
 #include <portable/stdbool.h>
+#include <tests/tap/macros.h>
 
 BEGIN_DECLS
 
