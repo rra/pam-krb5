@@ -494,6 +494,10 @@ this option to simulate the normal library behavior.
 This option can be set in F<krb5.conf> and is only applicable to the auth
 group.
 
+=item silent
+
+Like PAM_SILENT. Don't show text and error messages when prompting.
+
 =back
 
 =head2 PKINIT

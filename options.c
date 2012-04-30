@@ -60,6 +60,7 @@ static const struct option options[] = {
     { K(renew_lifetime),     true,  TIME   (0)     },
     { K(retain_after_close), true,  BOOL   (false) },
     { K(search_k5login),     true,  BOOL   (false) },
+    { K(silent),             false, BOOL   (false) },
     { K(ticket_lifetime),    true,  TIME   (0)     },
     { K(try_first_pass),     false, BOOL   (false) },
     { K(try_pkinit),         true,  BOOL   (false) },
@@ -175,6 +176,8 @@ pamk5_init(pam_handle_t *pamh, int flags, int argc, const char **argv)
                   " Kerberos libraries");
 #endif
 
+    if (config->silent)
+        args->silent = 1;
     return args;
 
 nomem:
