@@ -11,7 +11,7 @@
 [output]
     DEBUG pam_sm_authenticate: entry
     DEBUG (user %u) mapping bogus-nonexistent-account to %1
-    DEBUG (user %u) alternate authentication failed: %*
+    DEBUG /^\(user %u\) alternate authentication failed: /
     NOTICE authentication failure; logname=%u uid=%i euid=%i tty= ruser= rhost=
     DEBUG pam_sm_authenticate: exit (failure)
     DEBUG pam_sm_acct_mgmt: entry
