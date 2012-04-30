@@ -155,7 +155,8 @@ Scripted PAM Testing
 
     Regular expression matching is supported for output lines and for
     prompts.  To mark an expected prompt or output line as a regular
-    expression, it must begin and end with a slash (/).  If regular
+    expression, it must begin and end with a slash (/).  Slashes inside
+    the regular expression do not need to be escaped.  If regular
     expression support is not available in the C library, those matching
     tests will be skipped.
 
