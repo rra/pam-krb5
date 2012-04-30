@@ -48,6 +48,7 @@
 #include <tests/fakepam/pam.h>
 #include <tests/fakepam/script.h>
 #include <tests/tap/basic.h>
+#include <tests/tap/macros.h>
 #include <tests/tap/string.h>
 
 
