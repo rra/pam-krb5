@@ -160,8 +160,6 @@ Scripted PAM Testing
     expression support is not available in the C library, those matching
     tests will be skipped.
 
-    The PAM output (described below) also supports a special %* wildcard.
-
   The [options] Section
 
     The [options] section contains the PAM configuration that will be
@@ -214,9 +212,7 @@ Scripted PAM Testing
     output or a regular expression to match against the output.  Valid
     values for <priority> are DEBUG, INFO, NOTICE, ERR, and CRIT.
     <output> and <regex> may contain spaces and undergoes %-escape
-    expansion.  <output> may also end in %*, in which case only the line
-    up to %* is required to match and anything after that in the same
-    output message is permitted.
+    expansion.
 
     The replacement values are taken from the script_config struct passed
     as a parameter to run_script or run_script_dir.

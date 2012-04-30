@@ -135,26 +135,9 @@ compare_string(char *wanted, char *seen, const char *format, ...)
         regex = bstrndup(wanted + 1, length - 2);
         like(regex, seen, comment);
         free(regex);
-        free(comment);
-        return;
+    } else {
+        is_string(wanted, seen, "%s", comment);
     }
-
-    /*
-     * Handle the %* wildcard.  If this occurs in the desired string, it must
-     * be the end of the string, and it means that all output after that point
-     * is ignored.  So truncate both strings at that point so that we'll only
-     * compare the first parts.
-     *
-     * This is a hacky substitute for real regex matching, which would be a
-     * much better option.
-     */
-    if (length > 1
-        && strcmp(wanted + (length - 2), "%*") == 0
-        && strlen(seen) > (length - 2)) {
-        wanted[length - 2] = '\0';
-        seen[length - 2] = '\0';
-    }
-    is_string(wanted, seen, "%s", comment);
     free(comment);
 }
 
@@ -220,7 +203,7 @@ converse(int num_msg, const struct pam_message **msg,
 /*
  * Check the actual PAM output against the expected output.  We divide the
  * expected and seen output into separate lines and compare each one so that
- * we can handle wildcards.
+ * we can handle regular expressions and the output priority.
  */
 static void
 check_output(const struct output *wanted, const struct output *seen)
