@@ -39,30 +39,30 @@
 #include <tests/tap/basic.h>
 #include <tests/tap/string.h>
 
-/* Test a normal PAM logging function. */                       \
-#define TEST(func, p, n)                                        \
-    do {                                                        \
-        (func)(args, "%s", "foo");                              \
-        basprintf(&expected, "%d %s", (p), "foo");              \
-        seen = pam_output();                                    \
-        is_string(expected, seen->strings[0], "%s", (n));       \
-        pam_output_free(seen);                                  \
-        free(expected);                                         \
+/* Test a normal PAM logging function. */
+#define TEST(func, p, n)                                                \
+    do {                                                                \
+        (func)(args, "%s", "foo");                                      \
+        seen = pam_output();                                            \
+        is_int((p), seen->lines[0].priority, "priority %d", (p));       \
+        is_string("foo", seen->lines[0].line, "line %s", (n));          \
+        pam_output_free(seen);                                          \
     } while (0);
 
 /* Test a PAM error logging function. */
-#define TEST_PAM(func, c, p, n)                                 \
-    do {                                                        \
-        (func)(args, (c), "%s", "bar");                         \
-        if ((c) == PAM_SUCCESS)                                 \
-            basprintf(&expected, "%d %s", (p), "bar");          \
-        else                                                    \
-            basprintf(&expected, "%d %s: %s", (p), "bar",       \
-                      pam_strerror(args->pamh, c));             \
-        seen = pam_output();                                    \
-        is_string(expected, seen->strings[0], "%s", (n));       \
-        pam_output_free(seen);                                  \
-        free(expected);                                         \
+#define TEST_PAM(func, c, p, n)                                         \
+    do {                                                                \
+        (func)(args, (c), "%s", "bar");                                 \
+        if ((c) == PAM_SUCCESS)                                         \
+            expected = strdup("bar");                                   \
+        else                                                            \
+            basprintf(&expected, "%s: %s", "bar",                       \
+                      pam_strerror(args->pamh, c));                     \
+        seen = pam_output();                                            \
+        is_int((p), seen->lines[0].priority, "priority %s", (n));       \
+        is_string(expected, seen->lines[0].line, "line %s", (n));       \
+        pam_output_free(seen);                                          \
+        free(expected);                                                 \
     } while (0);
 
 /* Test a PAM Kerberos error logging function .*/
@@ -74,9 +74,10 @@
         (func)(args, code, "%s", "krb");                                  \
         code = krb5_parse_name(args->ctx, "foo@bar@EXAMPLE.COM", &princ); \
         msg = krb5_get_error_message(args->ctx, code);                    \
-        basprintf(&expected, "%d %s: %s", (p), "krb", msg);               \
+        basprintf(&expected, "%s: %s", "krb", msg);                       \
         seen = pam_output();                                              \
-        is_string(expected, seen->strings[0], "%s", (n));                 \
+        is_int((p), seen->lines[0].priority, "priority %s", (n));         \
+        is_string(expected, seen->lines[0].line, "line %s", (n));         \
         pam_output_free(seen);                                            \
         free(expected);                                                   \
         krb5_free_error_message(args->ctx, msg);                          \
@@ -96,7 +97,7 @@ main(void)
     krb5_principal princ;
 #endif
 
-    plan(15);
+    plan(27);
 
     if (pam_start("test", NULL, &conv, &pamh) != PAM_SUCCESS)
         sysbail("Fake PAM initialization failed");

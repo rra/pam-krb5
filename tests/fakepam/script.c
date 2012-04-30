@@ -230,23 +230,34 @@ check_output(const struct output *wanted, const struct output *seen)
         ok(1, "no output");
     else if (wanted == NULL) {
         for (i = 0; i < seen->count; i++)
-            diag("unexpected: %s", seen->strings[0]);
+            diag("unexpected: (%d) %s", seen->lines[i].priority,
+                 seen->lines[i].line);
         ok(0, "no output");
     } else if (seen == NULL) {
-        for (i = 0; i < wanted->count; i++)
-            is_string(wanted->strings[i], NULL, "output line %lu",
+        for (i = 0; i < wanted->count; i++) {
+            is_int(wanted->lines[i].priority, 0, "output priority %lu",
                       (unsigned long) i + 1);
+            is_string(wanted->lines[i].line, NULL, "output line %lu",
+                      (unsigned long) i + 1);
+        }
     } else {
-        for (i = 0; i < wanted->count && i < seen->count; i++)
-            compare_string(wanted->strings[i], seen->strings[i],
+        for (i = 0; i < wanted->count && i < seen->count; i++) {
+            is_int(wanted->lines[i].priority, seen->lines[i].priority,
+                   "output priority %lu", (unsigned long) i + 1);
+            compare_string(wanted->lines[i].line, seen->lines[i].line,
                            "output line %lu", (unsigned long) i + 1);
+        }
         if (wanted->count > seen->count)
-            for (i = seen->count; i < wanted->count; i++)
-                is_string(wanted->strings[i], NULL, "output line %lu",
+            for (i = seen->count; i < wanted->count; i++) {
+                is_int(wanted->lines[i].priority, 0, "output priority %lu",
+                       (unsigned long) i + 1);
+                is_string(wanted->lines[i].line, NULL, "output line %lu",
                           (unsigned long) i + 1);
+            }
         if (seen->count > wanted->count) {
             for (i = wanted->count; i < seen->count; i++)
-                diag("unexpected: %s", seen->strings[i]);
+                diag("unexpected: (%d) %s", seen->lines[i].priority,
+                     seen->lines[i].line);
             ok(0, "unexpected output lines");
         } else {
             ok(1, "no excess output");

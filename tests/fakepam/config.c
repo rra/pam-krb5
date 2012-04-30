@@ -552,7 +552,7 @@ parse_run(FILE *script)
 static struct output *
 parse_output(FILE *script, const struct script_config *config)
 {
-    char *line, *token, *piece, *message;
+    char *line, *token, *message;
     struct output *output = NULL;
     int priority;
 
@@ -565,10 +565,8 @@ parse_output(FILE *script, const struct script_config *config)
         token = strtok(NULL, "");
         if (token == NULL)
             bail("malformed line %s", line);
-        piece = expand_string(token, config);
-        basprintf(&message, "%d %s", priority, piece);
-        free(piece);
-        output_add(output, message);
+        message = expand_string(token, config);
+        output_add(output, priority, message);
         free(message);
         free(line);
     }

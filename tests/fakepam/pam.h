@@ -61,13 +61,16 @@ struct pam_handle {
 
 /*
  * Used to accumulate output from the PAM module.  Each call to a logging
- * function will result in an additional string added to the array, and count
+ * function will result in an additional line added to the array, and count
  * will hold the total.
  */
 struct output {
     size_t count;
     size_t allocated;
-    char **strings;
+    struct {
+        int priority;
+        char *line;
+    } *lines;
 };
 
 BEGIN_DECLS

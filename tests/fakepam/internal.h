@@ -99,8 +99,8 @@ BEGIN_DECLS
 /* Create a new output struct. */
 struct output *output_new(void);
 
-/* Add a new string to an output struct. */
-void output_add(struct output *, const char *);
+/* Add a new output line (with numeric priority) to an output struct. */
+void output_add(struct output *, int, const char *);
 
 
 /*

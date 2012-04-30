@@ -5,7 +5,7 @@
  * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <rra@stanford.edu>
- * Copyright 2010, 2011
+ * Copyright 2010, 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -88,16 +88,15 @@ const size_t optlen = sizeof(options) / sizeof(options[0]);
  * calling putil_args_parse() on it.  It then recovers the error message and
  * expects it to match the severity and error message given.
  */
-#define TEST_ERROR(a, p, e)                                             \
-    do {                                                                \
-        argv_err[0] = (a);                                              \
-        status = putil_args_parse(args, 1, argv_err, options, optlen);  \
-        ok(status, "Parse of %s", (a));                                 \
-        basprintf(&expected, "%d %s", (p), (e));                        \
-        seen = pam_output();                                            \
-        is_string(expected, seen->strings[0], "...error for %s", (a));  \
-        pam_output_free(seen);                                          \
-        free(expected);                                                 \
+#define TEST_ERROR(a, p, e)                                              \
+    do {                                                                 \
+        argv_err[0] = (a);                                               \
+        status = putil_args_parse(args, 1, argv_err, options, optlen);   \
+        ok(status, "Parse of %s", (a));                                  \
+        seen = pam_output();                                             \
+        is_int((p), seen->lines[0].priority, "...priority for %s", (a)); \
+        is_string((e), seen->lines[0].line, "...error for %s", (a));     \
+        pam_output_free(seen);                                           \
     } while (0);
 
 
@@ -140,7 +139,7 @@ main(void)
     struct pam_conv conv = { NULL, NULL };
     bool status;
     struct vector *cells;
-    char *program, *expected;
+    char *program;
     struct output *seen;
     const char *argv_bool[2] = { NULL, NULL };
     const char *argv_err[2] = { NULL, NULL };
@@ -164,7 +163,7 @@ main(void)
     if (args == NULL)
         sysbail("cannot create PAM argument struct");
 
-    plan(150);
+    plan(161);
 
     /* First, check just the defaults. */
     args->config = config_new();
@@ -402,11 +401,10 @@ main(void)
     args->config = config_new();
     status = putil_args_krb5(args, "bad-number", options, optlen);
     ok(status, "Options from krb5.conf (bad-number)");
-    basprintf(&expected, "%d invalid number in krb5.conf setting for %s: %s",
-              LOG_ERR, "minimum_uid", "1000foo");
     seen = pam_output();
-    is_string(expected, seen->strings[0], "...and correct error reported");
-    free(expected);
+    is_string("invalid number in krb5.conf setting for minimum_uid: 1000foo",
+              seen->lines[0].line, "...and correct error reported");
+    is_int(LOG_ERR, seen->lines[0].priority, "...with correct priority");
     pam_output_free(seen);
     config_free(args->config);
     args->config = NULL;
@@ -415,11 +413,10 @@ main(void)
     args->config = config_new();
     status = putil_args_krb5(args, "bad-time", options, optlen);
     ok(status, "Options from krb5.conf (bad-time)");
-    basprintf(&expected, "%d invalid time in krb5.conf setting for %s: %s",
-              LOG_ERR, "expires", "ft87");
     seen = pam_output();
-    is_string(expected, seen->strings[0], "...and correct error reported");
-    free(expected);
+    is_string("invalid time in krb5.conf setting for expires: ft87",
+              seen->lines[0].line, "...and correct error reported");
+    is_int(LOG_ERR, seen->lines[0].priority, "...with correct priority");
     pam_output_free(seen);
     config_free(args->config);
     args->config = NULL;
