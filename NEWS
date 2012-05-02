@@ -2,6 +2,13 @@
 
 pam-krb5 4.6 (unreleased)
 
+    Add a user_realm option to only set the realm for unqualified user
+    principals.  This differs from the existing realm option in that realm
+    also changes the default realm for authorization decisions and for
+    verification of credentials.  Update the realm option documentation to
+    clarify the differences and remove incorrect information.  Patch from
+    Roland C. Dowdeswell.
+
     Add a no_prompt option to suppress the PAM module's prompt for the
     user's password and defer all prompting to the Kerberos library.  This
     allows the Kerberos library to have complete control of the prompting
