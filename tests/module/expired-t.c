@@ -90,6 +90,27 @@ main(void)
     run_script("data/scripts/expired/basic-mit-debug", &config);
 #endif
 
+    /* Test again with PAM_SILENT, specified two ways. */
+#ifdef HAVE_KRB5_HEIMDAL
+    config.newpass = newpass;
+    config.password = krbconf->password;
+    kerberos_expire_password(krbconf->userprinc, now);
+    run_script("data/scripts/expired/basic-heimdal-silent", &config);
+    config.newpass = krbconf->password;
+    config.password = newpass;
+    kerberos_expire_password(krbconf->userprinc, now);
+    run_script("data/scripts/expired/basic-heimdal-flag-silent", &config);
+#else
+    config.newpass = newpass;
+    config.password = krbconf->password;
+    kerberos_expire_password(krbconf->userprinc, now);
+    run_script("data/scripts/expired/basic-mit-silent", &config);
+    config.newpass = krbconf->password;
+    config.password = newpass;
+    kerberos_expire_password(krbconf->userprinc, now);
+    run_script("data/scripts/expired/basic-mit-flag-silent", &config);
+#endif
+
     /*
      * We can only run the remaining checks if we can suppress the Kerberos
      * library behavior of prompting for a new password when the password has

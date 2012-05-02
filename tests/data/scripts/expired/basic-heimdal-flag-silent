@@ -1,0 +1,20 @@
+# Test default handling of expired passwords with PAM_SILENT.  -*- conf -*-
+
+[options]
+    auth     = ignore_k5login
+    account  = ignore_k5login
+    password = ignore_k5login
+
+[run]
+    authenticate(SILENT)  = PAM_SUCCESS
+    acct_mgmt(SILENT)     = PAM_SUCCESS
+    open_session(SILENT)  = PAM_SUCCESS
+    close_session(SILENT) = PAM_SUCCESS
+
+[prompts]
+    echo_off = Password: |%p
+    echo_off = New password: |%n
+    echo_off = Repeat new password: |%n
+
+[output]
+    INFO user %u authenticated as %0
