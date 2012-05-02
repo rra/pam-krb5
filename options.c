@@ -67,6 +67,7 @@ static const struct option options[] = {
     { K(use_authtok),        false, BOOL   (false) },
     { K(use_first_pass),     false, BOOL   (false) },
     { K(use_pkinit),         true,  BOOL   (false) },
+    { K(user_realm),         true,  STRING (NULL)  },
 };
 static const size_t optlen = sizeof(options) / sizeof(options[0]);
 
@@ -225,6 +226,8 @@ pamk5_free(struct pam_args *args)
             vector_free(config->preauth_opt);
         if (config->realm != NULL)
             free(config->realm);
+        if (config->user_realm != NULL)
+            free(config->user_realm);
         free(args->config);
         args->config = NULL;
     }

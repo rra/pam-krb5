@@ -56,6 +56,7 @@ parse_name(struct pam_args *args)
 {
     struct context *ctx = args->config->ctx;
     krb5_context c = ctx->context;
+    char *user_realm;
     char *user = ctx->name;
     char *newuser = NULL;
     char kuser[65] = "";        /* MAX_USERNAME == 65 (MIT Kerberos 1.4.1). */
@@ -84,8 +85,11 @@ parse_name(struct pam_args *args)
      * specified and a realm is set in our arguments, append the realm to
      * force krb5_parse_name to do the right thing.
      */
-    if (args->realm != NULL && strchr(user, '@') == NULL) {
-        if (asprintf(&newuser, "%s@%s", user, args->realm) < 0)
+    user_realm = args->realm;
+    if (args->config->user_realm)
+        user_realm = args->config->user_realm;
+    if (user_realm != NULL && strchr(user, '@') == NULL) {
+        if (asprintf(&newuser, "%s@%s", user, user_realm) < 0)
             return KRB5_CC_NOMEM;
         if (user != ctx->name)
             free(user);
@@ -863,7 +867,7 @@ done:
      * already set to something other than PAM_SUCCESS, we encountered a PAM
      * error and will just return that code.  Otherwise, we need to map the
      * Kerberos status code in retval to a PAM error code.
-     */ 
+     */
     if (status == PAM_SUCCESS) {
         switch (retval) {
         case 0:

@@ -69,6 +69,7 @@ struct pam_config {
     char *realm;                /* Default realm for Kerberos. */
     krb5_deltat renew_lifetime; /* Renewable lifetime of credentials. */
     krb5_deltat ticket_lifetime; /* Lifetime of credentials. */
+    char *user_realm;           /* Default realm for user principals. */
 
     /* PAM behavior. */
     bool clear_on_fail;         /* Delete saved password on change failure. */

@@ -366,13 +366,17 @@ group.
 
 =item realm=<realm>
 
-Obtain credentials in the specified realm rather than in the default realm
-for this system.  If this option is used, it should be set for all groups
-being used for consistent results (although the account group currently
-doesn't care about realm).  This will not change authorization decisions.
-If the obtained credentials are supposed to allow access to a shell
-account, the user will need an appropriate F<.k5login> file entry or the
-system will have to have a custom aname_to_localname mapping.
+Set the default Kerberos realm and obtain credentials in that realm,
+rather than in the normal default realm for this system.  If this option
+is used, it should be set for all groups being used for consistent
+results.  This setting will affect authorization decisions since it
+changes the default realm.  This setting will also change the service
+principal used to verify the obtained credentials to be in the specified
+realm.
+
+If you only want to set the realm assumed for user principals without
+changing the realm for authorization decisions or the service principal
+used to verify credentials, see the I<user_realm> option.
 
 =item renew_lifetime=<lifetime>
 
@@ -393,6 +397,18 @@ section of F<krb5.conf>.
 
 This option can be set in F<krb5.conf> and is only applicable to the auth
 group.
+
+=back
+
+=item user_realm
+
+Obtain credentials in the specified realm rather than in the default realm
+for this system.  If this option is used, it should be set for all groups
+being used for consistent results (although the account group currently
+doesn't care about realm).  This will not change authorization decisions.
+If the obtained credentials are supposed to allow access to a shell
+account, the user will need an appropriate F<.k5login> file entry or the
+system will have to have a custom aname_to_localname mapping.
 
 =back
 
