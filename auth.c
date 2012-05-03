@@ -904,7 +904,7 @@ done:
 
 
 /*
- * Authenticate a user via Kerberos 5.
+ * Authenticate a user via Kerberos.
  *
  * It would be nice to be able to save the ticket cache temporarily as a
  * memory cache and then only write it out to disk during the session
