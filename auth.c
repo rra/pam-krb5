@@ -140,28 +140,38 @@ set_fast_options(struct pam_args *args, krb5_get_init_creds_opt *opts)
     krb5_ccache fast_ccache = NULL;
     const char *cache = args->config->fast_ccache;
 
-    if (cache == NULL)
-        return;
-    k5_errno = krb5_cc_resolve(c, cache, &fast_ccache);
-    if (k5_errno != 0) {
-        putil_debug_krb5(args, k5_errno, "failed resolving FAST ccache %s",
-                         cache);
-        goto done;
+    if (cache == NULL) {
+        if (args->config->anon_fast == 0)
+            return;
+        k5_errno = pamk5_cache_init_anon_fast(args, &fast_ccache);
+        if (k5_errno != 0)
+            return;
+        if (args->config->ctx->anon_fast_ccache != NULL)
+            krb5_cc_destroy(c, args->config->ctx->anon_fast_ccache);
+        args->config->ctx->anon_fast_ccache = fast_ccache;
+    } else {
+        k5_errno = krb5_cc_resolve(c, cache, &fast_ccache);
+        if (k5_errno != 0) {
+            putil_debug_krb5(args, k5_errno, "failed resolving FAST ccache %s",
+                             cache);
+            goto done;
+        }
     }
+
     k5_errno = krb5_cc_get_principal(c, fast_ccache, &princ);
     if (k5_errno != 0) {
         putil_debug_krb5(args, k5_errno,
                          "failed to get principal from FAST ccache %s", cache);
         goto done;
     }
-    k5_errno = krb5_get_init_creds_opt_set_fast_ccache_name(c, opts, cache);
+    k5_errno = krb5_get_init_creds_opt_set_fast_ccache(c, opts, fast_ccache);
     if (k5_errno != 0)
         putil_err_krb5(args, k5_errno, "failed setting FAST ccache to %s",
                        cache);
     putil_debug(args, "setting FAST credential cache to %s", cache);
 
 done:
-    if (fast_ccache != NULL)
+    if (fast_ccache != NULL && args->config->ctx->anon_fast_ccache != fast_ccache)
         krb5_cc_close(c, fast_ccache);
     if (princ != NULL)
         krb5_free_principal(c, princ);
@@ -900,6 +910,12 @@ done:
     }
     if (opts != NULL)
         krb5_get_init_creds_opt_free(ctx->context, opts);
+
+    /* Whatever the results, destroy the anonymous fast armor. */
+    if (ctx->anon_fast_ccache) {
+        krb5_cc_destroy(ctx->context, ctx->anon_fast_ccache);
+        ctx->anon_fast_ccache = NULL;
+    }
     return status;
 }
 

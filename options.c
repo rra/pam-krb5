@@ -31,6 +31,7 @@
 #define K(name) (#name), offsetof(struct pam_config, name)
 static const struct option options[] = {
     { K(alt_auth_map),       true,  STRING (NULL)  },
+    { K(anon_fast),          true,  BOOL   (false) },
     { K(banner),             true,  STRING ("Kerberos") },
     { K(ccache),             true,  STRING (NULL)  },
     { K(ccache_dir),         true,  STRING ("FILE:/tmp") },
@@ -174,9 +175,9 @@ pamk5_init(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
     /* Warn if the FAST option was set and FAST isn't supported. */
 #ifndef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_FAST_CCACHE_NAME
-    if (config->fast_ccache)
-        putil_err(args, "fast_ccache requested but FAST not supported by"
-                  " Kerberos libraries");
+    if (config->fast_ccache || config->anon_fast)
+        putil_err(args, "fast_ccache or anon_fast requested but FAST not"
+                  " supported by Kerberos libraries");
 #endif
 
     return args;

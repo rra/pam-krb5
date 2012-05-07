@@ -182,3 +182,97 @@ done:
     free(cache_name);
     return pamret;
 }
+
+krb5_error_code pamk5_cache_init_anon_fast(struct pam_args *args, krb5_ccache *out_ccache) {
+    krb5_context c = args->config->ctx->context;
+    krb5_creds *fast_creds = NULL;
+    char* realm = NULL;
+    krb5_error_code k5_errno;
+    krb5_principal princ = NULL;
+    krb5_get_init_creds_opt *fast_opts = NULL;
+    krb5_ccache fast_ccache = NULL;
+    char *armor_name = NULL;
+    int pamret;
+
+    if (args->realm != NULL) {
+        realm = args->realm;
+    } else {
+        k5_errno = krb5_get_default_realm(c, &realm);
+        if (k5_errno != 0) {
+            putil_debug_krb5(args, k5_errno,
+                             "Can't find a realm for anonymous user");
+            goto done;
+        }
+    }
+    k5_errno = krb5_build_principal_ext(c, &princ,
+                                        strlen(realm), realm,
+                                        strlen(KRB5_WELLKNOWN_NAMESTR),
+                                        KRB5_WELLKNOWN_NAMESTR,
+                                        strlen(KRB5_ANONYMOUS_PRINCSTR),
+                                        KRB5_ANONYMOUS_PRINCSTR,
+                                        NULL);
+    if (args->realm == NULL)
+        krb5_free_default_realm(c, realm);
+    if (k5_errno != 0) {
+        putil_debug_krb5(args, k5_errno,
+                         "cannot create anonymous principal");
+        goto done;
+    }
+
+    armor_name = strdup("/tmp/krb5cc_pam_armor_XXXXXX");
+    pamret = pamk5_cache_mkstemp(args, armor_name);
+    if (pamret != PAM_SUCCESS)
+        goto done;
+
+    k5_errno = krb5_cc_resolve(c, armor_name, &fast_ccache);
+    if (k5_errno != 0) {
+        putil_err_krb5(args, k5_errno,
+                       "Can't create temp fast cache: %s", armor_name);
+        goto done;
+    }
+
+    fast_creds = calloc(1, sizeof(krb5_creds));
+    if (fast_creds == NULL) {
+        putil_err(args, "cannot allocate memory: %s, not using fast",
+                  strerror(errno));
+        k5_errno = ENOMEM;
+        goto done;
+    }
+
+    k5_errno = krb5_get_init_creds_opt_alloc(c, &fast_opts);
+    if (k5_errno != 0) {
+        putil_err_krb5(args, k5_errno,
+                       "cannot allocate memory, not using fast");
+        goto done;
+    }
+
+    krb5_get_init_creds_opt_set_anonymous(fast_opts, 1);
+    krb5_get_init_creds_opt_set_tkt_life(fast_opts, 60);
+    krb5_get_init_creds_opt_set_out_ccache(c, fast_opts, fast_ccache);
+
+    k5_errno = krb5_get_init_creds_password(c, fast_creds, princ, NULL,
+                                            NULL, NULL, 0, NULL,
+                                            fast_opts);
+    if (k5_errno != 0) {
+        putil_debug_krb5(args, k5_errno, "failed getting initial "
+                         "credentials for anonymous user");
+        goto done;
+    }
+    *out_ccache = fast_ccache;
+
+ done:
+    if (armor_name != NULL)
+        free(armor_name);
+    if (k5_errno != 0 && fast_ccache != NULL)
+        krb5_cc_destroy(c, fast_ccache);
+    if (fast_opts != NULL)
+        krb5_get_init_creds_opt_free(c, fast_opts);
+    if (princ != NULL)
+        krb5_free_principal(c, princ);
+    if (fast_creds != NULL) {
+        krb5_free_cred_contents(c, fast_creds);
+        free(fast_creds);
+    }
+
+    return k5_errno;
+}
