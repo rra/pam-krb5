@@ -144,20 +144,21 @@ set_fast_options(struct pam_args *args, krb5_get_init_creds_opt *opts)
         return;
     k5_errno = krb5_cc_resolve(c, cache, &fast_ccache);
     if (k5_errno != 0) {
-        putil_debug_krb5(args, k5_errno, "failed resolving fast ccache %s",
+        putil_debug_krb5(args, k5_errno, "failed resolving FAST ccache %s",
                          cache);
         goto done;
     }
     k5_errno = krb5_cc_get_principal(c, fast_ccache, &princ);
     if (k5_errno != 0) {
         putil_debug_krb5(args, k5_errno,
-                         "failed to get principal from fast ccache %s", cache);
+                         "failed to get principal from FAST ccache %s", cache);
         goto done;
     }
     k5_errno = krb5_get_init_creds_opt_set_fast_ccache_name(c, opts, cache);
     if (k5_errno != 0)
-        putil_err_krb5(args, k5_errno, "failed setting fast ccache to %s",
+        putil_err_krb5(args, k5_errno, "failed setting FAST ccache to %s",
                        cache);
+    putil_debug(args, "setting FAST credential cache to %s", cache);
 
 done:
     if (fast_ccache != NULL)
