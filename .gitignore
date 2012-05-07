@@ -19,6 +19,7 @@
 /pam_krb5.5
 /stamp-h1
 /tests/config/admin-keytab
+/tests/config/keytab
 /tests/config/password
 /tests/module/alt-auth-t
 /tests/module/bad-authtok-t
@@ -26,6 +27,7 @@
 /tests/module/cache-cleanup-t
 /tests/module/cache-t
 /tests/module/expired-t
+/tests/module/fast-t
 /tests/module/no-cache-t
 /tests/module/password-t
 /tests/module/realm-t

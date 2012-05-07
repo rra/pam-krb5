@@ -4,6 +4,7 @@ module/basic
 module/cache
 module/cache-cleanup
 module/expired
+module/fast
 module/no-cache
 module/password
 module/realm
