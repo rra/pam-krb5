@@ -407,8 +407,6 @@ section of F<krb5.conf>.
 This option can be set in F<krb5.conf> and is only applicable to the auth
 group.
 
-=back
-
 =item user_realm
 
 Obtain credentials in the specified realm rather than in the default realm
