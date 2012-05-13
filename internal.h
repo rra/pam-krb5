@@ -232,14 +232,18 @@ int pamk5_cache_init(struct pam_args *, const char *ccname, krb5_creds *,
 int pamk5_cache_init_random(struct pam_args *, krb5_creds *);
 
 /*
+ * Create a ticket cache with anonymous credentials and return it in the
+ * provided second argument.
+ */
+krb5_error_code pamk5_cache_init_anonymous(struct pam_args *, krb5_ccache *);
+
+/*
  * Compatibility functions.  Depending on whether pam_krb5 is built with MIT
  * Kerberos or Heimdal, appropriate implementations for the Kerberos
  * implementation will be provided.
  */
 krb5_error_code pamk5_compat_set_realm(struct pam_config *, const char *);
 void pamk5_compat_free_realm(struct pam_config *);
-
-krb5_error_code pamk5_cache_init_anon_fast(struct pam_args *args, krb5_ccache* ccache);
 
 /* Undo default visibility change. */
 #pragma GCC visibility pop

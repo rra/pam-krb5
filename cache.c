@@ -89,12 +89,14 @@ done:
 int
 pamk5_cache_mkstemp(struct pam_args *args, char *template)
 {
-    int ccfd;
+    int ccfd, oerrno;
 
     ccfd = mkstemp(template);
     if (ccfd < 0) {
+        oerrno = errno;
         putil_crit(args, "mkstemp(\"%s\") failed: %s", template,
                    strerror(errno));
+        errno = oerrno;
         return PAM_SERVICE_ERR;
     }
     close(ccfd);
@@ -184,121 +186,128 @@ done:
 }
 
 
+/*
+ * Initialize an internal anonymous ticket cache with a random name and store
+ * the resulting ticket cache in the ccache argument.  Returns a Kerberos
+ * error code.
+ */
 #ifndef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_ANONYMOUS
+
 krb5_error_code
-pamk5_cache_init_anon_fast(struct pam_args *args UNUSED,
-                           krb5_ccache *out_ccache UNUSED)
+pamk5_cache_init_anonymous(struct pam_args *args, krb5_ccache *ccache UNUSED)
 {
+    putil_debug(args, "not built with anonymous FAST support");
     return KRB5KDC_ERR_BADOPTION;
 }
+
 #else /* HAVE_KRB5_GET_INIT_CREDS_OPT_SET_ANONYMOUS */
+
 krb5_error_code
-pamk5_cache_init_anon_fast(struct pam_args *args, krb5_ccache *out_ccache)
+pamk5_cache_init_anonymous(struct pam_args *args, krb5_ccache *ccache)
 {
     krb5_context c = args->config->ctx->context;
-    krb5_creds *fast_creds = NULL;
-    char *realm = NULL;
-    krb5_error_code k5_errno;
+    krb5_error_code retval;
     krb5_principal princ = NULL;
-    krb5_get_init_creds_opt *fast_opts = NULL;
-    krb5_ccache fast_ccache = NULL;
-    char *armor_name = NULL;
-    int pamret;
+    const char *dir;
+    char *realm;
+    char *path = NULL;
+    int status;
+    krb5_creds creds;
+    bool creds_valid = false;
+    krb5_get_init_creds_opt *opts = NULL;
 
-    if (args->realm != NULL) {
-        realm = args->realm;
-    } else {
-        k5_errno = krb5_get_default_realm(c, &realm);
-        if (k5_errno != 0) {
-            putil_debug_krb5(args, k5_errno,
-                             "Can't find a realm for anonymous user");
-            goto done;
-        }
+    *ccache = NULL;
+    memset(&creds, 0, sizeof(creds));
+
+    /* Construct the anonymous principal name. */
+    retval = krb5_get_default_realm(c, &realm);
+    if (retval != 0) {
+        putil_debug_krb5(args, retval, "cannot find realm for anonymous FAST");
+        return retval;
     }
-    k5_errno = krb5_build_principal_ext(c, &princ,
-                                        strlen(realm), realm,
-                                        strlen(KRB5_WELLKNOWN_NAME),
-                                        KRB5_WELLKNOWN_NAME,
-                                        strlen(KRB5_ANON_NAME),
-                                        KRB5_ANON_NAME,
-                                        NULL);
-    if (args->realm == NULL)
+    retval = krb5_build_principal_ext(c, &princ, strlen(realm), realm,
+                 strlen(KRB5_WELLKNOWN_NAME), KRB5_WELLKNOWN_NAME,
+                 strlen(KRB5_ANON_NAME), KRB5_ANON_NAME, NULL);
+    if (retval != 0) {
         krb5_free_default_realm(c, realm);
-    if (k5_errno != 0) {
-        putil_debug_krb5(args, k5_errno,
-                         "cannot create anonymous principal");
+        putil_debug_krb5(args, retval, "cannot create anonymous principal");
+        return retval;
+    }
+    krb5_free_default_realm(c, realm);
+
+    /* Set up the credential cache the anonymous credentials. */
+    dir = args->config->ccache_dir;
+    if (strncmp("FILE:", args->config->ccache_dir, strlen("FILE:")) == 0)
+        dir += strlen("FILE:");
+    if (asprintf(&path, "%s/krb5cc_pam_armor_XXXXXX", dir) < 0) {
+        putil_crit(args, "malloc failure: %s", strerror(errno));
+        retval = errno;
+        goto done;
+    }
+    status = pamk5_cache_mkstemp(args, path);
+    if (status != PAM_SUCCESS) {
+        retval = errno;
+        goto done;
+    }
+    retval = krb5_cc_resolve(c, path, ccache);
+    if (retval != 0) {
+        putil_err_krb5(args, retval, "cannot create anonymous FAST ccache %s",
+                       path);
         goto done;
     }
 
-    armor_name = strdup("/tmp/krb5cc_pam_armor_XXXXXX");
-    pamret = pamk5_cache_mkstemp(args, armor_name);
-    if (pamret != PAM_SUCCESS)
+    /* Obtain the credentials. */
+    retval = krb5_get_init_creds_opt_alloc(c, &opts);
+    if (retval != 0) {
+        putil_err_krb5(args, retval, "cannot create FAST credential options");
         goto done;
+    }
+    krb5_get_init_creds_opt_set_anonymous(opts, 1);
+    krb5_get_init_creds_opt_set_tkt_life(opts, 60);
+# ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_OUT_CCACHE
+    krb5_get_init_creds_opt_set_out_ccache(c, opts, *ccache);
+# endif
+    retval = krb5_get_init_creds_password(c, &creds, princ, NULL, NULL, NULL,
+                                          0, NULL, opts);
+    if (retval != 0) {
+        putil_debug_krb5(args, retval, "cannot obtain anonymous credentials"
+                         " for FAST");
+        goto done;
+    }
+    creds_valid = true;
 
-    k5_errno = krb5_cc_resolve(c, armor_name, &fast_ccache);
-    if (k5_errno != 0) {
-        putil_err_krb5(args, k5_errno,
-                       "Can't create temp fast cache: %s", armor_name);
+    /*
+     * If set_out_ccache was available, we're done.  Otherwise, we have to
+     * manually set up the ticket cache.  Use the principal from the acquired
+     * credentials when initializing the ticket cache, since the realm will
+     * not match the realm of our input principal.
+     */
+# ifndef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_OUT_CCACHE
+    retval = krb5_cc_initialize(c, *ccache, creds.client);
+    if (retval != 0) {
+        putil_err_krb5(args, retval, "cannot initialize FAST ticket cache");
         goto done;
     }
-
-    fast_creds = calloc(1, sizeof(krb5_creds));
-    if (fast_creds == NULL) {
-        putil_err(args, "cannot allocate memory: %s, not using fast",
-                  strerror(errno));
-        k5_errno = ENOMEM;
+    retval = krb5_cc_store_cred(c, *ccache, &creds);
+    if (retval != 0) {
+        putil_err_krb5(args, retval, "cannot store FAST credentials");
         goto done;
     }
-
-    k5_errno = krb5_get_init_creds_opt_alloc(c, &fast_opts);
-    if (k5_errno != 0) {
-        putil_err_krb5(args, k5_errno,
-                       "cannot allocate memory, not using fast");
-        goto done;
-    }
-
-    krb5_get_init_creds_opt_set_anonymous(fast_opts, 1);
-    krb5_get_init_creds_opt_set_tkt_life(fast_opts, 60);
-#ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_OUT_CCACHE
-    krb5_get_init_creds_opt_set_out_ccache(c, fast_opts, fast_ccache);
-#endif
-
-    k5_errno = krb5_get_init_creds_password(c, fast_creds, princ, NULL,
-                                            NULL, NULL, 0, NULL,
-                                            fast_opts);
-    if (k5_errno != 0) {
-        putil_debug_krb5(args, k5_errno, "failed getting initial "
-                         "credentials for anonymous user");
-        goto done;
-    }
-#ifndef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_OUT_CCACHE
-    k5_errno = krb5_cc_initialize(c, fast_ccache, fast_creds->client);
-    if (k5_errno != 0) {
-        putil_err_krb5(args, k5_errno, "cannot initialize FAST ticket cache");
-        goto done;
-    }
-    k5_errno = krb5_cc_store_cred(c, fast_ccache, fast_creds);
-    if (k5_errno != 0) {
-        putil_err_krb5(args, k5_errno, "cannot store credentials in FAST"
-                       " ticket cache");
-        goto done;
-    }
-#endif /* !HAVE_KRB5_GET_INIT_CREDS_OPT_SET_OUT_CCACHE */
-    *out_ccache = fast_ccache;
+# endif /* !HAVE_KRB5_GET_INIT_CREDS_OPT_SET_OUT_CCACHE */
 
  done:
-    if (armor_name != NULL)
-        free(armor_name);
-    if (k5_errno != 0 && fast_ccache != NULL)
-        krb5_cc_destroy(c, fast_ccache);
-    if (fast_opts != NULL)
-        krb5_get_init_creds_opt_free(c, fast_opts);
+    if (retval != 0 && *ccache != NULL) {
+        krb5_cc_destroy(c, *ccache);
+        *ccache = NULL;
+    }
     if (princ != NULL)
         krb5_free_principal(c, princ);
-    if (fast_creds != NULL) {
-        krb5_free_cred_contents(c, fast_creds);
-        free(fast_creds);
-    }
-    return k5_errno;
+    if (path != NULL)
+        free(path);
+    if (opts != NULL)
+        krb5_get_init_creds_opt_free(c, opts);
+    if (creds_valid)
+        krb5_free_cred_contents(c, &creds);
+    return retval;
 }
 #endif /* HAVE_KRB5_GET_INIT_CREDS_OPT_SET_ANONYMOUS */
