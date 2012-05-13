@@ -217,10 +217,10 @@ pamk5_cache_init_anon_fast(struct pam_args *args, krb5_ccache *out_ccache)
     }
     k5_errno = krb5_build_principal_ext(c, &princ,
                                         strlen(realm), realm,
-                                        strlen(KRB5_WELLKNOWN_NAMESTR),
-                                        KRB5_WELLKNOWN_NAMESTR,
-                                        strlen(KRB5_ANONYMOUS_PRINCSTR),
-                                        KRB5_ANONYMOUS_PRINCSTR,
+                                        strlen(KRB5_WELLKNOWN_NAME),
+                                        KRB5_WELLKNOWN_NAME,
+                                        strlen(KRB5_ANON_NAME),
+                                        KRB5_ANON_NAME,
                                         NULL);
     if (args->realm == NULL)
         krb5_free_default_realm(c, realm);
