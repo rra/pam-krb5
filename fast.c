@@ -47,10 +47,8 @@ cache_init_anonymous(struct pam_args *args, krb5_ccache *ccache)
     krb5_context c = args->config->ctx->context;
     krb5_error_code retval;
     krb5_principal princ = NULL;
-    const char *dir;
     char *realm;
-    char *path = NULL;
-    int status;
+    char *name = NULL;
     krb5_creds creds;
     bool creds_valid = false;
     krb5_get_init_creds_opt *opts = NULL;
@@ -74,24 +72,20 @@ cache_init_anonymous(struct pam_args *args, krb5_ccache *ccache)
     }
     krb5_free_default_realm(c, realm);
 
-    /* Set up the credential cache the anonymous credentials. */
-    dir = args->config->ccache_dir;
-    if (strncmp("FILE:", args->config->ccache_dir, strlen("FILE:")) == 0)
-        dir += strlen("FILE:");
-    if (asprintf(&path, "%s/krb5cc_pam_armor_XXXXXX", dir) < 0) {
+    /*
+     * Set up the credential cache the anonymous credentials.  We use a
+     * memory cache whose name is based on the pointer value of our Kerberos
+     * context, since that should be unique among threads.
+     */
+    if (asprintf(&name, "MEMORY:%p", c) < 0) {
         putil_crit(args, "malloc failure: %s", strerror(errno));
         retval = errno;
         goto done;
     }
-    status = pamk5_cache_mkstemp(args, path);
-    if (status != PAM_SUCCESS) {
-        retval = errno;
-        goto done;
-    }
-    retval = krb5_cc_resolve(c, path, ccache);
+    retval = krb5_cc_resolve(c, name, ccache);
     if (retval != 0) {
-        putil_err_krb5(args, retval, "cannot create anonymous FAST ccache %s",
-                       path);
+        putil_err_krb5(args, retval, "cannot create anonymous FAST credential"
+                       " cache %s", name);
         goto done;
     }
 
@@ -141,8 +135,8 @@ cache_init_anonymous(struct pam_args *args, krb5_ccache *ccache)
     }
     if (princ != NULL)
         krb5_free_principal(c, princ);
-    if (path != NULL)
-        free(path);
+    if (name != NULL)
+        free(name);
     if (opts != NULL)
         krb5_get_init_creds_opt_free(c, opts);
     if (creds_valid)
