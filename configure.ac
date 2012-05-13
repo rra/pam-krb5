@@ -1,7 +1,7 @@
 dnl Autoconf configuration for pam-krb5.
 dnl
 dnl Written by Russ Allbery <rra@stanford.edu>
-dnl Copyright 2009, 2010, 2011
+dnl Copyright 2009, 2010, 2011, 2012
 dnl     The Board of Trustees of the Leland Stanford Junior University
 dnl Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@stanford.edu>
 dnl Copyright 2005 Andres Salomon <dilinger@debian.org>
@@ -55,12 +55,16 @@ AC_CHECK_MEMBER([krb5_creds.session],
         [Define if your Kerberos implementation is MIT.])],
     [RRA_INCLUDES_KRB5])
 AC_CHECK_TYPES([krb5_realm], [], [], [RRA_INCLUDES_KRB5])
-AC_CHECK_FUNCS([krb5_data_free \
+AC_CHECK_FUNCS([krb5_cc_get_full_name \
+    krb5_data_free \
     krb5_free_default_realm \
+    krb5_free_string \
     krb5_get_init_creds_opt_alloc \
+    krb5_get_init_creds_opt_set_anonymous \
     krb5_get_init_creds_opt_set_change_password_prompt \
     krb5_get_init_creds_opt_set_default_flags \
     krb5_get_init_creds_opt_set_fast_ccache_name \
+    krb5_get_init_creds_opt_set_out_ccache \
     krb5_get_init_creds_opt_set_pa \
     krb5_init_secure_context \
     krb5_principal_get_realm \

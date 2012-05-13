@@ -49,6 +49,35 @@
 static const char error_unknown[] = "unknown error";
 
 
+#ifndef HAVE_KRB5_CC_GET_FULL_NAME
+/*
+ * Given a Kerberos ticket cache, return the full name (TYPE:name) in
+ * newly-allocated memory.  Returns an error code.  Avoid asprintf and
+ * snprintf here in case someone wants to use this code without the rest of
+ * the portability layer.
+ */
+krb5_error_code
+krb5_cc_get_full_name(krb5_context ctx, krb5_ccache ccache, char **out)
+{
+    const char *type, *name;
+    size_t length;
+
+    type = krb5_cc_get_type(ctx, ccache);
+    if (type == NULL)
+        type = "FILE";
+    name = krb5_cc_get_name(ctx, ccache);
+    if (name == NULL)
+        return EINVAL;
+    length = strlen(type) + 1 + strlen(name) + 1;
+    *out = malloc(length);
+    if (*out == NULL)
+        return errno;
+    sprintf(*out, "%s:%s", type, name);
+    return 0;
+}
+#endif /* !HAVE_KRB5_CC_GET_FULL_NAME */
+
+
 #ifndef HAVE_KRB5_GET_ERROR_MESSAGE
 /*
  * Given a Kerberos error code, return the corresponding error.  Prefer the

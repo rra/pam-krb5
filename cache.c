@@ -183,10 +183,21 @@ done:
     return pamret;
 }
 
-krb5_error_code pamk5_cache_init_anon_fast(struct pam_args *args, krb5_ccache *out_ccache) {
+
+#ifndef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_ANONYMOUS
+krb5_error_code
+pamk5_cache_init_anon_fast(struct pam_args *args UNUSED,
+                           krb5_ccache *out_ccache UNUSED)
+{
+    return KRB5KDC_ERR_BADOPTION;
+}
+#else /* HAVE_KRB5_GET_INIT_CREDS_OPT_SET_ANONYMOUS */
+krb5_error_code
+pamk5_cache_init_anon_fast(struct pam_args *args, krb5_ccache *out_ccache)
+{
     krb5_context c = args->config->ctx->context;
     krb5_creds *fast_creds = NULL;
-    char* realm = NULL;
+    char *realm = NULL;
     krb5_error_code k5_errno;
     krb5_principal princ = NULL;
     krb5_get_init_creds_opt *fast_opts = NULL;
@@ -248,7 +259,9 @@ krb5_error_code pamk5_cache_init_anon_fast(struct pam_args *args, krb5_ccache *o
 
     krb5_get_init_creds_opt_set_anonymous(fast_opts, 1);
     krb5_get_init_creds_opt_set_tkt_life(fast_opts, 60);
+#ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_OUT_CCACHE
     krb5_get_init_creds_opt_set_out_ccache(c, fast_opts, fast_ccache);
+#endif
 
     k5_errno = krb5_get_init_creds_password(c, fast_creds, princ, NULL,
                                             NULL, NULL, 0, NULL,
@@ -258,6 +271,19 @@ krb5_error_code pamk5_cache_init_anon_fast(struct pam_args *args, krb5_ccache *o
                          "credentials for anonymous user");
         goto done;
     }
+#ifndef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_OUT_CCACHE
+    k5_errno = krb5_cc_initialize(c, fast_ccache, fast_creds->client);
+    if (k5_errno != 0) {
+        putil_err_krb5(args, k5_errno, "cannot initialize FAST ticket cache");
+        goto done;
+    }
+    k5_errno = krb5_cc_store_cred(c, fast_ccache, fast_creds);
+    if (k5_errno != 0) {
+        putil_err_krb5(args, k5_errno, "cannot store credentials in FAST"
+                       " ticket cache");
+        goto done;
+    }
+#endif /* !HAVE_KRB5_GET_INIT_CREDS_OPT_SET_OUT_CCACHE */
     *out_ccache = fast_ccache;
 
  done:
@@ -273,6 +299,6 @@ krb5_error_code pamk5_cache_init_anon_fast(struct pam_args *args, krb5_ccache *o
         krb5_free_cred_contents(c, fast_creds);
         free(fast_creds);
     }
-
     return k5_errno;
 }
+#endif /* HAVE_KRB5_GET_INIT_CREDS_OPT_SET_ANONYMOUS */
