@@ -125,86 +125,6 @@ parse_name(struct pam_args *args)
 
 
 /*
- * Set initial credential options for FAST if support is available.  For
- * non-anonymous FAST, we open the ticket cache and read the principal from it
- * first to ensure that the cache exists and contains credentials, and skip
- * setting the FAST cache if we cannot do that.
- */
-#ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_FAST_CCACHE_NAME
-static void
-set_fast_options(struct pam_args *args, krb5_get_init_creds_opt *opts)
-{
-    krb5_context c = args->config->ctx->context;
-    const char *cache = args->config->fast_ccache;
-    krb5_error_code retval;
-    krb5_principal princ;
-    krb5_ccache ccache;
-    bool valid = false;
-    char *anon_cache = NULL;
-
-    /*
-     * Obtain the credential cache.  We may generate a new anonymous ticket
-     * cache or we may use an existing ticket cache.  Try to use an existing
-     * one first, and fall back on anonymous if that was configured.
-     */
-    if (cache != NULL) {
-        retval = krb5_cc_resolve(c, cache, &ccache);
-        if (retval != 0)
-            putil_debug_krb5(args, retval, "failed resolving FAST ccache %s",
-                             cache);
-        else {
-            retval = krb5_cc_get_principal(c, ccache, &princ);
-            if (retval != 0)
-                putil_debug_krb5(args, retval, "failed to get principal from"
-                                 " FAST ccache %s", cache);
-            else {
-                valid = true;
-                krb5_free_principal(c, princ);
-            }
-            krb5_cc_close(c, ccache);
-        }
-    }
-    if (!valid && args->config->anon_fast) {
-        retval = pamk5_cache_init_anonymous(args, &ccache);
-        if (retval != 0) {
-            putil_debug_krb5(args, retval, "skipping anonymous FAST");
-            return;
-        }
-        if (args->config->ctx->anon_fast_ccache != NULL)
-            krb5_cc_destroy(c, args->config->ctx->anon_fast_ccache);
-        args->config->ctx->anon_fast_ccache = ccache;
-        retval = krb5_cc_get_full_name(c, ccache, &anon_cache);
-        if (retval != 0)
-            putil_debug_krb5(args, retval, "cannot get name of anonymous FAST"
-                             " credential cache");
-        else {
-            valid = true;
-            cache = anon_cache;
-        }
-    }
-    if (!valid)
-        goto done;
-
-    /* We have a valid FAST ticket cache.  Set the option. */
-    retval = krb5_get_init_creds_opt_set_fast_ccache_name(c, opts, cache);
-    if (retval != 0)
-        putil_err_krb5(args, retval, "failed to set FAST ccache");
-    else if (anon_cache != NULL)
-        putil_debug(args, "setting anonymous FAST credential cache to %s",
-                    anon_cache);
-    else
-        putil_debug(args, "setting FAST credential cache to %s", cache);
-
-done:
-    if (anon_cache != NULL)
-        krb5_free_string(c, anon_cache);
-}
-#else /* !HAVE_KRB5_GET_INIT_CREDS_OPT_SET_FAST_CCACHE_NAME */
-# define set_fast_options(a, o) /* empty */
-#endif
-
-
-/*
  * Set initial credential options based on our configuration information, and
  * using the Heimdal call to set initial credential options if it's available.
  * This function is used both for regular password authentication and for
@@ -238,7 +158,7 @@ set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
         krb5_get_init_creds_opt_set_proxiable(opts, 0);
         krb5_get_init_creds_opt_set_renew_life(opts, 0);
     }
-    set_fast_options(args, opts);
+    pamk5_fast_setup(args, opts);
 
     /*
      * Set options for PKINIT.  Only used with MIT Kerberos; Heimdal's

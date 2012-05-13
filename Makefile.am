@@ -37,8 +37,8 @@ endif
 
 pamdir = $(libdir)/security
 pam_LTLIBRARIES = pam_krb5.la
-pam_krb5_la_SOURCES = account.c alt-auth.c auth.c cache.c context.c	\
-	internal.h options.c password.c prompting.c public.c setcred.c	\
+pam_krb5_la_SOURCES = account.c alt-auth.c auth.c cache.c context.c fast.c \
+	internal.h options.c password.c prompting.c public.c setcred.c	   \
 	support.c
 pam_krb5_la_LDFLAGS = -module -shared -avoid-version $(VERSION_LDFLAGS) \
 	$(AM_LDFLAGS)
@@ -99,7 +99,7 @@ tests_tap_libtap_a_SOURCES = tests/tap/basic.c tests/tap/basic.h	\
 
 # The list of objects and libraries used for module testing by programs that
 # link with the fake PAM library or with both it and the module.
-MODULE_OBJECTS = account.lo alt-auth.lo auth.lo cache.lo context.lo	    \
+MODULE_OBJECTS = account.lo alt-auth.lo auth.lo cache.lo context.lo fast.lo \
 	options.lo password.lo prompting.lo public.lo setcred.lo support.lo \
 	pam-util/libpamutil.la tests/fakepam/libfakepam.a
 

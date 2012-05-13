@@ -202,6 +202,9 @@ krb5_error_code pamk5_alt_auth(struct pam_args *, const char *service,
                                krb5_creds *);
 int pamk5_alt_auth_verify(struct pam_args *);
 
+/* FAST support.  Set up FAST protection of authentication. */
+void pamk5_fast_setup(struct pam_args *, krb5_get_init_creds_opt *);
+
 /* Context management. */
 int pamk5_context_new(struct pam_args *);
 int pamk5_context_fetch(struct pam_args *);
@@ -230,12 +233,6 @@ int pamk5_cache_init(struct pam_args *, const char *ccname, krb5_creds *,
  * credentials, store it in the context, and put the path into PAM_KRB5CCNAME.
  */
 int pamk5_cache_init_random(struct pam_args *, krb5_creds *);
-
-/*
- * Create a ticket cache with anonymous credentials and return it in the
- * provided second argument.
- */
-krb5_error_code pamk5_cache_init_anonymous(struct pam_args *, krb5_ccache *);
 
 /*
  * Compatibility functions.  Depending on whether pam_krb5 is built with MIT
