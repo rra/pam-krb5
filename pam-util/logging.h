@@ -112,7 +112,7 @@ END_DECLS
     if (args->debug)                                                    \
         putil_log_entry((args), __func__, (flags));
 #define EXIT(args, pamret)                                              \
-    if (args->debug)                                                    \
+    if (args != NULL && args->debug)                                    \
         pam_syslog((args)->pamh, LOG_DEBUG, "%s: exit (%s)", __func__,  \
                    ((pamret) == PAM_SUCCESS) ? "success"                \
                    : (((pamret) == PAM_IGNORE) ? "ignore" : "failure"))
