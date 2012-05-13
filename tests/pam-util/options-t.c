@@ -161,7 +161,7 @@ main(void)
         sysbail("cannot create pam_handle_t");
     args = putil_args_new(pamh, 0);
     if (args == NULL)
-        sysbail("cannot create PAM argument struct");
+        bail("cannot create PAM argument struct");
 
     plan(161);
 

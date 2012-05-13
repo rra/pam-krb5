@@ -102,6 +102,8 @@ main(void)
     if (pam_start("test", NULL, &conv, &pamh) != PAM_SUCCESS)
         sysbail("Fake PAM initialization failed");
     args = putil_args_new(pamh, 0);
+    if (args == NULL)
+        bail("cannot create PAM argument struct");
     TEST(putil_crit,  LOG_CRIT,  "putil_crit");
     TEST(putil_err,   LOG_ERR,   "putil_err");
     putil_debug(args, "%s", "foo");
