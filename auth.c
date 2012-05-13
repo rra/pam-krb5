@@ -145,8 +145,11 @@ set_fast_options(struct pam_args *args, krb5_get_init_creds_opt *opts)
         if (args->config->anon_fast == 0)
             return;
         k5_errno = pamk5_cache_init_anon_fast(args, &fast_ccache);
-        if (k5_errno != 0)
+        if (k5_errno != 0) {
+            putil_debug_krb5(args, k5_errno, "failed to create anonymous FAST"
+                             " ccache");
             return;
+        }
         if (args->config->ctx->anon_fast_ccache != NULL)
             krb5_cc_destroy(c, args->config->ctx->anon_fast_ccache);
         args->config->ctx->anon_fast_ccache = fast_ccache;
