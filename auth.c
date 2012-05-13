@@ -139,6 +139,7 @@ set_fast_options(struct pam_args *args, krb5_get_init_creds_opt *opts)
     krb5_principal princ = NULL;
     krb5_ccache fast_ccache = NULL;
     const char *cache = args->config->fast_ccache;
+    char *tmp;
 
     if (cache == NULL) {
         if (args->config->anon_fast == 0)
@@ -168,7 +169,16 @@ set_fast_options(struct pam_args *args, krb5_get_init_creds_opt *opts)
     if (k5_errno != 0)
         putil_err_krb5(args, k5_errno, "failed setting FAST ccache to %s",
                        cache);
-    putil_debug(args, "setting FAST credential cache to %s", cache);
+    else if (cache == NULL) {
+        k5_errno = krb5_cc_get_full_name(c, fast_ccache, &tmp);
+        if (k5_errno == 0) {
+            putil_debug(args, "setting anonymous FAST credential cache to %s",
+                        tmp);
+            krb5_free_string(c, tmp);
+        }
+    } else {
+        putil_debug(args, "setting FAST credential cache to %s", cache);
+    }
 
 done:
     if (fast_ccache != NULL && args->config->ctx->anon_fast_ccache != fast_ccache)
