@@ -62,5 +62,15 @@ main(void)
         run_script("data/scripts/fast/no-ccache-debug", &config);
     }
 
+    /*
+     * Test anonymous FAST.  This will require some pre-testing later.  For
+     * this, we need to use our real local realm.
+     */
+    kerberos_generate_conf(krbconf->realm);
+    config.user = krbconf->username;
+    config.extra[0] = krbconf->userprinc;
+    run_script("data/scripts/fast/anonymous", &config);
+    run_script("data/scripts/fast/anonymous-debug", &config);
+
     return 0;
 }
