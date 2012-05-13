@@ -141,6 +141,9 @@ main(void)
 
 #endif /* HAVE_KRB5_GET_INIT_CREDS_OPT_SET_CHANGE_PASSWORD_PROMPT */
 
+    /* In case we ran into some error, try to unexpire the password. */
+    kerberos_expire_password(krbconf->userprinc, 0);
+
     free(date);
     free(newpass);
     free(pwd.pw_dir);
