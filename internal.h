@@ -80,6 +80,7 @@ struct pam_config {
     bool fail_pwchange;         /* Treat expired password as auth failure. */
     bool force_pwchange;        /* Change expired passwords in auth. */
     bool silent;                /* Suppress text and errors (PAM_SILENT). */
+    char *trace;                /* File name for trace logging. */
 
     /* PKINIT. */
     char *pkinit_anchors;       /* Trusted certificates, usually per realm. */

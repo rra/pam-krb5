@@ -63,6 +63,7 @@ static const struct option options[] = {
     { K(search_k5login),     true,  BOOL   (false) },
     { K(silent),             false, BOOL   (false) },
     { K(ticket_lifetime),    true,  TIME   (0)     },
+    { K(trace),              false, STRING (NULL)  },
     { K(try_first_pass),     false, BOOL   (false) },
     { K(try_pkinit),         true,  BOOL   (false) },
     { K(use_authtok),        false, BOOL   (false) },
@@ -180,6 +181,23 @@ pamk5_init(pam_handle_t *pamh, int flags, int argc, const char **argv)
                   " supported by Kerberos libraries");
 #endif
 
+    /* If tracing was requested enable it if possible. */
+#ifdef HAVE_KRB5_SET_TRACE_FILENAME
+    if (config->trace != NULL) {
+        krb5_error_code retval;
+
+        retval = krb5_set_trace_filename(args->ctx, config->trace);
+        if (retval == 0)
+            putil_debug(args, "enabled trace logging to %s", config->trace);
+        else
+            putil_err_krb5(args, retval, "cannot enable trace logging to %s",
+                           config->trace);
+    }
+#else
+    if (config->trace != NULL)
+        putil_err(args, "trace logging requested but not supported");
+#endif
+
     return args;
 
 nomem:
@@ -227,6 +245,8 @@ pamk5_free(struct pam_args *args)
             vector_free(config->preauth_opt);
         if (config->realm != NULL)
             free(config->realm);
+        if (config->trace != NULL)
+            free(config->trace);
         if (config->user_realm != NULL)
             free(config->user_realm);
         free(args->config);

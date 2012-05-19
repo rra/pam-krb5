@@ -526,6 +526,14 @@ PAM configuration.
 
 This option is only applicable to the auth and password groups.
 
+=item trace=<log-file>
+
+Enables Kerberos library trace logging to the specified log file if it is
+supported by the Kerberos library.  This is intended for temporary
+debugging.  The specified file will be appended to without further
+security checks, so do not specify a file in a publicly writable directory
+like F</tmp>.
+
 =back
 
 =head2 PKINIT

@@ -261,7 +261,6 @@ run_script(const char *file, const struct script_config *config)
 {
     char *path;
     struct output *output;
-    const char *user;
     FILE *script;
     struct work *work;
     struct options *opts;
@@ -292,10 +291,7 @@ run_script(const char *file, const struct script_config *config)
     }
 
     /* Initialize PAM. */
-    user = config->user;
-    if (user == NULL)
-        user = "testuser";
-    status = pam_start("test", user, &conv, &pamh);
+    status = pam_start("test", config->user, &conv, &pamh);
     if (status != PAM_SUCCESS)
         sysbail("cannot create PAM handle");
     if (config->authtok != NULL)

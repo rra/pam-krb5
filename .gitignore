@@ -32,6 +32,7 @@
 /tests/module/password-t
 /tests/module/realm-t
 /tests/module/stacked-t
+/tests/module/trace-t
 /tests/pam-util/args-t
 /tests/pam-util/fakepam-t
 /tests/pam-util/logging-t

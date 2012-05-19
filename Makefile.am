@@ -77,7 +77,7 @@ check_PROGRAMS = tests/runtests tests/module/alt-auth-t			    \
 	tests/module/cache-cleanup-t tests/module/cache-t		    \
 	tests/module/expired-t tests/module/fast-t tests/module/no-cache-t  \
 	tests/module/password-t tests/module/realm-t tests/module/stacked-t \
-	tests/pam-util/args-t tests/pam-util/fakepam-t			    \
+	tests/module/trace-t tests/pam-util/args-t tests/pam-util/fakepam-t \
 	tests/pam-util/logging-t tests/pam-util/options-t		    \
 	tests/pam-util/vector-t tests/portable/asprintf-t		    \
 	tests/portable/mkstemp-t tests/portable/snprintf-t		    \
@@ -126,6 +126,8 @@ tests_module_password_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
 tests_module_realm_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
 	portable/libportable.la $(KRB5_LIBS)
 tests_module_stacked_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
+	portable/libportable.la $(KRB5_LIBS)
+tests_module_trace_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
 	portable/libportable.la $(KRB5_LIBS)
 tests_pam_util_args_t_LDADD = pam-util/libpamutil.la	\
 	tests/fakepam/libfakepam.a tests/tap/libtap.a	\
