@@ -2,98 +2,83 @@
 
 PAM API:
 
- * Support PAM_CHANGE_EXPIRED_AUTHTOK properly in pam_chauthtok.  This
-   will require prompting for the current password (if it's not already
-   available in the PAM data) and trying a regular authentication first to
-   see if the account is expired.  (PAMKRB-5)
+ * PAMKRB-5: Support PAM_CHANGE_EXPIRED_AUTHTOK properly in pam_chauthtok.
+   This will require prompting for the current password (if it's not
+   already available in the PAM data) and trying a regular authentication
+   first to see if the account is expired.
 
- * Tighter verification that all of our flags are valid might be a good
-   idea.  (PAMKRB-6)
+ * PAMKRB-6: Tighter verification that all of our flags are valid might be
+   a good idea.
 
- * For informational messages followed by a prompt, find a way to combine
-   these into one PAM conversation call for better GUI presentation
-   behavior.  (PAMKRB-16)
+ * PAMKRB-16: For informational messages followed by a prompt, find a way
+   to combine these into one PAM conversation call for better GUI
+   presentation behavior.
 
 Functionality:
 
- * Find a way to do only PKINIT authentication with no password fallback
-   with MIT Kerberos and then change the authentication flow so that both
-   Heimdal and MIT use the same logic for attempting PKINIT first and then
-   falling back to password.  This will fix failure to store passwords in
-   the PAM data with try_pkinit and MIT Kerberos on password fallback and
-   will allow implementation of use_pkinit for MIT.  (PAMKRB-2)
+ * PAMKRB-2: Find a way to do only PKINIT authentication with no password
+   fallback with MIT Kerberos and then change the authentication flow so
+   that both Heimdal and MIT use the same logic for attempting PKINIT
+   first and then falling back to password.  This will fix failure to
+   store passwords in the PAM data with try_pkinit and MIT Kerberos on
+   password fallback and will allow implementation of use_pkinit for MIT.
 
- * Add support for enabling trace logging if krb5_set_trace_filename() is
-   available (MIT Kerberos 1.9 and later).  (PAMKRB-4)
+ * PAMKRB-10: Add a daemon that can be used to verify TGTs that can be
+   used when pam-krb5 is run as a non-root user and hence doesn't have
+   access to the system keytab.  Jeff Hutzelman has a daemon and protocol
+   for doing this developed for a different PAM authentication module, and
+   it would be good to stay consistent with that protocol if possible.
+   (Debian Bug#399001)
 
- * Add support for obtaining a Kerberos ticket cache using anonymous
-   PKINIT and then using that cache to protect the pre-authentication
-   exchange with FAST.  (PAMKRB-1, Debian Bug#626509)
+ * PAMKRB-23: The alt_auth_map parsing to find realms doesn't take into
+   account escaped @-signs and doesn't do proper principal parsing.
 
- * Add a no_password PAM option to suppress the module password prompt,
-   useful with preauth mechanisms that need to do their own prompting
-   (possibly for things other than passwords).  (PAMKRB-3, Debian
-   Bug#626506)
-
- * Add a daemon that can be used to verify TGTs that can be used when
-   pam-krb5 is run as a non-root user and hence doesn't have access to the
-   system keytab.  Jeff Hutzelman has a daemon and protocol for doing this
-   developed for a different PAM authentication module, and it would be
-   good to stay consistent with that protocol if possible.  (PAMKRB-10,
-   Debian Bug#399001)
-
- * If using alt_auth_map, we don't log the correct principal as which
-   we're trying to authenticate for the first authentication.
-
- * The alt_auth_map parsing to find realms doesn't take into account
-   escaped @-signs and doesn't do proper principal parsing.
-
- * Fix password expiration handling for the search_k5login and
+ * PAMKRB-24: Fix password expiration handling for the search_k5login and
    alt_auth_map cases.  Right now, we may return expired password errors
    that would trigger password expiration handling, which probably isn't
    correct.
 
 Code Cleanup:
 
- * The PKINIT code for Heimdal involves too many #ifdefs right now for my
-   taste.  Find a way to restructure it to only wrap the main PKINIT
-   function for Heimdal.  (PAMKRB-11)
+ * PAMKRB-11: The PKINIT code for Heimdal involves too many #ifdefs right
+   now for my taste.  Find a way to restructure it to only wrap the main
+   PKINIT function for Heimdal.
 
- * The current handling of error return codes is a mess.  We need to find
-   a way to return a rich set of error codes from the underlying functions
-   and then map error codes appropriately in the interface functions.
-   Helpful for this would be improved documentation of what error codes
-   are permitted and where.  (PAMKRB-12)
+ * PAMKRB-12: The current handling of error return codes is a mess.  We
+   need to find a way to return a rich set of error codes from the
+   underlying functions and then map error codes appropriately in the
+   interface functions.  Helpful for this would be improved documentation
+   of what error codes are permitted and where.
 
 Documentation:
 
- * Document PKINIT configuration with MIT in krb5.conf.  It looks like the
-   library supports configuration in [realms] with similar names to the
-   PAM module configuration.  (PAMKRB-13)
+ * PAMKRB-13: Document PKINIT configuration with MIT in krb5.conf.  It
+   looks like the library supports configuration in [realms] with similar
+   names to the PAM module configuration.
 
- * Note the version number when options were added.  It helps people
-   looking at the documentation on-line and writing portable
-   configurations.  (PAMKRB-14)
+ * PAMKRB-14: Note the version number when options were added.  It helps
+   people looking at the documentation on-line and writing portable
+   configurations.
 
 Portability:
 
- * If pam_modutil_getpwnam is not available but getpwnam_r is, roll our
-   own using getpwnam_r.  (PAMKRB-15)
+ * PAMKRB-15: If pam_modutil_getpwnam is not available but getpwnam_r is,
+   roll our own using getpwnam_r.
 
 Logging:
 
- * Log the information that the Kerberos library asks us to display, or
-   at least the info and error messages.  (PAMKRB-17)
+ * PAMKRB-17: Log the information that the Kerberos library asks us to
+   display, or at least the info and error messages.
 
- * Log unknown PAM flags on module entry.  Currently, only the symbolic
-   flags we know about will be logged.  (PAMKRB-18)
+ * PAMKRB-18: Log unknown PAM flags on module entry.  Currently, only the
+   symbolic flags we know about will be logged.
 
 Test suite:
 
- * Add tests for PKINIT.  (PAMKRB-19)
+ * PAMKRB-19: Add tests for PKINIT.
 
- * Add tests for PAM prompting options.  (PAMKRB-20)
+ * PAMKRB-20: Ensure that the test suite covers all possible PAM options.
 
- * Add tests for other PAM options.  (PAMKRB-21)
-
- * Integrate and automate valgrind testing.  (PAMKRB-22)
+ * PAMKRB-22: Integrate and automate valgrind testing.  There is currently
+   a check-valgrind option with the beginnings of an exclusion list, but
+   it needs better integration with the rest of the test suite.
