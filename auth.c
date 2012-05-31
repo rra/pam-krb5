@@ -854,10 +854,10 @@ done:
     if (opts != NULL)
         krb5_get_init_creds_opt_free(ctx->context, opts);
 
-    /* Whatever the results, destroy the anonymous fast armor. */
-    if (ctx->anon_fast_ccache) {
-        krb5_cc_destroy(ctx->context, ctx->anon_fast_ccache);
-        ctx->anon_fast_ccache = NULL;
+    /* Whatever the results, destroy the anonymous FAST cache. */
+    if (ctx->fast_cache != NULL) {
+        krb5_cc_destroy(ctx->context, ctx->fast_cache);
+        ctx->fast_cache = NULL;
     }
     return status;
 }

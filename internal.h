@@ -44,7 +44,7 @@ struct context {
     int dont_destroy_cache;     /* If set, don't destroy cache on shutdown. */
     int initialized;            /* If set, ticket cache initialized. */
     krb5_creds *creds;          /* Credentials for password changing. */
-    krb5_ccache anon_fast_ccache; /* the anonymous ccache (to destory) */
+    krb5_ccache fast_cache;     /* Temporary credential cache for FAST. */
 };
 
 /*
