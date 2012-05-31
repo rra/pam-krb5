@@ -63,13 +63,16 @@ pam-krb5 4.6 (unreleased)
     addition to decrypt integrity check errors to handle a wider array of
     possible "password incorrect" error messages from the KDC.
 
-    Update to rra-c-util 4.3:
+    Update to rra-c-util 4.4:
 
     * Replacement strndup now works with non-nul-terminated strings.
     * New Kerberos test setup that simplifies writing tests.
     * Add -D_FORTIFY_SOURCE=2 to the make warnings flags.
+    * Use --deps flag to krb5-config by default.
+    * Suppress __alloc_size__ attribute with older versions of gcc.
+    * Suppress attribute warnings for non-gcc compilers.
 
-    Update to C TAP Harness 1.11:
+    Update to C TAP Harness 1.12:
 
     * Add bstrndup to the basic C TAP library.
     * Only use feature-test macros when requested or built with gcc -ansi.
