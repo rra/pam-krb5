@@ -14,7 +14,7 @@ AC_INIT([pam-krb5], [4.5], [rra@stanford.edu])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_LIBOBJ_DIR([portable])
 AC_CONFIG_MACRO_DIR([m4])
-AM_INIT_AUTOMAKE([1.11 check-news foreign silent-rules subdir-objects
+AM_INIT_AUTOMAKE([1.11 check-news dist-xz foreign silent-rules subdir-objects
     -Wall -Werror])
 AM_MAINTAINER_MODE
 
