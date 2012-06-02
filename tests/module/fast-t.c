@@ -21,6 +21,54 @@
 #include <tests/tap/string.h>
 
 
+/*
+ * Test whether anonymous authentication works.  If this doesn't, we need to
+ * skip the tests of anonymous FAST.
+ */
+static bool
+anon_fast_works(void)
+{
+    krb5_context ctx;
+    krb5_error_code retval;
+    krb5_principal princ = NULL;
+    char *realm;
+    krb5_creds creds;
+    krb5_get_init_creds_opt *opts = NULL;
+
+    /* Construct the anonymous principal name. */
+    retval = krb5_init_context(&ctx);
+    if (retval != 0)
+        bail("cannot initialize Kerberos");
+    retval = krb5_get_default_realm(ctx, &realm);
+    if (retval != 0)
+        bail("cannot get default realm");
+    retval = krb5_build_principal_ext(ctx, &princ, strlen(realm), realm,
+                 strlen(KRB5_WELLKNOWN_NAME), KRB5_WELLKNOWN_NAME,
+                 strlen(KRB5_ANON_NAME), KRB5_ANON_NAME, NULL);
+    if (retval != 0)
+        bail("cannot construct anonymous principal");
+    krb5_free_default_realm(ctx, realm);
+
+    /* Obtain the credentials. */
+    memset(&creds, 0, sizeof(creds));
+    retval = krb5_get_init_creds_opt_alloc(ctx, &opts);
+    if (retval != 0)
+        bail("cannot create credential options");
+    krb5_get_init_creds_opt_set_anonymous(opts, 1);
+    krb5_get_init_creds_opt_set_tkt_life(opts, 60);
+    retval = krb5_get_init_creds_password(ctx, &creds, princ, NULL, NULL,
+                                          NULL, 0, NULL, opts);
+
+    /* Clean up. */
+    if (princ != NULL)
+        krb5_free_principal(ctx, princ);
+    if (opts != NULL)
+        krb5_get_init_creds_opt_free(ctx, opts);
+    krb5_free_cred_contents(ctx, &creds);
+    return (retval == 0);
+}
+
+
 int
 main(void)
 {
@@ -69,8 +117,12 @@ main(void)
     kerberos_generate_conf(krbconf->realm);
     config.user = krbconf->username;
     config.extra[0] = krbconf->userprinc;
-    run_script("data/scripts/fast/anonymous", &config);
-    run_script("data/scripts/fast/anonymous-debug", &config);
+    if (anon_fast_works()) {
+        run_script("data/scripts/fast/anonymous", &config);
+        run_script("data/scripts/fast/anonymous-debug", &config);
+    } else {
+        skip_block(2, "Anonymous authentication required to test anon_fast");
+    }
 
     return 0;
 }
