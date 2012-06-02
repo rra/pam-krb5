@@ -153,7 +153,7 @@ cache_init_anonymous(struct pam_args *args, krb5_ccache *ccache)
  * out in newly allocated memory.  Caller is responsible for freeing.  If not,
  * returns NULL.
  */
-static char * UNUSED
+UNUSED static char *
 fast_setup_cache(struct pam_args *args)
 {
     krb5_context c = args->config->ctx->context;
@@ -197,7 +197,7 @@ fast_setup_cache(struct pam_args *args)
  * If successful, store the anonymous FAST cache in the context where it will
  * be freed following authentication.
  */
-static char * UNUSED
+UNUSED static char *
 fast_setup_anon(struct pam_args *args)
 {
     krb5_context c = args->config->ctx->context;
