@@ -1,6 +1,6 @@
                       User-Visible pam-krb5 Changes
 
-pam-krb5 4.6 (unreleased)
+pam-krb5 4.6 (2012-06-02)
 
     Add a user_realm option to only set the realm for unqualified user
     principals.  This differs from the existing realm option in that realm
