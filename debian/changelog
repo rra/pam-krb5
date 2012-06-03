@@ -1,5 +1,24 @@
-libpam-krb5 (4.5-5) UNRELEASED; urgency=low
+libpam-krb5 (4.6-1) UNRELEASED; urgency=low
 
+  * New upstream release.
+    - New user_realm option to set the realm for unqualified user
+      principals without changing the default realm for all other
+      operations.
+    - New no_prompt option to suppress PAM prompting in favor of letting
+      the Kerberos library handle it.  (Closes: #626506)
+    - New silent option that duplicates the behavior of PAM_SILENT.
+    - New trace option for preliminary support of Kerberos trace logging.
+    - Fix the doubled colon in password prompts from Heimdal.
+    - Preserve the realm of the authentication identity when forming an
+      alt_auth_map identity.
+    - Allow the alt_auth_map format to contain a realm to force all mapped
+      principals to be in that realm.
+    - Avoid a NULL pointer dereference if krb5_init_context fails.
+      (LP: #998525)
+    - Close memory leaks in search_k5login and alt_auth_map.
+    - Suppress bogus error messages about the realm option.
+    - Retry authentication under try_first_pass for several other error
+      conditions.
   * Regenerate the Autotools build system with dh-autoreconf.
 
  -- Russ Allbery <rra@debian.org>  Mon, 06 Feb 2012 18:29:47 -0800
