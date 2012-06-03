@@ -1,6 +1,8 @@
 libpam-krb5 (4.6-1) UNRELEASED; urgency=low
 
   * New upstream release.
+    - New anon_fast option to attempt anonymous authentication and use
+      those credentials to provide FAST armor.  (Closes: #626509)
     - New user_realm option to set the realm for unqualified user
       principals without changing the default realm for all other
       operations.
