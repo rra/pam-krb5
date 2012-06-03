@@ -25,6 +25,7 @@ libpam-krb5 (4.6-1) UNRELEASED; urgency=low
   * Switch to xz compression for the upstream tarball and for the built
     Debian package.
   * Enable parallel builds.
+  * Update standards version to 3.9.3 (no changes required).
 
  -- Russ Allbery <rra@debian.org>  Mon, 06 Feb 2012 18:29:47 -0800
 
