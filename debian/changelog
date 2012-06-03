@@ -24,8 +24,7 @@ libpam-krb5 (4.6-1) UNRELEASED; urgency=low
   * Regenerate the Autotools build system with dh-autoreconf.
   * Add krb5-config to Build-Depends so that the test programs don't abort
     with errors about not having a Kerberos configuration.
-  * Switch to xz compression for the upstream tarball and for the built
-    Debian package.
+  * Switch to xz compression for the upstream and Debian tarballs.
   * Enable parallel builds.
   * Update standards version to 3.9.3 (no changes required).
 
