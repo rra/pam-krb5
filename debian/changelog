@@ -22,6 +22,8 @@ libpam-krb5 (4.6-1) UNRELEASED; urgency=low
     - Retry authentication under try_first_pass for several other error
       conditions.
   * Regenerate the Autotools build system with dh-autoreconf.
+  * Switch to xz compression for the upstream tarball and for the built
+    Debian package.
 
  -- Russ Allbery <rra@debian.org>  Mon, 06 Feb 2012 18:29:47 -0800
 
