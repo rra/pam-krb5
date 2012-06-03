@@ -53,7 +53,7 @@ pam-krb5 4.6 (2012-06-02)
     authentication in multiple realms should instead run the module
     multiple times with different realm settings.
 
-    Avoid a NULL pointer deference if krb5_init_context fails.
+    Avoid a NULL pointer dereference if krb5_init_context fails.
 
     Fix initialization of time values in the module configuration on
     platforms (like S/390X) where krb5_deltat is not equivalent to long.
