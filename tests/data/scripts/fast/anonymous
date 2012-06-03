@@ -1,0 +1,10 @@
+# Test anonymous FAST.  -*- conf -*-
+
+[options]
+    auth = force_first_pass no_ccache anon_fast
+
+[run]
+    authenticate = PAM_SUCCESS
+
+[output]
+    INFO user %u authenticated as %0

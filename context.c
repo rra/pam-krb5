@@ -43,6 +43,7 @@ pamk5_context_new(struct pam_args *args)
     ctx->cache = NULL;
     ctx->princ = NULL;
     ctx->creds = NULL;
+    ctx->fast_cache = NULL;
     ctx->context = args->ctx;
     args->config->ctx = ctx;
 
@@ -130,6 +131,8 @@ context_free(struct context *ctx, bool free_context)
         if (free_context)
             krb5_free_context(ctx->context);
     }
+    if (ctx->fast_cache != NULL)
+        krb5_cc_destroy(ctx->context, ctx->fast_cache);
     free(ctx);
 }
 

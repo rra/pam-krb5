@@ -1,8 +1,14 @@
+module/alt-auth
+module/bad-authtok
 module/basic
 module/cache
+module/cache-cleanup
 module/expired
+module/fast
 module/no-cache
 module/password
+module/realm
+module/stacked
 pam-util/args
 pam-util/fakepam
 pam-util/logging

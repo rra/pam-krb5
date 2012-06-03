@@ -10,7 +10,7 @@
  * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <rra@stanford.edu>
- * Copyright 2011
+ * Copyright 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -95,11 +95,12 @@ static const struct {
     const char *name;
     int status;
 } RETURNS[] = {
-    { "PAM_AUTH_ERR",         PAM_AUTH_ERR     },
-    { "PAM_IGNORE",           PAM_IGNORE       },
-    { "PAM_SUCCESS",          PAM_SUCCESS      },
-    { "PAM_USER_UNKNOWN",     PAM_USER_UNKNOWN },
+    { "PAM_AUTH_ERR",         PAM_AUTH_ERR         },
+    { "PAM_AUTHINFO_UNAVAIL", PAM_AUTHINFO_UNAVAIL },
+    { "PAM_IGNORE",           PAM_IGNORE           },
     { "PAM_NEW_AUTHTOK_REQD", PAM_NEW_AUTHTOK_REQD },
+    { "PAM_SUCCESS",          PAM_SUCCESS          },
+    { "PAM_USER_UNKNOWN",     PAM_USER_UNKNOWN     },
 };
 
 /* Mapping of PAM prompt styles to their values. */
@@ -286,33 +287,6 @@ rewind_section(FILE *script, size_t length)
 
 
 /*
- * Given a whitespace-delimited string of PAM options, split it into an argv
- * array and argc count and store it in the provided option struct.
- */
-static void
-split_options(char *string, struct options *options)
-{
-    char *opt;
-    size_t size;
-
-    for (opt = strtok(string, " "); opt != NULL; opt = strtok(NULL, " ")) {
-        if (options->argv == NULL) {
-            options->argv = bmalloc(sizeof(const char *) * 2);
-            options->argv[0] = bstrdup(opt);
-            options->argv[1] = NULL;
-            options->argc = 1;
-        } else {
-            size = sizeof(const char *) * (options->argc + 2);
-            options->argv = brealloc(options->argv, size);
-            options->argv[options->argc] = bstrdup(opt);
-            options->argv[options->argc + 1] = NULL;
-            options->argc++;
-        }
-    }
-}
-
-
-/*
  * Given a string that may contain %-escapes, expand it into the resulting
  * value.  The following escapes are supported:
  *
@@ -348,9 +322,13 @@ expand_string(const char *template, const struct script_config *config)
                 length += strlen(uid);
                 break;
             case 'n':
+                if (config->newpass == NULL)
+                    bail("new password not set");
                 length += strlen(config->newpass);
                 break;
             case 'p':
+                if (config->password == NULL)
+                    bail("password not set");
                 length += strlen(config->password);
                 break;
             case 'u':
@@ -358,6 +336,8 @@ expand_string(const char *template, const struct script_config *config)
                 break;
             case '0': case '1': case '2': case '3': case '4':
             case '5': case '6': case '7': case '8': case '9':
+                if (config->extra[*p - '0'] == NULL)
+                    bail("extra script parameter %%%c not set", *p);
                 length += strlen(config->extra[*p - '0']);
                 break;
             case '*':
@@ -416,6 +396,34 @@ expand_string(const char *template, const struct script_config *config)
 
 
 /*
+ * Given a whitespace-delimited string of PAM options, split it into an argv
+ * array and argc count and store it in the provided option struct.
+ */
+static void
+split_options(char *string, struct options *options,
+              const struct script_config *config)
+{
+    char *opt;
+    size_t size;
+
+    for (opt = strtok(string, " "); opt != NULL; opt = strtok(NULL, " ")) {
+        if (options->argv == NULL) {
+            options->argv = bmalloc(sizeof(const char *) * 2);
+            options->argv[0] = expand_string(opt, config);
+            options->argv[1] = NULL;
+            options->argc = 1;
+        } else {
+            size = sizeof(const char *) * (options->argc + 2);
+            options->argv = brealloc(options->argv, size);
+            options->argv[options->argc] = expand_string(opt, config);
+            options->argv[options->argc + 1] = NULL;
+            options->argc++;
+        }
+    }
+}
+
+
+/*
  * Parse the options section of a PAM script.  This consists of one or more
  * lines in the format:
  *
@@ -428,7 +436,8 @@ expand_string(const char *template, const struct script_config *config)
  * Takes the work struct as an argument and puts values into its array.
  */
 static void
-parse_options(FILE *script, struct work *work)
+parse_options(FILE *script, struct work *work,
+              const struct script_config *config)
 {
     char *line, *group, *token;
     size_t length;
@@ -446,7 +455,7 @@ parse_options(FILE *script, struct work *work)
         if (token == NULL || strcmp(token, "=") != 0)
             bail("malformed action line near %s", token);
         token = strtok(NULL, "");
-        split_options(token, &work->options[type]);
+        split_options(token, &work->options[type], config);
         free(line);
     }
     if (line != NULL) {
@@ -534,6 +543,7 @@ parse_run(FILE *script)
  * lines in the format:
  *
  *     PRIORITY some output information
+ *     PRIORITY /output regex/
  *
  * where PRIORITY is replaced by the numeric syslog priority corresponding to
  * that priority and the rest of the output undergoes %-esacape expansion.
@@ -542,7 +552,7 @@ parse_run(FILE *script)
 static struct output *
 parse_output(FILE *script, const struct script_config *config)
 {
-    char *line, *token, *piece, *message;
+    char *line, *token, *message;
     struct output *output = NULL;
     int priority;
 
@@ -555,10 +565,8 @@ parse_output(FILE *script, const struct script_config *config)
         token = strtok(NULL, "");
         if (token == NULL)
             bail("malformed line %s", line);
-        piece = expand_string(token, config);
-        basprintf(&message, "%d %s", priority, piece);
-        free(piece);
-        output_add(output, message);
+        message = expand_string(token, config);
+        output_add(output, priority, message);
         free(message);
         free(line);
     }
@@ -571,10 +579,12 @@ parse_output(FILE *script, const struct script_config *config)
  * lines in one of the formats:
  *
  *     type = prompt
+ *     type = /prompt/
  *     type = prompt|response
+ *     type = /prompt/|response
  *
  * If the type is error_msg or info, there is no response.  Otherwise,
- * everything after a colon is taken to be the response that should be
+ * everything after the last | is taken to be the response that should be
  * provided to that prompt.  The response undergoes %-escape expansion.
  */
 static struct prompts *
@@ -582,7 +592,7 @@ parse_prompts(FILE *script, const struct script_config *config)
 {
     struct prompts *prompts = NULL;
     struct prompt *prompt;
-    char *line, *token, *style;
+    char *line, *token, *style, *end;
     size_t size, i, length;
 
     for (line = readline(script); line != NULL; line = readline(script)) {
@@ -613,12 +623,12 @@ parse_prompts(FILE *script, const struct script_config *config)
         if (prompt->style == PAM_ERROR_MSG || prompt->style == PAM_TEXT_INFO)
             prompt->prompt = expand_string(token, config);
         else {
-            token = strtok(token, "|");
-            prompt->prompt = expand_string(token, config);
-            token = strtok(NULL, "");
-            if (token == NULL)
+            end = strrchr(token, '|');
+            if (end == NULL)
                 bail("malformed prompt line near %s", prompt->prompt);
-            token = skip_whitespace(token);
+            *end = '\0';
+            prompt->prompt = expand_string(token, config);
+            token = end + 1;
             prompt->response = expand_string(token, config);
         }
         prompts->size++;
@@ -651,7 +661,7 @@ parse_script(FILE *script, const struct script_config *config)
         if (token[0] != '[')
             bail("line outside of section: %s", line);
         if (strcmp(token, "[options]") == 0)
-            parse_options(script, work);
+            parse_options(script, work, config);
         else if (strcmp(token, "[run]") == 0)
             work->actions = parse_run(script);
         else if (strcmp(token, "[output]") == 0)

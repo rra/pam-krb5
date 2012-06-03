@@ -1,7 +1,7 @@
 dnl Autoconf configuration for pam-krb5.
 dnl
 dnl Written by Russ Allbery <rra@stanford.edu>
-dnl Copyright 2009, 2010, 2011
+dnl Copyright 2009, 2010, 2011, 2012
 dnl     The Board of Trustees of the Leland Stanford Junior University
 dnl Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@stanford.edu>
 dnl Copyright 2005 Andres Salomon <dilinger@debian.org>
@@ -10,11 +10,11 @@ dnl
 dnl See LICENSE for licensing terms.
 
 AC_PREREQ([2.64])
-AC_INIT([pam-krb5], [4.5], [rra@stanford.edu])
+AC_INIT([pam-krb5], [4.6], [rra@stanford.edu])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_LIBOBJ_DIR([portable])
 AC_CONFIG_MACRO_DIR([m4])
-AM_INIT_AUTOMAKE([1.11 check-news foreign silent-rules subdir-objects
+AM_INIT_AUTOMAKE([1.11 check-news dist-xz foreign silent-rules subdir-objects
     -Wall -Werror])
 AM_MAINTAINER_MODE
 
@@ -55,16 +55,21 @@ AC_CHECK_MEMBER([krb5_creds.session],
         [Define if your Kerberos implementation is MIT.])],
     [RRA_INCLUDES_KRB5])
 AC_CHECK_TYPES([krb5_realm], [], [], [RRA_INCLUDES_KRB5])
-AC_CHECK_FUNCS([krb5_data_free \
+AC_CHECK_FUNCS([krb5_cc_get_full_name \
+    krb5_data_free \
     krb5_free_default_realm \
+    krb5_free_string \
     krb5_get_init_creds_opt_alloc \
+    krb5_get_init_creds_opt_set_anonymous \
     krb5_get_init_creds_opt_set_change_password_prompt \
     krb5_get_init_creds_opt_set_default_flags \
     krb5_get_init_creds_opt_set_fast_ccache_name \
+    krb5_get_init_creds_opt_set_out_ccache \
     krb5_get_init_creds_opt_set_pa \
     krb5_init_secure_context \
     krb5_principal_get_realm \
     krb5_set_password \
+    krb5_set_trace_filename \
     krb5_verify_init_creds_opt_init \
     krb5_xfree])
 AC_CHECK_FUNCS([krb5_get_init_creds_opt_set_pkinit],
@@ -84,6 +89,9 @@ RRA_LIB_KADM5CLNT_OPTIONAL
 RRA_LIB_KADM5CLNT_SWITCH
 AC_CHECK_FUNCS([kadm5_init_with_skey_ctx])
 RRA_LIB_KADM5CLNT_RESTORE
+
+dnl Regex support is only used for the test suite.
+AC_CHECK_HEADER([regex.h], [AC_CHECK_FUNCS([regcomp])])
 
 dnl Other probes of the system libraries.
 AC_HEADER_STDBOOL

@@ -9,7 +9,7 @@
  * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <rra@stanford.edu>
- * Copyright 2005, 2006, 2007, 2009, 2010
+ * Copyright 2005, 2006, 2007, 2009, 2010, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -135,6 +135,8 @@ log_plain(struct pam_args *pargs, int priority, const char *fmt, ...)
  * Log wrapper function for reporting a PAM error.  Log a message with the
  * given priority, prefixed by (user <user>) with the account name being
  * authenticated if known, followed by a colon and the formatted PAM error.
+ * However, do not include the colon and the PAM error if the PAM status is
+ * PAM_SUCCESS.
  */
 static void
 log_pam(struct pam_args *pargs, int priority, int status, const char *fmt,
@@ -149,6 +151,8 @@ log_pam(struct pam_args *pargs, int priority, int status, const char *fmt,
         return;
     if (pargs == NULL)
         log_plain(NULL, priority, "%s", msg);
+    else if (status == PAM_SUCCESS)
+        log_plain(pargs, priority, "%s", msg);
     else
         log_plain(pargs, priority, "%s: %s", msg,
                   pam_strerror(pargs->pamh, status));

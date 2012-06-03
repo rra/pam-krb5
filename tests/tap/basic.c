@@ -6,14 +6,14 @@
  * number and some number of appropriate arguments, check to be sure the
  * results match the expected output using the arguments, and print out
  * something appropriate for that test number.  Other utility routines help in
- * constructing more complex tests, skipping tests, or setting up the TAP
- * output format.
+ * constructing more complex tests, skipping tests, reporting errors, setting
+ * up the TAP output format, or finding things in the test environment.
  *
  * This file is part of C TAP Harness.  The current version plus supporting
  * documentation is at <http://www.eyrie.org/~eagle/software/c-tap-harness/>.
  *
- * Copyright 2009, 2010, 2011 Russ Allbery <rra@stanford.edu>
- * Copyright 2001, 2002, 2004, 2005, 2006, 2007, 2008, 2011
+ * Copyright 2009, 2010, 2011, 2012 Russ Allbery <rra@stanford.edu>
+ * Copyright 2001, 2002, 2004, 2005, 2006, 2007, 2008, 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -35,13 +35,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-/* Required for isnan() and isinf(). */
-#ifndef _XOPEN_SOURCE
-# define _XOPEN_SOURCE 600
-#endif
-
 #include <errno.h>
-#include <math.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,7 +48,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <tap/basic.h>
+#include <tests/tap/basic.h>
 
 /* Windows provides mkdir and rmdir under different names. */
 #ifdef _WIN32
@@ -88,7 +82,9 @@ static int _lazy = 0;
 
 /*
  * Our exit handler.  Called on completion of the test to report a summary of
- * results provided we're still in the original process.
+ * results provided we're still in the original process.  This also handles
+ * printing out the plan if we used plan_lazy(), although that's suppressed if
+ * we never ran a test (due to an early bail, for example).
  */
 static void
 finish(void)
@@ -99,7 +95,7 @@ finish(void)
         return;
     fflush(stderr);
     if (_process != 0 && getpid() == _process) {
-        if (_lazy) {
+        if (_lazy && highest > 0) {
             printf("1..%lu\n", highest);
             _planned = highest;
         }
@@ -353,34 +349,6 @@ is_string(const char *wanted, const char *seen, const char *format, ...)
 
 
 /*
- * Takes an expected double and a seen double and assumes the test passes if
- * those two numbers are within delta of each other.
- */
-void
-is_double(double wanted, double seen, double epsilon, const char *format, ...)
-{
-    fflush(stderr);
-    if ((isnan(wanted) && isnan(seen))
-        || (isinf(wanted) && isinf(seen) && wanted == seen)
-        || fabs(wanted - seen) <= epsilon)
-        printf("ok %lu", testnum++);
-    else {
-        printf("# wanted: %g\n#   seen: %g\n", wanted, seen);
-        printf("not ok %lu", testnum++);
-        _failed++;
-    }
-    if (format != NULL) {
-        va_list args;
-
-        va_start(args, format);
-        print_desc(format, args);
-        va_end(args);
-    }
-    putchar('\n');
-}
-
-
-/*
  * Takes an expected unsigned long and a seen unsigned long and assumes the
  * test passes if the two numbers match.  Otherwise, reports them in hex.
  */
@@ -541,6 +509,31 @@ bstrdup(const char *s)
         sysbail("failed to strdup %lu bytes", (unsigned long) len);
     memcpy(p, s, len);
     return p;
+}
+
+
+/*
+ * Copy up to n characters of a string, reporting a fatal error with bail on
+ * failure.  Don't use the system strndup function, since it may not exist and
+ * the TAP library doesn't assume any portability support.
+ */
+char *
+bstrndup(const char *s, size_t n)
+{
+    const char *p;
+    char *copy;
+    size_t length;
+
+    /* Don't assume that the source string is nul-terminated. */
+    for (p = s; (size_t) (p - s) < n && *p != '\0'; p++)
+        ;
+    length = p - s;
+    copy = malloc(length + 1);
+    if (p == NULL)
+        sysbail("failed to strndup %lu bytes", (unsigned long) length);
+    memcpy(copy, s, length);
+    copy[length] = '\0';
+    return copy;
 }
 
 

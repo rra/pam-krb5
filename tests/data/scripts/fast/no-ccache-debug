@@ -1,0 +1,14 @@
+# Test FAST with an existing ticket cache, with debug.  -*- conf -*-
+
+[options]
+    auth = force_first_pass no_ccache fast_ccache=%0BAD debug
+
+[run]
+    authenticate = PAM_SUCCESS
+
+[output]
+    DEBUG pam_sm_authenticate: entry
+    DEBUG /^\(user %u\) failed to get principal from FAST ccache %0BAD: /
+    DEBUG (user %u) attempting authentication as %u
+    INFO user %u authenticated as %u
+    DEBUG pam_sm_authenticate: exit (success)

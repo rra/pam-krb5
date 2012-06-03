@@ -1,0 +1,11 @@
+# Test authentication failure with different user_realm.  -*- conf -*-
+
+[options]
+    auth = force_first_pass no_ccache user_realm=%0
+
+[run]
+    authenticate = PAM_AUTH_ERR
+
+[output]
+    ERR /^\(user %u\) cannot convert principal to user: /
+    NOTICE failed authorization check; logname=%u uid=%i euid=%i tty= ruser= rhost=

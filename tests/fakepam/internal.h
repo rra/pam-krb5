@@ -5,7 +5,7 @@
  * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <rra@stanford.edu>
- * Copyright 2011
+ * Copyright 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -99,8 +99,8 @@ BEGIN_DECLS
 /* Create a new output struct. */
 struct output *output_new(void);
 
-/* Add a new string to an output struct. */
-void output_add(struct output *, const char *);
+/* Add a new output line (with numeric priority) to an output struct. */
+void output_add(struct output *, int, const char *);
 
 
 /*
