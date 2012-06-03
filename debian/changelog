@@ -1,4 +1,4 @@
-libpam-krb5 (4.6-1) UNRELEASED; urgency=low
+libpam-krb5 (4.6-1) unstable; urgency=low
 
   * New upstream release.
     - New anon_fast option to attempt anonymous authentication and use
@@ -28,7 +28,7 @@ libpam-krb5 (4.6-1) UNRELEASED; urgency=low
   * Enable parallel builds.
   * Update standards version to 3.9.3 (no changes required).
 
- -- Russ Allbery <rra@debian.org>  Mon, 06 Feb 2012 18:29:47 -0800
+ -- Russ Allbery <rra@debian.org>  Sat, 02 Jun 2012 19:20:27 -0700
 
 libpam-krb5 (4.5-4) unstable; urgency=low
 
