@@ -16,11 +16,15 @@ override_dh_auto_configure:
 	dh_auto_configure --parallel -Bbuild-mit -- \
 	    --enable-reduced-depends --libdir=/lib/$(DEB_HOST_MULTIARCH) \
 	    --with-krb5-include=/usr/include/mit-krb5 \
-	    --with-krb5-lib=/usr/lib/$(DEB_HOST_MULTIARCH)/mit-krb5
+	    --with-krb5-lib=/usr/lib/$(DEB_HOST_MULTIARCH)/mit-krb5 \
+	    --with-kadm-client-include=/usr/include/mit-krb5 \
+	    --with-kadm-client-lib=/usr/lib/$(DEB_HOST_MULTIARCH)/mit-krb5
 	dh_auto_configure --parallel -Bbuild-heimdal -- \
 	    --enable-reduced-depends --libdir=/lib/$(DEB_HOST_MULTIARCH) \
 	    --with-krb5-include=/usr/include/heimdal \
-	    --with-krb5-lib=/usr/lib/$(DEB_HOST_MULTIARCH)/heimdal
+	    --with-krb5-lib=/usr/lib/$(DEB_HOST_MULTIARCH)/heimdal \
+	    --with-kadm-client-include=/usr/include/heimdal \
+	    --with-kadm-client-lib=/usr/lib/$(DEB_HOST_MULTIARCH)/heimdal
 
 override_dh_auto_build:
 	dh_auto_build --parallel -Bbuild-mit
