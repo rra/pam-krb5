@@ -6,7 +6,7 @@
  * that case.
  *
  * Written by Russ Allbery <rra@stanford.edu>
- * Copyright 2011
+ * Copyright 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * See LICENSE for licensing terms.
@@ -31,37 +31,35 @@ int
 main(void)
 {
     struct script_config config;
-    struct kerberos_password *password;
+    struct kerberos_config *krbconf;
     char *newpass, *date;
     struct passwd pwd;
     time_t now;
 
     /* Load the Kerberos principal and password from a file. */
-    password = kerberos_config_password();
-    if (password == NULL)
-        skip_all("Kerberos tests not configured");
+    krbconf = kerberos_setup(TAP_KRB_NEEDS_PASSWORD);
     memset(&config, 0, sizeof(config));
-    config.user = password->username;
-    config.password = password->password;
-    config.extra[0] = password->principal;
+    config.user = krbconf->username;
+    config.password = krbconf->password;
+    config.extra[0] = krbconf->userprinc;
 
     /*
      * Ensure we can expire the password.  Heimdal has a prompt for the
      * expiration time, so save that to use as a substitution in the script.
      */
     now = time(NULL) - 1;
-    if (!kerberos_expire_password(password->principal, now))
+    if (!kerberos_expire_password(krbconf->userprinc, now))
         skip_all("kadmin not configured or kadmin mismatch");
     date = bstrdup(ctime(&now));
     date[strlen(date) - 1] = '\0';
     config.extra[1] = date;
 
     /* Generate a testing krb5.conf file. */
-    kerberos_generate_conf(password->realm);
+    kerberos_generate_conf(krbconf->realm);
 
     /* Create a fake passwd struct for our user. */
     memset(&pwd, 0, sizeof(pwd));
-    pwd.pw_name = password->username;
+    pwd.pw_name = krbconf->username;
     pwd.pw_uid = getuid();
     pwd.pw_gid = getgid();
     basprintf(&pwd.pw_dir, "%s/tmp", getenv("BUILD"));
@@ -80,16 +78,37 @@ main(void)
     /* Default behavior. */
 #ifdef HAVE_KRB5_HEIMDAL
     run_script("data/scripts/expired/basic-heimdal", &config);
-    config.newpass = password->password;
+    config.newpass = krbconf->password;
     config.password = newpass;
-    kerberos_expire_password(password->principal, now);
+    kerberos_expire_password(krbconf->userprinc, now);
     run_script("data/scripts/expired/basic-heimdal-debug", &config);
 #else
     run_script("data/scripts/expired/basic-mit", &config);
-    config.newpass = password->password;
+    config.newpass = krbconf->password;
     config.password = newpass;
-    kerberos_expire_password(password->principal, now);
+    kerberos_expire_password(krbconf->userprinc, now);
     run_script("data/scripts/expired/basic-mit-debug", &config);
+#endif
+
+    /* Test again with PAM_SILENT, specified two ways. */
+#ifdef HAVE_KRB5_HEIMDAL
+    config.newpass = newpass;
+    config.password = krbconf->password;
+    kerberos_expire_password(krbconf->userprinc, now);
+    run_script("data/scripts/expired/basic-heimdal-silent", &config);
+    config.newpass = krbconf->password;
+    config.password = newpass;
+    kerberos_expire_password(krbconf->userprinc, now);
+    run_script("data/scripts/expired/basic-heimdal-flag-silent", &config);
+#else
+    config.newpass = newpass;
+    config.password = krbconf->password;
+    kerberos_expire_password(krbconf->userprinc, now);
+    run_script("data/scripts/expired/basic-mit-silent", &config);
+    config.newpass = krbconf->password;
+    config.password = newpass;
+    kerberos_expire_password(krbconf->userprinc, now);
+    run_script("data/scripts/expired/basic-mit-flag-silent", &config);
 #endif
 
     /*
@@ -105,19 +124,28 @@ main(void)
 
     /* Defer the error to the account management check. */
     config.newpass = newpass;
-    config.password = password->password;
-    kerberos_expire_password(password->principal, now);
+    config.password = krbconf->password;
+    config.authtok = krbconf->password;
+    kerberos_expire_password(krbconf->userprinc, now);
     run_script("data/scripts/expired/defer", &config);
-    config.newpass = password->password;
+    config.newpass = krbconf->password;
     config.password = newpass;
-    kerberos_expire_password(password->principal, now);
+    config.authtok = newpass;
+    kerberos_expire_password(krbconf->userprinc, now);
     run_script("data/scripts/expired/defer-debug", &config);
 
+#else /* !HAVE_KRB5_GET_INIT_CREDS_OPT_SET_CHANGE_PASSWORD_PROMPT */
+
+    /* Mention that we skipped something for the record. */
+    skip_block(4, "cannot disable library password prompting");
+
 #endif /* HAVE_KRB5_GET_INIT_CREDS_OPT_SET_CHANGE_PASSWORD_PROMPT */
+
+    /* In case we ran into some error, try to unexpire the password. */
+    kerberos_expire_password(krbconf->userprinc, 0);
 
     free(date);
     free(newpass);
     free(pwd.pw_dir);
-    kerberos_config_password_free(password);
     return 0;
 }

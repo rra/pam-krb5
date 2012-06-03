@@ -49,6 +49,24 @@
 #endif
 #include <stdlib.h>
 
+/* Heimdal: KRB5_WELLKNOWN_NAME, MIT: KRB5_WELLKNOWN_NAMESTR. */
+#ifndef KRB5_WELLKNOWN_NAME
+# ifdef KRB5_WELLKNOWN_NAMESTR
+#  define KRB5_WELLKNOWN_NAME KRB5_WELLKNOWN_NAMESTR
+# else
+#  define KRB5_WELLKNOWN_NAMESTR "WELLKNOWN"
+# endif
+#endif
+
+/* Heimdal: KRB5_ANON_NAME, MIT: KRB5_ANONYMOUS_PRINCSTR. */
+#ifndef KRB5_ANON_NAME
+# ifdef KRB5_ANONYMOUS_PRINCSTR
+#  define KRB5_ANON_NAME KRB5_ANONYMOUS_PRINCSTR
+# else
+#  define KRB5_ANONYMOUS_PRINCSTR "ANONYMOUS"
+# endif
+#endif
+
 BEGIN_DECLS
 
 /* Default to a hidden visibility for all portability functions. */
@@ -66,6 +84,14 @@ void krb5_appdefault_string(krb5_context, const char *, const krb5_data *,
                             const char *, const char *, char **);
 #endif
 
+/*
+ * Now present in both Heimdal and MIT, but very new in MIT and not present in
+ * older Heimdal.
+ */
+#ifndef HAVE_KRB5_CC_GET_FULL_NAME
+krb5_error_code krb5_cc_get_full_name(krb5_context, krb5_ccache, char **);
+#endif
+
 /* Heimdal: krb5_data_free, MIT: krb5_free_data_contents. */
 #ifdef HAVE_KRB5_DATA_FREE
 # define krb5_free_data_contents(c, d) krb5_data_free(d)
@@ -74,6 +100,20 @@ void krb5_appdefault_string(krb5_context, const char *, const krb5_data *,
 /* MIT-specific.  The Heimdal documentation says to use free(). */
 #ifndef HAVE_KRB5_FREE_DEFAULT_REALM
 # define krb5_free_default_realm(c, r) free(r)
+#endif
+
+/*
+ * Heimdal: krb5_xfree, MIT: krb5_free_string, older MIT uses free().  Note
+ * that we can incorrectly allocate in the library and call free() if
+ * krb5_free_string is not available but something we use that API for is
+ * available.  Hopefully that won't happen.
+ */
+#ifndef HAVE_KRB5_FREE_STRING
+# ifdef HAVE_KRB5_XFREE
+#  define krb5_free_string(c, s) krb5_xfree(s)
+# else
+#  define krb5_free_string(c, s) free(s)
+# endif
 #endif
 
 /* Heimdal: krb5_xfree, MIT: krb5_free_unparsed_name. */

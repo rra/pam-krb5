@@ -28,9 +28,10 @@ char *test_strndup(const char *, size_t);
 int
 main(void)
 {
+    char buffer[3];
     char *result = NULL;
 
-    plan(6);
+    plan(7);
 
     result = test_strndup("foo", 8);
     is_string("foo", result, "strndup longer than string");
@@ -43,6 +44,10 @@ main(void)
     free(result);
     result = test_strndup("foo", 0);
     is_string("", result, "strndup of size 0");
+    free(result);
+    memcpy(buffer, "foo", 3);
+    result = test_strndup(buffer, 3);
+    is_string("foo", result, "strndup of non-nul-terminated string");
     free(result);
     errno = 0;
     result = test_strndup(NULL, 0);

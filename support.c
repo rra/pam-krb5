@@ -4,7 +4,7 @@
  * Some general utility functions used by multiple PAM groups that aren't
  * associated with any particular chunk of functionality.
  *
- * Copyright 2011
+ * Copyright 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  * Copyright 2005, 2006, 2007, 2009 Russ Allbery <rra@stanford.edu>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
@@ -18,6 +18,7 @@
 #include <portable/pam.h>
 #include <portable/system.h>
 
+#include <errno.h>
 #include <pwd.h>
 
 #include <internal.h>
@@ -52,76 +53,6 @@ pamk5_should_ignore(struct pam_args *args, PAM_CONST char *username)
     return 0;
 }
 
-/*
- * Map the user to a Kerberos principal according to alt_auth_map.  Returns
- * PAM_SUCCESS on success, storing the mapped principal name in newly
- * allocated memory in principal.  The caller is responsible for freeing.
- * Returns PAM_SERVICE_ERROR on any error.
- */
-int
-pamk5_map_principal(struct pam_args *args, const char *username,
-                    char **principal)
-{
-    char *user = NULL;
-    char *realm;
-    const char *i;
-    size_t needed, offset;
-
-    /* Makes no sense if alt_auth_map isn't set. */
-    if (args->config->alt_auth_map == NULL)
-        return PAM_SERVICE_ERR;
-
-    /* Need to split off the realm if it is present. */
-    realm = strchr(username, '@');
-    if (realm == NULL)
-        user = (char *) username;
-    else {
-        user = strdup(username);
-        if (user == NULL)
-            return PAM_SERVICE_ERR;
-        realm = strchr(user, '@');
-        if (realm == NULL)
-            goto fail;
-        *realm = '\0';
-        realm++;
-    }
-
-    /* Now, allocate a string and build the principal. */
-    needed = 0;
-    for (i = args->config->alt_auth_map; *i != '\0'; i++) {
-        if (i[0] == '%' && i[1] == 's') {
-            needed += strlen(user);
-            i++;
-        } else {
-            needed++;
-        }
-    }
-    if (realm != NULL)
-        needed += 1 + strlen(realm);
-    needed++;
-    *principal = malloc(needed);
-    if (*principal == NULL)
-        goto fail;
-    offset = 0;
-    for (i = args->config->alt_auth_map; *i != '\0'; i++) {
-        if (i[0] == '%' && i[1] == 's') {
-            memcpy(*principal + offset, user, strlen(user));
-            offset += strlen(user);
-            i++;
-        } else {
-            (*principal)[offset] = *i;
-            offset++;
-        }
-    }
-    (*principal)[offset] = '\0';
-    return PAM_SUCCESS;
-
-fail:
-    if (user != NULL && user != username)
-        free(user);
-    return PAM_SERVICE_ERR;
-}
-
 
 /*
  * Verify the user authorization.  Call krb5_kuserok if this is a local
@@ -135,6 +66,7 @@ pamk5_authorized(struct pam_args *args)
     struct context *ctx;
     krb5_context c;
     krb5_error_code retval;
+    int status;
     struct passwd *pwd;
     char kuser[65];             /* MAX_USERNAME == 65 (MIT Kerberos 1.4.1). */
 
@@ -149,47 +81,15 @@ pamk5_authorized(struct pam_args *args)
     /*
      * If alt_auth_map was set, authorize the user if the authenticated
      * principal matches the mapped principal.  alt_auth_map essentially
-     * serves as a supplemental .k5login.
+     * serves as a supplemental .k5login.  PAM_SERVICE_ERR indicates fatal
+     * errors that should abort remaining processing; PAM_AUTH_ERR indicates
+     * that it just didn't match, in which case we continue to try other
+     * authorization methods.
      */
     if (args->config->alt_auth_map != NULL) {
-        char *mapped;
-        char *authed;
-        krb5_principal princ;
-
-        if (pamk5_map_principal(args, ctx->name, &mapped) != PAM_SUCCESS) {
-            putil_err(args, "cannot map principal name");
-            return PAM_SERVICE_ERR;
-        }
-        retval = krb5_parse_name(c, mapped, &princ);
-        if (retval != 0) {
-            putil_err_krb5(args, retval,
-                           "cannot parse mapped principal name %s", mapped);
-            free(mapped);
-            return PAM_SERVICE_ERR;
-        }
-        free(mapped);
-        retval = krb5_unparse_name(c, princ, &mapped);
-        if (retval != 0) {
-            putil_err_krb5(args, retval,
-                           "krb5_unparse_name on mapped principal failed");
-            return PAM_SERVICE_ERR;
-        }
-        retval = krb5_unparse_name(c, ctx->princ, &authed);
-        if (retval != 0) {
-            putil_err_krb5(args, retval, "krb5_unparse_name failed");
-            free(mapped);
-            return PAM_SERVICE_ERR;
-        }
-        if (strcmp(authed, mapped) == 0) {
-            krb5_free_unparsed_name(c, authed);
-            krb5_free_unparsed_name(c, mapped);
-            return PAM_SUCCESS;
-        } else {
-            putil_debug(args, "mapped user %s does not match principal %s",
-                        mapped, authed);
-        }
-        krb5_free_unparsed_name(c, authed);
-        krb5_free_unparsed_name(c, mapped);
+        status = pamk5_alt_auth_verify(args);
+        if (status == PAM_SUCCESS || status == PAM_SERVICE_ERR)
+            return status;
     }
 
     /*

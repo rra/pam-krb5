@@ -1,0 +1,12 @@
+# Test required alternative authentication principal.  -*- conf -*-
+
+[options]
+    auth    = alt_auth_map=%1 only_alt_auth force_first_pass no_ccache
+    account = alt_auth_map=%1 no_ccache
+
+[run]
+    authenticate  = PAM_SUCCESS
+    acct_mgmt     = PAM_SUCCESS
+
+[output]
+    INFO user %u authenticated as %1

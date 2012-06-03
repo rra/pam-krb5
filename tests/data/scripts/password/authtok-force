@@ -1,0 +1,11 @@
+# Test password change with new authtok set but not old.  -*- conf -*-
+
+[options]
+    password = use_authtok force_first_pass
+
+[run]
+    chauthtok(PRELIM_CHECK)   = PAM_SUCCESS
+    chauthtok(UPDATE_AUTHTOK) = PAM_SUCCESS
+
+[output]
+    INFO user %u changed Kerberos password

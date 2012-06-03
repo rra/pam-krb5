@@ -10,7 +10,7 @@
  * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <rra@stanford.edu>
- * Copyright 2011
+ * Copyright 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -39,13 +39,107 @@
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
+#ifdef HAVE_REGCOMP
+# include <regex.h>
+#endif
 #include <syslog.h>
 
 #include <tests/fakepam/internal.h>
 #include <tests/fakepam/pam.h>
 #include <tests/fakepam/script.h>
 #include <tests/tap/basic.h>
+#include <tests/tap/macros.h>
 #include <tests/tap/string.h>
+
+
+/*
+ * Compare a regex to a string.  If regular expression support isn't
+ * available, we skip this test.
+ */
+#ifdef HAVE_REGCOMP
+static void
+like(const char *wanted, const char *seen, const char *format, ...)
+{
+    va_list args;
+    regex_t regex;
+    char err[BUFSIZ];
+    int status;
+
+    if (seen == NULL) {
+        fflush(stderr);
+        printf("# wanted: /%s/\n#   seen: %s\n", wanted, seen);
+        va_start(args, format);
+        okv(0, format, args);
+        va_end(args);
+        return;
+    }
+    memset(&regex, 0, sizeof(regex));
+    status = regcomp(&regex, wanted, REG_EXTENDED | REG_NOSUB);
+    if (status != 0) {
+        regerror(status, &regex, err, sizeof(err));
+        bail("invalid regex /%s/: %s", wanted, err);
+    }
+    status = regexec(&regex, seen, 0, NULL, 0);
+    switch (status) {
+    case 0:
+        va_start(args, format);
+        okv(1, format, args);
+        va_end(args);
+        break;
+    case REG_NOMATCH:
+        printf("# wanted: /%s/\n#   seen: %s\n", wanted, seen);
+        va_start(args, format);
+        okv(0, format, args);
+        va_end(args);
+        break;
+    default:
+        regerror(status, &regex, err, sizeof(err));
+        bail("regexec failed for regex /%s/: %s", wanted, err);
+    }
+    regfree(&regex);
+}
+#else /* !HAVE_REGCOMP */
+static void
+like(const char *wanted, const char *seen, const char *format UNUSED, ...)
+{
+    diag("wanted /%s/", wanted);
+    diag("  seen %s", seen);
+    skip("regex support not available");
+}
+#endif /* !HAVE_REGCOMP */
+
+
+/*
+ * Compare an expected string with a seen string, used by both output checking
+ * and prompt checking.  This is a separate function because the expected
+ * string may be a regex, determined by seeing if it starts and ends with a
+ * slash (/), which may require a regex comparison.
+ *
+ * Eventually calls either is_string or ok to report results via TAP.
+ */
+static void
+compare_string(char *wanted, char *seen, const char *format, ...)
+{
+    va_list args;
+    char *comment, *regex;
+    size_t length;
+
+    /* Format the comment since we need it regardless. */
+    va_start(args, format);
+    bvasprintf(&comment, format, args);
+    va_end(args);
+
+    /* Check whether the wanted string is a regex. */
+    length = strlen(wanted);
+    if (wanted[0] == '/' && wanted[length - 1] == '/') {
+        regex = bstrndup(wanted + 1, length - 2);
+        like(regex, seen, comment);
+        free(regex);
+    } else {
+        is_string(wanted, seen, "%s", comment);
+    }
+    free(comment);
+}
 
 
 /*
@@ -86,9 +180,9 @@ converse(int num_msg, const struct pam_message **msg,
         /* Be sure everything matches and return the response, if any. */
         prompt = &prompts->prompts[prompts->current];
         is_int(prompt->style, msg[i]->msg_style, "style of prompt %lu",
-               (unsigned long) prompts->current);
-        is_string(prompt->prompt, message, "value of prompt %lu",
-                  (unsigned long) prompts->current);
+               (unsigned long) prompts->current + 1);
+        compare_string(prompt->prompt, message, "value of prompt %lu",
+                       (unsigned long) prompts->current + 1);
         free(message);
         prompts->current++;
         if (prompt->style == msg[i]->msg_style && prompt->response != NULL) {
@@ -109,52 +203,45 @@ converse(int num_msg, const struct pam_message **msg,
 /*
  * Check the actual PAM output against the expected output.  We divide the
  * expected and seen output into separate lines and compare each one so that
- * we can handle wildcards.
+ * we can handle regular expressions and the output priority.
  */
 static void
 check_output(const struct output *wanted, const struct output *seen)
 {
-    size_t i, length;
+    size_t i;
 
     if (wanted == NULL && seen == NULL)
         ok(1, "no output");
     else if (wanted == NULL) {
         for (i = 0; i < seen->count; i++)
-            diag("unexpected: %s", seen->strings[0]);
+            diag("unexpected: (%d) %s", seen->lines[i].priority,
+                 seen->lines[i].line);
         ok(0, "no output");
     } else if (seen == NULL) {
-        for (i = 0; i < wanted->count; i++)
-            is_string(wanted->strings[i], NULL, "output line %lu",
-                      (unsigned long) i);
+        for (i = 0; i < wanted->count; i++) {
+            is_int(wanted->lines[i].priority, 0, "output priority %lu",
+                      (unsigned long) i + 1);
+            is_string(wanted->lines[i].line, NULL, "output line %lu",
+                      (unsigned long) i + 1);
+        }
     } else {
         for (i = 0; i < wanted->count && i < seen->count; i++) {
-            length = strlen(wanted->strings[i]);
-
-            /*
-             * Handle the %* wildcard.  If this occurs in the desired string,
-             * it must be the end of the string, and it means that all output
-             * after that point is ignored.  So truncate both strings at that
-             * point so that we'll only compare the first parts.
-             *
-             * This is a hacky substitute for real regex matching, which would
-             * be a much better option.
-             */
-            if (length > 1
-                && strcmp(wanted->strings[i] + (length - 2), "%*") == 0
-                && strlen(seen->strings[i]) > (length - 2)) {
-                wanted->strings[i][length - 2] = '\0';
-                seen->strings[i][length - 2] = '\0';
-            }
-            is_string(wanted->strings[i], seen->strings[i], "output line %lu",
-                      (unsigned long) i);
+            is_int(wanted->lines[i].priority, seen->lines[i].priority,
+                   "output priority %lu", (unsigned long) i + 1);
+            compare_string(wanted->lines[i].line, seen->lines[i].line,
+                           "output line %lu", (unsigned long) i + 1);
         }
         if (wanted->count > seen->count)
-            for (i = seen->count; i < wanted->count; i++)
-                is_string(wanted->strings[i], NULL, "output line %lu",
-                          (unsigned long) i);
-        else if (seen->count > wanted->count) {
+            for (i = seen->count; i < wanted->count; i++) {
+                is_int(wanted->lines[i].priority, 0, "output priority %lu",
+                       (unsigned long) i + 1);
+                is_string(wanted->lines[i].line, NULL, "output line %lu",
+                          (unsigned long) i + 1);
+            }
+        if (seen->count > wanted->count) {
             for (i = wanted->count; i < seen->count; i++)
-                diag("unexpected: %s", seen->strings[i]);
+                diag("unexpected: (%d) %s", seen->lines[i].priority,
+                     seen->lines[i].line);
             ok(0, "unexpected output lines");
         } else {
             ok(1, "no excess output");
@@ -174,7 +261,6 @@ run_script(const char *file, const struct script_config *config)
 {
     char *path;
     struct output *output;
-    const char *user;
     FILE *script;
     struct work *work;
     struct options *opts;
@@ -205,14 +291,13 @@ run_script(const char *file, const struct script_config *config)
     }
 
     /* Initialize PAM. */
-    user = config->user;
-    if (user == NULL)
-        user = "testuser";
-    status = pam_start("test", user, &conv, &pamh);
+    status = pam_start("test", config->user, &conv, &pamh);
     if (status != PAM_SUCCESS)
         sysbail("cannot create PAM handle");
-    if (config->password != NULL)
-        pamh->authtok = bstrdup(config->password);
+    if (config->authtok != NULL)
+        pamh->authtok = bstrdup(config->authtok);
+    if (config->oldauthtok != NULL)
+        pamh->oldauthtok = bstrdup(config->oldauthtok);
 
     /* Run the actions and check their return status. */
     for (action = work->actions; action != NULL; action = action->next) {

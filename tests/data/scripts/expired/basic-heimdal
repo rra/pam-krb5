@@ -15,8 +15,8 @@
     echo_off = Password: |%p
     info     = Your password will expire at %1
     info     = Changing password
-    echo_off = New password: : |%n
-    echo_off = Repeat new password: : |%n
+    echo_off = New password: |%n
+    echo_off = Repeat new password: |%n
     info     = Success: Password changed
 
 [output]

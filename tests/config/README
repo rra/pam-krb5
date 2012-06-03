@@ -27,6 +27,12 @@ krb5.conf
     this will be done automatically in the generated file used by the test
     suite.
 
+keytab
+
+    An optional keytab for a principal, which generally should be in the
+    same realm as the user configured in the password file.  This is used
+    to test FAST support with a ticket cache.
+
 admin-keytab
 
     A keytab for a principal (in the same realm as the test principal

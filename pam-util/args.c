@@ -15,7 +15,7 @@
  * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <rra@stanford.edu>
- * Copyright 2010
+ * Copyright 2010, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -95,6 +95,8 @@ putil_args_new(pam_handle_t *pamh, int flags)
 void
 putil_args_free(struct pam_args *args)
 {
+    if (args == NULL)
+        return;
 #ifdef HAVE_KERBEROS
     if (args->realm != NULL)
         free(args->realm);

@@ -1,7 +1,7 @@
 /*
  * Internal prototypes and structures for pam-krb5.
  *
- * Copyright 2011
+ * Copyright 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  * Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@stanford.edu>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
@@ -44,6 +44,7 @@ struct context {
     int dont_destroy_cache;     /* If set, don't destroy cache on shutdown. */
     int initialized;            /* If set, ticket cache initialized. */
     krb5_creds *creds;          /* Credentials for password changing. */
+    krb5_ccache fast_cache;     /* Temporary credential cache for FAST. */
 };
 
 /*
@@ -64,10 +65,13 @@ struct pam_config {
 
     /* Kerberos behavior. */
     char *fast_ccache;          /* Cache containing armor ticket. */
+    bool anon_fast;             /* sets up an anonymous fast armor cache */
     bool forwardable;           /* Obtain forwardable tickets. */
     char *keytab;               /* Keytab for credential validation. */
+    char *realm;                /* Default realm for Kerberos. */
     krb5_deltat renew_lifetime; /* Renewable lifetime of credentials. */
     krb5_deltat ticket_lifetime; /* Lifetime of credentials. */
+    char *user_realm;           /* Default realm for user principals. */
 
     /* PAM behavior. */
     bool clear_on_fail;         /* Delete saved password on change failure. */
@@ -75,6 +79,8 @@ struct pam_config {
     bool defer_pwchange;        /* Defer expired account fail to account. */
     bool fail_pwchange;         /* Treat expired password as auth failure. */
     bool force_pwchange;        /* Change expired passwords in auth. */
+    bool silent;                /* Suppress text and errors (PAM_SILENT). */
+    char *trace;                /* File name for trace logging. */
 
     /* PKINIT. */
     char *pkinit_anchors;       /* Trusted certificates, usually per realm. */
@@ -88,6 +94,7 @@ struct pam_config {
     char *banner;               /* Addition to password changing prompts. */
     bool expose_account;        /* Display principal in password prompts. */
     bool force_first_pass;      /* Require a previous password be stored. */
+    bool no_prompt;             /* Let Kerberos handle password prompting. */
     bool prompt_principal;      /* Prompt for the Kerberos principal. */
     bool try_first_pass;        /* Try the previously entered password. */
     bool use_authtok;           /* Use the stored new password for changes. */
@@ -177,11 +184,27 @@ krb5_error_code pamk5_prompter_krb5(krb5_context, void *data,
 /* Check the user with krb5_kuserok or the configured equivalent. */
 int pamk5_authorized(struct pam_args *);
 
-/* Map username to principal using alt_auth_map. */
-int pamk5_map_principal(struct pam_args *args, const char *, char **);
-
 /* Returns true if we should ignore this user (root or low UID). */
 int pamk5_should_ignore(struct pam_args *, PAM_CONST char *);
+
+/*
+ * alt_auth_map support.
+ *
+ * pamk5_alt_auth attempts an authentication to the given service with the
+ * given options and password and returns a Kerberos error code.  On success,
+ * the new credentials are stored in krb5_creds.
+ *
+ * pamk5_alt_auth_verify verifies that Kerberos credentials are authorized to
+ * access the account given the configured alt_auth_map and is meant to be
+ * called from pamk5_authorized.  It returns a PAM status code.
+ */
+krb5_error_code pamk5_alt_auth(struct pam_args *, const char *service,
+                               krb5_get_init_creds_opt *, const char *pass,
+                               krb5_creds *);
+int pamk5_alt_auth_verify(struct pam_args *);
+
+/* FAST support.  Set up FAST protection of authentication. */
+void pamk5_fast_setup(struct pam_args *, krb5_get_init_creds_opt *);
 
 /* Context management. */
 int pamk5_context_new(struct pam_args *);

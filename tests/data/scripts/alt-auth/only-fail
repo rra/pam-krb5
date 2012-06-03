@@ -1,0 +1,15 @@
+# Test failure of required alternative authentication.  -*- conf -*-
+
+[options]
+    auth    = alt_auth_map=bogus only_alt_auth no_ccache
+    account = alt_auth_map=bogus no_ccache
+
+[run]
+    authenticate  = PAM_USER_UNKNOWN
+    acct_mgmt     = PAM_IGNORE
+
+[prompts]
+    echo_off = Password: |%p
+
+[output]
+    NOTICE authentication failure; logname=%u uid=%i euid=%i tty= ruser= rhost=

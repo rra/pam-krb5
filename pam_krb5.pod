@@ -198,8 +198,10 @@ configuration that was turned on in F<krb5.conf>.
 This functions similarly to the I<search_k5login> option.  The <format>
 argument is used as the authentication Kerberos principal, with any C<%s>
 in <format> replaced with the username.  If the username contains an C<@>,
-only the part of the username before the realm is used to replace C<%s>
-and the realm is appended to the result.  There is no quote removal.
+only the part of the username before the realm is used to replace C<%s>.
+If <format> contains a realm, it will be used; otherwise, the realm of the
+username (if any) will be appended to the result.  There is no quote
+removal.
 
 If this option is present, the default behavior is to try this alternate
 principal first and then fall back to the standard behavior if it fails.
@@ -211,6 +213,18 @@ authentication in programs like B<sudo>.  Most examples will look like:
 which attempts authentication as the root instance of the username first
 and then falls back to the regular username (but see I<force_alt_auth> and
 I<only_alt_auth>).
+
+This option also allows a cheap way to attempt authentication in an
+alternative realm first and then fall back to the primary realm.  A
+setting like:
+
+    alt_auth_map=%s@EXAMPLE.COM
+
+will attempt authentication in the EXAMPLE.COM realm first and then fall
+back on the local default realm.  This is more convenient than running the
+module multiple times with multiple default realms set with I<realm>, but
+it is very limited: only two realms can be tried, and the alternate realm
+is always tried first.
 
 This option can be set in F<krb5.conf>, although normally it doesn't make
 sense to do that; normally it is used in the PAM options of configuration
@@ -305,18 +319,48 @@ group.
 
 =over 4
 
+=item anon_fast
+
+Attempt to use Flexible Authentication Secure Tunneling (FAST) by first
+authenticating as the anonymous user (WELLKNOWN/ANONYMOUS) and using its
+credentials as the FAST armor.  This requires anonymous PKINIT be enabled
+for the local realm, that PKINIT be configured on the local system, and
+that the Kerberos library support FAST and anonymous PKINIT.
+
+FAST is a mechanism to protect Kerberos against password guessing attacks
+and provide other security improvements.  To work, FAST requires that a
+ticket be obtained with a strong key to protect exchanges with potentially
+weaker user passwords.  This option uses anonymous authentication to
+obtain that key and then uses it to protect the subsequent authentication.
+
+If anonymous PKINIT is not available or fails, FAST will not be used and
+the authentication will proceed as normal.
+
+To instead use an existing ticket cache for the FAST credentials, use
+I<fast_ccache> instead of this option.  If both I<fast_ccache> and
+I<anon_fast> are set, the ticket cache named by I<fast_ccache> will be
+tried first, and the Kerberos PAM module will fall back on attempting
+anonymous PKINIT if that cache could not be used.
+
+This option can be set in F<krb5.conf> and is only applicable to the auth
+and password groups.
+
+The operation is the same as if using the I<fast_ccache> option, but the
+cache is created and destroyed automatically.  If both I<fast_ccache> and
+I<anon_fast> options are used, the I<fast_ccache> takes precedent and no
+anonymous authentication is done.
+
 =item fast_ccache=<ccache_name>
 
-Attempt to use Flexible Authenticatin Secure Tunneling (FAST) to protect
-the authentication.  FAST is a mechanism to protect Kerberos against
-password guessing attacks and provide other security improvements.  To
-work, FAST requires that a ticket be obtained with a strong key to protect
-exchanges with potentially weaker user passwords.  This configuration
-value should be set to a credential cache containing such a ticket.
+The same as I<anon_fast>, but use an existing Kerberos ticket cache rather
+than anonymous PKINIT.  This allows use of FAST with a realm that doesn't
+support PKINIT or doesn't support anonymous authentication.
 
-If <ccache_name> names a ticket cache that is readable by the
-authenticating process and has tickets then FAST will be attempted.  The
-easiest way to use this option is to use a program like B<k5start> to
+<ccache_name> should be a credential cache containing a ticket obtained
+using a strong key, such as the randomized key for the host principal of
+the local system.  If <ccache_name> names a ticket cache that is readable
+by the authenticating process and has tickets then FAST will be attempted.
+The easiest way to use this option is to use a program like B<k5start> to
 maintain a ticket cache using the host's keytab.  This ticket cache should
 normally only be readable by root, so this option will not be able to
 protect authentications done as non-root users (such as screensavers).
@@ -325,6 +369,14 @@ If no credentials are present in the ticket cache, or if the ticket cache
 does not exist or is not readable, FAST will not used and authentication
 will proceed as normal.  However, if the credentials in that ticket cache
 are expired, authentication will fail if the KDC supports FAST.
+
+To use anonymous PKINIT to protect the FAST exchange, use the I<anon_fast>
+option instead.  I<anon_fast> is easier to configure, since no existing
+ticket cache is required, but requires PKINIT be available and configured
+and that the local realm support anonymous authentication.  If both
+I<fast_ccache> and I<anon_fast> are set, the ticket cache named by
+I<fast_ccache> will be tried first, and the Kerberos PAM module will fall
+back on attempting anonymous PKINIT if that cache could not be used.
 
 This option can be set in F<krb5.conf> and is only applicable to the auth
 and password groups.
@@ -352,13 +404,17 @@ group.
 
 =item realm=<realm>
 
-Obtain credentials in the specified realm rather than in the default realm
-for this system.  If this option is used, it should be set for all groups
-being used for consistent results (although the account group currently
-doesn't care about realm).  This will not change authorization decisions.
-If the obtained credentials are supposed to allow access to a shell
-account, the user will need an appropriate F<.k5login> file entry or the
-system will have to have a custom aname_to_localname mapping.
+Set the default Kerberos realm and obtain credentials in that realm,
+rather than in the normal default realm for this system.  If this option
+is used, it should be set for all groups being used for consistent
+results.  This setting will affect authorization decisions since it
+changes the default realm.  This setting will also change the service
+principal used to verify the obtained credentials to be in the specified
+realm.
+
+If you only want to set the realm assumed for user principals without
+changing the realm for authorization decisions or the service principal
+used to verify credentials, see the I<user_realm> option.
 
 =item renew_lifetime=<lifetime>
 
@@ -379,6 +435,16 @@ section of F<krb5.conf>.
 
 This option can be set in F<krb5.conf> and is only applicable to the auth
 group.
+
+=item user_realm
+
+Obtain credentials in the specified realm rather than in the default realm
+for this system.  If this option is used, it should be set for all groups
+being used for consistent results (although the account group currently
+doesn't care about realm).  This will not change authorization decisions.
+If the obtained credentials are supposed to allow access to a shell
+account, the user will need an appropriate F<.k5login> file entry or the
+system will have to have a custom aname_to_localname mapping.
 
 =back
 
@@ -479,6 +545,23 @@ this option to simulate the normal library behavior.
 
 This option can be set in F<krb5.conf> and is only applicable to the auth
 group.
+
+=item silent
+
+Don't show messages and errors from Kerberos, such as warnings of expiring
+passwords, to the user via the prompter.  This is equivalent to the
+behavior when the application passes in PAM_SILENT, but can be set in the
+PAM configuration.
+
+This option is only applicable to the auth and password groups.
+
+=item trace=<log-file>
+
+Enables Kerberos library trace logging to the specified log file if it is
+supported by the Kerberos library.  This is intended for temporary
+debugging.  The specified file will be appended to without further
+security checks, so do not specify a file in a publicly writable directory
+like F</tmp>.
 
 =back
 
@@ -637,6 +720,33 @@ this option.
 This option is only applicable to the auth and password groups.  For the
 password group, it applies only to the old password.  See I<use_authtok>
 for a similar setting for the new password.
+
+=item no_prompt
+
+Never prompt for the current password.  Instead, pass in a NULL password
+to the Kerberos library and let the Kerberos library do the prompting.
+This may be needed if, for example, the Kerberos library is configured to
+use other authentication mechanisms than passwords and needs full control
+over the prompting process.
+
+The major disadvantage of this option is that it means the PAM module will
+never see the user's password and therefore cannot save it in the PAM
+module data for any subsequent modules.  In other words, this option
+cannot be used if another module is in the stack behind the Kerberos PAM
+module and wants to use I<use_first_pass>.  The Kerberos library also
+usually includes the principal in the prompt, and therefore this option
+implies behavior similar to I<expose_account>.  Similar to
+I<expose_account>, this can cause problems with OpenSSH if
+ChallengeResponseAuthentication is enabled, since clients may not
+recognize password prompts other than "Password:".
+
+Using this option with I<search_k5login> would result in a password prompt
+for every principal listed in the user's F<.k5login> file.  This is
+probably not desired behavior, although it's not prohibited by the module.
+
+This option is only applicable to the auth and password groups.  For the
+password group, it applies only to the authentication process; the user
+will still be prompted for a new password.
 
 =item prompt_principal
 

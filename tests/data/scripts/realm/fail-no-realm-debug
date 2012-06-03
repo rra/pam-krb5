@@ -1,0 +1,14 @@
+# Test authentication failure due to wrong realm.  -*- conf -*-
+
+[options]
+    auth = force_first_pass no_ccache debug
+
+[run]
+    authenticate = PAM_AUTHINFO_UNAVAIL
+
+[output]
+    DEBUG pam_sm_authenticate: entry
+    DEBUG (user %u) attempting authentication as %u@%0
+    DEBUG /^\(user %u\) krb5_get_init_creds_password: /
+    NOTICE authentication failure; logname=%u uid=%i euid=%i tty= ruser= rhost=
+    DEBUG pam_sm_authenticate: exit (failure)

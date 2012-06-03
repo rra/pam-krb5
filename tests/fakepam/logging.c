@@ -10,7 +10,7 @@
  * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <rra@stanford.edu>
- * Copyright 2010, 2011
+ * Copyright 2010, 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -60,28 +60,30 @@ output_new(void)
     output = bmalloc(sizeof(struct output));
     output->count = 0;
     output->allocated = 1;
-    output->strings = bmalloc(sizeof(char *));
-    output->strings[0] = NULL;
+    output->lines = bmalloc(sizeof(output->lines[0]));
+    output->lines[0].line = NULL;
     return output;
 }
 
 
 /*
- * Add a new string to the output struct, resizing the string array as
+ * Add a new output line to the output struct, resizing the array as
  * necessary.  Calls bail if memory allocation fails.
  */
 void
-output_add(struct output *output, const char *string)
+output_add(struct output *output, int priority, const char *string)
 {
     size_t next = output->count;
-    size_t size;
+    size_t size, n;
 
     if (output->count == output->allocated) {
-        size = output->allocated + 1;
-        output->strings = brealloc(output->strings, size * sizeof(char *));
-        output->allocated = size;
+        n = output->allocated + 1;
+        size = sizeof(output->lines[0]);
+        output->lines = brealloc(output->lines, n * size);
+        output->allocated = n;
     }
-    output->strings[next] = bstrdup(string);
+    output->lines[next].priority = priority;
+    output->lines[next].line = bstrdup(string);
     output->count++;
 }
 
@@ -133,15 +135,12 @@ pam_vsyslog(const pam_handle_t *pamh UNUSED, int priority, const char *format,
             va_list args)
 {
     char *message = NULL;
-    char *result = NULL;
 
     bvasprintf(&message, format, args);
-    basprintf(&result, "%d %s", priority, message);
     if (messages == NULL)
         messages = output_new();
-    output_add(messages, result);
+    output_add(messages, priority, message);
     free(message);
-    free(result);
 }
 
 
@@ -172,8 +171,8 @@ pam_output_free(struct output *output)
     if (output == NULL)
         return;
     for (i = 0; i < output->count; i++)
-        if (output->strings[i] != NULL)
-            free(output->strings[i]);
-    free(output->strings);
+        if (output->lines[i].line != NULL)
+            free(output->lines[i].line);
+    free(output->lines);
     free(output);
 }

@@ -5,7 +5,7 @@
  * internal functions.  Retrieves configuration information from krb5.conf and
  * parses the PAM configuration.
  *
- * Copyright 2011
+ * Copyright 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  * Copyright 2005, 2006, 2007, 2008, 2009, 2010
  *     Russ Allbery <rra@stanford.edu>
@@ -31,6 +31,7 @@
 #define K(name) (#name), offsetof(struct pam_config, name)
 static const struct option options[] = {
     { K(alt_auth_map),       true,  STRING (NULL)  },
+    { K(anon_fast),          true,  BOOL   (false) },
     { K(banner),             true,  STRING ("Kerberos") },
     { K(ccache),             true,  STRING (NULL)  },
     { K(ccache_dir),         true,  STRING ("FILE:/tmp") },
@@ -49,21 +50,26 @@ static const struct option options[] = {
     { K(keytab),             true,  STRING (NULL)  },
     { K(minimum_uid),        true,  NUMBER (0)     },
     { K(no_ccache),          false, BOOL   (false) },
+    { K(no_prompt),          true,  BOOL   (false) },
     { K(only_alt_auth),      true,  BOOL   (false) },
     { K(pkinit_anchors),     true,  STRING (NULL)  },
     { K(pkinit_prompt),      true,  BOOL   (false) },
     { K(pkinit_user),        true,  STRING (NULL)  },
     { K(preauth_opt),        true,  LIST   (NULL)  },
     { K(prompt_principal),   true,  BOOL   (false) },
+    { K(realm),              false, STRING (NULL)  },
     { K(renew_lifetime),     true,  TIME   (0)     },
     { K(retain_after_close), true,  BOOL   (false) },
     { K(search_k5login),     true,  BOOL   (false) },
+    { K(silent),             false, BOOL   (false) },
     { K(ticket_lifetime),    true,  TIME   (0)     },
+    { K(trace),              false, STRING (NULL)  },
     { K(try_first_pass),     false, BOOL   (false) },
     { K(try_pkinit),         true,  BOOL   (false) },
     { K(use_authtok),        false, BOOL   (false) },
     { K(use_first_pass),     false, BOOL   (false) },
     { K(use_pkinit),         true,  BOOL   (false) },
+    { K(user_realm),         true,  STRING (NULL)  },
 };
 static const size_t optlen = sizeof(options) / sizeof(options[0]);
 
@@ -92,6 +98,10 @@ pamk5_init(pam_handle_t *pamh, int flags, int argc, const char **argv)
      * Do an initial scan to see if the realm is already set in our options.
      * If so, make sure that's set before we start loading option values,
      * since it affects what comes out of krb5.conf.
+     *
+     * We will then ignore args->config->realm, set later by option parsing,
+     * in favor of using args->realm extracted here.  However, the latter must
+     * exist to avoid throwing unknown option errors.
      */
     for (i = 0; i < argc; i++) {
         if (strncmp(argv[i], "realm=", 6) != 0)
@@ -114,6 +124,8 @@ pamk5_init(pam_handle_t *pamh, int flags, int argc, const char **argv)
         goto fail;
     if (config->debug)
         args->debug = true;
+    if (config->silent)
+        args->silent = true;
 
     /* An empty banner should be treated the same as not having one. */
     if (config->banner != NULL && config->banner[0] == '\0') {
@@ -164,9 +176,26 @@ pamk5_init(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
     /* Warn if the FAST option was set and FAST isn't supported. */
 #ifndef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_FAST_CCACHE_NAME
-    if (config->fast_ccache)
-        putil_err(args, "fast_ccache requested but FAST not supported by"
-                  " Kerberos libraries");
+    if (config->fast_ccache || config->anon_fast)
+        putil_err(args, "fast_ccache or anon_fast requested but FAST not"
+                  " supported by Kerberos libraries");
+#endif
+
+    /* If tracing was requested enable it if possible. */
+#ifdef HAVE_KRB5_SET_TRACE_FILENAME
+    if (config->trace != NULL) {
+        krb5_error_code retval;
+
+        retval = krb5_set_trace_filename(args->ctx, config->trace);
+        if (retval == 0)
+            putil_debug(args, "enabled trace logging to %s", config->trace);
+        else
+            putil_err_krb5(args, retval, "cannot enable trace logging to %s",
+                           config->trace);
+    }
+#else
+    if (config->trace != NULL)
+        putil_err(args, "trace logging requested but not supported");
 #endif
 
     return args;
@@ -214,6 +243,12 @@ pamk5_free(struct pam_args *args)
             free(config->pkinit_user);
         if (config->preauth_opt != NULL)
             vector_free(config->preauth_opt);
+        if (config->realm != NULL)
+            free(config->realm);
+        if (config->trace != NULL)
+            free(config->trace);
+        if (config->user_realm != NULL)
+            free(config->user_realm);
         free(args->config);
         args->config = NULL;
     }

@@ -1,5 +1,85 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 4.6 (2012-06-02)
+
+    Add a user_realm option to only set the realm for unqualified user
+    principals.  This differs from the existing realm option in that realm
+    also changes the default realm for authorization decisions and for
+    verification of credentials.  Update the realm option documentation to
+    clarify the differences and remove incorrect information.  Patch from
+    Roland C. Dowdeswell.
+
+    Add a no_prompt option to suppress the PAM module's prompt for the
+    user's password and defer all prompting to the Kerberos library.  This
+    allows the Kerberos library to have complete control of the prompting
+    process, which may be desireable if authentication mechanisms other
+    than password are in use.  Be aware that, with this option set, the
+    PAM module has no control over the contents of the prompt and cannot
+    store the user's password in the PAM data.  Based on a patch by Yair
+    Yarom.
+
+    Add a silent option to force the module to behave as if the
+    application had passed in PAM_SILENT and suppress text messages and
+    errors from the Kerberos library.  Patch from Yair Yarom.
+
+    Add preliminary support for Kerberos trace logging via a trace option
+    that enables trace logging if supported by the underlying Kerberos
+    library.  The option takes as an argument the file name to which to
+    log trace output.  This option does not yet work with any released
+    version of Kerberos, but may work with the next release of MIT
+    Kerberos.
+
+    MIT Kerberos does not add a colon and space to its password prompts,
+    but Heimdal does.  pam-krb5 previously unconditionally added a colon
+    and space, resulting in doubled colons with Heimdal.  Work around this
+    inconsistency by not adding the colon and space if already present.
+
+    Fix alt_auth_map support to preserve the realm of the authentication
+    identity when forming the alternate authentication principal, matching
+    the documentation.
+
+    Document that the alt_auth_map format may contain a realm to force all
+    mapped principals to be in that realm.  In that case, don't add the
+    realm of the authentication identity.  Note that this can be used as a
+    simple way to attempt authentication in an alternate realm first and
+    then fall back to the local realm, although any complex attempt at
+    authentication in multiple realms should instead run the module
+    multiple times with different realm settings.
+
+    Avoid a NULL pointer deference if krb5_init_context fails.
+
+    Fix initialization of time values in the module configuration on
+    platforms (like S/390X) where krb5_deltat is not equivalent to long.
+
+    Close a memory leak when search_k5login is set but the user has no
+    .k5login file.
+
+    Close several memory leaks in alt_auth_map support.
+
+    Suppress bogus error messages about unknown option for the realm
+    option.  The option was being parsed and honored despite the error.
+
+    Retry authentication under try_first_pass on several other errors in
+    addition to decrypt integrity check errors to handle a wider array of
+    possible "password incorrect" error messages from the KDC.
+
+    Update to rra-c-util 4.4:
+
+    * Replacement strndup now works with non-nul-terminated strings.
+    * New Kerberos test setup that simplifies writing tests.
+    * Add -D_FORTIFY_SOURCE=2 to the make warnings flags.
+    * Use --deps flag to krb5-config by default.
+    * Suppress __alloc_size__ attribute with older versions of gcc.
+    * Suppress attribute warnings for non-gcc compilers.
+
+    Update to C TAP Harness 1.12:
+
+    * Add bstrndup to the basic C TAP library.
+    * Only use feature-test macros when requested or built with gcc -ansi.
+    * New tests/tap/macros.h header with some common definitions.
+    * Drop is_double from the C TAP library to avoid requiring -lm.
+    * Avoid using local in the shell libtap.sh library.
+
 pam-krb5 4.5 (2011-12-24)
 
     Suppress the notice that the password is being changed because it's
@@ -116,7 +196,7 @@ pam-krb5 4.4 (2010-12-31)
 
 pam-krb5 4.3 (2010-06-09)
 
-    Add a new option fast_ccache, which if set points to a Kerberos ticket
+    Add a fast_ccache option that, if set, points to a Kerberos ticket
     cache used for Flexible Authentication Secure Tunneling (FAST) to
     protect the authentication.  FAST is a mechanism to protect Kerberos
     against password guessing attacks and provide other security

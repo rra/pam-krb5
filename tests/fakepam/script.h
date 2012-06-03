@@ -10,7 +10,7 @@
  * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <rra@stanford.edu>
- * Copyright 2011
+ * Copyright 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -50,6 +50,8 @@ struct script_config {
     const char *password;       /* Substituted for %p in prompts. */
     const char *newpass;        /* Substituted for %n in prompts. */
     const char *extra[10];      /* Substituted for %0-%9 in logging. */
+    const char *authtok;        /* Stored as AUTHTOK before PAM. */
+    const char *oldauthtok;     /* Stored as OLDAUTHTOK before PAM. */
     script_callback callback;   /* Called after PAM, before pam_end. */
     void *data;                 /* Passed to the callback function. */
 };

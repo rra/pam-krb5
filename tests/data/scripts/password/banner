@@ -1,0 +1,16 @@
+# Test password change with a modified banner.  -*- conf -*-
+
+[options]
+    password = banner=realm
+
+[run]
+    chauthtok(PRELIM_CHECK)   = PAM_SUCCESS
+    chauthtok(UPDATE_AUTHTOK) = PAM_SUCCESS
+
+[prompts]
+    echo_off = Current realm password: |%p
+    echo_off = Enter new realm password: |%n
+    echo_off = Retype new realm password: |%n
+
+[output]
+    INFO user %u changed Kerberos password

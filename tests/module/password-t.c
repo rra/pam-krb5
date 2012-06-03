@@ -7,7 +7,7 @@
  * created (so without setuid and with chown doing nothing).
  *
  * Written by Russ Allbery <rra@stanford.edu>
- * Copyright 2011
+ * Copyright 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * See LICENSE for licensing terms.
@@ -33,20 +33,18 @@ int
 main(void)
 {
     struct script_config config;
-    struct kerberos_password *password;
+    struct kerberos_config *krbconf;
     char *newpass;
 
     /* Load the Kerberos principal and password from a file. */
-    password = kerberos_config_password();
-    if (password == NULL)
-        skip_all("Kerberos tests not configured");
+    krbconf = kerberos_setup(TAP_KRB_NEEDS_PASSWORD);
     memset(&config, 0, sizeof(config));
-    config.user = password->username;
-    config.password = password->password;
-    config.extra[0] = password->principal;
+    config.user = krbconf->username;
+    config.password = krbconf->password;
+    config.extra[0] = krbconf->userprinc;
 
     /* Generate a testing krb5.conf file. */
-    kerberos_generate_conf(password->realm);
+    kerberos_generate_conf(krbconf->realm);
 
     plan_lazy();
 
@@ -57,13 +55,51 @@ main(void)
     basprintf(&newpass, "ngh1,a%lu nn9af6", (unsigned long) getpid());
     config.newpass = newpass;
     run_script("data/scripts/password/basic", &config);
-
-    /* Change the password back. */
     config.password = newpass;
-    config.newpass = password->password;
-    run_script("data/scripts/password/basic", &config);
+    config.newpass = krbconf->password;
+    run_script("data/scripts/password/basic-debug", &config);
+
+    /* Test prompt_principal with password change. */
+    config.password = krbconf->password;
+    config.newpass = newpass;
+    run_script("data/scripts/password/prompt-principal", &config);
+
+    /* Change the password back and test expose-account. */
+    config.password = newpass;
+    config.newpass = krbconf->password;
+    run_script("data/scripts/password/expose", &config);
+
+    /*
+     * Test two banner settings by changing the password and then changing it
+     * back again.
+     */
+    config.password = krbconf->password;
+    config.newpass = newpass;
+    run_script("data/scripts/password/banner", &config);
+    config.password = newpass;
+    config.newpass = krbconf->password;
+    run_script("data/scripts/password/no-banner", &config);
+
+    /* Do the same, but with expose_account set as well. */
+    config.password = krbconf->password;
+    config.newpass = newpass;
+    run_script("data/scripts/password/banner-expose", &config);
+    config.password = newpass;
+    config.newpass = krbconf->password;
+    run_script("data/scripts/password/no-banner-expose", &config);
+
+    /* Test use_authtok. */
+    config.password = krbconf->password;
+    config.newpass = NULL;
+    config.authtok = newpass;
+    run_script("data/scripts/password/authtok", &config);
+
+    /* Test use_authtok with force_first_pass. */
+    config.password = NULL;
+    config.authtok = krbconf->password;
+    config.oldauthtok = newpass;
+    run_script("data/scripts/password/authtok-force", &config);
 
     free(newpass);
-    kerberos_config_password_free(password);
     return 0;
 }

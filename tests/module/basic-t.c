@@ -15,6 +15,7 @@
 #include <portable/system.h>
 
 #include <tests/fakepam/script.h>
+#include <tests/tap/basic.h>
 
 
 int

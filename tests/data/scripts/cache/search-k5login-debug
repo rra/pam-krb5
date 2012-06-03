@@ -13,13 +13,15 @@
 
 [output]
     DEBUG pam_sm_authenticate: entry
+    DEBUG (user %u) attempting authentication as %0
     INFO user %u authenticated as %0
+    DEBUG /^\(user %u\) temporarily storing credentials in /tmp/krb5cc_pam_/
     DEBUG pam_sm_authenticate: exit (success)
     DEBUG pam_sm_acct_mgmt: entry
-    DEBUG (user testuser) retrieving principal from cache
+    DEBUG (user %u) retrieving principal from cache
     DEBUG pam_sm_acct_mgmt: exit (success)
     DEBUG pam_sm_open_session: entry
-    DEBUG (user testuser) initializing ticket cache FILE:/tmp/krb5cc_1000_%*
+    DEBUG /^\(user %u\) initializing ticket cache FILE:/tmp/krb5cc_/
     DEBUG pam_sm_open_session: exit (success)
     DEBUG pam_sm_close_session: entry
     DEBUG pam_sm_close_session: exit (success)
