@@ -2,6 +2,13 @@
 
 pam-krb5 4.6 (2012-06-02)
 
+    Add an anon_fast option that attempts anonymous authentication
+    (generally implemented via anonymous PKINIT inside the Kerberos
+    library) and then, if successful, uses those credentials for FAST
+    armor.  If fast_ccache and anon_fast are both specified, anonymous
+    authentication will be used as a fallback if the specified FAST ticket
+    cache doesn't exist.  Based on patches from Yair Yarom.
+
     Add a user_realm option to only set the realm for unqualified user
     principals.  This differs from the existing realm option in that realm
     also changes the default realm for authorization decisions and for
