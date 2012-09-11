@@ -135,6 +135,8 @@ pamk5_conv(struct pam_args *args, const char *message, int type,
     pamret = pam_get_item(args->pamh, PAM_CONV, (PAM_CONST void **) &conv);
     if (pamret != PAM_SUCCESS)
 	return pamret;
+    if (conv->conv == NULL)
+        return PAM_CONV_ERR;
     pmsg = &msg;
     msg.msg_style = type;
     msg.msg = (PAM_CONST char *) message;
@@ -213,6 +215,8 @@ pamk5_prompter_krb5(krb5_context context UNUSED, void *data, const char *name,
     /* Obtain the conversation function from the application. */
     pamret = pam_get_item(args->pamh, PAM_CONV, (PAM_CONST void **) &conv);
     if (pamret != 0)
+        return KRB5KRB_ERR_GENERIC;
+    if (conv->conv == NULL)
         return KRB5KRB_ERR_GENERIC;
 
     /* Treat the name and banner as prompts that doesn't need input. */
