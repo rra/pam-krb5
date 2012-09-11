@@ -71,7 +71,7 @@ kerberos_expire_password(const char *principal, time_t expires)
     krb5_error_code code;
     kadm5_config_params params;
     kadm5_principal_ent_rec ent;
-    void *handle;
+    void *handle = NULL;
     bool okay = false;
 
     /* Set up for making our call. */
@@ -118,7 +118,8 @@ kerberos_expire_password(const char *principal, time_t expires)
         diag_krb5(ctx, code, "error setting password expiration");
 
 done:
-    kadm5_destroy(handle);
+    if (handle != NULL)
+        kadm5_destroy(handle);
     krb5_free_unparsed_name(ctx, user);
     krb5_free_principal(ctx, admin);
     krb5_free_principal(ctx, princ);
