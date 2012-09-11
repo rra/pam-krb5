@@ -18,8 +18,6 @@
 
 #include <tests/fakepam/script.h>
 #include <tests/tap/kerberos.h>
-#include <tests/tap/process.h>
-#include <tests/tap/string.h>
 
 
 int
