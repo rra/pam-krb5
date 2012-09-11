@@ -1,5 +1,10 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 4.7 (unreleased)
+
+    Suppress spurious password prompt from Heimdal when authenticating
+    with PKINIT.
+
 pam-krb5 4.6 (2012-06-02)
 
     Add an anon_fast option that attempts anonymous authentication

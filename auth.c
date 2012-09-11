@@ -544,7 +544,7 @@ pkinit_auth(struct pam_args *args, const char *service, krb5_creds **creds)
 
     /* Finally, do the actual work and return the results. */
     retval = krb5_get_init_creds_password(ctx->context, *creds, ctx->princ,
-                 NULL, pamk5_prompter_krb5, args, 0, (char *) service, opts);
+                 NULL, NULL, args, 0, (char *) service, opts);
 
 done:
     krb5_get_init_creds_opt_free(ctx->context, opts);
