@@ -46,17 +46,21 @@ struct kerberos_config {
     char *username;             /* The local (non-realm) part of principal. */
     char *realm;                /* The realm part of the principal. */
     char *password;             /* The password. */
+    char *pkinit_principal;     /* Principal for PKINIT authentication. */
+    char *pkinit_cert;          /* Path to certificates for PKINIT. */
 };
 
 /*
  * Whether to skip all tests (by calling skip_all) in kerberos_setup if
- * certain configuration information isn't available.
+ * certain configuration information isn't available.  "_BOTH" means that the
+ * tests require both keytab and password, but PKINIT is not required.
  */
 enum kerberos_needs {
     TAP_KRB_NEEDS_NONE,
     TAP_KRB_NEEDS_KEYTAB,
     TAP_KRB_NEEDS_PASSWORD,
-    TAP_KRB_NEEDS_BOTH
+    TAP_KRB_NEEDS_BOTH,
+    TAP_KRB_NEEDS_PKINIT
 };
 
 BEGIN_DECLS

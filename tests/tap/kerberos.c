@@ -228,6 +228,10 @@ kerberos_cleanup(void)
             free(config->username);
             free(config->password);
         }
+        if (config->pkinit_principal != NULL) {
+            free(config->pkinit_principal);
+            free(config->pkinit_cert);
+        }
         free(config);
         config = NULL;
     }
@@ -323,6 +327,32 @@ kerberos_setup(enum kerberos_needs needs)
     }
     if (path != NULL)
         test_file_path_free(path);
+
+    /*
+     * If we have PKINIT configuration, read it and fill out the relevant
+     * members of our config struct.
+     */
+    path = test_file_path("config/pkinit-principal");
+    if (path != NULL)
+        file = fopen(path, "r");
+    if (file != NULL) {
+        if (fgets(buffer, sizeof(buffer), file) == NULL)
+            bail("cannot read %s", path);
+        if (buffer[strlen(buffer) - 1] != '\n')
+            bail("no newline in %s", path);
+        buffer[strlen(buffer) - 1] = '\0';
+        fclose(file);
+        test_file_path_free(path);
+        path = test_file_path("config/pkinit-cert");
+        if (path != NULL) {
+            config->pkinit_principal = bstrdup(buffer);
+            config->pkinit_cert = bstrdup(path);
+        }
+    }
+    if (path != NULL)
+        test_file_path_free(path);
+    if (config->pkinit_cert == NULL && needs == TAP_KRB_NEEDS_PKINIT)
+        skip_all("PKINIT tests not configured");
 
     /*
      * Register the cleanup function as an atexit handler so that the caller

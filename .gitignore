@@ -21,6 +21,8 @@
 /tests/config/admin-keytab
 /tests/config/keytab
 /tests/config/password
+/tests/config/pkinit-cert
+/tests/config/pkinit-principal
 /tests/module/alt-auth-t
 /tests/module/bad-authtok-t
 /tests/module/basic-t
@@ -30,6 +32,7 @@
 /tests/module/fast-t
 /tests/module/no-cache-t
 /tests/module/password-t
+/tests/module/pkinit-t
 /tests/module/realm-t
 /tests/module/stacked-t
 /tests/module/trace-t

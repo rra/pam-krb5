@@ -7,6 +7,7 @@ module/expired
 module/fast
 module/no-cache
 module/password
+module/pkinit
 module/realm
 module/stacked
 pam-util/args

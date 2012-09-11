@@ -72,17 +72,17 @@ warnings:
 	$(MAKE) V=0 CFLAGS='$(WARNINGS)' $(check_PROGRAMS)
 
 # The bits below are for the test suite, not for the main package.
-check_PROGRAMS = tests/runtests tests/module/alt-auth-t			    \
-	tests/module/bad-authtok-t tests/module/basic-t			    \
-	tests/module/cache-cleanup-t tests/module/cache-t		    \
-	tests/module/expired-t tests/module/fast-t tests/module/no-cache-t  \
-	tests/module/password-t tests/module/realm-t tests/module/stacked-t \
-	tests/module/trace-t tests/pam-util/args-t tests/pam-util/fakepam-t \
-	tests/pam-util/logging-t tests/pam-util/options-t		    \
-	tests/pam-util/vector-t tests/portable/asprintf-t		    \
-	tests/portable/mkstemp-t tests/portable/snprintf-t		    \
-	tests/portable/strlcat-t tests/portable/strlcpy-t		    \
-	tests/portable/strndup-t
+check_PROGRAMS = tests/runtests tests/module/alt-auth-t			   \
+	tests/module/bad-authtok-t tests/module/basic-t			   \
+	tests/module/cache-cleanup-t tests/module/cache-t		   \
+	tests/module/expired-t tests/module/fast-t tests/module/no-cache-t \
+	tests/module/password-t tests/module/pkinit-t tests/module/realm-t \
+	tests/module/stacked-t tests/module/trace-t tests/pam-util/args-t  \
+	tests/pam-util/fakepam-t tests/pam-util/logging-t		   \
+	tests/pam-util/options-t tests/pam-util/vector-t		   \
+	tests/portable/asprintf-t tests/portable/mkstemp-t		   \
+	tests/portable/snprintf-t tests/portable/strlcat-t		   \
+	tests/portable/strlcpy-t tests/portable/strndup-t
 tests_runtests_CPPFLAGS = -DSOURCE='"$(abs_top_srcdir)/tests"' \
 	-DBUILD='"$(abs_top_builddir)/tests"'
 check_LIBRARIES = tests/fakepam/libfakepam.a tests/tap/libtap.a
@@ -122,6 +122,8 @@ tests_module_fast_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
 tests_module_no_cache_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
 	portable/libportable.la $(KRB5_LIBS)
 tests_module_password_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
+	portable/libportable.la $(KRB5_LIBS)
+tests_module_pkinit_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
 	portable/libportable.la $(KRB5_LIBS)
 tests_module_realm_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
 	portable/libportable.la $(KRB5_LIBS)

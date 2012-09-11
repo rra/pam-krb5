@@ -1,0 +1,13 @@
+# Test optional PKINIT auth w/debug.  -*- conf -*-
+
+[options]
+    auth = debug no_ccache try_pkinit pkinit_user=FILE:%0
+
+[run]
+    authenticate = PAM_SUCCESS
+
+[output]
+    DEBUG pam_sm_authenticate: entry
+    DEBUG (user %u) attempting authentication as %u
+    INFO user %u authenticated as %u
+    DEBUG pam_sm_authenticate: exit (success)

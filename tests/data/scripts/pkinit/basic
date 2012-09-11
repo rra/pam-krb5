@@ -1,0 +1,15 @@
+# Test PKINIT auth without saving a ticket cache.  -*- conf -*-
+
+[options]
+    auth    = no_ccache use_pkinit pkinit_user=FILE:%0
+    account = no_ccache
+    session = no_ccache
+
+[run]
+    authenticate  = PAM_SUCCESS
+    acct_mgmt     = PAM_SUCCESS
+    open_session  = PAM_SUCCESS
+    close_session = PAM_SUCCESS
+
+[output]
+    INFO user %u authenticated as %u
