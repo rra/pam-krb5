@@ -519,8 +519,8 @@ pkinit_auth(struct pam_args *args, const char *service, krb5_creds **creds)
     if (args->config->pkinit_prompt) {
         pamk5_conv(args,
                    args->config->use_pkinit
-                       ? "Insert smart card and press Enter:"
-                       : "Insert smart card if desired, then press Enter:",
+                       ? "Insert smart card and press Enter: "
+                       : "Insert smart card if desired, then press Enter: ",
                    PAM_PROMPT_ECHO_OFF, &dummy);
     }
 
