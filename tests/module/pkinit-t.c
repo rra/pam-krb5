@@ -53,6 +53,7 @@ main(void)
     run_script("data/scripts/pkinit/try-pkinit-debug", &config);
 #else
     run_script("data/scripts/pkinit/try-pkinit-debug-mit", &config);
+    run_script("data/scripts/pkinit/preauth-opt-mit", &config);
 #endif
 
     return 0;
