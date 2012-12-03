@@ -75,8 +75,6 @@ Logging:
 
 Test suite:
 
- * PAMKRB-19: Add tests for PKINIT.
-
  * PAMKRB-20: Ensure that the test suite covers all possible PAM options.
 
  * PAMKRB-22: Integrate and automate valgrind testing.  There is currently
