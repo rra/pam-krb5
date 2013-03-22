@@ -35,8 +35,8 @@
  * principal.  The caller is responsible for freeing.  Returns an errno value
  * on any error.
  */
-static int
-map_principal(struct pam_args *args, const char *username, char **principal)
+int
+pamk5_map_principal(struct pam_args *args, const char *username, char **principal)
 {
     char *user = NULL;
     char *realm;
@@ -129,7 +129,7 @@ pamk5_alt_auth(struct pam_args *args, const char *service,
     krb5_principal princ;
     krb5_error_code retval;
 
-    retval = map_principal(args, ctx->name, &kuser);
+    retval = pamk5_map_principal(args, ctx->name, &kuser);
     if (retval != 0)
         return retval;
     retval = krb5_parse_name(ctx->context, kuser, &princ);
@@ -197,7 +197,7 @@ pamk5_alt_auth_verify(struct pam_args *args)
     ctx = args->config->ctx;
     if (ctx->context == NULL || ctx->name == NULL)
         return PAM_SERVICE_ERR;
-    if (map_principal(args, ctx->name, &name) != 0) {
+    if (pamk5_map_principal(args, ctx->name, &name) != 0) {
         putil_err(args, "cannot map principal name");
         goto done;
     }

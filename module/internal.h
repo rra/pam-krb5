@@ -195,6 +195,11 @@ int pamk5_should_ignore(struct pam_args *, PAM_CONST char *);
 /*
  * alt_auth_map support.
  *
+ * pamk5_map_principal attempts to map the user to a Kerberos principal
+ * according to alt_auth_map.  Returns 0 on success, storing the mapped
+ * principal name in newly allocated memory in principal.  The caller is
+ * responsiple for freeing. Returns an errno value on any error.
+ *
  * pamk5_alt_auth attempts an authentication to the given service with the
  * given options and password and returns a Kerberos error code.  On success,
  * the new credentials are stored in krb5_creds.
@@ -203,6 +208,8 @@ int pamk5_should_ignore(struct pam_args *, PAM_CONST char *);
  * access the account given the configured alt_auth_map and is meant to be
  * called from pamk5_authorized.  It returns a PAM status code.
  */
+int pamk5_map_principal(struct pam_args *, const char *username,
+                        char **principal);
 krb5_error_code pamk5_alt_auth(struct pam_args *, const char *service,
                                krb5_get_init_creds_opt *, const char *pass,
                                krb5_creds *);
