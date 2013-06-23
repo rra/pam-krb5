@@ -1,3 +1,10 @@
+libpam-krb5 (4.6-2) unstable; urgency=low
+
+  * Apply upstream patch to add AM_PROG_AR to configure.ac, now apparently
+    required by Automake for the binutils in unstable.  (Closes: #713296)
+
+ -- Russ Allbery <rra@debian.org>  Sun, 23 Jun 2013 12:25:18 -0700
+
 libpam-krb5 (4.6-1) unstable; urgency=low
 
   * New upstream release.
