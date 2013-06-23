@@ -1,7 +1,7 @@
 dnl Autoconf configuration for pam-krb5.
 dnl
 dnl Written by Russ Allbery <rra@stanford.edu>
-dnl Copyright 2009, 2010, 2011, 2012
+dnl Copyright 2009, 2010, 2011, 2012, 2013
 dnl     The Board of Trustees of the Leland Stanford Junior University
 dnl Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@stanford.edu>
 dnl Copyright 2005 Andres Salomon <dilinger@debian.org>
@@ -21,6 +21,7 @@ AM_MAINTAINER_MODE
 AC_PROG_CC
 AC_USE_SYSTEM_EXTENSIONS
 AM_PROG_CC_C_O
+AM_PROG_AR
 AC_PROG_INSTALL
 LT_INIT([disable-static])
 AC_CANONICAL_HOST
