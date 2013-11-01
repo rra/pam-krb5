@@ -38,6 +38,23 @@ Functionality:
    that would trigger password expiration handling, which probably isn't
    correct.
 
+ * PAMKRB-26: Support authentication from a keytab.
+
+ * PAMKRB-27: The PAM module currently supports several options that
+   duplicate standard configuration settings for the Kerberos library.
+   Deprecate the ones where this appears to serve no useful purpose.
+
+ * PAMKRB-28: Support disabling of user canonicalization so that the PAM
+   user is retained even if the module did an aname to lname mapping.
+
+ * PAMKRB-29: Use set_out_ccache to write the resulting ticket cache, if
+   it is available.  This ensures the correct flags are set in the ticket
+   cache.  This poses some challenges due to the two-step ticket cache
+   mechanism currently used.  Perhaps there's a cache copying API?
+
+ * PAMKRB-31: Use krb5_chpw_message to parse password change messages from
+   Active Directory.
+
 Code Cleanup:
 
  * PAMKRB-11: The PKINIT code for Heimdal involves too many #ifdefs right
@@ -49,6 +66,10 @@ Code Cleanup:
    underlying functions and then map error codes appropriately in the
    interface functions.  Helpful for this would be improved documentation
    of what error codes are permitted and where.
+
+ * PAMKRB-25: Tracking when to free the Kerberos context and other things
+   stored in the PAM context is currently too complicated.  It should be
+   possible to simplify it with a reference counting scheme.
 
 Documentation:
 
