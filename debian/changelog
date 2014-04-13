@@ -1,4 +1,4 @@
-libpam-krb5 (4.6-3) UNRELEASED; urgency=medium
+libpam-krb5 (4.6-3) unstable; urgency=medium
 
   * Drop version qualifications on Build-Depends that are satisfied by
     stable.  Drop version qualifications on Depends that are satisfied by
@@ -9,7 +9,7 @@ libpam-krb5 (4.6-3) UNRELEASED; urgency=medium
   * Specify the Debian packaging branch in the Vcs-Git control field.
   * Update standards version to 3.9.5 (no changes required).
 
- -- Russ Allbery <rra@debian.org>  Sun, 13 Apr 2014 12:58:37 -0700
+ -- Russ Allbery <rra@debian.org>  Sun, 13 Apr 2014 13:13:38 -0700
 
 libpam-krb5 (4.6-2) unstable; urgency=low
 
