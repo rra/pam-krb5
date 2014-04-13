@@ -4,6 +4,7 @@ libpam-krb5 (4.6-3) UNRELEASED; urgency=medium
   * Prefer *.tar.xz in debian/watch to match packaging.
   * Convert debian/copyright to copyright-format 1.0.
   * Specify the Debian packaging branch in the Vcs-Git control field.
+  * Update standards version to 3.9.5 (no changes required).
 
  -- Russ Allbery <rra@debian.org>  Sun, 13 Apr 2014 12:58:37 -0700
 
