@@ -4,9 +4,8 @@ Priority: optional
 Maintainer: Russ Allbery <rra@debian.org>
 Uploaders: Sam Hartman <hartmans@debian.org>
 Standards-Version: 3.9.5
-Build-Depends: debhelper (>= 9), dh-autoreconf,
- heimdal-multidev (>= 1.5.dfsg.1-1~), krb5-config,
- krb5-multidev (>= 1.9.1+dfsg-2~), libpam0g-dev
+Build-Depends: debhelper (>= 9), dh-autoreconf, heimdal-multidev,
+ krb5-config, krb5-multidev, libpam0g-dev
 Homepage: http://www.eyrie.org/~eagle/software/pam-krb5/
 Vcs-Browser: http://anonscm.debian.org/gitweb/?p=pkg-k5-afs/pam-krb5.git
 Vcs-Git: git://anonscm.debian.org/pkg-k5-afs/pam-krb5.git -b debian
@@ -15,8 +14,8 @@ Package: libpam-krb5
 Architecture: any
 Multi-Arch: same
 Pre-Depends: ${misc:Pre-Depends}
-Depends: ${shlibs:Depends}, ${misc:Depends}, krb5-config,
- libpam-runtime (>= 1.0.1-6~), libpam0g (>= 1.1.3-2~)
+Depends: ${shlibs:Depends}, ${misc:Depends}, krb5-config, libpam-runtime,
+ libpam0g (>= 1.1.3-2~)
 Conflicts: libpam-heimdal
 Description: PAM module for MIT Kerberos
  A Kerberos PAM module build against the MIT Kerberos libraries.  It
@@ -29,8 +28,8 @@ Priority: extra
 Architecture: any
 Multi-Arch: same
 Pre-Depends: ${misc:Pre-Depends}
-Depends: ${shlibs:Depends}, ${misc:Depends}, krb5-config,
- libpam-runtime (>= 1.0.1-6~), libpam0g (>= 1.1.3-2~)
+Depends: ${shlibs:Depends}, ${misc:Depends}, krb5-config, libpam-runtime,
+ libpam0g (>= 1.1.3-2~)
 Conflicts: libpam-krb5
 Description: PAM module for Heimdal Kerberos
  A Kerberos PAM module build against the Heimdal libraries.  It supports

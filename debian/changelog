@@ -1,5 +1,8 @@
 libpam-krb5 (4.6-3) UNRELEASED; urgency=medium
 
+  * Drop version qualifications on Build-Depends that are satisfied by
+    stable.  Drop version qualifications on Depends that are satisfied by
+    oldstable.
   * Add the upstream release signing key and verify it in debian/watch.
   * Prefer *.tar.xz in debian/watch to match packaging.
   * Convert debian/copyright to copyright-format 1.0.
