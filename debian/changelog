@@ -1,3 +1,9 @@
+libpam-krb5 (4.6-3) UNRELEASED; urgency=medium
+
+  * Convert debian/copyright to copyright-format 1.0.
+
+ -- Russ Allbery <rra@debian.org>  Sun, 13 Apr 2014 12:58:37 -0700
+
 libpam-krb5 (4.6-2) unstable; urgency=low
 
   * Apply upstream patch to add AM_PROG_AR to configure.ac, now apparently
