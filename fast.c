@@ -6,7 +6,7 @@
  * to protect the initial preauthentication exchange.  These can come either
  * from a ticket cache for another principal or via anonymous PKINIT.
  *
- * Written by Russ Allbery <rra@stanford.edu>
+ * Written by Russ Allbery <eagle@eyrie.org>
  * Contributions from Sam Hartman and Yair Yarom
  * Copyright 2010, 2012
  *     The Board of Trustees of the Leland Stanford Junior University

@@ -6,7 +6,7 @@
  * PAM module running as the same user for which the ticket cache will be
  * created (so without setuid and with chown doing nothing).
  *
- * Written by Russ Allbery <rra@stanford.edu>
+ * Written by Russ Allbery <eagle@eyrie.org>
  * Copyright 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *

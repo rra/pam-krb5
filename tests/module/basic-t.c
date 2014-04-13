@@ -4,7 +4,7 @@
  * This test case includes all tests that can be done without having Kerberos
  * configured and a username and password available.
  *
- * Written by Russ Allbery <rra@stanford.edu>
+ * Written by Russ Allbery <eagle@eyrie.org>
  * Copyright 2011
  *     The Board of Trustees of the Leland Stanford Junior University
  *

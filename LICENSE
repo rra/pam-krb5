@@ -3,7 +3,7 @@ The pam-krb5 package as a whole is:
   Copyright 2009, 2010, 2011
       The Board of Trustees of the Leland Stanford Junior University
   Copyright 2005, 2006, 2007, 2008, 2009, 2010
-      Russ Allbery <rra@stanford.edu>
+      Russ Allbery <eagle@eyrie.org>
   Copyright (c) 2005 Andres Salomon <dilinger@debian.org>
   Copyright (c) Frank Cusack, 1999-2000.
   fcusack@fcusack.com
@@ -49,7 +49,7 @@ Web at <http://www.gnu.org/licenses/>.
 Collected copyright notices for the entire package:
 
   Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2011
-      Russ Allbery <rra@stanford.edu>
+      Russ Allbery <eagle@eyrie.org>
   Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2011
       The Board of Trustees of the Leland Stanford Junior University
   Copyright 2007, 2008 Markus Moeller
@@ -206,13 +206,13 @@ the following statement:
 
 In other words, you can do anything you wish with this code, although I
 would strongly prefer that any improvements or modifications be sent to me
-(rra@stanford.edu) so that I can continue to maintain a canonical version.
+(eagle@eyrie.org) so that I can continue to maintain a canonical version.
 
 The files configure.ac, m4/kadm5clnt.m4, m4/krb5.m4, m4/krb5-config.m4,
 m4/lib-depends.m4, m4/lib-helper.m4, m4/lib-pathname.m4, m4/pam-const.m4,
 and m4/snprintf.m4 are released under the following copyright and license:
 
-  Copyright 1999, 2000, 2001, 2003 Russ Allbery <rra@stanford.edu>
+  Copyright 1999, 2000, 2001, 2003 Russ Allbery <eagle@eyrie.org>
   Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2011
       The Board of Trustees of the Leland Stanford Junior University
 
@@ -349,7 +349,7 @@ license:
 The files tests/README and tests/fakepam/README are released under the
 following copyright and license:
 
-  Copyright 2010, 2011 Russ Allbery <rra@stanford.edu>
+  Copyright 2010, 2011 Russ Allbery <eagle@eyrie.org>
 
   Copying and distribution of this file, with or without modification, are
   permitted in any medium without royalty provided the copyright notice

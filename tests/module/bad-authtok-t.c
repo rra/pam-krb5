@@ -7,7 +7,7 @@
  * a ticket cache (which requires additional work to test the cache
  * ownership).
  *
- * Written by Russ Allbery <rra@stanford.edu>
+ * Written by Russ Allbery <eagle@eyrie.org>
  * Copyright 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *

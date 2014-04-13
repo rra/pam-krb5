@@ -4,7 +4,7 @@
  * Checks that trace logging is handled properly.  This is currently very
  * simple and just checks that the file is created.
  *
- * Written by Russ Allbery <rra@stanford.edu>
+ * Written by Russ Allbery <eagle@eyrie.org>
  * Copyright 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *
