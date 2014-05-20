@@ -707,7 +707,7 @@ pamk5_password_auth(struct pam_args *args, const char *service,
     if (ctx->princ == NULL) {
         retval = parse_name(args);
         if (retval != 0) {
-            putil_err_krb5(args, retval, "krb5_parse_name failed");
+            putil_err_krb5(args, retval, "parse_name failed");
             return PAM_SERVICE_ERR;
         }
     }
