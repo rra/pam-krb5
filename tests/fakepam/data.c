@@ -116,8 +116,23 @@ pam_get_item(const pam_handle_t *pamh, int item, PAM_CONST void **data)
     case PAM_OLDAUTHTOK:
         *data = pamh->oldauthtok;
         return PAM_SUCCESS;
+    case PAM_RHOST:
+        *data = (PAM_CONST char *) pamh->rhost;
+        return PAM_SUCCESS;
+    case PAM_RUSER:
+        *data = (PAM_CONST char *) pamh->ruser;
+        return PAM_SUCCESS;
+    case PAM_SERVICE:
+        *data = (PAM_CONST char *) pamh->service;
+        return PAM_SUCCESS;
+    case PAM_TTY:
+        *data = (PAM_CONST char *) pamh->tty;
+        return PAM_SUCCESS;
     case PAM_USER:
         *data = (PAM_CONST char *) pamh->user;
+        return PAM_SUCCESS;
+    case PAM_USER_PROMPT:
+        *data = "login: ";
         return PAM_SUCCESS;
     default:
         return PAM_BAD_ITEM;
@@ -144,6 +159,27 @@ pam_set_item(pam_handle_t *pamh, int item, PAM_CONST void *data)
             free(pamh->oldauthtok);
         pamh->oldauthtok = strdup(data);
         if (pamh->oldauthtok == NULL)
+            return PAM_BUF_ERR;
+        return PAM_SUCCESS;
+    case PAM_RHOST:
+        if (pamh->rhost != NULL)
+            free(pamh->rhost);
+        pamh->rhost = strdup(data);
+        if (pamh->rhost == NULL)
+            return PAM_BUF_ERR;
+        return PAM_SUCCESS;
+    case PAM_RUSER:
+        if (pamh->ruser != NULL)
+            free(pamh->ruser);
+        pamh->ruser = strdup(data);
+        if (pamh->ruser == NULL)
+            return PAM_BUF_ERR;
+        return PAM_SUCCESS;
+    case PAM_TTY:
+        if (pamh->tty != NULL)
+            free(pamh->tty);
+        pamh->tty = strdup(data);
+        if (pamh->tty == NULL)
             return PAM_BUF_ERR;
         return PAM_SUCCESS;
     case PAM_USER:

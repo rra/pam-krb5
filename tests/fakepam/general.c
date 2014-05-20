@@ -64,6 +64,9 @@ pam_start(const char *service_name, const char *user,
     handle->user = user;
     handle->authtok = NULL;
     handle->oldauthtok = NULL;
+    handle->rhost = NULL;
+    handle->ruser = NULL;
+    handle->tty = NULL;
     handle->conversation = pam_conversation;
     handle->environ = NULL;
     handle->data = NULL;
