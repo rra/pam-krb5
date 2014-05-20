@@ -89,8 +89,11 @@ parse_name(struct pam_args *args)
     if (args->config->user_realm)
         user_realm = args->config->user_realm;
     if (user_realm != NULL && strchr(user, '@') == NULL) {
-        if (asprintf(&newuser, "%s@%s", user, user_realm) < 0)
+        if (asprintf(&newuser, "%s@%s", user, user_realm) < 0) {
+            if (user != ctx->name)
+                free(user);
             return KRB5_CC_NOMEM;
+        }
         if (user != ctx->name)
             free(user);
         user = newuser;
