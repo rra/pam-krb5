@@ -8,7 +8,7 @@ Build-Depends: debhelper (>= 9), dh-autoreconf, heimdal-multidev,
  krb5-config, krb5-multidev, libpam0g-dev
 Homepage: http://www.eyrie.org/~eagle/software/pam-krb5/
 Vcs-Browser: http://anonscm.debian.org/gitweb/?p=pkg-k5-afs/pam-krb5.git
-Vcs-Git: git://anonscm.debian.org/pkg-k5-afs/pam-krb5.git -b debian
+Vcs-Git: git://anonscm.debian.org/pkg-k5-afs/pam-krb5.git
 
 Package: libpam-krb5
 Architecture: any

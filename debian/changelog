@@ -1,3 +1,9 @@
+libpam-krb5 (4.6-4) UNRELEASED; urgency=medium
+
+  * Remove erroneous branch information from Vcs-Git.
+
+ -- Russ Allbery <rra@debian.org>  Sun, 03 Aug 2014 12:20:03 -0700
+
 libpam-krb5 (4.6-3) unstable; urgency=medium
 
   * Drop version qualifications on Build-Depends that are satisfied by
