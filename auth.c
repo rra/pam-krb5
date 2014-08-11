@@ -8,7 +8,7 @@
  *
  * Copyright 2010, 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
- * Copyright 2005, 2006, 2007, 2008, 2009, 2010
+ * Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2014
  *     Russ Allbery <eagle@eyrie.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
@@ -801,7 +801,8 @@ pamk5_password_auth(struct pam_args *args, const char *service,
     } while (retry
              && (retval == KRB5KRB_AP_ERR_BAD_INTEGRITY
                  || retval == KRB5KRB_AP_ERR_MODIFIED
-                 || retval == KRB5KDC_ERR_PREAUTH_FAILED));
+                 || retval == KRB5KDC_ERR_PREAUTH_FAILED
+                 || retval == KRB5_GET_IN_TKT_LOOP));
 
 verify: UNUSED
     /*

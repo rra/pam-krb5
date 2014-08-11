@@ -8,6 +8,9 @@ pam-krb5 4.7 (unreleased)
     Map unknown realm errors from the Kerberos libraries to the PAM error
     code PAM_AUTHINFO_UNAVAIL instead of PAM_AUTH_ERR.
 
+    Treat an KRB5_GET_IN_TKT_LOOP error as an incorrect password.  Heimdal
+    KDCs sometimes return it, and Heimdal kinit treats it this way.
+
 pam-krb5 4.6 (2012-06-02)
 
     Add an anon_fast option that attempts anonymous authentication
