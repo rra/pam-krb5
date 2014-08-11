@@ -838,6 +838,7 @@ done:
             break;
         case KRB5_KDC_UNREACH:
         case KRB5_REALM_CANT_RESOLVE:
+        case KRB5_REALM_UNKNOWN:
             status = PAM_AUTHINFO_UNAVAIL;
             break;
         default:
