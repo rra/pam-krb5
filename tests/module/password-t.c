@@ -7,7 +7,7 @@
  * created (so without setuid and with chown doing nothing).
  *
  * Written by Russ Allbery <eagle@eyrie.org>
- * Copyright 2011, 2012
+ * Copyright 2011, 2012, 2014
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * See LICENSE for licensing terms.
@@ -52,7 +52,8 @@ main(void)
      * Change the password to something new.  This needs to be sufficiently
      * random that it's unlikely to fall afoul of password strength checking.
      */
-    basprintf(&newpass, "ngh1,a%lu nn9af6", (unsigned long) getpid());
+    basprintf(&newpass, "ngh1,a%lu nn9af6%lu", (unsigned long) getpid(),
+              (unsigned long) time(NULL));
     config.newpass = newpass;
     run_script("data/scripts/password/basic", &config);
     config.password = newpass;
