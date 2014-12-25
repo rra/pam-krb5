@@ -11,6 +11,9 @@ pam-krb5 4.7 (unreleased)
     Treat an KRB5_GET_IN_TKT_LOOP error as an incorrect password.  Heimdal
     KDCs sometimes return it, and Heimdal kinit treats it this way.
 
+    Add the version number at which each module option was added with its
+    current meaning to the documentatation.
+
 pam-krb5 4.6 (2012-06-02)
 
     Add an anon_fast option that attempts anonymous authentication

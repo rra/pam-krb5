@@ -82,10 +82,6 @@ Documentation:
    library supports configuration in [realms] with similar names to the
    PAM module configuration.
 
- * Note the version number when options were added.  It helps people
-   looking at the documentation on-line and writing portable
-   configurations.
-
 Portability:
 
  * If pam_modutil_getpwnam is not available but getpwnam_r is, roll our
