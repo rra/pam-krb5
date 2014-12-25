@@ -1,3 +1,10 @@
+=for stopwords
+KRB5CCNAME ChallengeResponseAuthentication GSS-API Heimdal KDC PKINIT
+PasswordAuthentication SRV Solaris Sourceforge aname appdefaults auth
+canonicalized ccache krb5.conf forwardable kdestroy keytab libdefaults
+logout pam-krb5 preauth 0.8rc1 screensaver screensavers sshd localname
+krb5.conf. 0.8rc1.
+
 =head1 NAME
 
 pam_krb5 - Kerberos PAM module
@@ -309,7 +316,7 @@ attempting to use the supplied password to authenticate as each principal
 listed there in turn.  If any of those authentications succeed, the user
 will be successfully authenticated; otherwise, authentication will fail.
 This option is useful for allowing password authentication (via console or
-sshd without GSS-API support) to shared accounts.  If there is no
+B<sshd> without GSS-API support) to shared accounts.  If there is no
 F<.k5login> file, the behavior is the same as normal.  Using this option
 requires that the user's F<.k5login> file be readable at the time of
 authentication.
@@ -662,8 +669,8 @@ If this option is set and pam-krb5 is built against MIT Kerberos, and
 PKINIT fails and the module falls back to password authentication, the
 user's password will not be stored in the PAM stack for subsequent
 modules.  This is a bug in the interaction between the module and MIT
-Kerberos that requires some rearchitecting of the PKINIT authentication
-method to fix.
+Kerberos that requires some reworking of the PKINIT authentication method
+to fix.
 
 This option can be set in F<krb5.conf> and is only applicable to the auth
 and password groups.
@@ -878,7 +885,7 @@ This option is only applicable to the auth group.
 [2.3] Normally, the user's ticket cache is destroyed when either pam_end()
 or pam_close_session() is called by the authenticating application so that
 ticket caches aren't left behind after the user logs out.  In some cases,
-however, this isn't desireable.  (On Solaris 8, for instance, the default
+however, this isn't desirable.  (On Solaris 8, for instance, the default
 behavior means login will destroy the ticket cache before running the
 user's shell.)  If this option is set, the PAM module will never destroy
 the user's ticket cache.  If you set this, you may want to call
