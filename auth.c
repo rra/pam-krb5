@@ -48,8 +48,9 @@
 /*
  * Fill in ctx->princ from the value of ctx->name or (if configured) from
  * prompting.  If we don't prompt and ctx->name contains an @-sign,
- * canonicalize it to a local account name.  If the canonicalization fails,
- * don't worry about it.  It may be that the application doesn't care.
+ * canonicalize it to a local account name unless no_update_user is set.  If
+ * the canonicalization fails, don't worry about it.  It may be that the
+ * application doesn't care.
  */
 static krb5_error_code
 parse_name(struct pam_args *args)
@@ -101,6 +102,8 @@ parse_name(struct pam_args *args)
     k5_errno = krb5_parse_name(c, user, &ctx->princ);
     if (user != ctx->name)
         free(user);
+    if (k5_errno != 0)
+        return k5_errno;
 
     /*
      * Now that we have a principal to call krb5_aname_to_localname, we can
@@ -110,8 +113,11 @@ parse_name(struct pam_args *args)
      * be rather weird, if the user were to specify a principal name for the
      * username and then enter a different username at the principal prompt,
      * but this behavior seems to make the most sense.
+     *
+     * Skip canonicalization if no_update_user was set.  In that case,
+     * continue to use the initial authentication identity everywhere.
      */
-    if (k5_errno == 0 && strchr(ctx->name, '@') != NULL) {
+    if (strchr(ctx->name, '@') != NULL && !args->config->no_update_user) {
         if (krb5_aname_to_localname(c, ctx->princ, sizeof(kuser), kuser) != 0)
             return 0;
         user = strdup(kuser);
@@ -982,7 +988,7 @@ pamk5_authenticate(struct pam_args *args)
     }
 
     /* Reset PAM_USER in case we canonicalized, but ignore errors. */
-    if (!ctx->expired) {
+    if (!ctx->expired && !args->config->no_update_user) {
         pamret = pam_set_item(args->pamh, PAM_USER, ctx->name);
         if (pamret != PAM_SUCCESS)
             putil_err_pam(args, pamret, "cannot set PAM_USER");

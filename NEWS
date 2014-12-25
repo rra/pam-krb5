@@ -2,6 +2,11 @@
 
 pam-krb5 4.7 (unreleased)
 
+    Add a no_update_user option that disables the normal update of the
+    PAM_USER PAM variable after canonicalization of the username.  When
+    this is set, pam-krb5 will not convert full principal names to local
+    usernames where possible for the rest of the PAM stack.
+
     Suppress spurious password prompt from Heimdal when authenticating
     with PKINIT.
 

@@ -67,13 +67,13 @@ If the username provided to PAM contains an C<@> and Kerberos can,
 treating the username as a principal, map it to a local account name,
 pam_authenticate() will change the PAM user to that local account name.
 This allows users to log in with their Kerberos principal and let Kerberos
-do the mapping to an account.  Be aware, however, that this facility
-cannot be used with OpenSSH.  OpenSSH will reject usernames that don't
-match local accounts before this remapping can be done and will pass an
-invalid password to the PAM module.  Also be aware that several other
-common PAM modules, such as pam_securetty, expect to be able to look up
-the user with getpwnam() and cannot be called before pam_krb5 if this
-feature is used.
+do the mapping to an account.  This can be disabled with the
+I<no_update_user> option.  Be aware, however, that this facility cannot be
+used with OpenSSH.  OpenSSH will reject usernames that don't match local
+accounts before this remapping can be done and will pass an invalid
+password to the PAM module.  Also be aware that several other common PAM
+modules, such as pam_securetty, expect to be able to look up the user with
+getpwnam() and cannot be called before pam_krb5 when using this feature.
 
 When pam_setcred() is called to initialize a new ticket cache, the
 environment variable KRB5CCNAME is set to the path to that ticket cache.
@@ -546,6 +546,17 @@ their password if the first attempt (done by the Kerberos library) fails.
 However, some system Kerberos libraries (such as Solaris's) have password
 change prompting disabled in the Kerberos library; on those systems, you
 can set this option to simulate the normal library behavior.
+
+This option can be set in F<krb5.conf> and is only applicable to the auth
+group.
+
+=item no_update_user
+
+[4.7] Normally, if pam-krb5 is able to canonicalize the principal to a
+local name using krb5_aname_to_localname() or similar calls, it changes
+the PAM_USER variable for this PAM session to the canonicalized local
+name.  Setting this option disables this behavior and leaves PAM_USER set
+to the initial authentication identity.
 
 This option can be set in F<krb5.conf> and is only applicable to the auth
 group.

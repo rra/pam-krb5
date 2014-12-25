@@ -6,6 +6,7 @@ module/cache-cleanup
 module/expired
 module/fast
 module/no-cache
+module/pam-user
 module/password
 module/pkinit
 module/realm
