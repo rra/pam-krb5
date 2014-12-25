@@ -9,7 +9,7 @@
  * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
- * Copyright 2006, 2007, 2008, 2010, 2011
+ * Copyright 2006, 2007, 2008, 2010, 2011, 2013, 2014
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -32,7 +32,7 @@
  */
 
 #include <config.h>
-#ifdef HAVE_KERBEROS
+#ifdef HAVE_KRB5
 # include <portable/krb5.h>
 #endif
 #include <portable/system.h>
@@ -61,7 +61,7 @@
  * We can only process times properly if we have Kerberos.  If not, they fall
  * back to longs and we convert them as numbers.
  */
-#ifdef HAVE_KERBEROS
+#ifdef HAVE_KRB5
 # define CONF_TIME(c, o) (krb5_deltat *)(void *)((char *) (c) + (o))
 #else
 # define CONF_TIME(c, o) (long *)       (void *)((char *) (c) + (o))
@@ -138,7 +138,7 @@ putil_args_defaults(struct pam_args *args, const struct option options[],
     for (opt = 0; opt < optlen; opt++) {
         bool *bp;
         long *lp;
-#ifdef HAVE_KERBEROS
+#ifdef HAVE_KRB5
         krb5_deltat *tp;
 #else
         long *tp;
@@ -188,7 +188,7 @@ putil_args_defaults(struct pam_args *args, const struct option options[],
 }
 
 
-#ifdef HAVE_KERBEROS
+#ifdef HAVE_KRB5
 /*
  * Load a boolean option from Kerberos appdefaults.  Takes the PAM argument
  * struct, the section name, the realm, the option, and the result location.
@@ -266,8 +266,7 @@ default_number(struct pam_args *args, const char *section, const char *realm,
         else
             *result = value;
     }
-    if (tmp != NULL)
-        free(tmp);
+    free(tmp);
 }
 
 
@@ -309,8 +308,7 @@ default_time(struct pam_args *args, const char *section, const char *realm,
         else
             *result = value;
     }
-    if (tmp != NULL)
-        free(tmp);
+    free(tmp);
 }
 
 
@@ -453,7 +451,7 @@ putil_args_krb5(struct pam_args *args, const char *section,
     return true;
 }
 
-#else /* !HAVE_KERBEROS */
+#else /* !HAVE_KRB5 */
 
 /*
  * Stub function for getting configuration information from krb5.conf used
@@ -467,7 +465,7 @@ putil_args_krb5(struct pam_args *args UNUSED, const char *section UNUSED,
     return true;
 }
 
-#endif /* !HAVE_KERBEROS */
+#endif /* !HAVE_KRB5 */
 
 
 /*
@@ -564,7 +562,7 @@ convert_number(struct pam_args *args, const char *arg, long *setting)
  * location.  If the value is missing or isn't a number, report an error and
  * leave the location unchanged.
  */
-#ifdef HAVE_KERBEROS
+#ifdef HAVE_KRB5
 static void
 convert_time(struct pam_args *args, const char *arg, krb5_deltat *setting)
 {
@@ -584,7 +582,7 @@ convert_time(struct pam_args *args, const char *arg, krb5_deltat *setting)
         *setting = result;
 }
 
-#else /* HAVE_KERBEROS */
+#else /* HAVE_KRB5 */
 
 static void
 convert_time(struct pam_args *args, const char *arg, long *setting)
@@ -592,7 +590,7 @@ convert_time(struct pam_args *args, const char *arg, long *setting)
     convert_number(args, arg, setting);
 }
 
-#endif /* !HAVE_KERBEROS */
+#endif /* !HAVE_KRB5 */
 
 
 /*
@@ -618,8 +616,7 @@ convert_string(struct pam_args *args, const char *arg, char **setting)
         putil_crit(args, "cannot allocate memory: %s", strerror(errno));
         return false;
     }
-    if (*setting != NULL)
-        free(*setting);
+    free(*setting);
     *setting = result;
     return true;
 }
@@ -648,8 +645,7 @@ convert_list(struct pam_args *args, const char *arg, struct vector **setting)
         putil_crit(args, "cannot allocate vector: %s", strerror(errno));
         return false;
     }
-    if (*setting != NULL)
-        vector_free(*setting);
+    vector_free(*setting);
     *setting = result;
     return true;
 }

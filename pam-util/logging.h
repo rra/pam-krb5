@@ -5,7 +5,7 @@
  * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
- * Copyright 2006, 2007, 2008, 2009, 2010, 2012
+ * Copyright 2006, 2007, 2008, 2009, 2010, 2012, 2013
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -32,10 +32,12 @@
 
 #include <config.h>
 #include <portable/macros.h>
-#ifdef HAVE_KERBEROS
+#ifdef HAVE_KRB5
 # include <portable/krb5.h>
 #endif
 #include <portable/pam.h>
+
+#include <stddef.h>
 #include <syslog.h>
 
 /* Forward declarations to avoid extra includes. */
@@ -74,7 +76,7 @@ void putil_debug_pam(struct pam_args *, int, const char *, ...)
  * report the last Kerberos error.  These are only available if built with
  * Kerberos support.
  */
-#ifdef HAVE_KERBEROS
+#ifdef HAVE_KRB5
 void putil_crit_krb5(struct pam_args *, int, const char *, ...)
     __attribute__((__format__(printf, 3, 4)));
 void putil_err_krb5(struct pam_args *, int, const char *, ...)
@@ -99,8 +101,8 @@ void putil_log_failure(struct pam_args *, const char *, ...)
 END_DECLS
 
 /* __func__ is C99, but not provided by all implementations. */
-#if __STDC_VERSION__ < 199901L
-# if (__GNUC__ >= 2) && !defined(__func__)
+#if (__STDC_VERSION__ < 199901L) && !defined(__func__)
+# if (__GNUC__ >= 2)
 #  define __func__ __FUNCTION__
 # else
 #  define __func__ "<unknown>"

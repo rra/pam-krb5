@@ -25,6 +25,11 @@
 #include <config.h>
 
 #include <kadm5/admin.h>
+#ifdef HAVE_KADM5_KADM5_ERR_H
+# include <kadm5/kadm5_err.h>
+#else
+# include <kadm5/kadm_err.h>
+#endif
 
 /*
  * MIT as of 1.10 supports version 3.  Heimdal as of 1.5 has a maximum version
@@ -38,6 +43,16 @@
 # else
 #  define KADM5_API_VERSION KADM5_API_VERSION_2
 # endif
+#endif
+
+/* Heimdal doesn't define KADM5_PASS_Q_GENERIC. */
+#ifndef KADM5_PASS_Q_GENERIC
+# define KADM5_PASS_Q_GENERIC KADM5_PASS_Q_DICT
+#endif
+
+/* Heimdal doesn't define KADM5_MISSING_KRB5_CONF_PARAMS. */
+#ifndef KADM5_MISSING_KRB5_CONF_PARAMS
+# define KADM5_MISSING_KRB5_CONF_PARAMS KADM5_MISSING_CONF_PARAMS
 #endif
 
 /*

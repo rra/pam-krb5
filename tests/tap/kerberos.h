@@ -5,7 +5,7 @@
  * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
- * Copyright 2006, 2007, 2009, 2011, 2012
+ * Copyright 2006, 2007, 2009, 2011, 2012, 2013, 2014
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -33,7 +33,7 @@
 #include <config.h>
 #include <tests/tap/macros.h>
 
-#ifdef HAVE_KERBEROS
+#ifdef HAVE_KRB5
 # include <portable/krb5.h>
 #endif
 
@@ -56,11 +56,11 @@ struct kerberos_config {
  * tests require both keytab and password, but PKINIT is not required.
  */
 enum kerberos_needs {
-    TAP_KRB_NEEDS_NONE,
-    TAP_KRB_NEEDS_KEYTAB,
-    TAP_KRB_NEEDS_PASSWORD,
-    TAP_KRB_NEEDS_BOTH,
-    TAP_KRB_NEEDS_PKINIT
+    TAP_KRB_NEEDS_NONE     = 0x00,
+    TAP_KRB_NEEDS_KEYTAB   = 0x01,
+    TAP_KRB_NEEDS_PASSWORD = 0x02,
+    TAP_KRB_NEEDS_BOTH     = 0x01 | 0x02,
+    TAP_KRB_NEEDS_PKINIT   = 0x04
 };
 
 BEGIN_DECLS
@@ -77,11 +77,11 @@ BEGIN_DECLS
  * the principal field will be NULL.  If the files exist but loading them
  * fails, or authentication fails, kerberos_setup calls bail.
  *
- * kerberos_cleanup will be set up to run from an atexit handler.  This means
- * that any child processes that should not remove the Kerberos ticket cache
- * should call _exit instead of exit.  The principal will be automatically
- * freed when kerberos_cleanup is called or if kerberos_setup is called again.
- * The caller doesn't need to worry about it.
+ * kerberos_cleanup will be run as a cleanup function normally, freeing all
+ * resources and cleaning up temporary files on process exit.  It can,
+ * however, be called directly if for some reason the caller needs to delete
+ * the Kerberos environment again.  However, normally the caller can just call
+ * kerberos_setup again.
  */
 struct kerberos_config *kerberos_setup(enum kerberos_needs)
     __attribute__((__malloc__));
@@ -104,7 +104,7 @@ void kerberos_generate_conf(const char *realm);
 void kerberos_cleanup_conf(void);
 
 /* Thes interfaces are only available with native Kerberos support. */
-#ifdef HAVE_KERBEROS
+#ifdef HAVE_KRB5
 
 /* Bail out with an error, appending the Kerberos error message. */
 void bail_krb5(krb5_context, krb5_error_code, const char *format, ...)
@@ -122,7 +122,7 @@ void diag_krb5(krb5_context, krb5_error_code, const char *format, ...)
 krb5_principal kerberos_keytab_principal(krb5_context, const char *path)
     __attribute__((__nonnull__));
 
-#endif /* HAVE_KERBEROS */
+#endif /* HAVE_KRB5 */
 
 END_DECLS
 

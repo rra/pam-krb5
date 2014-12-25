@@ -9,7 +9,7 @@
  * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
- * Copyright 2010
+ * Copyright 2010, 2013
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -65,6 +65,8 @@ main(void)
     ok(pam_getenv(pamh, "TEST") == NULL, "getenv when NULL");
     env = pam_getenvlist(pamh);
     ok(env != NULL, "getenvlist when NULL returns non-NULL");
+    if (env == NULL)
+        bail("pam_getenvlist returned NULL");
     is_string(NULL, env[0], "...but first element is NULL");
     for (i = 0; env[i] != NULL; i++)
         free(env[i]);
@@ -95,6 +97,8 @@ main(void)
     /* pam_getenvlist. */
     env = pam_getenvlist(pamh);
     ok(env != NULL, "getenvlist not NULL");
+    if (env == NULL)
+        bail("pam_getenvlist returned NULL");
     is_string("TEST=foo", env[0], "getenvlist TEST");
     is_string("BAR=baz", env[1], "getenvlist BAR");
     is_string("FOON=bar=n", env[2], "getenvlist FOON");

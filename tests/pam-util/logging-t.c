@@ -5,7 +5,7 @@
  * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
- * Copyright 2010, 2011, 2012
+ * Copyright 2010, 2011, 2012, 2013
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -92,7 +92,7 @@ main(void)
     struct pam_conv conv = { NULL, NULL };
     char *expected;
     struct output *seen;
-#ifdef HAVE_KERBEROS
+#ifdef HAVE_KRB5
     krb5_error_code code;
     krb5_principal princ;
 #endif
@@ -123,7 +123,7 @@ main(void)
     TEST_PAM(putil_debug_pam, PAM_SUCCESS,    LOG_DEBUG, "putil_debug_pam ok");
     args->debug = false;
 
-#ifdef HAVE_KERBEROS
+#ifdef HAVE_KRB5
     TEST_KRB5(putil_crit_krb5,  LOG_CRIT,  "putil_crit_krb5");
     TEST_KRB5(putil_err_krb5,   LOG_ERR,   "putil_err_krb5");
     code = krb5_parse_name(args->ctx, "foo@bar@EXAMPLE.COM", &princ);

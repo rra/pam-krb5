@@ -22,6 +22,7 @@
 
 #include <config.h>
 #include <portable/krb5.h>
+#include <portable/macros.h>
 #include <portable/system.h>
 
 #include <errno.h>

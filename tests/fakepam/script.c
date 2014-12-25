@@ -10,7 +10,7 @@
  * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
- * Copyright 2011, 2012
+ * Copyright 2011, 2012, 2014
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -337,10 +337,8 @@ run_script(const char *file, const struct script_config *config)
         pam_output_free(work->output);
     if (work->prompts != NULL) {
         for (i = 0; i < work->prompts->size; i++) {
-            if (work->prompts->prompts[i].prompt != NULL)
-                free(work->prompts->prompts[i].prompt);
-            if (work->prompts->prompts[i].response != NULL)
-                free(work->prompts->prompts[i].response);
+            free(work->prompts->prompts[i].prompt);
+            free(work->prompts->prompts[i].response);
         }
         free(work->prompts->prompts);
         free(work->prompts);

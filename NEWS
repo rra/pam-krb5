@@ -19,6 +19,34 @@ pam-krb5 4.7 (unreleased)
     Add the version number at which each module option was added with its
     current meaning to the documentatation.
 
+    Update to rra-c-util 5.6:
+
+    * Suppress warnings from Kerberos headers in non-system paths.
+    * Fix probing for Heimdal's libroken to work with older versions.
+    * Fix Kerberos header detection if root or include paths are given.
+    * Pass --deps to krb5-config in the non-reduced-dependencies case.
+    * Provide a reallocarray replacement for platforms without it.
+    * Use reallocarray where appropriate.
+    * Drop checks for NULL before freeing pointers.
+    * Drop explicit pointer initialization to NULL and rely on calloc.
+    * Check the return status of snprintf and vsnprintf properly.
+    * Preserve errno if snprintf fails in vasprintf replacement.
+    * Suppress a dummy symbol in the client library that could leak.
+    * Fix syntax errors when building with a C++ compiler.
+    * Avoid test suite failures where tested functions are macros.
+
+    Update to C TAP Harness 3.2:
+
+    * Reopen standard input to /dev/null when running a test list.
+    * Don't leak extraneous file descriptors to tests.
+    * Suppress lazy plans and test summaries if the test failed with bail.
+    * bail and sysbail now exit with status 255 to match Test::More.
+    * runtests now treats the command line as a list of tests by default.
+    * The full test executable path can now be passed to runtests -o.
+    * Improved harness output for tests with lazy plans.
+    * Improved harness output to a terminal for some abort cases.
+    * Flush harness output after each test even when not on a terminal.
+
 pam-krb5 4.6 (2012-06-02)
 
     Add an anon_fast option that attempts anonymous authentication

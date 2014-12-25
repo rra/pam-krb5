@@ -15,7 +15,7 @@
  * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
- * Copyright 2010, 2012
+ * Copyright 2010, 2012, 2013, 2014
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -38,7 +38,7 @@
  */
 
 #include <config.h>
-#ifdef HAVE_KERBEROS
+#ifdef HAVE_KRB5
 # include <portable/krb5.h>
 #endif
 #include <portable/pam.h>
@@ -52,14 +52,14 @@
 
 /*
  * Allocate a new pam_args struct and return it, or NULL on memory allocation
- * or Kerberos initialization failure.  If HAVE_KERBEROS is defined, we also
+ * or Kerberos initialization failure.  If HAVE_KRB5 is defined, we also
  * allocate a Kerberos context.
  */
 struct pam_args *
 putil_args_new(pam_handle_t *pamh, int flags)
 {
     struct pam_args *args;
-#ifdef HAVE_KERBEROS
+#ifdef HAVE_KRB5
     krb5_error_code status;
 #endif
 
@@ -69,12 +69,9 @@ putil_args_new(pam_handle_t *pamh, int flags)
         return NULL;
     }
     args->pamh = pamh;
-    args->config = NULL;
-    args->user = NULL;
     args->silent = ((flags & PAM_SILENT) == PAM_SILENT);
 
-#ifdef HAVE_KERBEROS
-    args->realm = NULL;
+#ifdef HAVE_KRB5
     if (issetugid())
         status = krb5_init_secure_context(&args->ctx);
     else
@@ -84,7 +81,7 @@ putil_args_new(pam_handle_t *pamh, int flags)
         free(args);
         return NULL;
     }
-#endif /* HAVE_KERBEROS */
+#endif /* HAVE_KRB5 */
     return args;
 }
 
@@ -97,9 +94,8 @@ putil_args_free(struct pam_args *args)
 {
     if (args == NULL)
         return;
-#ifdef HAVE_KERBEROS
-    if (args->realm != NULL)
-        free(args->realm);
+#ifdef HAVE_KRB5
+    free(args->realm);
     if (args->ctx != NULL)
         krb5_free_context(args->ctx);
 #endif

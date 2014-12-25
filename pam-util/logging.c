@@ -9,7 +9,7 @@
  * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
- * Copyright 2005, 2006, 2007, 2009, 2010, 2012
+ * Copyright 2005, 2006, 2007, 2009, 2010, 2012, 2013
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -32,7 +32,7 @@
  */
 
 #include <config.h>
-#ifdef HAVE_KERBEROS
+#ifdef HAVE_KRB5
 # include <portable/krb5.h>
 #endif
 #include <portable/pam.h>
@@ -276,7 +276,7 @@ putil_log_failure(struct pam_args *pargs, const char *fmt, ...)
  * Below are the additional logging functions enabled if built with Kerberos
  * support, used to report Kerberos errors.
  */
-#ifdef HAVE_KERBEROS
+#ifdef HAVE_KRB5
 
 
 /*
@@ -329,4 +329,4 @@ LOG_FUNCTION_KRB5(err,    LOG_ERR)
 LOG_FUNCTION_KRB5(notice, LOG_NOTICE)
 LOG_FUNCTION_KRB5(debug,  LOG_DEBUG)
 
-#endif /* HAVE_KERBEROS */
+#endif /* HAVE_KRB5 */

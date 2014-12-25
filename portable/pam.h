@@ -97,4 +97,6 @@ void pam_vsyslog(const pam_handle_t *, int, const char *, va_list);
 /* Undo default visibility change. */
 #pragma GCC visibility pop
 
+END_DECLS
+
 #endif /* !PORTABLE_PAM_H */

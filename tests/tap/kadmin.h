@@ -5,7 +5,7 @@
  * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
- * Copyright 2011
+ * Copyright 2011, 2013
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -32,6 +32,9 @@
 
 #include <config.h>
 #include <portable/stdbool.h>
+
+#include <time.h>
+
 #include <tests/tap/macros.h>
 
 BEGIN_DECLS

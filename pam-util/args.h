@@ -13,7 +13,7 @@
  * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
- * Copyright 2010
+ * Copyright 2010, 2013
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -39,7 +39,7 @@
 #define PAM_UTIL_ARGS_H 1
 
 #include <config.h>
-#ifdef HAVE_KERBEROS
+#ifdef HAVE_KRB5
 # include <portable/krb5.h>
 #endif
 #include <portable/pam.h>
@@ -55,7 +55,7 @@ struct pam_args {
     bool silent;                /* Do not pass text to the application. */
     const char *user;           /* User being authenticated. */
 
-#ifdef HAVE_KERBEROS
+#ifdef HAVE_KRB5
     krb5_context ctx;           /* Context for Kerberos operations. */
     char *realm;                /* Kerberos realm for configuration. */
 #endif

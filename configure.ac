@@ -3,7 +3,8 @@ dnl
 dnl Written by Russ Allbery <eagle@eyrie.org>
 dnl Copyright 2009, 2010, 2011, 2012, 2013
 dnl     The Board of Trustees of the Leland Stanford Junior University
-dnl Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <eagle@eyrie.org>
+dnl Copyright 2005, 2006, 2007, 2008, 2009, 2014
+dnl     Russ Allbery <eagle@eyrie.org>
 dnl Copyright 2005 Andres Salomon <dilinger@debian.org>
 dnl Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
 dnl
@@ -22,7 +23,7 @@ AC_PROG_CC
 AC_USE_SYSTEM_EXTENSIONS
 AC_SYS_LARGEFILE
 AM_PROG_CC_C_O
-AM_PROG_AR
+m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 AC_PROG_INSTALL
 LT_INIT([disable-static])
 AC_CANONICAL_HOST
@@ -89,6 +90,7 @@ RRA_LIB_KRB5_RESTORE
 dnl The kadmin client libraries are only used for the test suite.
 RRA_LIB_KADM5CLNT_OPTIONAL
 RRA_LIB_KADM5CLNT_SWITCH
+AC_CHECK_HEADERS([kadm5/kadm5_err.h])
 AC_CHECK_FUNCS([kadm5_init_with_skey_ctx])
 RRA_LIB_KADM5CLNT_RESTORE
 
@@ -97,13 +99,14 @@ AC_CHECK_HEADER([regex.h], [AC_CHECK_FUNCS([regcomp])])
 
 dnl Other probes of the system libraries.
 AC_HEADER_STDBOOL
-AC_CHECK_HEADERS([strings.h sys/bittypes.h])
-AC_CHECK_DECLS([snprintf, vsnprintf])
+AC_CHECK_HEADERS([strings.h sys/bittypes.h sys/select.h sys/time.h])
+AC_CHECK_DECLS([snprintf, strlcat, strlcpy, vsnprintf])
 AC_TYPE_LONG_LONG_INT
 AC_CHECK_TYPES([ssize_t], [], [],
     [#include <sys/types.h>])
 RRA_FUNC_SNPRINTF
-AC_REPLACE_FUNCS([asprintf issetugid mkstemp strlcat strlcpy strndup])
+AC_REPLACE_FUNCS([asprintf issetugid mkstemp reallocarray strlcat strlcpy])
+AC_REPLACE_FUNCS([strndup])
 
 dnl Try to specify the binding so that any references within the PAM module
 dnl are resolved to the functions in that module in preference to any external

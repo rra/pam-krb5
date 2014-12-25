@@ -9,7 +9,7 @@
  * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
- * Copyright 2010, 2011
+ * Copyright 2010, 2011, 2014
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -148,36 +148,31 @@ pam_set_item(pam_handle_t *pamh, int item, PAM_CONST void *data)
 {
     switch (item) {
     case PAM_AUTHTOK:
-        if (pamh->authtok != NULL)
-            free(pamh->authtok);
+        free(pamh->authtok);
         pamh->authtok = strdup(data);
         if (pamh->authtok == NULL)
             return PAM_BUF_ERR;
         return PAM_SUCCESS;
     case PAM_OLDAUTHTOK:
-        if (pamh->oldauthtok != NULL)
-            free(pamh->oldauthtok);
+        free(pamh->oldauthtok);
         pamh->oldauthtok = strdup(data);
         if (pamh->oldauthtok == NULL)
             return PAM_BUF_ERR;
         return PAM_SUCCESS;
     case PAM_RHOST:
-        if (pamh->rhost != NULL)
-            free(pamh->rhost);
+        free(pamh->rhost);
         pamh->rhost = strdup(data);
         if (pamh->rhost == NULL)
             return PAM_BUF_ERR;
         return PAM_SUCCESS;
     case PAM_RUSER:
-        if (pamh->ruser != NULL)
-            free(pamh->ruser);
+        free(pamh->ruser);
         pamh->ruser = strdup(data);
         if (pamh->ruser == NULL)
             return PAM_BUF_ERR;
         return PAM_SUCCESS;
     case PAM_TTY:
-        if (pamh->tty != NULL)
-            free(pamh->tty);
+        free(pamh->tty);
         pamh->tty = strdup(data);
         if (pamh->tty == NULL)
             return PAM_BUF_ERR;
@@ -243,7 +238,7 @@ pam_getenvlist(pam_handle_t *pamh)
     }
     for (i = 0; pamh->environ[i] != NULL; i++)
         ;
-    env = malloc((i + 1) * sizeof(char *));
+    env = calloc(i + 1, sizeof(char *));
     if (env == NULL)
         return NULL;
     for (i = 0; pamh->environ[i] != NULL; i++) {
@@ -304,7 +299,7 @@ pam_putenv(pam_handle_t *pamh, const char *setting)
     if (pamh->environ == NULL) {
         if (delete)
             return PAM_BAD_ITEM;
-        pamh->environ = malloc(2 * sizeof(char *));
+        pamh->environ = calloc(2, sizeof(char *));
         if (pamh->environ == NULL) {
             free(copy);
             return PAM_BUF_ERR;
@@ -337,7 +332,7 @@ pam_putenv(pam_handle_t *pamh, const char *setting)
     if (!found) {
         if (delete)
             return PAM_BAD_ITEM;
-        env = realloc(pamh->environ, (i + 2) * sizeof(char *));
+        env = reallocarray(pamh->environ, (i + 2), sizeof(char *));
         if (env == NULL)
             return PAM_BUF_ERR;
         pamh->environ = env;

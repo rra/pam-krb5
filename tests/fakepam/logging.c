@@ -10,7 +10,7 @@
  * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
- * Copyright 2010, 2011, 2012
+ * Copyright 2010, 2011, 2012, 2014
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -79,7 +79,7 @@ output_add(struct output *output, int priority, const char *string)
     if (output->count == output->allocated) {
         n = output->allocated + 1;
         size = sizeof(output->lines[0]);
-        output->lines = brealloc(output->lines, n * size);
+        output->lines = breallocarray(output->lines, n, size);
         output->allocated = n;
     }
     output->lines[next].priority = priority;

@@ -43,15 +43,7 @@
 struct vector *
 vector_new(void)
 {
-    struct vector *vector;
-
-    vector = malloc(sizeof(struct vector));
-    if (vector == NULL)
-        return NULL;
-    vector->count = 0;
-    vector->allocated = 0;
-    vector->strings = NULL;
-    return vector;
+    return calloc(1, sizeof(struct vector));
 }
 
 
@@ -83,7 +75,7 @@ vector_copy(const struct vector *old)
 
 
 /*
- * Resize a vector (using realloc to resize the table).  Return false if
+ * Resize a vector (using reallocarray to resize the table).  Return false if
  * memory allocation fails.
  */
 bool
@@ -101,7 +93,7 @@ vector_resize(struct vector *vector, size_t size)
         free(vector->strings);
         vector->strings = NULL;
     } else {
-        strings = realloc(vector->strings, size * sizeof(char *));
+        strings = reallocarray(vector->strings, size, sizeof(char *));
         if (strings == NULL)
             return false;
         vector->strings = strings;

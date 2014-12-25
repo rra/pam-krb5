@@ -12,8 +12,8 @@ dnl sets the substitution variables KADM5CLNT_CPPFLAGS, KADM5CLNT_LDFLAGS, and
 dnl KADM5CLNT_LIBS.  Also provides RRA_LIB_KADM5CLNT_SWITCH to set CPPFLAGS,
 dnl LDFLAGS, and LIBS to include the kadmin client libraries, saving the
 dnl ecurrent values, and RRA_LIB_KADM5CLNT_RESTORE to restore those settings
-dnl to before the last RRA_LIB_KADM5CLNT_SWITCH.  Define HAVE_KADM5CLNT if the
-dnl library is found.
+dnl to before the last RRA_LIB_KADM5CLNT_SWITCH.  Defines HAVE_KADM5CLNT and
+dnl sets rra_use_KADM5CLNT to true if the library is found.
 dnl
 dnl Depends on the RRA_LIB helper routines.
 dnl
@@ -21,7 +21,7 @@ dnl The canonical version of this file is maintained in the rra-c-util
 dnl package, available at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
 dnl
 dnl Written by Russ Allbery <eagle@eyrie.org>
-dnl Copyright 2005, 2006, 2007, 2008, 2009, 2011
+dnl Copyright 2005, 2006, 2007, 2008, 2009, 2011, 2013
 dnl     The Board of Trustees of the Leland Stanford Junior University
 dnl
 dnl This file is free software; the authors give unlimited permission to copy
@@ -84,6 +84,7 @@ AC_DEFUN([RRA_LIB_KADM5CLNT],
 [RRA_LIB_HELPER_VAR_INIT([KADM5CLNT])
  RRA_LIB_HELPER_WITH([kadm-client], [kadmin client], [KADM5CLNT])
  _RRA_LIB_KADM5CLNT_INTERNAL([true])
+ rra_use_KADM5CLNT=true
  AC_DEFINE([HAVE_KADM5CLNT], 1, [Define to enable kadmin client features.])])
 
 dnl The main macro for packages with optional kadmin client support.
@@ -95,5 +96,6 @@ AC_DEFUN([RRA_LIB_KADM5CLNT_OPTIONAL],
         [_RRA_LIB_KADM5CLNT_INTERNAL([true])],
         [_RRA_LIB_KADM5CLNT_INTERNAL([false])])])
  AS_IF([test x"$KADM5CLNT_LIBS" != x],
-    [AC_DEFINE([HAVE_KADM5CLNT], 1,
+    [rra_use_KADM5CLNT=true
+     AC_DEFINE([HAVE_KADM5CLNT], 1,
         [Define to enable kadmin client features.])])])
