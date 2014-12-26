@@ -39,6 +39,13 @@
    fun:_dlerror_run
 }
 {
+   heimdal-base-once
+   Memcheck:Leak
+   fun:*alloc
+   ...
+   fun:heim_base_once_f
+}
+{
    heimdal-gss-config
    Memcheck:Leak
    fun:*alloc
