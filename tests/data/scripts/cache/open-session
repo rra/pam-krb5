@@ -1,4 +1,11 @@
 # Test authentication with ticket cache, open session.  -*- conf -*-
+#
+# Written by Russ Allbery <eagle@eyrie.org>
+# Copyright 2014 Russ Allbery <eagle@eyrie.org>
+# Copyright 2010, 2011
+#     The Board of Trustees of the Leland Stanford Junior University
+#
+# See LICENSE for licensing terms.
 
 [options]
     auth    = force_first_pass ignore_k5login

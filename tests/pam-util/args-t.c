@@ -4,8 +4,8 @@
  * The canonical version of this file is maintained in the rra-c-util package,
  * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
- * Written by Russ Allbery <rra@stanford.edu>
- * Copyright 2010, 2012
+ * Written by Russ Allbery <eagle@eyrie.org>
+ * Copyright 2010, 2012, 2013
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -57,7 +57,7 @@ main(void)
         ok(args->user == NULL, "...and user is NULL");
         is_int(args->debug, false, "...and debug is false");
         is_int(args->silent, false, "...and silent is false");
-#ifdef HAVE_KERBEROS
+#ifdef HAVE_KRB5
         ok(args->ctx != NULL, "...and the Kerberos context is initialized");
         ok(args->realm == NULL, "...and realm is NULL");
 #else

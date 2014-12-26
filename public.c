@@ -7,10 +7,10 @@
  * and linking mechanism used in OpenPAM, since OpenPAM will mark them all as
  * static functions and export a function table instead.
  *
- * Written by Russ Allbery <rra@stanford.edu>
+ * Written by Russ Allbery <eagle@eyrie.org>
  * Copyright 2011
  *     The Board of Trustees of the Leland Stanford Junior University
- * Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@stanford.edu>
+ * Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <eagle@eyrie.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  *

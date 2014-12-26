@@ -4,7 +4,7 @@
  * The canonical version of this file is maintained in the rra-c-util package,
  * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
- * Written by Russ Allbery <rra@stanford.edu>
+ * Written by Russ Allbery <eagle@eyrie.org>
  *
  * The authors hereby relinquish any claim to any copyright that they may have
  * in this work, whether granted under contract or by operation of law or
@@ -22,23 +22,25 @@
 
 #include <pam-util/vector.h>
 #include <tests/tap/basic.h>
+#include <tests/tap/string.h>
 
 
 int
 main(void)
 {
     struct vector *vector, *ovector, *copy;
-    const char cstring[] = "This is a\ttest.  ";
-    char *string;
-    char buffer[BUFSIZ];
-    const char * const env[] = { buffer, NULL };
+    char *command, *string;
+    const char *env[2];
     pid_t child;
     size_t i;
+    const char cstring[] = "This is a\ttest.  ";
 
     plan(60);
 
     vector = vector_new();
     ok(vector != NULL, "vector_new returns non-NULL");
+    if (vector == NULL)
+        bail("vector_new returned NULL");
     ok(vector_add(vector, cstring), "vector_add succeeds");
     is_int(1, vector->count, "vector_add increases count");
     ok(vector->strings[0] != cstring, "...and allocated new memory");
@@ -59,12 +61,15 @@ main(void)
     ok(vector->strings[0] != cstring, "each pointer is different");
     copy = vector_copy(vector);
     ok(copy != NULL, "vector_copy returns non-NULL");
+    if (copy == NULL)
+        bail("vector_copy returned NULL");
     is_int(4, copy->count, "...and has right count");
     is_int(4, copy->allocated, "...and has right allocated count");
     for (i = 0; i < 4; i++) {
-        is_string(cstring, copy->strings[i], "...and string %d is right", i);
+        is_string(cstring, copy->strings[i], "...and string %lu is right",
+                  (unsigned long) i);
         ok(copy->strings[i] != vector->strings[i],
-           "...and pointer %d is different", i);
+           "...and pointer %lu is different", (unsigned long) i);
     }
     vector_free(copy);
     vector_clear(vector);
@@ -106,8 +111,8 @@ main(void)
     vector = vector_new();
     ok(vector_add(vector, "/bin/sh"), "vector_add succeeds");
     ok(vector_add(vector, "-c"), "vector_add succeeds");
-    snprintf(buffer, sizeof(buffer), "echo ok %lu - vector_exec", testnum++);
-    ok(vector_add(vector, buffer), "vector_add succeeds");
+    basprintf(&command, "echo ok %lu - vector_exec", testnum++);
+    ok(vector_add(vector, command), "vector_add succeeds");
     child = fork();
     if (child < 0)
         sysbail("unable to fork");
@@ -116,13 +121,16 @@ main(void)
             sysdiag("unable to exec /bin/sh");
     waitpid(child, NULL, 0);
     vector_free(vector);
+    free(command);
 
     vector = vector_new();
     ok(vector_add(vector, "/bin/sh"), "vector_add succeeds");
     ok(vector_add(vector, "-c"), "vector_add succeeds");
     ok(vector_add(vector, "echo ok $NUMBER - vector_exec_env"),
        "vector_add succeeds");
-    snprintf(buffer, sizeof(buffer), "NUMBER=%lu", testnum++);
+    basprintf(&string, "NUMBER=%lu", testnum++);
+    env[0] = string;
+    env[1] = NULL;
     child = fork();
     if (child < 0)
         sysbail("unable to fork");
@@ -131,6 +139,7 @@ main(void)
             sysdiag("unable to exec /bin/sh");
     waitpid(child, NULL, 0);
     vector_free(vector);
+    free(string);
 
     return 0;
 }

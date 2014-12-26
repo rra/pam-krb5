@@ -9,7 +9,7 @@
  * This file collects all the pieces related to that support.
  *
  * Original support written by Booker Bense <bbense@slac.stanford.edu>
- * Further updates by Russ Allbery <rra@stanford.edu>
+ * Further updates by Russ Allbery <eagle@eyrie.org>
  * Copyright 2008, 2009, 2010, 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *
@@ -226,8 +226,7 @@ pamk5_alt_auth_verify(struct pam_args *args)
     }
 
 done:
-    if (name != NULL)
-        free(name);
+    free(name);
     if (authed != NULL)
         krb5_free_unparsed_name(ctx->context, authed);
     if (mapped != NULL)

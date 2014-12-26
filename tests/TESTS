@@ -1,3 +1,5 @@
+docs/pod
+docs/pod-spelling
 module/alt-auth
 module/bad-authtok
 module/basic
@@ -6,7 +8,9 @@ module/cache-cleanup
 module/expired
 module/fast
 module/no-cache
+module/pam-user
 module/password
+module/pkinit
 module/realm
 module/stacked
 pam-util/args

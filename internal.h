@@ -3,7 +3,7 @@
  *
  * Copyright 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
- * Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <rra@stanford.edu>
+ * Copyright 2005, 2006, 2007, 2008, 2009, 2014 Russ Allbery <eagle@eyrie.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  *
@@ -79,6 +79,7 @@ struct pam_config {
     bool defer_pwchange;        /* Defer expired account fail to account. */
     bool fail_pwchange;         /* Treat expired password as auth failure. */
     bool force_pwchange;        /* Change expired passwords in auth. */
+    bool no_update_user;        /* Don't update PAM_USER with local name. */
     bool silent;                /* Suppress text and errors (PAM_SILENT). */
     char *trace;                /* File name for trace logging. */
 

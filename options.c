@@ -7,8 +7,8 @@
  *
  * Copyright 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
- * Copyright 2005, 2006, 2007, 2008, 2009, 2010
- *     Russ Allbery <rra@stanford.edu>
+ * Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2014
+ *     Russ Allbery <eagle@eyrie.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  *
@@ -51,6 +51,7 @@ static const struct option options[] = {
     { K(minimum_uid),        true,  NUMBER (0)     },
     { K(no_ccache),          false, BOOL   (false) },
     { K(no_prompt),          true,  BOOL   (false) },
+    { K(no_update_user),     true,  BOOL   (false) },
     { K(only_alt_auth),      true,  BOOL   (false) },
     { K(pkinit_anchors),     true,  STRING (NULL)  },
     { K(pkinit_prompt),      true,  BOOL   (false) },
@@ -106,8 +107,7 @@ pamk5_init(pam_handle_t *pamh, int flags, int argc, const char **argv)
     for (i = 0; i < argc; i++) {
         if (strncmp(argv[i], "realm=", 6) != 0)
             continue;
-        if (args->realm != NULL)
-            free(args->realm);
+        free(args->realm);
         args->realm = strdup(&argv[i][strlen("realm=")]);
         if (args->realm == NULL)
             goto nomem;
@@ -202,8 +202,7 @@ pamk5_init(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 nomem:
     putil_crit(args, "cannot allocate memory: %s", strerror(errno));
-    if (config != NULL)
-        free(config);
+    free(config);
     putil_args_free(args);
     return NULL;
 
@@ -225,30 +224,18 @@ pamk5_free(struct pam_args *args)
         return;
     config = args->config;
     if (config != NULL) {
-        if (config->alt_auth_map != NULL)
-            free(config->alt_auth_map);
-        if (config->banner != NULL)
-            free(config->banner);
-        if (config->ccache != NULL)
-            free(config->ccache);
-        if (config->ccache_dir != NULL)
-            free(config->ccache_dir);
-        if (config->fast_ccache != NULL)
-            free(config->fast_ccache);
-        if (config->keytab != NULL)
-            free(config->keytab);
-        if (config->pkinit_anchors != NULL)
-            free(config->pkinit_anchors);
-        if (config->pkinit_user != NULL)
-            free(config->pkinit_user);
-        if (config->preauth_opt != NULL)
-            vector_free(config->preauth_opt);
-        if (config->realm != NULL)
-            free(config->realm);
-        if (config->trace != NULL)
-            free(config->trace);
-        if (config->user_realm != NULL)
-            free(config->user_realm);
+        free(config->alt_auth_map);
+        free(config->banner);
+        free(config->ccache);
+        free(config->ccache_dir);
+        free(config->fast_ccache);
+        free(config->keytab);
+        free(config->pkinit_anchors);
+        free(config->pkinit_user);
+        vector_free(config->preauth_opt);
+        free(config->realm);
+        free(config->trace);
+        free(config->user_realm);
         free(args->config);
         args->config = NULL;
     }
