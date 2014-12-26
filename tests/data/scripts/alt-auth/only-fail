@@ -1,4 +1,11 @@
 # Test failure of required alternative authentication.  -*- conf -*-
+#
+# Written by Russ Allbery <eagle@eyrie.org>
+# Copyright 2014 Russ Allbery <eagle@eyrie.org>
+# Copyright 2010, 2011
+#     The Board of Trustees of the Leland Stanford Junior University
+#
+# See LICENSE for licensing terms.
 
 [options]
     auth    = alt_auth_map=bogus only_alt_auth no_ccache

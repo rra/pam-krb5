@@ -1001,6 +1001,26 @@ best solution to this problem is to upgrade OpenSSH.  I'm not sure exactly
 when this problem was fixed, but at the very least OpenSSH 4.3 and later
 do not exhibit it.
 
+=head1 AUTHOR
+
+pam-krb5 was originally written by Frank Cusack.  Andres Salomon made
+extensive modifications, and then Russ Allbery <eagle@eyrie.org> adopted
+it and made even more extensive modifications.  Russ Allbery currently
+maintains the module.
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2014 Russ Allbery
+<eagle@eyrie.org>
+
+Copyright 2008, 2009, 2010, 2011, 2012, 2013, 2014 The Board of Trustees
+of the Leland Stanford Junior University
+
+Copying and distribution of this file, with or without modification, are
+permitted in any medium without royalty provided the copyright notice and
+this notice are preserved.  This file is offered as-is, without any
+warranty.
+
 =head1 SEE ALSO
 
 kadmin(8), kdestroy(1), krb5.conf(5), pam(7), passwd(1), syslog(3)
