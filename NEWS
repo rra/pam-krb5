@@ -1,6 +1,6 @@
                       User-Visible pam-krb5 Changes
 
-pam-krb5 4.7 (unreleased)
+pam-krb5 4.7 (2014-12-25)
 
     Add a no_update_user option that disables the normal update of the
     PAM_USER PAM variable after canonicalization of the username.  When
