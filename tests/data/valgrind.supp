@@ -111,6 +111,29 @@
    fun:krb5_gss_save_error_string
 }
 {
+   mit-gss-mechs
+   Memcheck:Leak
+   fun:glob
+   fun:loadConfigFiles
+   fun:updateMechList
+   fun:build_mechSet
+   fun:gss_indicate_mechs
+}
+{
+   mit-kadmin-ovku-error
+   Memcheck:Leak
+   fun:*alloc*
+   fun:initialize_ovku_error_table_r
+}
+{
+   mit-krb5-changepw
+   Memcheck:Leak
+   fun:*alloc
+   fun:change_set_password
+   fun:krb5_change_password
+   fun:krb5_get_init_creds_password
+}
+{
    mit-krb5-pkinit-openssl-init
    Memcheck:Leak
    fun:*alloc
@@ -123,6 +146,13 @@
    fun:*alloc
    ...
    fun:krb5_preauth_request_context_init
+}
+{
+   mit-krb5-pkinit-openssl-request-2
+   Memcheck:Leak
+   fun:*alloc
+   ...
+   fun:k5_preauth_request_context_init
 }
 {
    mit-krb5-plugin-dirs
@@ -144,6 +174,38 @@
    fun:malloc
    fun:strdup
    fun:register_module.isra.1
+}
+{
+   mit-krb5-preauth-init
+   Memcheck:Leak
+   fun:*alloc
+   ...
+   fun:k5_init_preauth_context
+}
+{
+   mit-krb5-preauth-init
+   Memcheck:Leak
+   fun:strdup
+   fun:add_to_list
+   fun:profile_get_values
+   ...
+   fun:clpreauth_prep_questions
+}
+{
+   mit-krb5-preauth-init-2
+   Memcheck:Leak
+   fun:*alloc
+   fun:init_list
+   fun:profile_get_values
+   ...
+   fun:clpreauth_prep_questions
+}
+{
+   mit-krb5-profile
+   Memcheck:Leak
+   fun:*alloc
+   ...
+   fun:profile_open_file
 }
 {
    portable-setenv
