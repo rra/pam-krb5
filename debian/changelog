@@ -1,5 +1,13 @@
-libpam-krb5 (4.6-4) UNRELEASED; urgency=medium
+libpam-krb5 (4.7-1) UNRELEASED; urgency=medium
 
+  * New upstream release.
+    - Add no_update_user option to disable the normal update of PAM_USER
+      after user canonicalization.
+    - Suppress spurious Heimdal password prompt when using PKINIT.
+    - Map unknown realm errors to PAM_AUTHINFO_UNAVAIL.
+    - Treat more error codes as incorrect passwords for better
+      compatibility between MIT client libraries and Heimdal KDCs.
+    - Add version number when module options were added to the man page.
   * Remove erroneous branch information from Vcs-Git.
 
  -- Russ Allbery <rra@debian.org>  Sun, 03 Aug 2014 12:20:03 -0700
