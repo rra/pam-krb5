@@ -1,5 +1,6 @@
-libpam-krb5 (4.7-1) UNRELEASED; urgency=medium
+libpam-krb5 (4.7-1) experimental; urgency=medium
 
+  * Upload to experimental due to release freeze.
   * New upstream release.
     - Add no_update_user option to disable the normal update of PAM_USER
       after user canonicalization.
@@ -10,7 +11,7 @@ libpam-krb5 (4.7-1) UNRELEASED; urgency=medium
     - Add version number when module options were added to the man page.
   * Remove erroneous branch information from Vcs-Git.
 
- -- Russ Allbery <rra@debian.org>  Sun, 03 Aug 2014 12:20:03 -0700
+ -- Russ Allbery <rra@debian.org>  Thu, 25 Dec 2014 19:36:00 -0800
 
 libpam-krb5 (4.6-3) unstable; urgency=medium
 
