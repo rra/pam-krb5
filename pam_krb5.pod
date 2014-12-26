@@ -3,7 +3,7 @@ KRB5CCNAME ChallengeResponseAuthentication GSS-API Heimdal KDC PKINIT
 PasswordAuthentication SRV Solaris Sourceforge aname appdefaults auth
 canonicalized ccache krb5.conf forwardable kdestroy keytab libdefaults
 logout pam-krb5 preauth 0.8rc1 screensaver screensavers sshd localname
-krb5.conf. 0.8rc1.
+krb5.conf. 0.8rc1. Allbery Cusack Salomon
 
 =head1 NAME
 
