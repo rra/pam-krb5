@@ -183,4 +183,4 @@ check-valgrind: $(check_PROGRAMS)
 	    --log-file=$(abs_top_builddir)/tmp-valgrind/log.%p		\
 	    --suppressions=$(abs_top_srcdir)/tests/data/valgrind.supp	\
 	    --trace-children-skip="/bin/sh,*/cat,*/cut,*/expr,*/getopt,*/kinit,*/ls,*/mkdir,*/rm,*/rmdir,*/sed,*/sleep,*/wc,*/data/generate-krb5-conf,*/docs/*-t" \
-	    tests/runtests $(abs_top_srcdir)/tests/TESTS
+	    tests/runtests -l $(abs_top_srcdir)/tests/TESTS
