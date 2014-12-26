@@ -15,7 +15,7 @@ pam-krb5 4.7 (unreleased)
 
     Treat an KRB5_GET_IN_TKT_LOOP error as an incorrect password.  Heimdal
     KDCs sometimes return it, and Heimdal kinit treats it this way.
-    Similarly, treat an KRB5_BAD_ENCTYPE error as an incorrect password,
+    Similarly, treat a KRB5_BAD_ENCTYPE error as an incorrect password,
     since this error is returned by a Heimdal 1.6-rc2 KDC for incorrect
     preauth from a MIT Kerberos 1.12.1 client.
 
