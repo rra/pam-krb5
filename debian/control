@@ -3,7 +3,7 @@ Section: admin
 Priority: optional
 Maintainer: Russ Allbery <rra@debian.org>
 Uploaders: Sam Hartman <hartmans@debian.org>
-Standards-Version: 3.9.5
+Standards-Version: 3.9.6
 Build-Depends: debhelper (>= 9), dh-autoreconf, heimdal-multidev,
  krb5-config, krb5-multidev, libpam0g-dev
 Homepage: http://www.eyrie.org/~eagle/software/pam-krb5/

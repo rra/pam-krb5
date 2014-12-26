@@ -11,6 +11,7 @@ libpam-krb5 (4.7-1) experimental; urgency=medium
     - Add version number when module options were added to the man page.
   * Remove erroneous branch information from Vcs-Git.
   * Fix debian/copyright to match the correct upstream licensing.
+  * Update standards version to 3.9.6 (no changes required).
 
  -- Russ Allbery <rra@debian.org>  Thu, 25 Dec 2014 19:36:00 -0800
 
