@@ -211,18 +211,22 @@ pamk5_prompter_krb5(krb5_context context UNUSED, void *data, const char *name,
     struct pam_response *resp = NULL;
     struct pam_conv *conv;
 
+    /* Treat the name and banner as prompts that doesn't need input. */
+    if (name != NULL && !args->silent)
+        total_prompts++;
+    if (banner != NULL && !args->silent)
+        total_prompts++;
+
+    /* If we have zero prompts, do nothing, silently. */
+    if (total_prompts == 0)
+        return 0;
+
     /* Obtain the conversation function from the application. */
     pamret = pam_get_item(args->pamh, PAM_CONV, (PAM_CONST void **) &conv);
     if (pamret != 0)
         return KRB5KRB_ERR_GENERIC;
     if (conv->conv == NULL)
         return KRB5KRB_ERR_GENERIC;
-
-    /* Treat the name and banner as prompts that doesn't need input. */
-    if (name != NULL && !args->silent)
-        total_prompts++;
-    if (banner != NULL && !args->silent)
-        total_prompts++;
 
     /*
      * Allocate memory to copy all of the prompts into a pam_message.
