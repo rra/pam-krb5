@@ -6,7 +6,7 @@
  * the appropriate internal functions.  This interface is used by both the
  * authentication and the password groups.
  *
- * Copyright 2010, 2011, 2012
+ * Copyright 2010, 2011, 2012, 2014
  *     The Board of Trustees of the Leland Stanford Junior University
  * Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2014
  *     Russ Allbery <eagle@eyrie.org>
@@ -811,7 +811,8 @@ pamk5_password_auth(struct pam_args *args, const char *service,
              && (retval == KRB5KRB_AP_ERR_BAD_INTEGRITY
                  || retval == KRB5KRB_AP_ERR_MODIFIED
                  || retval == KRB5KDC_ERR_PREAUTH_FAILED
-                 || retval == KRB5_GET_IN_TKT_LOOP));
+                 || retval == KRB5_GET_IN_TKT_LOOP
+                 || retval == KRB5_BAD_ENCTYPE));
 
 verify: UNUSED
     /*
