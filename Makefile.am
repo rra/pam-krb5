@@ -1,9 +1,9 @@
 # Automake makefile for pam-krb5.
 #
-# Written by Russ Allbery <rra@stanford.edu>
+# Written by Russ Allbery <eagle@eyrie.org>
 # Copyright 2009, 2011, 2012
 #     The Board of Trustees of the Leland Stanford Junior University
-# Copyright 2005, 2006, 2007 Russ Allbery <rra@stanford.edu>
+# Copyright 2005, 2006, 2007, 2014 Russ Allbery <eagle@eyrie.org>
 # Copyright 2005 Andres Salomon <dilinger@debian.org>
 # Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
 #
@@ -12,8 +12,9 @@
 ACLOCAL_AMFLAGS = -I m4
 EXTRA_DIST = .gitignore LICENSE autogen pam_krb5.map pam_krb5.pod	 \
 	pam_krb5.sym tests/README tests/TESTS tests/config/README	 \
-	tests/data/generate-krb5-conf tests/data/krb5.conf		 \
-	tests/data/scripts tests/data/valgrind.supp tests/fakepam/README \
+	tests/data/generate-krb5-conf tests/data/krb5-pam.conf		 \
+	tests/data/krb5.conf tests/data/scripts tests/data/valgrind.supp \
+	tests/docs/pod-spelling-t tests/docs/pod-t tests/fakepam/README	 \
 	tests/tap/libtap.sh
 
 # Everything we build needs the Kerbeors headers and library flags.
@@ -52,31 +53,35 @@ MAINTAINERCLEANFILES = Makefile.in aclocal.m4 build-aux/compile		 \
 	config.h.in config.h.in~ configure m4/libtool.m4 m4/ltoptions.m4 \
 	m4/ltsugar.m4 m4/ltversion.m4 m4/lt~obsolete.m4 pam_krb5.5
 
-# A set of flags for warnings.  Add -O because gcc won't find some warnings
+# A set of flags for warnings.	Add -O because gcc won't find some warnings
 # without optimization turned on.  Desirable warnings that can't be turned
 # on due to other problems:
 #
-#     -Wconversion      http://bugs.debian.org/488884 (htons warnings)
+#     -Wconversion	http://bugs.debian.org/488884 (htons warnings)
 #
-# Last checked against gcc 4.6.1 (2011-05-04).  -D_FORTIFY_SOURCE=2 enables
+# Last checked against gcc 4.8.2 (2014-04-12).	-D_FORTIFY_SOURCE=2 enables
 # warn_unused_result attribute markings on glibc functions on Linux, which
 # catches a few more issues.
-WARNINGS = -g -O -D_FORTIFY_SOURCE=2 -Wall -Wextra -Wendif-labels	   \
-	-Wformat=2 -Winit-self -Wswitch-enum -Wdeclaration-after-statement \
-	-Wshadow -Wpointer-arith -Wbad-function-cast -Wwrite-strings	   \
-	-Wjump-misses-init -Wlogical-op -Wstrict-prototypes		   \
-	-Wmissing-prototypes -Wredundant-decls -Wnested-externs -Werror
+WARNINGS = -g -O -fstrict-overflow -fstrict-aliasing -D_FORTIFY_SOURCE=2    \
+	-Wall -Wextra -Wendif-labels -Wformat=2 -Winit-self -Wswitch-enum   \
+	-Wstrict-overflow=5 -Wfloat-equal -Wdeclaration-after-statement	    \
+	-Wshadow -Wpointer-arith -Wbad-function-cast -Wcast-align	    \
+	-Wwrite-strings -Wjump-misses-init -Wlogical-op -Wstrict-prototypes \
+	-Wold-style-definition -Wmissing-prototypes -Wnormalized=nfc	    \
+	-Wpacked -Wredundant-decls -Wnested-externs -Winline -Wvla -Werror
 
 warnings:
-	$(MAKE) V=0 CFLAGS='$(WARNINGS)'
-	$(MAKE) V=0 CFLAGS='$(WARNINGS)' $(check_PROGRAMS)
+	$(MAKE) V=0 CFLAGS='$(WARNINGS)' KRB5_CPPFLAGS='$(KRB5_CPPFLAGS_GCC)'
+	$(MAKE) V=0 CFLAGS='$(WARNINGS)' \
+	    KRB5_CPPFLAGS='$(KRB5_CPPFLAGS_GCC)' $(check_PROGRAMS)
 
 # The bits below are for the test suite, not for the main package.
 check_PROGRAMS = tests/runtests tests/module/alt-auth-t			    \
 	tests/module/bad-authtok-t tests/module/basic-t			    \
 	tests/module/cache-cleanup-t tests/module/cache-t		    \
 	tests/module/expired-t tests/module/fast-t tests/module/no-cache-t  \
-	tests/module/password-t tests/module/realm-t tests/module/stacked-t \
+	tests/module/pam-user-t tests/module/password-t			    \
+	tests/module/pkinit-t tests/module/realm-t tests/module/stacked-t   \
 	tests/module/trace-t tests/pam-util/args-t tests/pam-util/fakepam-t \
 	tests/pam-util/logging-t tests/pam-util/options-t		    \
 	tests/pam-util/vector-t tests/portable/asprintf-t		    \
@@ -121,7 +126,11 @@ tests_module_fast_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
 	portable/libportable.la $(KRB5_LIBS)
 tests_module_no_cache_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
 	portable/libportable.la $(KRB5_LIBS)
+tests_module_pam_user_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
+	portable/libportable.la $(KRB5_LIBS)
 tests_module_password_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
+	portable/libportable.la $(KRB5_LIBS)
+tests_module_pkinit_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
 	portable/libportable.la $(KRB5_LIBS)
 tests_module_realm_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
 	portable/libportable.la $(KRB5_LIBS)
@@ -163,14 +172,15 @@ tests_portable_strndup_t_SOURCES = tests/portable/strndup-t.c \
 tests_portable_strndup_t_LDADD = tests/tap/libtap.a portable/libportable.la
 
 check-local: $(check_PROGRAMS)
-	cd tests && ./runtests $(abs_top_srcdir)/tests/TESTS
+	cd tests && ./runtests -l $(abs_top_srcdir)/tests/TESTS
 
 # Used by maintainers to run the test suite under valgrind.
 check-valgrind: $(check_PROGRAMS)
 	rm -rf $(abs_top_builddir)/tmp-valgrind
 	mkdir $(abs_top_builddir)/tmp-valgrind
-	valgrind --leak-check=full --trace-children=yes --show-reachable=yes \
-	    --trace-children-skip="*generate-krb5-conf*,/bin/sh" \
-	    --log-file=$(abs_top_builddir)/tmp-valgrind/log.%p \
-	    --suppressions=tests/data/valgrind.supp \
-	    tests/runtests $(abs_top_srcdir)/tests/TESTS
+	valgrind --leak-check=full --leak-check=full			\
+	    --show-reachable=yes --trace-children=yes			\
+	    --log-file=$(abs_top_builddir)/tmp-valgrind/log.%p		\
+	    --suppressions=$(abs_top_srcdir)/tests/data/valgrind.supp	\
+	    --trace-children-skip="/bin/sh,*/cat,*/cut,*/expr,*/getopt,*/kinit,*/ls,*/mkdir,*/rm,*/rmdir,*/sed,*/sleep,*/wc,*/data/generate-krb5-conf,*/docs/*-t" \
+	    tests/runtests -l $(abs_top_srcdir)/tests/TESTS

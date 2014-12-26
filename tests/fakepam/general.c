@@ -7,8 +7,8 @@
  * The canonical version of this file is maintained in the rra-c-util package,
  * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
- * Written by Russ Allbery <rra@stanford.edu>
- * Copyright 2010, 2011
+ * Written by Russ Allbery <eagle@eyrie.org>
+ * Copyright 2010, 2011, 2014
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -57,16 +57,12 @@ pam_start(const char *service_name, const char *user,
 {
     struct pam_handle *handle;
 
-    handle = malloc(sizeof(struct pam_handle));
+    handle = calloc(1, sizeof(struct pam_handle));
     if (handle == NULL)
         return PAM_BUF_ERR;
     handle->service = service_name;
     handle->user = user;
-    handle->authtok = NULL;
-    handle->oldauthtok = NULL;
     handle->conversation = pam_conversation;
-    handle->environ = NULL;
-    handle->data = NULL;
     *pamh = handle;
     return PAM_SUCCESS;
 }
@@ -86,17 +82,17 @@ pam_end(pam_handle_t *pamh, int status)
 
     if (pamh->environ != NULL) {
         for (i = 0; pamh->environ[i] != NULL; i++)
-            if (pamh->environ[i] != NULL)
-                free(pamh->environ[i]);
+            free(pamh->environ[i]);
         free(pamh->environ);
     }
-    if (pamh->authtok != NULL)
-        free(pamh->authtok);
-    if (pamh->oldauthtok != NULL)
-        free(pamh->oldauthtok);
+    free(pamh->authtok);
+    free(pamh->oldauthtok);
+    free(pamh->rhost);
+    free(pamh->ruser);
+    free(pamh->tty);
     for (item = pamh->data; item != NULL; ) {
         if (item->cleanup != NULL)
-            item->cleanup (pamh, item->data, status);
+            item->cleanup(pamh, item->data, status);
         free(item->name);
         next = item->next;
         free(item);

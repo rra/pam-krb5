@@ -11,6 +11,14 @@
    don't. */
 #undef HAVE_DECL_SNPRINTF
 
+/* Define to 1 if you have the declaration of `strlcat', and to 0 if you
+   don't. */
+#undef HAVE_DECL_STRLCAT
+
+/* Define to 1 if you have the declaration of `strlcpy', and to 0 if you
+   don't. */
+#undef HAVE_DECL_STRLCPY
+
 /* Define to 1 if you have the declaration of `vsnprintf', and to 0 if you
    don't. */
 #undef HAVE_DECL_VSNPRINTF
@@ -42,8 +50,11 @@
 /* Define to 1 if you have the `kadm5_init_with_skey_ctx' function. */
 #undef HAVE_KADM5_INIT_WITH_SKEY_CTX
 
+/* Define to 1 if you have the <kadm5/kadm5_err.h> header file. */
+#undef HAVE_KADM5_KADM5_ERR_H
+
 /* Define to enable Kerberos features. */
-#undef HAVE_KERBEROS
+#undef HAVE_KRB5
 
 /* Define to 1 if you have the `krb5_appdefault_string' function. */
 #undef HAVE_KRB5_APPDEFAULT_STRING
@@ -150,7 +161,7 @@
 /* Define to 1 if you have the `krb5_xfree' function. */
 #undef HAVE_KRB5_XFREE
 
-/* Define to 1 if the system has the type `long long int'. */
+/* Define to 1 if the system has the type 'long long int'. */
 #undef HAVE_LONG_LONG_INT
 
 /* Define to 1 if you have the <memory.h> header file. */
@@ -182,6 +193,9 @@
 
 /* Define to 1 if you have the <profile.h> header file. */
 #undef HAVE_PROFILE_H
+
+/* Define to 1 if you have the `reallocarray' function. */
+#undef HAVE_REALLOCARRAY
 
 /* Define to 1 if you have the `regcomp' function. */
 #undef HAVE_REGCOMP
@@ -228,14 +242,23 @@
 /* Define to 1 if you have the <sys/bittypes.h> header file. */
 #undef HAVE_SYS_BITTYPES_H
 
+/* Define to 1 if you have the <sys/select.h> header file. */
+#undef HAVE_SYS_SELECT_H
+
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/time.h> header file. */
+#undef HAVE_SYS_TIME_H
 
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
+
+/* Define to 1 if the system has the type 'unsigned long long int'. */
+#undef HAVE_UNSIGNED_LONG_LONG_INT
 
 /* Define to 1 if the system has the type `_Bool'. */
 #undef HAVE__BOOL
@@ -246,9 +269,6 @@
 
 /* The name of the PAM module, used by the pam_vsyslog replacement. */
 #undef MODULE_NAME
-
-/* Define to 1 if your C compiler doesn't accept -c and -o together. */
-#undef NO_MINUS_C_MINUS_O
 
 /* Name of package */
 #undef PACKAGE
@@ -304,6 +324,17 @@
 
 /* Version number of package */
 #undef VERSION
+
+/* Enable large inode numbers on Mac OS X 10.5.  */
+#ifndef _DARWIN_USE_64_BIT_INODE
+# define _DARWIN_USE_64_BIT_INODE 1
+#endif
+
+/* Number of bits in a file offset, on hosts where this is settable. */
+#undef _FILE_OFFSET_BITS
+
+/* Define for large files, on AIX-style hosts. */
+#undef _LARGE_FILES
 
 /* Define to 1 if on MINIX. */
 #undef _MINIX

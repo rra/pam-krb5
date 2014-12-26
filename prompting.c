@@ -6,7 +6,7 @@
  *
  * Copyright 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
- * Copyright 2005, 2006, 2007, 2009 Russ Allbery <rra@stanford.edu>
+ * Copyright 2005, 2006, 2007, 2009, 2014 Russ Allbery <eagle@eyrie.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  *
@@ -135,6 +135,8 @@ pamk5_conv(struct pam_args *args, const char *message, int type,
     pamret = pam_get_item(args->pamh, PAM_CONV, (PAM_CONST void **) &conv);
     if (pamret != PAM_SUCCESS)
 	return pamret;
+    if (conv->conv == NULL)
+        return PAM_CONV_ERR;
     pmsg = &msg;
     msg.msg_style = type;
     msg.msg = (PAM_CONST char *) message;
@@ -163,8 +165,7 @@ pamk5_conv(struct pam_args *args, const char *message, int type,
         free(resp->resp);
         pamret = want_reply ? PAM_SUCCESS : PAM_CONV_ERR;
     }
-    if (resp != NULL)
-        free(resp);
+    free(resp);
     return pamret;
 }
 
@@ -210,16 +211,22 @@ pamk5_prompter_krb5(krb5_context context UNUSED, void *data, const char *name,
     struct pam_response *resp = NULL;
     struct pam_conv *conv;
 
-    /* Obtain the conversation function from the application. */
-    pamret = pam_get_item(args->pamh, PAM_CONV, (PAM_CONST void **) &conv);
-    if (pamret != 0)
-        return KRB5KRB_ERR_GENERIC;
-
     /* Treat the name and banner as prompts that doesn't need input. */
     if (name != NULL && !args->silent)
         total_prompts++;
     if (banner != NULL && !args->silent)
         total_prompts++;
+
+    /* If we have zero prompts, do nothing, silently. */
+    if (total_prompts == 0)
+        return 0;
+
+    /* Obtain the conversation function from the application. */
+    pamret = pam_get_item(args->pamh, PAM_CONV, (PAM_CONST void **) &conv);
+    if (pamret != 0)
+        return KRB5KRB_ERR_GENERIC;
+    if (conv->conv == NULL)
+        return KRB5KRB_ERR_GENERIC;
 
     /*
      * Allocate memory to copy all of the prompts into a pam_message.
@@ -331,10 +338,8 @@ pamk5_prompter_krb5(krb5_context context UNUSED, void *data, const char *name,
     retval = 0;
 
 cleanup:
-    for (i = 0; i < total_prompts; i++) {
-        if (msg[i]->msg != NULL)
-            free((char *) msg[i]->msg);
-    }
+    for (i = 0; i < total_prompts; i++)
+        free((char *) msg[i]->msg);
     free(*msg);
     free(msg);
 

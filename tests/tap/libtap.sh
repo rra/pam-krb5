@@ -9,9 +9,9 @@
 # writing test cases.  It is part of C TAP Harness, which can be found at
 # <http://www.eyrie.org/~eagle/software/c-tap-harness/>.
 #
-# Written by Russ Allbery <rra@stanford.edu>
-# Copyright 2009, 2010, 2011, 2012 Russ Allbery <rra@stanford.edu>
-# Copyright 2006, 2007, 2008
+# Written by Russ Allbery <eagle@eyrie.org>
+# Copyright 2009, 2010, 2011, 2012 Russ Allbery <eagle@eyrie.org>
+# Copyright 2006, 2007, 2008, 2013
 #     The Board of Trustees of the Leland Stanford Junior University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -204,7 +204,7 @@ strip_colon_error() {
 # Bail out with an error message.
 bail () {
     echo 'Bail out!' "$@"
-    exit 1
+    exit 255
 }
 
 # Output a diagnostic on standard error, preceded by the required # mark.

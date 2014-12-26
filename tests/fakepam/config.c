@@ -9,8 +9,8 @@
  * The canonical version of this file is maintained in the rra-c-util package,
  * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
- * Written by Russ Allbery <rra@stanford.edu>
- * Copyright 2011, 2012
+ * Written by Russ Allbery <eagle@eyrie.org>
+ * Copyright 2011, 2012, 2014
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -389,8 +389,7 @@ expand_string(const char *template, const struct script_config *config)
         }
     }
     *out = '\0';
-    if (uid != NULL)
-        free(uid);
+    free(uid);
     return output;
 }
 
@@ -404,17 +403,17 @@ split_options(char *string, struct options *options,
               const struct script_config *config)
 {
     char *opt;
-    size_t size;
+    size_t size, count;
 
     for (opt = strtok(string, " "); opt != NULL; opt = strtok(NULL, " ")) {
         if (options->argv == NULL) {
-            options->argv = bmalloc(sizeof(const char *) * 2);
+            options->argv = bcalloc(2, sizeof(const char *));
             options->argv[0] = expand_string(opt, config);
-            options->argv[1] = NULL;
             options->argc = 1;
         } else {
-            size = sizeof(const char *) * (options->argc + 2);
-            options->argv = brealloc(options->argv, size);
+            count = (options->argc + 2);
+            size = sizeof(const char *);
+            options->argv = breallocarray(options->argv, count, size);
             options->argv[options->argc] = expand_string(opt, config);
             options->argv[options->argc + 1] = NULL;
             options->argc++;
@@ -593,7 +592,7 @@ parse_prompts(FILE *script, const struct script_config *config)
     struct prompts *prompts = NULL;
     struct prompt *prompt;
     char *line, *token, *style, *end;
-    size_t size, i, length;
+    size_t size, count, i, length;
 
     for (line = readline(script); line != NULL; line = readline(script)) {
         length = strlen(line);
@@ -605,9 +604,10 @@ parse_prompts(FILE *script, const struct script_config *config)
             prompts->prompts = bcalloc(1, sizeof(struct prompt));
             prompts->allocated = 1;
         } else if (prompts->allocated == prompts->size) {
-            prompts->allocated *= 2;
-            size = prompts->allocated * sizeof(struct prompt);
-            prompts->prompts = brealloc(prompts->prompts, size);
+            count = prompts->allocated * 2;
+            size = sizeof(struct prompt);
+            prompts->prompts = breallocarray(prompts->prompts, count, size);
+            prompts->allocated = count;
             for (i = prompts->size; i < prompts->allocated; i++) {
                 prompts->prompts[i].prompt = NULL;
                 prompts->prompts[i].response = NULL;

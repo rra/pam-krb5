@@ -6,10 +6,10 @@
  * the appropriate internal functions.  This interface is used by both the
  * authentication and the password groups.
  *
- * Copyright 2010, 2011, 2012
+ * Copyright 2010, 2011, 2012, 2014
  *     The Board of Trustees of the Leland Stanford Junior University
- * Copyright 2005, 2006, 2007, 2008, 2009, 2010
- *     Russ Allbery <rra@stanford.edu>
+ * Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2014
+ *     Russ Allbery <eagle@eyrie.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  *
@@ -48,8 +48,9 @@
 /*
  * Fill in ctx->princ from the value of ctx->name or (if configured) from
  * prompting.  If we don't prompt and ctx->name contains an @-sign,
- * canonicalize it to a local account name.  If the canonicalization fails,
- * don't worry about it.  It may be that the application doesn't care.
+ * canonicalize it to a local account name unless no_update_user is set.  If
+ * the canonicalization fails, don't worry about it.  It may be that the
+ * application doesn't care.
  */
 static krb5_error_code
 parse_name(struct pam_args *args)
@@ -89,8 +90,11 @@ parse_name(struct pam_args *args)
     if (args->config->user_realm)
         user_realm = args->config->user_realm;
     if (user_realm != NULL && strchr(user, '@') == NULL) {
-        if (asprintf(&newuser, "%s@%s", user, user_realm) < 0)
+        if (asprintf(&newuser, "%s@%s", user, user_realm) < 0) {
+            if (user != ctx->name)
+                free(user);
             return KRB5_CC_NOMEM;
+        }
         if (user != ctx->name)
             free(user);
         user = newuser;
@@ -98,6 +102,8 @@ parse_name(struct pam_args *args)
     k5_errno = krb5_parse_name(c, user, &ctx->princ);
     if (user != ctx->name)
         free(user);
+    if (k5_errno != 0)
+        return k5_errno;
 
     /*
      * Now that we have a principal to call krb5_aname_to_localname, we can
@@ -107,8 +113,11 @@ parse_name(struct pam_args *args)
      * be rather weird, if the user were to specify a principal name for the
      * username and then enter a different username at the principal prompt,
      * but this behavior seems to make the most sense.
+     *
+     * Skip canonicalization if no_update_user was set.  In that case,
+     * continue to use the initial authentication identity everywhere.
      */
-    if (k5_errno == 0 && strchr(ctx->name, '@') != NULL) {
+    if (strchr(ctx->name, '@') != NULL && !args->config->no_update_user) {
         if (krb5_aname_to_localname(c, ctx->princ, sizeof(kuser), kuser) != 0)
             return 0;
         user = strdup(kuser);
@@ -393,8 +402,7 @@ k5login_password_auth(struct pam_args *args, krb5_creds *creds,
             return errno;
         }
     if (pwd == NULL || filename == NULL || access(filename, R_OK) != 0) {
-        if (filename != NULL)
-            free(filename);
+        free(filename);
         return krb5_get_init_creds_password(ctx->context, creds, ctx->princ,
                    (char *) pass, pamk5_prompter_krb5, args, 0,
                    (char *) service, opts);
@@ -519,8 +527,8 @@ pkinit_auth(struct pam_args *args, const char *service, krb5_creds **creds)
     if (args->config->pkinit_prompt) {
         pamk5_conv(args,
                    args->config->use_pkinit
-                       ? "Insert smart card and press Enter:"
-                       : "Insert smart card if desired, then press Enter:",
+                       ? "Insert smart card and press Enter: "
+                       : "Insert smart card if desired, then press Enter: ",
                    PAM_PROMPT_ECHO_OFF, &dummy);
     }
 
@@ -544,7 +552,7 @@ pkinit_auth(struct pam_args *args, const char *service, krb5_creds **creds)
 
     /* Finally, do the actual work and return the results. */
     retval = krb5_get_init_creds_password(ctx->context, *creds, ctx->princ,
-                 NULL, pamk5_prompter_krb5, args, 0, (char *) service, opts);
+                 NULL, NULL, args, 0, (char *) service, opts);
 
 done:
     krb5_get_init_creds_opt_free(ctx->context, opts);
@@ -704,7 +712,7 @@ pamk5_password_auth(struct pam_args *args, const char *service,
     if (ctx->princ == NULL) {
         retval = parse_name(args);
         if (retval != 0) {
-            putil_err_krb5(args, retval, "krb5_parse_name failed");
+            putil_err_krb5(args, retval, "parse_name failed");
             return PAM_SERVICE_ERR;
         }
     }
@@ -801,7 +809,9 @@ pamk5_password_auth(struct pam_args *args, const char *service,
     } while (retry
              && (retval == KRB5KRB_AP_ERR_BAD_INTEGRITY
                  || retval == KRB5KRB_AP_ERR_MODIFIED
-                 || retval == KRB5KDC_ERR_PREAUTH_FAILED));
+                 || retval == KRB5KDC_ERR_PREAUTH_FAILED
+                 || retval == KRB5_GET_IN_TKT_LOOP
+                 || retval == KRB5_BAD_ENCTYPE));
 
 verify: UNUSED
     /*
@@ -838,6 +848,7 @@ done:
             break;
         case KRB5_KDC_UNREACH:
         case KRB5_REALM_CANT_RESOLVE:
+        case KRB5_REALM_UNKNOWN:
             status = PAM_AUTHINFO_UNAVAIL;
             break;
         default:
@@ -977,7 +988,7 @@ pamk5_authenticate(struct pam_args *args)
     }
 
     /* Reset PAM_USER in case we canonicalized, but ignore errors. */
-    if (!ctx->expired) {
+    if (!ctx->expired && !args->config->no_update_user) {
         pamret = pam_set_item(args->pamh, PAM_USER, ctx->name);
         if (pamret != PAM_SUCCESS)
             putil_err_pam(args, pamret, "cannot set PAM_USER");

@@ -19,7 +19,7 @@
  * The canonical version of this file is maintained in the rra-c-util package,
  * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
- * Written by Russ Allbery <rra@stanford.edu>
+ * Written by Russ Allbery <eagle@eyrie.org>
  *
  * The authors hereby relinquish any claim to any copyright that they may have
  * in this work, whether granted under contract or by operation of law or
@@ -97,16 +97,21 @@ krb5_error_code krb5_cc_get_full_name(krb5_context, krb5_ccache, char **);
 # define krb5_free_data_contents(c, d) krb5_data_free(d)
 #endif
 
-/* MIT-specific.  The Heimdal documentation says to use free(). */
+/*
+ * MIT-specific.  The Heimdal documentation says to use free(), but that
+ * doesn't actually make sense since the memory is allocated inside the
+ * Kerberos library.  Use krb5_xfree instead.
+ */
 #ifndef HAVE_KRB5_FREE_DEFAULT_REALM
-# define krb5_free_default_realm(c, r) free(r)
+# define krb5_free_default_realm(c, r) krb5_xfree(r)
 #endif
 
 /*
  * Heimdal: krb5_xfree, MIT: krb5_free_string, older MIT uses free().  Note
  * that we can incorrectly allocate in the library and call free() if
  * krb5_free_string is not available but something we use that API for is
- * available.  Hopefully that won't happen.
+ * available, such as krb5_appdefaults_*, but there isn't anything we can
+ * really do about it.
  */
 #ifndef HAVE_KRB5_FREE_STRING
 # ifdef HAVE_KRB5_XFREE
@@ -222,5 +227,7 @@ void krb5_verify_init_creds_opt_init(krb5_verify_init_creds_opt *opt)
 
 /* Undo default visibility change. */
 #pragma GCC visibility pop
+
+END_DECLS
 
 #endif /* !PORTABLE_KRB5_H */
