@@ -7,7 +7,7 @@
  *
  * Copyright 2011
  *     The Board of Trustees of the Leland Stanford Junior University
- * Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2005, 2006, 2007, 2008, 2009, 2014 Russ Allbery <eagle@eyrie.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  *
@@ -64,8 +64,7 @@ pamk5_account(struct pam_args *args)
         return PAM_AUTH_ERR;
     }
     if (ctx->name != name) {
-        if (ctx->name != NULL)
-            free(ctx->name);
+        free(ctx->name);
         ctx->name = strdup(name);
         args->user = ctx->name;
     }

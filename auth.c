@@ -402,8 +402,7 @@ k5login_password_auth(struct pam_args *args, krb5_creds *creds,
             return errno;
         }
     if (pwd == NULL || filename == NULL || access(filename, R_OK) != 0) {
-        if (filename != NULL)
-            free(filename);
+        free(filename);
         return krb5_get_init_creds_password(ctx->context, creds, ctx->princ,
                    (char *) pass, pamk5_prompter_krb5, args, 0,
                    (char *) service, opts);

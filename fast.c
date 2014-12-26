@@ -135,8 +135,7 @@ cache_init_anonymous(struct pam_args *args, krb5_ccache *ccache)
     }
     if (princ != NULL)
         krb5_free_principal(c, princ);
-    if (name != NULL)
-        free(name);
+    free(name);
     if (opts != NULL)
         krb5_get_init_creds_opt_free(c, opts);
     if (creds_valid)

@@ -7,7 +7,7 @@
  *
  * Copyright 2011
  *     The Board of Trustees of the Leland Stanford Junior University
- * Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2005, 2006, 2007, 2008, 2009, 2014 Russ Allbery <eagle@eyrie.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  *
@@ -461,8 +461,7 @@ pamk5_setcred(struct pam_args *args, bool refresh)
 done:
     if (ctx != NULL && cache != NULL)
         krb5_cc_destroy(ctx->context, cache);
-    if (cache_name != NULL)
-        free(cache_name);
+    free(cache_name);
 
     /* If we stored our Kerberos context in PAM data, don't free it. */
     if (set_context)

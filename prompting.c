@@ -6,7 +6,7 @@
  *
  * Copyright 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
- * Copyright 2005, 2006, 2007, 2009 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2005, 2006, 2007, 2009, 2014 Russ Allbery <eagle@eyrie.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  *
@@ -165,8 +165,7 @@ pamk5_conv(struct pam_args *args, const char *message, int type,
         free(resp->resp);
         pamret = want_reply ? PAM_SUCCESS : PAM_CONV_ERR;
     }
-    if (resp != NULL)
-        free(resp);
+    free(resp);
     return pamret;
 }
 
@@ -335,10 +334,8 @@ pamk5_prompter_krb5(krb5_context context UNUSED, void *data, const char *name,
     retval = 0;
 
 cleanup:
-    for (i = 0; i < total_prompts; i++) {
-        if (msg[i]->msg != NULL)
-            free((char *) msg[i]->msg);
-    }
+    for (i = 0; i < total_prompts; i++)
+        free((char *) msg[i]->msg);
     free(*msg);
     free(msg);
 

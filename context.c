@@ -6,7 +6,7 @@
  *
  * Copyright 2011
  *     The Board of Trustees of the Leland Stanford Junior University
- * Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2005, 2006, 2007, 2008, 2009, 2014 Russ Allbery <eagle@eyrie.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  *
@@ -113,8 +113,7 @@ context_free(struct context *ctx, bool free_context)
 {
     if (ctx == NULL)
         return;
-    if (ctx->name != NULL)
-        free(ctx->name);
+    free(ctx->name);
     if (ctx->context != NULL) {
         if (ctx->princ != NULL)
             krb5_free_principal(ctx->context, ctx->princ);
