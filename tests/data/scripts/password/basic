@@ -1,0 +1,20 @@
+# Test password change with prompting.  -*- conf -*-
+#
+# Written by Russ Allbery <eagle@eyrie.org>
+# Copyright 2014 Russ Allbery <eagle@eyrie.org>
+# Copyright 2010, 2011
+#     The Board of Trustees of the Leland Stanford Junior University
+#
+# See LICENSE for licensing terms.
+
+[run]
+    chauthtok(PRELIM_CHECK)   = PAM_SUCCESS
+    chauthtok(UPDATE_AUTHTOK) = PAM_SUCCESS
+
+[prompts]
+    echo_off = Current Kerberos password: |%p
+    echo_off = Enter new Kerberos password: |%n
+    echo_off = Retype new Kerberos password: |%n
+
+[output]
+    INFO user %u changed Kerberos password

@@ -1,0 +1,16 @@
+# Test account and session behavior for ignored root user.  -*- conf -*-
+#
+# Written by Russ Allbery <eagle@eyrie.org>
+# Copyright 2014 Russ Allbery <eagle@eyrie.org>
+# Copyright 2010, 2011
+#     The Board of Trustees of the Leland Stanford Junior University
+#
+# See LICENSE for licensing terms.
+
+[options]
+    auth     = ignore_root
+    password = ignore_root
+
+[run]
+    authenticate            = PAM_USER_UNKNOWN
+    chauthtok(PRELIM_CHECK) = PAM_IGNORE
