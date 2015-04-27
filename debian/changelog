@@ -2,6 +2,8 @@ libpam-krb5 (4.7-2) unstable; urgency=medium
 
   * Upload to unstable.
   * Refresh upstream signing key.
+  * Add debian/gbp.conf reflecting the branch layout of the default
+    packaging repository.
 
  -- Russ Allbery <rra@debian.org>  Sun, 26 Apr 2015 20:23:59 -0700
 
