@@ -1,5 +1,6 @@
-libpam-krb5 (4.7-2) experimental; urgency=medium
+libpam-krb5 (4.7-2) unstable; urgency=medium
 
+  * Upload to unstable.
   * Refresh upstream signing key.
 
  -- Russ Allbery <rra@debian.org>  Sun, 26 Apr 2015 20:23:59 -0700
