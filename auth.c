@@ -729,10 +729,37 @@ pamk5_password_auth(struct pam_args *args, const char *service,
         if (retval == 0)
             goto verify;
         putil_debug_krb5(args, retval, "pkinit failed");
+        if (retval != 0 && args->config->use_pkinit)
+        {
+#ifdef HAVE_HX509_ERR_H
+            switch(retval)
+            {
+                case HX509_PKCS11_PIN_LOCKED:
+                    pamk5_conv(args, "User PIN locked.",
+                       PAM_TEXT_INFO, NULL);
+                break; 
+                case HX509_PKCS11_PIN_EXPIRED:
+                    pamk5_conv(args, "User PIN expired.",
+                       PAM_TEXT_INFO, NULL);
+                break; 
+                case HX509_PKCS11_PIN_INCORRECT:
+                    pamk5_conv(args, "User PIN incorrect.",
+                       PAM_TEXT_INFO, NULL);
+                break; 
+                case HX509_PKCS11_PIN_NOT_INITIALIZED:
+                    pamk5_conv(args, "User PIN not initialized.",
+                       PAM_TEXT_INFO, NULL);
+                break; 
+                default:
+                    pamk5_conv(args, "pkinit failed.",
+                       PAM_TEXT_INFO, NULL);
+            }
+#endif
+            goto done;
+        }
         if (retval != HX509_PKCS11_NO_TOKEN && retval != HX509_PKCS11_NO_SLOT)
             goto done;
-        if (retval != 0 && args->config->use_pkinit)
-            goto done;
+
     }
 #else
     if (args->config->use_pkinit) {
