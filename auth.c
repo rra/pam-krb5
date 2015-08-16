@@ -8,7 +8,7 @@
  *
  * Copyright 2010, 2011, 2012, 2014
  *     The Board of Trustees of the Leland Stanford Junior University
- * Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2014
+ * Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2014, 2015
  *     Russ Allbery <eagle@eyrie.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
@@ -680,6 +680,49 @@ verify_creds(struct pam_args *args, krb5_creds *creds)
 
 
 /*
+ * Give the user a nicer error message when we've attempted PKINIT without
+ * success.  We can only do this if the rich status codes are available.
+ * Currently, this only works with Heimdal.
+ */
+static void UNUSED
+report_pkinit_error(struct pam_args *args, krb5_error_code retval UNUSED)
+{
+    const char *message;
+
+#ifdef HAVE_HX509_ERR_H
+    switch (retval) {
+# ifdef HX509_PKCS11_PIN_LOCKED
+    case HX509_PKCS11_PIN_LOCKED:
+        message = "PKINIT failed: user PIN locked";
+        break;
+# endif
+# ifdef HX509_PKCS11_PIN_EXPIRED
+    case HX509_PKCS11_PIN_EXPIRED:
+        message = "PKINIT failed: user PIN expired";
+        break;
+# endif
+# ifdef HX509_PKCS11_PIN_INCORRECT
+    case HX509_PKCS11_PIN_INCORRECT:
+        message = "PKINIT failed: user PIN incorrect";
+        break;
+# endif
+# ifdef HX509_PKCS11_PIN_NOT_INITIALIZED
+    case HX509_PKCS11_PIN_NOT_INITIALIZED:
+        message = "PKINIT fialed: user PIN not initialized";
+        break;
+# endif
+    default:
+        message = "PKINIT failed";
+        break;
+    }
+#else
+    message = "PKINIT failed";
+#endif
+    pamk5_conv(args, message, PAM_TEXT_INFO, NULL);
+}
+
+
+/*
  * Prompt the user for a password and authenticate the password with the KDC.
  * If correct, fill in creds with the obtained TGT or ticket.  service, if
  * non-NULL, specifies the service to get tickets for; the only interesting
@@ -728,38 +771,14 @@ pamk5_password_auth(struct pam_args *args, const char *service,
         retval = pkinit_auth(args, service, creds);
         if (retval == 0)
             goto verify;
-        putil_debug_krb5(args, retval, "pkinit failed");
-        if (retval != 0 && args->config->use_pkinit)
-        {
-#ifdef HAVE_HX509_ERR_H
-            switch(retval)
-            {
-                case HX509_PKCS11_PIN_LOCKED:
-                    pamk5_conv(args, "User PIN locked.",
-                       PAM_TEXT_INFO, NULL);
-                break; 
-                case HX509_PKCS11_PIN_EXPIRED:
-                    pamk5_conv(args, "User PIN expired.",
-                       PAM_TEXT_INFO, NULL);
-                break; 
-                case HX509_PKCS11_PIN_INCORRECT:
-                    pamk5_conv(args, "User PIN incorrect.",
-                       PAM_TEXT_INFO, NULL);
-                break; 
-                case HX509_PKCS11_PIN_NOT_INITIALIZED:
-                    pamk5_conv(args, "User PIN not initialized.",
-                       PAM_TEXT_INFO, NULL);
-                break; 
-                default:
-                    pamk5_conv(args, "pkinit failed.",
-                       PAM_TEXT_INFO, NULL);
-            }
-#endif
-            goto done;
-        }
+        putil_debug_krb5(args, retval, "PKINIT failed");
         if (retval != HX509_PKCS11_NO_TOKEN && retval != HX509_PKCS11_NO_SLOT)
             goto done;
-
+        if (retval != 0) {
+            report_pkinit_error(args, retval);
+            if (args->config->use_pkinit)
+                goto done;
+        }
     }
 #else
     if (args->config->use_pkinit) {

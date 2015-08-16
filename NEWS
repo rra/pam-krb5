@@ -1,5 +1,11 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 4.8 (unreleased)
+
+    When built against recent versions of Heimdal with richer status codes
+    from PKINIT attempts, report to the user the reason for a PKINIT
+    failure.  Based on work by Henry Jacques.
+
 pam-krb5 4.7 (2014-12-25)
 
     Add a no_update_user option that disables the normal update of the
