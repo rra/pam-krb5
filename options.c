@@ -41,6 +41,7 @@ static const struct option options[] = {
     { K(expose_account),     true,  BOOL   (false) },
     { K(fail_pwchange),      true,  BOOL   (false) },
     { K(fast_ccache),        true,  STRING (NULL)  },
+    { K(first_pass_is_pin),  false, BOOL   (false) },
     { K(force_alt_auth),     true,  BOOL   (false) },
     { K(force_first_pass),   false, BOOL   (false) },
     { K(force_pwchange),     true,  BOOL   (false) },

@@ -90,6 +90,7 @@ struct pam_config {
     struct vector *preauth_opt; /* Preauth options. */
     bool try_pkinit;            /* Attempt PKINIT, fall back to password. */
     bool use_pkinit;            /* Require PKINIT. */
+    bool first_pass_is_pin;     /* Assume the cached password provided by PAM is a PIN */
 
     /* Prompting. */
     char *banner;               /* Addition to password changing prompts. */

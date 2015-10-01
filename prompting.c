@@ -4,6 +4,7 @@
  * Handles all interaction with the PAM conversation, either directly or
  * indirectly through the Kerberos libraries.
  *
+ * Copyright 2015 Timothy Pearson <kb9vqf@pearsoncomputing.net>
  * Copyright 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  * Copyright 2005, 2006, 2007, 2009, 2014 Russ Allbery <eagle@eyrie.org>
@@ -204,12 +205,15 @@ pamk5_prompter_krb5(krb5_context context UNUSED, void *data, const char *name,
                     const char *banner, int num_prompts, krb5_prompt *prompts)
 {
     struct pam_args *args = data;
+    struct pam_config *config = args->config;
     int total_prompts = num_prompts;
     int pam_prompts, pamret, i;
     int retval = KRB5KRB_ERR_GENERIC;
     struct pam_message **msg;
     struct pam_response *resp = NULL;
     struct pam_conv *conv;
+    int status;
+    char* prev_pass = NULL;
 
     /* Treat the name and banner as prompts that doesn't need input. */
     if (name != NULL && !args->silent)
@@ -220,6 +224,17 @@ pamk5_prompter_krb5(krb5_context context UNUSED, void *data, const char *name,
     /* If we have zero prompts, do nothing, silently. */
     if (total_prompts == 0)
         return 0;
+
+    /* If PKCS support is requested along with use_first_pass or force_first_pass, check if the needed
+     * password / PIN is being passed from another module in the PAM stack
+     */
+    if ((config->try_pkinit || config->use_pkinit)
+      && (config->use_first_pass || config->force_first_pass)
+      && config->first_pass_is_pin) {
+        status = maybe_retrieve_password(args, PAM_AUTHTOK, &prev_pass);
+        if (status != PAM_SUCCESS)
+            prev_pass = NULL;
+    }
 
     /* Obtain the conversation function from the application. */
     pamret = pam_get_item(args->pamh, PAM_CONV, (PAM_CONST void **) &conv);
@@ -300,13 +315,15 @@ pamk5_prompter_krb5(krb5_context context UNUSED, void *data, const char *name,
         pam_prompts++;
     }
 
-    /* Call into the application conversation function. */
-    pamret = conv->conv(pam_prompts, (PAM_CONST struct pam_message **) msg,
+    if (!prev_pass) {
+        /* Call into the application conversation function. */
+        pamret = conv->conv(pam_prompts, (PAM_CONST struct pam_message **) msg,
                         &resp, conv->appdata_ptr);
-    if (pamret != 0) 
-        goto cleanup;
-    if (resp == NULL)
-        goto cleanup;
+        if (pamret != 0) 
+            goto cleanup;
+        if (resp == NULL)
+            goto cleanup;
+    }
 
     /*
      * Reuse pam_prompts as a starting index and copy the data into the reply
@@ -319,6 +336,18 @@ pamk5_prompter_krb5(krb5_context context UNUSED, void *data, const char *name,
         pam_prompts++;
     for (i = 0; i < num_prompts; i++, pam_prompts++) {
         size_t len;
+
+        if (prev_pass) {
+            /*
+             * The trailing nul is not included in length, but other applications
+             * expect it to be there.  Therefore, we copy one more byte than the
+             * actual length of the password, but set length to just the length of
+             * the password.
+             */
+            prompts[i].reply->length = strlen(prev_pass);
+            memcpy(prompts[i].reply->data, prev_pass, prompts[i].reply->length + 1);
+            continue;
+        }
 
         if (resp[pam_prompts].resp == NULL)
             goto cleanup;

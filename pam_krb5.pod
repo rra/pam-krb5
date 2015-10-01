@@ -687,6 +687,12 @@ implementation instead.
 This option can be set in F<krb5.conf> and is only applicable to the auth
 and password groups.
 
+=item first_pass_is_pin
+
+[3.0] Assume any cached password provided by PAM is a PIN code.  This is
+useful to prevent multiple PIN entry prompts during login if the previous
+PAM module is known to cache the typed PIN.
+
 =back
 
 =head2 Prompting
