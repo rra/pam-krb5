@@ -226,7 +226,7 @@ set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
  * don't want them to.  We make the assumption here that the empty password is
  * always invalid and is an authentication failure.
  */
-static int
+int
 maybe_retrieve_password(struct pam_args *args, int authtok, const char **pass)
 {
     int status;
