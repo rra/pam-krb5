@@ -528,6 +528,11 @@ support prompting for password changes during authentication), and then
 only for specific applications known to call pam_acct_mgmt() and check its
 return status properly.
 
+This option is only supported when pam-krb5 is built with MIT Kerberos.
+If built against Heimdal, this option does nothing and normal expired
+password change handling still happens.  (Heimdal is missing the required
+API to implement this option, at least as of version 1.6.)
+
 This option can be set in F<krb5.conf> and is only applicable to the auth
 group.
 
