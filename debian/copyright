@@ -135,7 +135,7 @@ Files: pam-util/vector.c pam-util/vector.h portable/asprintf.c
  tests/pam-util/vector-t.c tests/portable/asprintf-t.c
  tests/portable/mkstemp-t.c tests/portable/strlcat-t.c
  tests/portable/strlcpy-t.c tests/portable/strndup-t.c
-Copyright: no copyright notice, see License
+Copyright: no copyright notice, see License below
 License: rra-public-domain
  The authors hereby relinquish any claim to any copyright that they may
  have in this work, whether granted under contract or by operation of law
