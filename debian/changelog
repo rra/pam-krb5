@@ -1,5 +1,10 @@
 libpam-krb5 (4.7-3) UNRELEASED; urgency=medium
 
+  * Drop libpam-heimdal since Heimdal is being removed from testing (and
+    possibly unstable) as being too buggy and too unsupported upstream for
+    Debian to support.  See #837728.  (Closes: #837716)
+  * Document restrictions around minimum_uid and pam-auth-update in
+    README.Debian (see #756880).
   * Switch to the DEP-14 branch layout and update debian/gbp.conf and
     Vcs-Git accordingly.
   * Switch to https for all package metadata URLs.

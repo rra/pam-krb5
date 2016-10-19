@@ -1,4 +1,8 @@
 #!/usr/bin/make -f
+#
+# The rules here build in a subdirectory so that Heimdal support can be
+# reintroduced in a later version, if Heimdal is ever fixed.  See releases
+# of the package prior to 4.7-3 for the Heimdal rules.
 
 # Enable compiler hardening flags.
 export DEB_BUILD_MAINT_OPTIONS = hardening=+bindnow
@@ -9,42 +13,30 @@ DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
 	dh $@ --parallel --with autoreconf
 
 override_dh_auto_clean:
-	rm -rf build-mit build-heimdal
+	rm -rf build-mit
 
 override_dh_auto_configure:
-	mkdir build-mit build-heimdal
-	dh_auto_configure --parallel -Bbuild-mit -- \
-	    --enable-reduced-depends --libdir=/lib/$(DEB_HOST_MULTIARCH) \
-	    --with-krb5-include=/usr/include/mit-krb5 \
-	    --with-krb5-lib=/usr/lib/$(DEB_HOST_MULTIARCH)/mit-krb5 \
-	    --with-kadm-client-include=/usr/include/mit-krb5 \
+	mkdir build-mit
+	dh_auto_configure --parallel -Bbuild-mit --			   \
+	    --enable-reduced-depends --libdir=/lib/$(DEB_HOST_MULTIARCH)   \
+	    --with-krb5-include=/usr/include/mit-krb5			   \
+	    --with-krb5-lib=/usr/lib/$(DEB_HOST_MULTIARCH)/mit-krb5	   \
+	    --with-kadm-client-include=/usr/include/mit-krb5		   \
 	    --with-kadm-client-lib=/usr/lib/$(DEB_HOST_MULTIARCH)/mit-krb5
-	dh_auto_configure --parallel -Bbuild-heimdal -- \
-	    --enable-reduced-depends --libdir=/lib/$(DEB_HOST_MULTIARCH) \
-	    --with-krb5-include=/usr/include/heimdal \
-	    --with-krb5-lib=/usr/lib/$(DEB_HOST_MULTIARCH)/heimdal \
-	    --with-kadm-client-include=/usr/include/heimdal \
-	    --with-kadm-client-lib=/usr/lib/$(DEB_HOST_MULTIARCH)/heimdal
 
 override_dh_auto_build:
 	dh_auto_build --parallel -Bbuild-mit
-	dh_auto_build --parallel -Bbuild-heimdal
 
 override_dh_auto_test:
 	dh_auto_test --parallel -Bbuild-mit
-	dh_auto_test --parallel -Bbuild-heimdal
 
 override_dh_auto_install:
 	dh_auto_install -Bbuild-mit --destdir=debian/libpam-krb5
-	dh_auto_install -Bbuild-heimdal --destdir=debian/libpam-heimdal
 	rm debian/libpam-*/lib/*/security/*.la
 	chmod 644 debian/libpam-*/lib/*/security/*.so
 	install -d debian/libpam-krb5/usr/share/pam-configs
-	install -d debian/libpam-heimdal/usr/share/pam-configs
 	install -m 644 debian/pam-auth-update \
 	    debian/libpam-krb5/usr/share/pam-configs/krb5
-	install -m 644 debian/pam-auth-update \
-	    debian/libpam-heimdal/usr/share/pam-configs/krb5
 
 override_dh_installchangelogs:
 	dh_installchangelogs NEWS

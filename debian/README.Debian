@@ -1,18 +1,12 @@
-libpam-krb5 and libpam-heimdal for Debian
------------------------------------------
+libpam-krb5 for Debian
+----------------------
 
-There are two packages in Debian for a Kerberos PAM module, built from the
-same source: libpam-krb5 and libpam-heimdal.  The first is linked against
-the MIT Kerberos libraries and the second is linked against the Heimdal
-Kerberos libraries.  Otherwise, they're identical and provide the same
-features.
-
-When you initially install either package, you will have the option to
-choose to automatically configure your PAM configuration to include it.
-If you do so, a standard set of PAM options will be used that will work
-for most users.  If those options do not work for you or if you can't use
-automatic PAM configuration for some reason (such as another PAM module
-that doesn't support it), see below.
+When you initially install libpam-krb5, you will have the option to choose
+to automatically configure your PAM configuration to include it.  If you
+do so, a standard set of PAM options will be used that will work for most
+users.  If those options do not work for you or if you can't use automatic
+PAM configuration for some reason (such as another PAM module that doesn't
+support it), see below.
 
 For a system where user account authentication should be handled primarily
 through Kerberos and password changes should be made against Kerberos,
@@ -51,6 +45,13 @@ timeouts, and this way such authentication is never attempted for a root
 login.  On Debian systems, regular user accounts normally start at UID
 1000; you may need to change this for local policy.
 
+Unfortunately, if you do need to change the UID limit, you won't be able
+to use the normal pam-auth-update support in Debian for automatically
+managing the PAM configuration and will need to manually maintain the
+files in /etc/pam.d.  This is due to complex restrictions of Kerberos
+configuration handling and backward compatibility that may be fixable in a
+later release.  See <https://bugs.debian.org/756880> for more details.
+
 This configuration will still require that users be listed in /etc/shadow,
 since otherwise the pam_unix account module will fail.  Normally, accounts
 that should only use Kerberos authentication should be created with
@@ -84,4 +85,4 @@ same name.  In this situation, you will probably also want to add the
 "search_k5login" option to the pam_krb5.so line in /etc/pam.d/common-auth;
 see the pam_krb5(5) man page for more information.
 
- -- Russ Allbery <rra@debian.org>, Sun, 25 Sep 2011 19:42:44 -0700
+ -- Russ Allbery <rra@debian.org>, Wed, 19 Oct 2016 11:24:05 -0700
