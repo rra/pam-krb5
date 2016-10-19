@@ -10,6 +10,7 @@ libpam-krb5 (4.7-3) UNRELEASED; urgency=medium
   * Switch to https for all package metadata URLs.
   * Run wrap-and-sort -ast on packaging files.
   * Refresh upstream signing key.
+  * Update standards version to 3.9.8 (no changes required).
 
  -- Russ Allbery <rra@debian.org>  Wed, 19 Oct 2016 11:11:09 -0700
 
