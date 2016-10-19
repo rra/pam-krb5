@@ -1,4 +1,4 @@
-libpam-krb5 (4.7-3) UNRELEASED; urgency=medium
+libpam-krb5 (4.7-3) unstable; urgency=medium
 
   * Drop libpam-heimdal since Heimdal is being removed from testing (and
     possibly unstable) as being too buggy and too unsupported upstream for
@@ -12,7 +12,7 @@ libpam-krb5 (4.7-3) UNRELEASED; urgency=medium
   * Refresh upstream signing key.
   * Update standards version to 3.9.8 (no changes required).
 
- -- Russ Allbery <rra@debian.org>  Wed, 19 Oct 2016 11:11:09 -0700
+ -- Russ Allbery <rra@debian.org>  Wed, 19 Oct 2016 11:44:18 -0700
 
 libpam-krb5 (4.7-2) unstable; urgency=medium
 
