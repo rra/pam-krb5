@@ -5,6 +5,8 @@ libpam-krb5 (4.7-4) UNRELEASED; urgency=medium
   * Update to debhelper compatibility level V10.
   * Drop "v5" from package long descriptions.  Kerberos v5 is now the only
     meaningful version of Kerberos, and there's no reason to qualify it.
+  * Remove libpam0g version qualification on dependency.  The required
+    version is older than oldstable.
 
  -- Russ Allbery <rra@debian.org>  Sat, 31 Dec 2016 13:32:40 -0800
 
