@@ -31,7 +31,7 @@ Conflicts:
  libpam-heimdal,
 Description: PAM module for MIT Kerberos
  A Kerberos PAM module build against the MIT Kerberos libraries.  It
- supports authenticating against a Kerberos v5 KDC, obtaining tickets and
+ supports authenticating against a Kerberos KDC, obtaining tickets and
  populating an initial ticket cache, authorizing users via a ~/.k5login
  file, and changing Kerberos passwords.
 
@@ -51,6 +51,6 @@ Conflicts:
  libpam-krb5,
 Description: PAM module for Heimdal Kerberos
  A Kerberos PAM module build against the Heimdal libraries.  It supports
- authenticating against a Kerberos v5 KDC, obtaining tickets and
- populating an initial ticket cache, authorizing users via a ~/.k5login
- file, and changing Kerberos passwords.
+ authenticating against a Kerberos KDC, obtaining tickets and populating
+ an initial ticket cache, authorizing users via a ~/.k5login file, and
+ changing Kerberos passwords.
