@@ -1,0 +1,796 @@
+libpam-krb5 (4.7-4) unstable; urgency=medium
+
+  * Re-add libpam-heimdal now that Heimdal upstream has released a new
+    stable version and seems to be active again.
+  * Update to debhelper compatibility level V10.
+    - Remove explicit build dependency on dh-autoreconf.
+    - Remove explicit --parallel and autoreconf module flags.
+  * Drop "v5" from package long descriptions.  Kerberos v5 is now the only
+    meaningful version of Kerberos, and there's no reason to qualify it.
+  * Remove libpam0g version qualification on dependency.  The required
+    version is older than oldstable.
+
+ -- Russ Allbery <rra@debian.org>  Sat, 31 Dec 2016 13:42:47 -0800
+
+libpam-krb5 (4.7-3) unstable; urgency=medium
+
+  * Drop libpam-heimdal since Heimdal is being removed from testing (and
+    possibly unstable) as being too buggy and too unsupported upstream for
+    Debian to support.  See #837728.  (Closes: #837716)
+  * Document restrictions around minimum_uid and pam-auth-update in
+    README.Debian (see #756880).
+  * Switch to the DEP-14 branch layout and update debian/gbp.conf and
+    Vcs-Git accordingly.
+  * Switch to https for all package metadata URLs.
+  * Run wrap-and-sort -ast on packaging files.
+  * Refresh upstream signing key.
+  * Update standards version to 3.9.8 (no changes required).
+
+ -- Russ Allbery <rra@debian.org>  Wed, 19 Oct 2016 11:44:18 -0700
+
+libpam-krb5 (4.7-2) unstable; urgency=medium
+
+  * Upload to unstable.
+  * Refresh upstream signing key.
+  * Add debian/gbp.conf reflecting the branch layout of the default
+    packaging repository.
+
+ -- Russ Allbery <rra@debian.org>  Sun, 26 Apr 2015 20:23:59 -0700
+
+libpam-krb5 (4.7-1) experimental; urgency=medium
+
+  * Upload to experimental due to release freeze.
+  * New upstream release.
+    - Add no_update_user option to disable the normal update of PAM_USER
+      after user canonicalization.
+    - Suppress spurious Heimdal password prompt when using PKINIT.
+    - Map unknown realm errors to PAM_AUTHINFO_UNAVAIL.
+    - Treat more error codes as incorrect passwords for better
+      compatibility between MIT client libraries and Heimdal KDCs.
+    - Add version number when module options were added to the man page.
+  * Remove erroneous branch information from Vcs-Git.
+  * Fix debian/copyright to match the correct upstream licensing.
+  * Update standards version to 3.9.6 (no changes required).
+
+ -- Russ Allbery <rra@debian.org>  Thu, 25 Dec 2014 19:36:00 -0800
+
+libpam-krb5 (4.6-3) unstable; urgency=medium
+
+  * Drop version qualifications on Build-Depends that are satisfied by
+    stable.  Drop version qualifications on Depends that are satisfied by
+    oldstable.
+  * Add the upstream release signing key and verify it in debian/watch.
+  * Prefer *.tar.xz in debian/watch to match packaging.
+  * Convert debian/copyright to copyright-format 1.0.
+  * Specify the Debian packaging branch in the Vcs-Git control field.
+  * Update standards version to 3.9.5 (no changes required).
+
+ -- Russ Allbery <rra@debian.org>  Sun, 13 Apr 2014 13:13:38 -0700
+
+libpam-krb5 (4.6-2) unstable; urgency=low
+
+  * Apply upstream patch to add AM_PROG_AR to configure.ac, now apparently
+    required by Automake for the binutils in unstable.  (Closes: #713296)
+  * Apply upstream patch to build with largefile support.  This is
+    probably pointless for this module, but consistency is good.
+  * Canonicalize the Vcs-Git and Vcs-Browser URLs.
+  * Update standards version to 3.9.4 (no changes required).
+
+ -- Russ Allbery <rra@debian.org>  Sun, 23 Jun 2013 12:33:04 -0700
+
+libpam-krb5 (4.6-1) unstable; urgency=low
+
+  * New upstream release.
+    - New anon_fast option to attempt anonymous authentication and use
+      those credentials to provide FAST armor.  (Closes: #626509)
+    - New user_realm option to set the realm for unqualified user
+      principals without changing the default realm for all other
+      operations.
+    - New no_prompt option to suppress PAM prompting in favor of letting
+      the Kerberos library handle it.  (Closes: #626506)
+    - New silent option that duplicates the behavior of PAM_SILENT.
+    - New trace option for preliminary support of Kerberos trace logging.
+    - Fix the doubled colon in password prompts from Heimdal.
+    - Preserve the realm of the authentication identity when forming an
+      alt_auth_map identity.
+    - Allow the alt_auth_map format to contain a realm to force all mapped
+      principals to be in that realm.
+    - Avoid a NULL pointer dereference if krb5_init_context fails.
+      (LP: #998525)
+    - Close memory leaks in search_k5login and alt_auth_map.
+    - Suppress bogus error messages about the realm option.
+    - Retry authentication under try_first_pass for several other error
+      conditions.
+  * Regenerate the Autotools build system with dh-autoreconf.
+  * Add krb5-config to Build-Depends so that the test programs don't abort
+    with errors about not having a Kerberos configuration.
+  * Switch to xz compression for the upstream and Debian tarballs.
+  * Enable parallel builds.
+  * Update standards version to 3.9.3 (no changes required).
+
+ -- Russ Allbery <rra@debian.org>  Sat, 02 Jun 2012 19:20:27 -0700
+
+libpam-krb5 (4.5-4) unstable; urgency=low
+
+  * Enable bindnow hardening flags and fix the syntax of the
+    DEB_BUILD_MAINT_OPTIONS setting.
+  * Bump debhelper dependency to 9 now that compatibility mode V9 is no
+    longer experimental.
+  * Move single-debian-patch to local-options and patch-header to
+    local-patch-header so that they only apply to the packages I build and
+    NMUs get regular version-numbered patches.
+
+ -- Russ Allbery <rra@debian.org>  Sat, 04 Feb 2012 13:27:02 -0800
+
+libpam-krb5 (4.5-3) unstable; urgency=low
+
+  * Fix build rule to not override CPPFLAGS, which deactivates some of the
+    options passed in by dpkg-buildflags.  Instead, use --with-krb5-lib
+    and --with-krb5-include to locate the Kerberos headers and libraries.
+    Thanks, Moritz Muehlenhoff.  (Closes: #654293)
+
+ -- Russ Allbery <rra@debian.org>  Tue, 03 Jan 2012 13:38:12 -0800
+
+libpam-krb5 (4.5-2) unstable; urgency=low
+
+  * Cherry-pick upstream patch to fix initialization of krb5_deltat
+    defaults on systems where krb5_deltat is not a long.  Should fix FTBFS
+    on s390x.
+
+ -- Russ Allbery <rra@debian.org>  Mon, 26 Dec 2011 16:36:21 -0800
+
+libpam-krb5 (4.5-1) unstable; urgency=low
+
+  * New upstream release.
+    - The temporary root-only ticket cache is now stored relative to
+      ccache_dir rather than hard-coded to be in /tmp.
+    - Suppress the notice that the password is being changed because it's
+      expired if force_first_pass or use_first_pass are set in the
+      password stack.
+    - Confirm the password can get kadmin/changepw credentials before
+      returning the status code indicating it's expired, working around a
+      bug in old Heimdal versions that return expired even for incorrect
+      passwords.
+    - Better error reporting of authorization (such as .k5login) failures.
+    - Prefer the change password protocol when linked with MIT libraries
+      for better compatibility with older KDCs.
+    - Improve logging and authorization when defer_pwchange is set.
+    - Close some memory leaks.
+    - Report symbolic names of PAM flags in debug logging.
+  * Enable compiler hardening flags.
+  * Remove "v5" from the long description.  Kerberos v5 has been the
+    default version of Kerberos for over ten years.
+
+ -- Russ Allbery <rra@debian.org>  Sat, 24 Dec 2011 17:34:03 -0800
+
+libpam-krb5 (4.4-3) unstable; urgency=low
+
+  * Change the pam-auth-update configuration to skip remaining password
+    stack by default modules if the Kerberos password change succeeds.
+    This is more useful behavior for the common case of Kerberos accounts
+    not having local passwords.  See README.Debian.gz for information
+    about how to synchronize Kerberos and local passwords.  (LP: #826989)
+  * Update README.Debian.gz documentation with more current options for
+    pam_unix and document password synchronization configuration.
+  * Convert to multiarch.  Depend on the multiarch version of libpam0g,
+    install the modules into the multiarch version of /lib/security, and
+    declare the packages Multi-Arch: same.
+  * Update to debhelper compatibility level V9 (experimental).
+    - Build-Depend on debhelper 8.9.4 or later for hardening flags.
+    - Add Pre-Depends: ${misc:Pre-Depends}.
+  * Update standards version to 3.9.2 (no changes required).
+  * Fix formal name of the GPL in debian/copyright.  (This will also be
+    done upstream in the next release.)
+
+ -- Russ Allbery <rra@debian.org>  Mon, 26 Sep 2011 08:40:43 -0700
+
+libpam-krb5 (4.4-2) unstable; urgency=low
+
+  * Add the architecture to the library path for heimdal-multidev and
+    krb5-multidev since the *.so symlinks were moved in 1.5.dfsg.1-1 and
+    1.9.1+dfsg-2 respectively.  (Closes: #642688)
+  * Tighten build dependencies on heimdal-multidev and krb5-multidev
+    accordingly.
+
+ -- Russ Allbery <rra@debian.org>  Sun, 25 Sep 2011 14:09:36 -0700
+
+libpam-krb5 (4.4-1) unstable; urgency=low
+
+  * New upstream release.
+    - Do not prompt for a password when try_pkinit is set, removing a
+      spurious password prompt introduced in 4.1, but partly reintroducing
+      a bug causing the password to not be saved in the PAM data if
+      authentication falls back to password after a PKINIT failure.
+    - Organize the pam_krb5 man page into sections.
+  * Fix custom patch header to refer to pam-krb5, not remctl.
+  * Update standards version to 3.9.1.
+    - Refer to the GPL version 1 now that it's in common-licenses.
+  * Update to debhelper compatibility level V8 (no changes required).
+
+ -- Russ Allbery <rra@debian.org>  Tue, 22 Feb 2011 13:07:05 -0800
+
+libpam-krb5 (4.3-1) unstable; urgency=low
+
+  * New upstream release.
+    - New fast_ccache option, which if set attempts to use credentials in
+      that ticket cache to protect the Kerberos authentication with FAST.
+      Requires FAST support in the Kerberos libraries and hence only is
+      available in libpam-krb5, not libpam-heimdal, for right now.
+    - Fix error in freeing a previous alt_auth_map setting.
+  * Switch to 3.0 (quilt) source format.  Force a single Debian patch and
+    include a custom patch header explaining that it is a rollup of any
+    fixes cherry-picked from upstream and breaking those patches out
+    separately would be work for no gain.
+
+ -- Russ Allbery <rra@debian.org>  Wed, 09 Jun 2010 18:08:04 -0700
+
+libpam-krb5 (4.2-2) unstable; urgency=low
+
+  * Build libpam-krb5 and libpam-heimdal from the same source package.
+  * Acknowledge libpam-heimdal NMU.
+    - Rebuild against current Heimdal libraries.  (Closes: #559779)
+    - Add support for pam-auth-update.  (Closes: #551455)
+  * Lower libpam-heimdal priority to extra, since it conflicts with
+    libpam-krb5 and the MIT Kerberos version will be sufficient for most
+    users.
+  * Fix spelling error in manual page.
+  * Update standards version to 3.8.4 (no changes required).
+
+ -- Russ Allbery <rra@debian.org>  Wed, 03 Feb 2010 23:41:39 -0800
+
+libpam-krb5 (4.2-1) unstable; urgency=low
+
+  * New upstream release.
+    - New fail_pwchange option which treats expired passwords like
+      authentication failure and suppresses password change.
+
+ -- Russ Allbery <rra@debian.org>  Wed, 25 Nov 2009 17:37:03 -0800
+
+libpam-krb5 (4.1-1) unstable; urgency=low
+
+  * New upstream release.
+    - Fix return status for pam_setcred for ignored users and non-Kerberos
+      logins to return success.  Returning failure breaks PAM
+      configurations using jumps, since modules doing jumps become
+      required on the pam_setcred pass through the auth group.
+    - During the second pass through the password group, always prompt for
+      and store the new password even if the user is ignored.  This is
+      required to allow this module to be stacked with another module that
+      uses use_authtok.  Thanks, Steve Langasek.  (Closes: #545824)
+    - Log successful authentications with priority LOG_INFO.
+    - Log failed authentications with priority LOG_NOTICE.
+    - Use pam_syslog for logging and rationalize all logging to follow the
+      Linux PAM recommendations.
+
+ -- Russ Allbery <rra@debian.org>  Fri, 20 Nov 2009 16:09:05 -0800
+
+libpam-krb5 (4.0-1) unstable; urgency=low
+
+  * New upstream release.
+    - Add force_first_pass parameter to auth and password groups to force
+      use of the password in the PAM data even if none is set, replacing
+      part of the old meaning of use_authtok.
+    - use_authtok now only affects the new password during password
+      change, although use_authtok in the auth group has the old meaning
+      for backward compatibility.  (Closes: #549188)
+    - use_first_pass and try_first_pass no longer affect how the new
+      password is obtained during password changes.
+    - Stop returning PAM_IGNORE from pam_setcred.  This confuses older
+      versions of the Linux PAM library.
+    - Better logging in pam_sm_{open,close}_session.
+  * Add try_first_pass to the pam-krb5 password group pam-auth-update
+    configuration.  Unlike the previous behavior, this means that if the
+    Kerberos password is different than the password of an earlier module
+    in the password group, pam-krb5 will now prompt the user for the
+    Kerberos password.
+  * Remove the libtool *.la file and set the permissions of pam_krb5.so
+    properly to work around the annoyances of switching to libtool.
+  * Update standards version to 3.8.3 (no changes required).
+
+ -- Russ Allbery <rra@debian.org>  Fri, 13 Nov 2009 18:19:45 -0800
+
+libpam-krb5 (3.15-1) unstable; urgency=low
+
+  * New upstream release.
+    - Fix a segfault if pam-krb5 is configured with use_first_pass or
+      use_authtok and there is no stored password.  Thanks, Jonathan
+      Guthrie. (Closes: #537729)
+
+ -- Russ Allbery <rra@debian.org>  Tue, 21 Jul 2009 09:24:26 -0700
+
+libpam-krb5 (3.14-1) unstable; urgency=low
+
+  * New upstream release.
+    - Always treat an empty password as an authentication failure rather
+      than passing it to the Kerberos libraries, which may treat it as no
+      password and prompt without our knowledge.  This prompting could
+      lead to authenticating with a password unknown to the PAM stack,
+      which could cause unexpected problems in some PAM configurations.
+    - Fix error handling if ticket cache creation fails.  (LP: #395938)
+  * Mention the PAM autoconfiguration support in README.Debian.
+
+ -- Russ Allbery <rra@debian.org>  Sat, 18 Jul 2009 15:56:45 -0700
+
+libpam-krb5 (3.13-5) unstable; urgency=medium
+
+  * Urgency medium for RC bug fix.
+  * Tighten the dependency on libpam-runtime to ensure that
+    pam-auth-update is available.  While it was introduced in Ubuntu at
+    1.0.1-4ubuntu1, Debian didn't introduce it until 1.0.1-6.  Thanks,
+    Steve Langasek.  (Closes: #537416)
+  * Update standards version to 3.8.2 (no changes required).
+
+ -- Russ Allbery <rra@debian.org>  Sat, 18 Jul 2009 00:02:42 -0700
+
+libpam-krb5 (3.13-4) unstable; urgency=low
+
+  * Return PAM_IGNORE for ignored users in pam_chauthtok instead of
+    PAM_PERM_DENIED.  This change is necessary for the pam-auth-update
+    configuration to work properly.  Thanks, Steve Langasek.
+
+ -- Russ Allbery <rra@debian.org>  Thu, 11 Jun 2009 14:38:10 -0700
+
+libpam-krb5 (3.13-3) unstable; urgency=low
+
+  * Enable pam-auth-update support.  libpam-krb5 will now automatically
+    configure pam_krb5 in the PAM common-* configuration unless it has
+    been edited by the local administrator.  Thanks to Steve Langasek for
+    the implementation.  (Closes: #520793)
+  * Rewrite debian/rules to use overrides and depend on debhelper 7.0.50.
+  * Change section to admin to match override.
+  * Update standards version to 3.8.1 (no changes required).
+
+ -- Russ Allbery <rra@debian.org>  Wed, 10 Jun 2009 17:52:58 -0700
+
+libpam-krb5 (3.13-2) unstable; urgency=low
+
+  * Upload to unstable.
+
+ -- Russ Allbery <rra@debian.org>  Tue, 17 Feb 2009 07:50:53 -0800
+
+libpam-krb5 (3.13-1) experimental; urgency=high
+
+  * New upstream release.
+    - SECURITY (CVE-2009-0360): If invoked in a setuid context, ignore
+      user environment variables that specify the local keytab and
+      Kerberos configuration.  Protects against a privilege escalation
+      vulnerability.
+    - SECURITY (CVE-2009-0361): Protect against applications calling
+      pam_setcred with PAM_REINITIALIZE_CREDS as root in a setuid
+      context.  This API call is designed to reinitialize an existing
+      Kerberos ticket cache and therefore trusts the KRB5CCNAME
+      environment variable, but in a setuid context, this may allow
+      overwriting arbitrary files.
+  * Install the upstream NEWS file as an upstream changelog.
+  * Add ${misc:Depends} to the package dependencies.
+  * Improve wording for the GPL pointer.  The package may be distributed
+    under any version of the GPL.
+
+ -- Russ Allbery <rra@debian.org>  Wed, 11 Feb 2009 10:47:51 -0800
+
+libpam-krb5 (3.12-1) experimental; urgency=low
+
+  * New upstream release.
+    - New alt_auth_map, force_alt_auth, and only_alt_auth options to map
+      usernames to alternative Kerberos principals for authentication.
+    - Log to authpriv, not auth.
+    - Correctly log an exit status of ignore during debugging.
+    - Document ssh session requirement.  (Closes: #492039)
+    - Document ignore handling with [] actions.  (Closes: #492379)
+  * Update to debhelper compatibility mode V7.
+    - Use debhelper rule minimization except for configure.
+    - Let the upstream Makefile do the installation.
+  * Remove NEWS.Debian, only of interest in upgrades from sarge.
+
+ -- Russ Allbery <rra@debian.org>  Thu, 13 Nov 2008 10:56:30 -0800
+
+libpam-krb5 (3.11-3) unstable; urgency=low
+
+  * Fix segfault after detection of unsafe .k5login ownership when
+    search_k5login is set.  Thanks, Andrew Deason.  (Closes: #499479)
+
+ -- Russ Allbery <rra@debian.org>  Thu, 18 Sep 2008 20:45:43 -0700
+
+libpam-krb5 (3.11-2) unstable; urgency=low
+
+  * Fix double-free of the cache data structure if cache creation fails
+    while opening a session or setting credentials.  (LP: #257826)
+
+ -- Russ Allbery <rra@debian.org>  Wed, 13 Aug 2008 23:36:54 -0700
+
+libpam-krb5 (3.11-1) unstable; urgency=low
+
+  * New upstream release.
+    - setcred, open_session, and acct_mgmt now return PAM_IGNORE instead
+      of PAM_SUCCESS for ignored users or non-Kerberos logins.
+    - New defer_pwchange option for fully correct expired password
+      handling.  This is not the default because it will open security
+      holes in badly written applications.
+    - New force_pwchange option to force password change for expired
+      accounts during the authentication step even if the Kerberos library
+      doesn't support this.
+    - Warn if more than one of use_authtok, use_first_pass, and
+      try_first_pass are set and use the strongest.
+    - Remove workaround for older MIT Kerberos that improperly initialized
+      the credential option structure.  The workaround was causing
+      problems for PKINIT with the current libraries (which fix this bug).
+    - Set explicit hidden visibility for all local symbols and further
+      restrict the visible symbols with a version script, removing leaks
+      of symbols into the application namespace.
+  * Install NEWS as the upstream changelog.  Upstream no longer includes a
+    detailed CHANGES file.
+  * Rewrite and expand debian/copyright based on the upstream LICENSE
+    file.
+  * Add Vcs-Git and Vcs-Browser control fields.
+  * Update standards version to 3.8.0 (no changes required).
+  
+ -- Russ Allbery <rra@debian.org>  Thu, 10 Jul 2008 17:07:15 -0700
+
+libpam-krb5 (3.10-1) unstable; urgency=low
+
+  * New upstream release.
+    - If no_ccache is set, don't fail if we can't find module data.
+    - Better error handling when reading keytabs.
+  * Document in README.Debian that accounts must still exist in
+    /etc/shadow when following the standard configuration and suggest an
+    alternate configuration when that isn't appropriate.  Thanks, Raoul
+    Borenius.  (Closes: #452592)
+  * No longer build-depend on comerr-dev, since the module no longer links
+    to it directly.
+  * Update standards version to 3.7.3 (no changes required).
+
+ -- Russ Allbery <rra@debian.org>  Fri, 28 Dec 2007 21:56:26 -0800
+
+libpam-krb5 (3.9-1) unstable; urgency=low
+
+  * New upstream release.
+    - If use_authtok is set, fail if we retrieve a NULL password, since
+      that's how pam_cracklib rejects passwords.  (Closes: #447306)
+    - Add clear_on_fail option to clear the password on failed password
+      change to force later password modules using use_authtok to fail.
+    - Fix parsing of the keytab PAM option.
+    - Return PAM_AUTHINFO_UNAVAIL when unable to resolve the realm.
+    - Additional debugging information in README.
+  * Add Homepage control field.
+
+ -- Russ Allbery <rra@debian.org>  Mon, 12 Nov 2007 16:37:21 -0800
+
+libpam-krb5 (3.8-1) unstable; urgency=low
+
+  * New upstream release.
+    - Restore prompting for expired passwords.  (Closes: #444740)
+    - Correctly handle a negative minimum UID setting.
+
+ -- Russ Allbery <rra@debian.org>  Sun, 30 Sep 2007 11:52:41 -0700
+
+libpam-krb5 (3.7-1) unstable; urgency=low
+
+  * New upstream release.
+    - Read verification principal from keytab if given one explicitly.
+    - Don't store context data until after authentication has succeeded,
+      fixing behavior when stacking multiple invocations in different
+      realms.
+    - Use pam_modutil_getpwnam for better thread safety.
+    - Don't store PAM data unless saving a ticket cache.
+    - Restore safer linker flags, broken with the last release.
+  * Swap Sam and I as maintainer and uploaders.  I'm now upstream and the
+    primary maintainer.
+
+ -- Russ Allbery <rra@debian.org>  Sat, 29 Sep 2007 23:29:51 -0700
+
+libpam-krb5 (3.6-1) unstable; urgency=low
+
+  * New upstream release.
+    - When search_k5login is enabled but the user doesn't exist locally,
+      fall back on standard Kerberos authentication instead of always
+      failing.  Fix other error handling issues with search_k5login.  This
+      fixes non-exploitable segfaults with unknown users.
+    - Clear ticket options when changing passwords.  (Closes: #440050)
+    - Fix and document username canonicalization.  (Closes: #437171)
+    - Add prompt_principal option.
+
+ -- Russ Allbery <rra@debian.org>  Tue, 18 Sep 2007 19:43:18 -0700
+
+libpam-krb5 (3.5-1) unstable; urgency=low
+
+  * New upstream release.
+    - Fix compilation errors with Heimdal.  (Closes: #413553)
+    - Document that ChallengeResponseAuthentication must be enabled in
+      sshd to prompt users to change expired passwords.  (Closes: #411816)
+    - Support specifying a keytab other than the system keytab to use to
+      verify passwords.  (Partly addresses #399002)
+    - New ticket_lifetime, banner, and expose_account config options.
+    - Honor PAM_SILENT where appropriate.
+    - Prefix the default cache type with FILE: to be explicit.
+    - If PAM_USER is set to a fully-qualified principal that the Kerberos
+      library can map to a local account name, reset PAM_USER to that
+      local account name after authentication.
+    - Return better PAM error codes for authentication failures.
+    - Fix various memory leaks and memory handling problems.
+    - Better error message handling with later Kerberos releases.
+    - Various improvements to debug logging.
+  * Update debhelper compatibility level to V5.
+
+ -- Russ Allbery <rra@debian.org>  Tue, 10 Apr 2007 16:37:41 -0700
+
+libpam-krb5 (2.6-1) unstable; urgency=low
+
+  * New upstream release.
+    - Don't assume the return from pam_get_user will persist.
+    - Avoid a use of freed memory when debugging is enabled.
+    - Bind function calls within the PAM module where possible.
+
+ -- Russ Allbery <rra@debian.org>  Wed, 29 Nov 2006 13:46:32 -0800
+
+libpam-krb5 (2.5-1) unstable; urgency=low
+
+  * New upstream release.
+    - Don't free the results of pam_get_item on password changes.  Thanks,
+      Arne Nordmark.  (Closes: #395041)
+    - Be more paranoid when checking authorization in pam_sm_acct_mgmt.
+    - Zero passwords before freeing them.
+
+ -- Russ Allbery <rra@debian.org>  Fri,  3 Nov 2006 20:17:56 -0800
+
+libpam-krb5 (2.4-1) unstable; urgency=low
+
+  * New upstream release.
+    - Fix compilation with Heimdal.  (Closes: #391276)
+    - Better error handling and several uninitialized variable fixes.
+    - Log when an unknown option is passed to the module.
+
+ -- Russ Allbery <rra@debian.org>  Thu,  5 Oct 2006 16:34:48 -0700
+
+libpam-krb5 (2.3-1) unstable; urgency=low
+
+  * New upstream release.
+    - Fix prompting when the Kerberos library sends more than one prompt,
+      such as for changing an expired password.  Thanks to Joachim Keltsch
+      for the analysis and an initial patch.  (Closes: #385774)
+    - Add the retain_after_close option.
+
+ -- Russ Allbery <rra@debian.org>  Sun,  3 Sep 2006 19:39:54 -0700
+
+libpam-krb5 (2.2-1) unstable; urgency=low
+
+  * New upstream release.
+    - Allow the default realm to be overridden in the PAM options.
+    - Use the realm when reading krb5.conf configuration.
+
+ -- Russ Allbery <rra@debian.org>  Mon, 28 Aug 2006 16:39:31 -0700
+
+libpam-krb5 (2.1-1) unstable; urgency=low
+
+  * New upstream release.
+    - Strip off a FILE: prefix from the cache path before creating it in
+      case the user set ccache or ccache_dir with a cache type prefix.
+  * Upstream now uses Autoconf, so update the build rules accordingly.
+  * Upstream renamed CHANGES.old to CHANGES-old.
+
+ -- Russ Allbery <rra@debian.org>  Sat, 26 Aug 2006 01:35:12 -0700
+
+libpam-krb5 (2.0-1) unstable; urgency=low
+
+  * New upstream release from a new upstream maintainer.
+    - Incorporated all Debian packages into the upstream release.
+    - Added new use_authtok, ignore_k5login, minimum_uid, and
+      renew_lifetime configuration options.  (Closes: #360601, #355970)
+    - Support setting some options in krb5.conf.
+    - Better support for password changing, including more correct saving
+      of passwords in the PAM stack, support for initial checks, and
+      better behavior as part of a password change stack.
+    - Fall back to the default ticket cache when reinitializing
+      credentials without a KRB5CCNAME setting.
+    - Understand the FILE: prefix to Kerberos ticket caches when
+      initializing the cache.  (Closes: #381849)
+    - Improved support for the no_ccache option.
+    - Rewritten and significantly improved documentation.
+    - Use standard Kerberos library calls for ticket validation.
+    - Add a trailing nul to the password in the prompter function,
+      matching the behavior of the default Kerberos prompter.
+    - Extensive code, error status, memory, and namespace cleanup.
+  * Improve the package long description, removing the misleading caution
+    about use with network services.
+  * Update standards version to 3.7.2 (no changes required).
+  * Add build-arch and build-indep rulies just in case.
+
+ -- Russ Allbery <rra@debian.org>  Fri, 11 Aug 2006 14:12:02 -0700
+
+libpam-krb5 (1.2.0-3) unstable; urgency=low
+
+  * Only call krb5_kuserok when the account to which we're authenticating
+    is a local account to allow use of pam_krb5 for application
+    authentication of users without local accounts.  (Closes: #354133)
+  * Restructure the code to do user validation after obtaining their
+    initial tickets.  This eliminates a lot of confusing special cases and
+    deferred checking and makes it easier to audit the code.
+  * Don't create the ticket cache until after successful authentication.
+    Otherwise, we leave files behind in /tmp.
+  * Document what principals libpam_krb5.so looks for in the system keytab
+    to do ticket validation.  (Closes: #350556)
+
+ -- Russ Allbery <rra@debian.org>  Wed,  8 Mar 2006 16:58:13 -0800
+
+libpam-krb5 (1.2.0-2) unstable; urgency=low
+
+  * Always use a disk cache for temporary storage of credentials and cope
+    with not having module-specific data during pam_sm_setcred by passing
+    the cache path in an environment variable.  This is required to cope
+    with OpenSSH's technique (when using ChallengeResponseAuthentication)
+    of doing PAM authentication in a child process and then opening the
+    session in the parent.  (Closes: #339734)
+  * Only initialize the ticket cache once no matter how many times setcred
+    is called.  Saves duplicate work and works around a bug in xdm, which
+    calls setcred repeatedly and discards the environment set by the final
+    call.
+  * Don't assume we already have a context when changing passwords; passwd
+    doesn't work that way.  (Closes: #344003)
+  * Fix the test for the new password.  I don't think this would have
+    worked at all before.
+  * Improve debugging output for password changes.
+  * If search_k5login is specified but no .k5login is found, still check
+    the user with krb5_kuserok in case there are custom principal mappings
+    defined.
+  * Handle ignore_root in a cleaner fashion and add support for
+    ignore_root on password changes.
+  * Depend on krb5-config.  (Closes: #342271)
+  * Document that ccache and ccache_dir must be specified as options to
+    the session module.  (Closes: #341926)
+  * Document that pam_sm_authenticate and pam_sm_setcred also call
+    krb5_kuserok.
+  * Properly override the upstream CFLAGS so that debugging builds work.
+  * Don't ignore errors from make clean.
+  * Providing binary-indep in debian/rules is required by Policy even if
+    there are no arch-independent packages.  Whoops.
+
+ -- Russ Allbery <rra@debian.org>  Mon, 16 Jan 2006 18:11:57 -0800
+
+libpam-krb5 (1.2.0-1) unstable; urgency=low
+
+  * New upstream maintainer and version.
+    - Now supports reinitialization of credentials properly, allowing
+      programs such as xlock to refresh credentials.  (Closes: #309345)
+      This currently only works with versions of xlock that try to refresh
+      credentials (xlockmore does not).
+    - Do not include the principal name in the prompt.  This breaks some
+      SSH clients and isn't necessary.  (Closes: #321319)
+    - New ignore_root option to skip this module for root authentication,
+      ameliorating pam_krb5 problems when the network is down.  Partially
+      addresses #315622.
+  * Bug fixes to upstream version (all sent back to the maintainer):
+    - Succeed silently in account management if Kerberos wasn't used.
+    - Parse ccache_dir correctly.
+    - Bring the man page up to date.
+    - Link with -z defs to ensure all symbols were found.
+  * Readd the ccache option with a better implementation and allow for
+    randomization of the filename using mkstemp even if ccache is used.
+  * Add search_k5login option to allow authentication based on the
+    principals listed in ~/.k5login when the local account name doesn't
+    easily map to the Kerberos principal.
+  * Add specific configuration recommendations to README.Debian.
+  * Install upstream changelog now that there is one.
+  * Add a watch file.
+  * Update standards version to 3.6.2 (no changes required).
+  * Remove maintainer from uploaders; dak can handle this properly.
+  * Update uploader address.
+  * Remove unnecessary code from debian/rules.
+
+ -- Russ Allbery <rra@debian.org>  Fri, 18 Nov 2005 14:48:57 -0800
+
+libpam-krb5 (1.0-12) unstable; urgency=low
+
+  * Revert the PAM_REINITIALIZE_CREDS change as it breaks sshd with
+    UsePAM.  Add a source comment explaining the confusion about the
+    meaning of this flag.
+
+ -- Russ Allbery <rra@stanford.edu>  Wed, 13 Apr 2005 16:01:45 -0700
+
+libpam-krb5 (1.0-11) unstable; urgency=low
+
+  * Return PAM_CRED_UNAVAIL to PAM_REINITIALIZE_CREDS as the apparently
+    most appropriate error message.  (Closes: #191001)
+  * Remove reference to non-existant man page pam.conf(8) and change
+    pam(8) to pam(7).  Thanks, Nik A. Melchior.  (Closes: #271066)
+  * Include the user UID in the default ticket cache name so that rpc.gssd
+    and similar programs can find the ticket cache.  Document the random
+    string in the default ticket cache name in the man page.  Thanks,
+    Steinar H. Gunderson.  (Closes: #295027)
+  * Really remove stray ex.doc-base.package file.
+
+ -- Russ Allbery <rra@stanford.edu>  Wed, 13 Apr 2005 13:54:47 -0700
+
+libpam-krb5 (1.0-10) unstable; urgency=low
+
+  * Free authentication context used to prevent KDC spoofing, fixing a
+    file descriptor leak.  Thanks, Martin Kögler.  (Closes: #194542)
+  * Fix use_first_pass and try_first_pass for password changes and report
+    password change errors via the PAM conversation.  Thanks, Martin Mares.
+    (Closes: #133461)
+  * Return PAM_USER_UNKNOWN and PAM_AUTHINFO_UNAVAIL where appropriate
+    when authenticating.  Thanks, Roland Bauerschmidt.  (Closes: #239399)
+  * Add missing includes to eliminate warnings.
+  * Update standards version to 3.6.1.
+    - Build with -g -O2 by default and support requesting no optimization.
+  * Simplified the build system.  The copy of source files into a
+    subdirectory isn't needed since we don't apply patches at build time,
+    so the package can be built normally with a regular make invocation.
+  * Be sure not to pass -I/usr/include to the compiler.
+  * Updated the build system to debhelper 4.
+    - Removed unneeded call to dh_suidregister.
+    - Use dh_installman rather than dh_installmanpages.
+  * Flesh out the package description.
+  * Removed stray ex.doc-base.package file.
+  * Refer to /usr/share/common-licenses in debian/copyright for the GPL
+    and remove dh_make boilerplate language.
+
+ -- Russ Allbery <rra@stanford.edu>  Mon,  6 Sep 2004 16:39:13 -0400
+
+libpam-krb5 (1.0-9) unstable; urgency=high
+
+  * Upload with no code changes in order to pick up symbol versions,
+    Closes: #260372 
+  * High urgency because we want this to make it into sarge.
+  * Don't build-depend on libdb2-dev, Closes: #248517
+
+ -- Sam Hartman <hartmans@mit.edu>  Wed, 18 Aug 2004 13:47:38 -0400
+
+libpam-krb5 (1.0-8) unstable; urgency=low
+
+  * Don't require user to exist in NSS, Closes: #141288
+  * Conflict with libpam-heimdal, Closes: #146279
+  * Fix pam_silent handling thanks to nocturne@permabit.com, Closes: #114475
+
+ -- Sam Hartman <hartmans@debian.org>  Sun,  4 Aug 2002 17:57:28 -0400
+
+libpam-krb5 (1.0-7) unstable; urgency=low
+
+  * Move fron non-us to main--second to last package of mine
+
+ -- Sam Hartman <hartmans@debian.org>  Sat,  6 Apr 2002 20:55:14 -0500
+
+libpam-krb5 (1.0-6) unstable; urgency=low
+
+  * New version that supports sessions management.  You may want to use
+    this to write out credentials at session managemment time, for example
+    so they can be used  by openafs.
+
+ -- Sam Hartman <hartmans@debian.org>  Sat, 12 May 2001 18:41:49 -0400
+
+libpam-krb5 (1.0-5) unstable; urgency=low
+
+  * Fix build-depends, closes: #80555
+
+ -- Sam Hartman <hartmans@debian.org>  Wed, 27 Dec 2000 17:02:18 -0500
+
+libpam-krb5 (1.0-4) unstable; urgency=medium
+
+  * Wildcard enctype matching so that you don't have to have a des-cbc-md5
+    key.  Previously, if you did not have a des-cbc-md5 key, it looks like
+    the code might not verify the ticket against the key, treating it as
+    if you had no local key and blindly trusted the KDC.  In practice this
+    is not an issue with most Kerberos setups.
+  * Test against pam service keys like imap rather than just the host
+    service key.  We still prefer host to service keys.
+
+ -- Sam Hartman <hartmans@debian.org>  Tue, 19 Dec 2000 17:49:12 -0500
+
+libpam-krb5 (1.0-3) unstable; urgency=low
+
+  * Add code to destroy ccache  on logout.
+  * Upload to Debian (Closes: BUG#79001)
+
+ -- Sam Hartman <hartmans@debian.org>  Fri,  8 Dec 2000 13:46:06 -0500
+
+libpam-krb5 (1.0-2) unstable; urgency=low
+
+  * Release MIT Kerberos5 version of PAM module.
+
+ -- Sam Hartman <hartmans@mit.edu>  Thu, 30 Nov 2000 17:49:41 -0500
+
+libpam-heimdal (1.0-1) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Brian May <bam@debian.org>  Fri, 17 Nov 2000 10:32:40 +1100
+
+
