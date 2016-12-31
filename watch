@@ -1,0 +1,3 @@
+version=3
+opts=pgpsigurlmangle=s/$/.asc/ \
+    http://archives.eyrie.org/software/kerberos/pam-krb5-(.*)\.tar\.xz

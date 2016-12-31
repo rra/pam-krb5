@@ -1,0 +1,94 @@
+libpam-krb5 and libpam-heimdal for Debian
+-----------------------------------------
+
+There are two packages in Debian for a Kerberos PAM module, built from the
+same source: libpam-krb5 and libpam-heimdal.  The first is linked against
+the MIT Kerberos libraries and the second is linked against the Heimdal
+Kerberos libraries.  Otherwise, they're identical and provide the same
+features.
+
+When you initially install either package, you will have the option to
+choose to automatically configure your PAM configuration to include it.
+If you do so, a standard set of PAM options will be used that will work
+for most users.  If those options do not work for you or if you can't use
+automatic PAM configuration for some reason (such as another PAM module
+that doesn't support it), see below.
+
+For a system where user account authentication should be handled primarily
+through Kerberos and password changes should be made against Kerberos,
+with fallback to local authentication, the following basic configuration
+should work.  In /etc/pam.d/common-auth, put:
+
+    auth  sufficient  pam_krb5.so minimum_uid=1000
+    auth  required    pam_unix.so try_first_pass nullok_secure
+
+In /etc/pam.d/common-session:
+
+    session  optional  pam_krb5.so minimum_uid=1000
+    session  required  pam_unix.so
+
+In /etc/pam.d/common-account:
+
+    account  required  pam_krb5.so minimum_uid=1000
+    account  required  pam_unix.so
+
+(Note that the account function of pam_krb5.so will return ignore if the
+user didn't log in via Kerberos, so this is will still allow access via a
+local password.  It will ensure that, if the user did log in via Kerberos,
+their Kerberos authentication is checked against ~/.k5login if present.)
+
+Finally, in /etc/pam.d/common-password:
+
+    password  sufficient  pam_krb5.so minimum_uid=1000
+    password  required    pam_unix.so nullok obscure sha512
+
+Note the minimum_uid=1000 on all of these lines.  This is optional, but
+normally sites do not create a single root@example.com Kerberos principal
+and use it for authentication to root accounts, and normally you don't
+want to allow Kerberos authentication to system accounts.  Also, trying to
+do Kerberos authentication when the network is down may cause delays or
+timeouts, and this way such authentication is never attempted for a root
+login.  On Debian systems, regular user accounts normally start at UID
+1000; you may need to change this for local policy.
+
+Unfortunately, if you do need to change the UID limit, you won't be able
+to use the normal pam-auth-update support in Debian for automatically
+managing the PAM configuration and will need to manually maintain the
+files in /etc/pam.d.  This is due to complex restrictions of Kerberos
+configuration handling and backward compatibility that may be fixable in a
+later release.  See <https://bugs.debian.org/756880> for more details.
+
+This configuration will still require that users be listed in /etc/shadow,
+since otherwise the pam_unix account module will fail.  Normally, accounts
+that should only use Kerberos authentication should be created with
+adduser --disabled-password.  If you don't want the accounts to be listed
+in /etc/shadow at all (if, for example, you're using some other source
+than files for your nsswitch configuration), you can mark the pam_krb5
+account module as sufficient rather than required so that pam_unix isn't
+run.  This will mean that you won't be able to disable accounts locally.
+
+If you have local passwords for Kerberos users and want to synchronize the
+local and Kerberos password on password change, instead use an
+/etc/pam.d/common-password configuration of:
+
+    password  requisite  pam_krb5.so minimum_uid=1000
+    password  required   pam_unix.so try_first_pass use_authtok obscure sha512
+
+If you regularly use ticket forwarding (such as with Kerberos rlogin or
+ssh with GSSAPI support), you may wish to add the "forwardable" option to
+the pam_krb5.so line in /etc/pam.d/common-auth or equivalently set
+forwardable in /etc/krb5.conf (in either [libdefaults] for all Kerberos
+applications or in a pam group in [appdefaults] just for the PAM module).
+
+The above configurations assume that one can generate a person's Kerberos
+credential by appending the default realm to the local username.  If this
+is not the case for your system, make sure that every account for which
+this is not the case has a .k5login file in their home directory listing
+the Kerberos principals that should have access (or which is empty if none
+should).  Otherwise, someone will be able to access that account if they
+know the password of the Kerberos principal in the default realm with the
+same name.  In this situation, you will probably also want to add the
+"search_k5login" option to the pam_krb5.so line in /etc/pam.d/common-auth;
+see the pam_krb5(5) man page for more information.
+
+ -- Russ Allbery <rra@debian.org>, Sat, 31 Dec 2016 13:31:09 -0800

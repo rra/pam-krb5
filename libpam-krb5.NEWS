@@ -1,0 +1,27 @@
+libpam-krb5 (4.4-3) unstable; urgency=low
+
+  The default PAM configuration for the password stack changed in this
+  version to skip all other modules if the Kerberos password change
+  succeeded.  This works better and with fewer strange errors for the
+  common case of Kerberos accounts not having a local password.
+
+  If you want to instead synchronize your local and Kerberos passwords,
+  you will need to not manage the module with pam-auth-update and instead
+  manually configure the password stack to run both pam_krb5 and pam_unix.
+  See /usr/share/doc/libpam-krb5/README.Debian.gz for more details.
+
+ -- Russ Allbery <rra@debian.org>  Sun, 25 Sep 2011 19:40:09 -0700
+
+libpam-krb5 (4.0-1) unstable; urgency=low
+
+  The meaning of use_authtok has changed in this version to only affect
+  the new password when changing passwords.  If you were using this
+  parameter in the auth group, you should now use force_first_pass
+  instead.  If you were using it in the password group, you should add
+  try_first_pass, use_first_pass, or force_first_pass depending on how you
+  want to handle prompting for the old password.  use_authtok in the auth
+  group will temporarily be treated as equivalent to force_first_pass for
+  backwards compatibility.
+
+ -- Russ Allbery <rra@debian.org>  Fri, 13 Nov 2009 18:26:23 -0800
+
