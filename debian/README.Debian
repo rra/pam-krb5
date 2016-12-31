@@ -1,12 +1,18 @@
-libpam-krb5 for Debian
-----------------------
+libpam-krb5 and libpam-heimdal for Debian
+-----------------------------------------
 
-When you initially install libpam-krb5, you will have the option to choose
-to automatically configure your PAM configuration to include it.  If you
-do so, a standard set of PAM options will be used that will work for most
-users.  If those options do not work for you or if you can't use automatic
-PAM configuration for some reason (such as another PAM module that doesn't
-support it), see below.
+There are two packages in Debian for a Kerberos PAM module, built from the
+same source: libpam-krb5 and libpam-heimdal.  The first is linked against
+the MIT Kerberos libraries and the second is linked against the Heimdal
+Kerberos libraries.  Otherwise, they're identical and provide the same
+features.
+
+When you initially install either package, you will have the option to
+choose to automatically configure your PAM configuration to include it.
+If you do so, a standard set of PAM options will be used that will work
+for most users.  If those options do not work for you or if you can't use
+automatic PAM configuration for some reason (such as another PAM module
+that doesn't support it), see below.
 
 For a system where user account authentication should be handled primarily
 through Kerberos and password changes should be made against Kerberos,
@@ -85,4 +91,4 @@ same name.  In this situation, you will probably also want to add the
 "search_k5login" option to the pam_krb5.so line in /etc/pam.d/common-auth;
 see the pam_krb5(5) man page for more information.
 
- -- Russ Allbery <rra@debian.org>, Wed, 19 Oct 2016 11:24:05 -0700
+ -- Russ Allbery <rra@debian.org>, Sat, 31 Dec 2016 13:31:09 -0800
