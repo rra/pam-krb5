@@ -7,7 +7,6 @@ Uploaders:
 Standards-Version: 3.9.8
 Build-Depends:
  debhelper (>= 10),
- dh-autoreconf,
  heimdal-multidev,
  krb5-config,
  krb5-multidev,
