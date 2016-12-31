@@ -1,4 +1,4 @@
-libpam-krb5 (4.7-4) UNRELEASED; urgency=medium
+libpam-krb5 (4.7-4) unstable; urgency=medium
 
   * Re-add libpam-heimdal now that Heimdal upstream has released a new
     stable version and seems to be active again.
@@ -10,7 +10,7 @@ libpam-krb5 (4.7-4) UNRELEASED; urgency=medium
   * Remove libpam0g version qualification on dependency.  The required
     version is older than oldstable.
 
- -- Russ Allbery <rra@debian.org>  Sat, 31 Dec 2016 13:32:40 -0800
+ -- Russ Allbery <rra@debian.org>  Sat, 31 Dec 2016 13:42:47 -0800
 
 libpam-krb5 (4.7-3) unstable; urgency=medium
 
