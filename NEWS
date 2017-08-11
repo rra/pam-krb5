@@ -6,6 +6,9 @@ pam-krb5 4.8 (unreleased)
     from PKINIT attempts, report to the user the reason for a PKINIT
     failure.  Based on work by Henry Jacques.
 
+    Rename the script to bootstrap from a Git checkout to bootstrap,
+    matching the emerging consensus in the Autoconf world.
+
     Update to rra-c-util 6.3:
 
     * Fix new warnings in GCC 7.
