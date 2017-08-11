@@ -17,7 +17,7 @@
  * krb5_free_unparsed_name() for both APIs since it's the most specific call.
  *
  * The canonical version of this file is maintained in the rra-c-util package,
- * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
+ * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
  *
@@ -42,8 +42,10 @@
 #endif
 #include <portable/macros.h>
 
-#ifdef HAVE_KRB5_H
+#if defined(HAVE_KRB5_H)
 # include <krb5.h>
+#elif defined(HAVE_KERBEROSV5_KRB5_H)
+# include <kerberosv5/krb5.h>
 #else
 # include <krb5/krb5.h>
 #endif
@@ -54,7 +56,7 @@
 # ifdef KRB5_WELLKNOWN_NAMESTR
 #  define KRB5_WELLKNOWN_NAME KRB5_WELLKNOWN_NAMESTR
 # else
-#  define KRB5_WELLKNOWN_NAMESTR "WELLKNOWN"
+#  define KRB5_WELLKNOWN_NAME "WELLKNOWN"
 # endif
 #endif
 
@@ -63,7 +65,16 @@
 # ifdef KRB5_ANONYMOUS_PRINCSTR
 #  define KRB5_ANON_NAME KRB5_ANONYMOUS_PRINCSTR
 # else
-#  define KRB5_ANONYMOUS_PRINCSTR "ANONYMOUS"
+#  define KRB5_ANON_NAME "ANONYMOUS"
+# endif
+#endif
+
+/* Heimdal: KRB5_ANON_REALM, MIT: KRB5_ANONYMOUS_REALMSTR. */
+#ifndef KRB5_ANON_REALM
+# ifdef KRB5_ANONYMOUS_REALMSTR
+#  define KRB5_ANON_REALM KRB5_ANONYMOUS_REALMSTR
+# else
+#  define KRB5_ANON_REALM "WELLKNOWN:ANONYMOUS"
 # endif
 #endif
 

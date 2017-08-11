@@ -7,9 +7,10 @@
  * external data files instead of coding everything in C.
  *
  * The canonical version of this file is maintained in the rra-c-util package,
- * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
+ * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
+ * Copyright 2016 Russ Allbery <eagle@eyrie.org>
  * Copyright 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *
@@ -60,9 +61,9 @@ BEGIN_DECLS
 
 /*
  * Given the file name of an interaction script (which may be a full path or
- * relative to SOURCE or BUILD) and configuration containing other parameters
- * such as the user, run that script, reporting the results via the TAP
- * format.
+ * relative to C_TAP_SOURCE or C_TAP_BUILD) and configuration containing other
+ * parameters such as the user, run that script, reporting the results via the
+ * TAP format.
  */
 void run_script(const char *file, const struct script_config *)
     __attribute__((__nonnull__));

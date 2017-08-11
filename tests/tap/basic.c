@@ -10,9 +10,10 @@
  * up the TAP output format, or finding things in the test environment.
  *
  * This file is part of C TAP Harness.  The current version plus supporting
- * documentation is at <http://www.eyrie.org/~eagle/software/c-tap-harness/>.
+ * documentation is at <https://www.eyrie.org/~eagle/software/c-tap-harness/>.
  *
- * Copyright 2009, 2010, 2011, 2012, 2013, 2014 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016
+ *     Russ Allbery <eagle@eyrie.org>
  * Copyright 2001, 2002, 2004, 2005, 2006, 2007, 2008, 2011, 2012, 2013, 2014
  *     The Board of Trustees of the Leland Stanford Junior University
  *
@@ -192,7 +193,7 @@ check_diag_files(void)
     struct diag_file *file;
     fpos_t where;
     size_t length;
-    int incomplete;
+    int size, incomplete;
 
     /*
      * Walk through each file and read each line of output available.  The
@@ -216,7 +217,8 @@ check_diag_files(void)
         /* Continue until we get EOF or an incomplete line of data. */
         incomplete = 0;
         while (!feof(file->file) && !incomplete) {
-            if (fgets(file->buffer, file->bufsize, file->file) == NULL) {
+            size = file->bufsize > INT_MAX ? INT_MAX : (int) file->bufsize;
+            if (fgets(file->buffer, size, file->file) == NULL) {
                 if (ferror(file->file))
                     sysbail("cannot read from %s", file->name);
                 continue;
@@ -807,7 +809,7 @@ bstrndup(const char *s, size_t n)
     /* Don't assume that the source string is nul-terminated. */
     for (p = s; (size_t) (p - s) < n && *p != '\0'; p++)
         ;
-    length = p - s;
+    length = (size_t) (p - s);
     copy = malloc(length + 1);
     if (p == NULL)
         sysbail("failed to strndup %lu bytes", (unsigned long) length);
@@ -818,17 +820,17 @@ bstrndup(const char *s, size_t n)
 
 
 /*
- * Locate a test file.  Given the partial path to a file, look under BUILD and
- * then SOURCE for the file and return the full path to the file.  Returns
- * NULL if the file doesn't exist.  A non-NULL return should be freed with
- * test_file_path_free().
+ * Locate a test file.  Given the partial path to a file, look under
+ * C_TAP_BUILD and then C_TAP_SOURCE for the file and return the full path to
+ * the file.  Returns NULL if the file doesn't exist.  A non-NULL return
+ * should be freed with test_file_path_free().
  */
 char *
 test_file_path(const char *file)
 {
     char *base;
     char *path = NULL;
-    const char *envs[] = { "BUILD", "SOURCE", NULL };
+    const char *envs[] = { "C_TAP_BUILD", "C_TAP_SOURCE", NULL };
     int i;
 
     for (i = 0; envs[i] != NULL; i++) {
@@ -858,7 +860,7 @@ test_file_path_free(char *path)
 
 
 /*
- * Create a temporary directory, tmp, under BUILD if set and the current
+ * Create a temporary directory, tmp, under C_TAP_BUILD if set and the current
  * directory if it does not.  Returns the path to the temporary directory in
  * newly allocated memory, and calls bail on any failure.  The return value
  * should be freed with test_tmpdir_free.
@@ -873,7 +875,7 @@ test_tmpdir(void)
     const char *build;
     char *path = NULL;
 
-    build = getenv("BUILD");
+    build = getenv("C_TAP_BUILD");
     if (build == NULL)
         build = ".";
     path = concat(build, "/tmp", (const char *) 0);

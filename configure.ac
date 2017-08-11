@@ -3,7 +3,7 @@ dnl
 dnl Written by Russ Allbery <eagle@eyrie.org>
 dnl Copyright 2009, 2010, 2011, 2012, 2013
 dnl     The Board of Trustees of the Leland Stanford Junior University
-dnl Copyright 2005, 2006, 2007, 2008, 2009, 2014
+dnl Copyright 2005, 2006, 2007, 2008, 2009, 2014, 2017
 dnl     Russ Allbery <eagle@eyrie.org>
 dnl Copyright 2005 Andres Salomon <dilinger@debian.org>
 dnl Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
@@ -19,8 +19,13 @@ AM_INIT_AUTOMAKE([1.11 check-news dist-xz foreign silent-rules subdir-objects
     -Wall -Werror])
 AM_MAINTAINER_MODE
 
+dnl Detect unexpanded macros.
+m4_pattern_forbid([^PKG_])
+m4_pattern_forbid([^_?RRA_])
+
 AC_PROG_CC
 AC_USE_SYSTEM_EXTENSIONS
+RRA_PROG_CC_WARNINGS_FLAGS
 AC_SYS_LARGEFILE
 AM_PROG_CC_C_O
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
@@ -32,7 +37,7 @@ RRA_LD_VERSION_SCRIPT
 dnl Probe for the functionality of the PAM libraries and their include file
 dnl naming.  Mac OS X puts them in pam/* instead of security/*.
 AC_SEARCH_LIBS([pam_set_data], [pam])
-AC_CHECK_FUNCS([pam_getenv pam_modutil_getpwnam])
+AC_CHECK_FUNCS([pam_getenv pam_getenvlist pam_modutil_getpwnam])
 AC_REPLACE_FUNCS([pam_syslog pam_vsyslog])
 AC_CHECK_HEADERS([security/pam_modutil.h], [],
     [AC_CHECK_HEADERS([pam/pam_modutil.h])])
@@ -42,8 +47,7 @@ AC_CHECK_HEADERS([security/pam_appl.h], [],
 AC_CHECK_HEADERS([security/pam_ext.h], [],
     [AC_CHECK_HEADERS([pam/pam_ext.h])])
 RRA_HEADER_PAM_CONST
-
-dnl Needed for the pam_vsyslog replacement function.
+RRA_HEADER_PAM_STRERROR_CONST
 AC_DEFINE([MODULE_NAME], ["pam_krb5"],
     [The name of the PAM module, used by the pam_vsyslog replacement.])
 
@@ -91,7 +95,7 @@ dnl The kadmin client libraries are only used for the test suite.
 RRA_LIB_KADM5CLNT_OPTIONAL
 RRA_LIB_KADM5CLNT_SWITCH
 AC_CHECK_HEADERS([kadm5/kadm5_err.h])
-AC_CHECK_FUNCS([kadm5_init_with_skey_ctx])
+AC_CHECK_FUNCS([kadm5_init_krb5_context kadm5_init_with_skey_ctx])
 RRA_LIB_KADM5CLNT_RESTORE
 
 dnl Regex support is only used for the test suite.
@@ -100,13 +104,12 @@ AC_CHECK_HEADER([regex.h], [AC_CHECK_FUNCS([regcomp])])
 dnl Other probes of the system libraries.
 AC_HEADER_STDBOOL
 AC_CHECK_HEADERS([strings.h sys/bittypes.h sys/select.h sys/time.h])
-AC_CHECK_DECLS([snprintf, strlcat, strlcpy, vsnprintf])
+AC_CHECK_DECLS([snprintf, vsnprintf])
 AC_TYPE_LONG_LONG_INT
 AC_CHECK_TYPES([ssize_t], [], [],
     [#include <sys/types.h>])
 RRA_FUNC_SNPRINTF
-AC_REPLACE_FUNCS([asprintf issetugid mkstemp reallocarray strlcat strlcpy])
-AC_REPLACE_FUNCS([strndup])
+AC_REPLACE_FUNCS([asprintf issetugid mkstemp reallocarray strndup])
 
 dnl Try to specify the binding so that any references within the PAM module
 dnl are resolved to the functions in that module in preference to any external

@@ -6,7 +6,7 @@
  * (favoring the Heimdal API as the exposed one).
  *
  * The canonical version of this file is maintained in the rra-c-util package,
- * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
+ * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
  *
@@ -53,6 +53,14 @@
 /* Heimdal doesn't define KADM5_MISSING_KRB5_CONF_PARAMS. */
 #ifndef KADM5_MISSING_KRB5_CONF_PARAMS
 # define KADM5_MISSING_KRB5_CONF_PARAMS KADM5_MISSING_CONF_PARAMS
+#endif
+
+/*
+ * MIT Kerberos provides this function for pure kadmin clients to get a
+ * Kerberos context.  With Heimdal, just use krb5_init_context.
+ */
+#ifndef HAVE_KADM5_INIT_KRB5_CONTEXT
+# define kadm5_init_krb5_context(c) krb5_init_context(c)
 #endif
 
 /*

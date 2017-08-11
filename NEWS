@@ -6,6 +6,25 @@ pam-krb5 4.8 (unreleased)
     from PKINIT attempts, report to the user the reason for a PKINIT
     failure.  Based on work by Henry Jacques.
 
+    Update to rra-c-util 6.3:
+
+    * Fix new warnings in GCC 7.
+    * Probe for warning flags instead of hard-coding a list.
+    * New test for obsolete URLs and email addresses.
+    * Remove unused portable replacements for strlcpy and strlcat.
+    * Use C_TAP_SOURCE and C_TAP_BUILD environment variables in tests.
+    * Fix portability defines for anonymous principal strings.
+    * Clear errno on pam_modutil_getpwnam to improve other testing.
+    * Add portability defines for macOS's PAM implementation.
+    * Add new Autoconf macro to probe for pam_strerror const usage.
+    * Support Solaris 10's included Kerberos.
+
+    Update to C TAP Harness 3.4:
+
+    * Fix segfault in runtests with an empty test list.
+    * Display verbose test results with -v or C_TAP_VERBOSE.
+    * Test infrastructure builds cleanly with Clang warnings.
+
 pam-krb5 4.7 (2014-12-25)
 
     Add a no_update_user option that disables the normal update of the

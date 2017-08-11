@@ -6,7 +6,7 @@
  * manipulation functions.
  *
  * The canonical version of this file is maintained in the rra-c-util package,
- * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
+ * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
  * Copyright 2010, 2011, 2014
@@ -74,7 +74,7 @@ pam_set_data(pam_handle_t *pamh, const char *item, void *data,
     for (p = pamh->data; p != NULL; p = p->next)
         if (strcmp(p->name, item) == 0) {
             if (p->cleanup != NULL)
-                p->cleanup (pamh, p->data, PAM_DATA_REPLACE);
+                p->cleanup(pamh, p->data, PAM_DATA_REPLACE);
             p->data = data;
             p->cleanup = cleanup;
             return PAM_SUCCESS;
@@ -280,8 +280,6 @@ pam_putenv(pam_handle_t *pamh, const char *setting)
     size_t i, j;
     char **env;
 
-    if (setting == NULL)
-        return PAM_PERM_DENIED;
     equals = strchr(setting, '=');
     if (equals != NULL)
         namelen = equals - setting;

@@ -7,7 +7,7 @@
  * external data files instead of coding everything in C.
  *
  * The canonical version of this file is maintained in the rra-c-util package,
- * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
+ * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
  * Copyright 2011, 2012, 2014
@@ -99,6 +99,7 @@ static const struct {
     { "PAM_AUTHINFO_UNAVAIL", PAM_AUTHINFO_UNAVAIL },
     { "PAM_IGNORE",           PAM_IGNORE           },
     { "PAM_NEW_AUTHTOK_REQD", PAM_NEW_AUTHTOK_REQD },
+    { "PAM_SESSION_ERR",      PAM_SESSION_ERR      },
     { "PAM_SUCCESS",          PAM_SUCCESS          },
     { "PAM_USER_UNKNOWN",     PAM_USER_UNKNOWN     },
 };

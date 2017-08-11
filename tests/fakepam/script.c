@@ -7,9 +7,10 @@
  * external data files instead of coding everything in C.
  *
  * The canonical version of this file is maintained in the rra-c-util package,
- * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
+ * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
+ * Copyright 2016 Russ Allbery <eagle@eyrie.org>
  * Copyright 2011, 2012, 2014
  *     The Board of Trustees of the Leland Stanford Junior University
  *
@@ -57,7 +58,7 @@
  * available, we skip this test.
  */
 #ifdef HAVE_REGCOMP
-static void
+static void __attribute__((__format__(printf, 3, 4)))
 like(const char *wanted, const char *seen, const char *format, ...)
 {
     va_list args;
@@ -117,7 +118,7 @@ like(const char *wanted, const char *seen, const char *format UNUSED, ...)
  *
  * Eventually calls either is_string or ok to report results via TAP.
  */
-static void
+static void __attribute__((__format__(printf, 3, 4)))
 compare_string(char *wanted, char *seen, const char *format, ...)
 {
     va_list args;
@@ -133,7 +134,7 @@ compare_string(char *wanted, char *seen, const char *format, ...)
     length = strlen(wanted);
     if (wanted[0] == '/' && wanted[length - 1] == '/') {
         regex = bstrndup(wanted + 1, length - 2);
-        like(regex, seen, comment);
+        like(regex, seen, "%s", comment);
         free(regex);
     } else {
         is_string(wanted, seen, "%s", comment);
@@ -252,9 +253,9 @@ check_output(const struct output *wanted, const struct output *seen)
 
 /*
  * The core of the work.  Given the path to a PAM interaction script, which
- * may be relative to SOURCE or BUILD, the user (may be NULL), and the stored
- * password (may be NULL), run that script, outputing the results in TAP
- * format.
+ * may be relative to C_TAP_SOURCE or C_TAP_BUILD, the user (may be NULL), and
+ * the stored password (may be NULL), run that script, outputing the results
+ * in TAP format.
  */
 void
 run_script(const char *file, const struct script_config *config)

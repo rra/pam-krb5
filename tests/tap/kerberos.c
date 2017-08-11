@@ -12,7 +12,7 @@
  * are available.
  *
  * The canonical version of this file is maintained in the rra-c-util package,
- * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
+ * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
  * Copyright 2006, 2007, 2009, 2010, 2011, 2012, 2013, 2014
@@ -55,7 +55,9 @@
  * Disable the requirement that format strings be literals, since it's easier
  * to handle the possible patterns for kinit commands as an array.
  */
-#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 2) || defined(__clang__)
+# pragma GCC diagnostic ignored "-Wformat-nonliteral"
+#endif
 
 
 /*

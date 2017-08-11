@@ -5,7 +5,7 @@
      Modifications by Joel Kociolek, Andres Salomon, and Sam Hartman
                Maintained by Russ Allbery <eagle@eyrie.org>
 
-  Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2014 Russ Allbery
+  Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2014, 2017 Russ Allbery
   <eagle@eyrie.org>.  Copyright 2009, 2010, 2011 The Board of Trustees of
   the Leland Stanford Junior University.  Copyright 2005 Andres Salomon
   <dilinger@debian.org>.  Copyright 1999, 2000 Frank Cusack.  This
@@ -43,7 +43,7 @@ DESCRIPTION
   support Kerberos v4 or AFS.  For an AFS session module that works with
   this module (or any other Kerberos PAM module), see:
 
-      <http://www.eyrie.org/~eagle/software/pam-afs-session/>
+      <https://www.eyrie.org/~eagle/software/pam-afs-session/>
 
   If there are other options besides AFS and Kerberos v4 support from the
   Sourceforge PAM module that you're missing in this module, please let me
@@ -489,7 +489,7 @@ HOMEPAGE AND SOURCE REPOSITORY
 
   The pam-krb5 web page at:
 
-      http://www.eyrie.org/~eagle/software/pam-krb5/
+      https://www.eyrie.org/~eagle/software/pam-krb5/
 
   will always have the current version of this package, the current
   documentation, and pointers to any additional resources.
@@ -501,7 +501,7 @@ HOMEPAGE AND SOURCE REPOSITORY
 
   or view the repository via the web at:
 
-      http://git.eyrie.org/?p=kerberos/pam-krb5.git
+      https://git.eyrie.org/?p=kerberos/pam-krb5.git
 
 HISTORY AND ACKNOWLEDGEMENTS
 

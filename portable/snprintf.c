@@ -11,7 +11,7 @@
  * improvements should be sent back to the original author.
  *
  * The canonical version of this file is maintained in the rra-c-util package,
- * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
+ * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  */
 
 /*
@@ -79,6 +79,8 @@
  *  Russ Allbery <eagle@eyrie.org> 2000-08-26
  *    fixed return value to comply with C99
  *    fixed handling of snprintf(NULL, ...)
+ *    added explicit casts for double to long long int conversion
+ *    fixed various warnings with GCC 7
  *
  *  Hrvoje Niksic <hniksic@arsdigita.com> 2000-11-04
  *    include <stdio.h> for NULL.
@@ -180,7 +182,7 @@ static int dopr (char *buffer, size_t maxlen, const char *format, va_list args)
   char *strvalue;
   int min;
   int max;
-  int state;
+  unsigned int state;
   int flags;
   int cflags;
   int total;
@@ -351,6 +353,7 @@ static int dopr (char *buffer, size_t maxlen, const char *format, va_list args)
 	break;
       case 'X':
 	flags |= DP_F_UP;
+        /* fallthrough */
       case 'x':
 	flags |= DP_F_UNSIGNED;
 	if (cflags == DP_C_SHORT)
@@ -372,6 +375,7 @@ static int dopr (char *buffer, size_t maxlen, const char *format, va_list args)
 	break;
       case 'E':
 	flags |= DP_F_UP;
+        /* fallthrough */
       case 'e':
 	if (cflags == DP_C_LDOUBLE)
 	  fvalue = va_arg (args, LDOUBLE);
@@ -381,6 +385,7 @@ static int dopr (char *buffer, size_t maxlen, const char *format, va_list args)
 	break;
       case 'G':
 	flags |= DP_F_UP;
+        /* fallthrough */
       case 'g':
         flags |= DP_F_FP_G;
 	if (cflags == DP_C_LDOUBLE)
@@ -612,7 +617,7 @@ static LDOUBLE abs_val (LDOUBLE value)
   return result;
 }
 
-static LDOUBLE pow10_int (int exp)
+static LLONG pow10_int (unsigned int exp)
 {
   LDOUBLE result = 1;
 
@@ -622,20 +627,28 @@ static LDOUBLE pow10_int (int exp)
     exp--;
   }
   
-  return result;
+  return (LLONG) result;
 }
 
 static LLONG round_int (LDOUBLE value)
 {
   LLONG intpart;
 
-  intpart = value;
+  intpart = (LLONG) value;
   value = value - intpart;
   if (value >= 0.5)
     intpart++;
 
   return intpart;
 }
+
+/*
+ * GCC 7.1 issues this warning at the point of the function definition header
+ * (not in any actual code), and I can't figure out what's triggering it since
+ * the comparison form doesn't appear anywhere in this code.  Since this is
+ * rarely-used portability code, suppress the warning.
+ */
+#pragma GCC diagnostic ignored "-Wstrict-overflow"
 
 static int fmtfp (char *buffer, size_t *currlen, size_t maxlen,
 		  LDOUBLE fvalue, int min, int max, int flags)
@@ -678,7 +691,7 @@ static int fmtfp (char *buffer, size_t *currlen, size_t maxlen,
   if (flags & DP_F_UP) caps = 1; /* Should characters be upper case? */
 #endif
 
-  intpart = ufvalue;
+  intpart = (LLONG) ufvalue;
 
   /* With %g precision is the number of significant digits, which
      includes the digits in intpart. */

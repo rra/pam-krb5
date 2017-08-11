@@ -1031,6 +1031,6 @@ warranty.
 kadmin(8), kdestroy(1), krb5.conf(5), pam(7), passwd(1), syslog(3)
 
 The current version of this module is available from its web page at
-L<http://www.eyrie.org/~eagle/software/pam-krb5/>.
+L<https://www.eyrie.org/~eagle/software/pam-krb5/>.
 
 =cut
