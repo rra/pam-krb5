@@ -1,0 +1,16 @@
+sudo: required
+dist: trusty
+
+language: c
+compiler:
+  - gcc
+
+before_install:
+  - sudo apt-get update -qq
+  - sudo apt-get install -y krb5-config libkrb5-dev libtest-pod-perl perl
+env: AUTHOR_TESTING=1
+script: ./bootstrap && make warnings && make check
+
+branches:
+  only:
+    - master
