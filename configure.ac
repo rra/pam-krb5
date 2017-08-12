@@ -75,6 +75,7 @@ AC_CHECK_FUNCS([krb5_cc_get_full_name \
     krb5_get_init_creds_opt_set_pa \
     krb5_init_secure_context \
     krb5_principal_get_realm \
+    krb5_principal_set_comp_string \
     krb5_set_password \
     krb5_set_trace_filename \
     krb5_verify_init_creds_opt_init \

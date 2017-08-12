@@ -9,6 +9,8 @@ pam-krb5 4.8 (unreleased)
     Document the test suite configuration files required to run the PKINIT
     tests.
 
+    Fix expired password tests to work with Heimdal 7.0.1 and later.
+
     Rename the script to bootstrap from a Git checkout to bootstrap,
     matching the emerging consensus in the Autoconf world.
 
