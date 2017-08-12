@@ -2,6 +2,14 @@
 
 pam-krb5 4.8 (unreleased)
 
+    When verifying that an expired password can still be used to get
+    kadmin/changepw credentials, correctly set the credential options for
+    getting password change credentials, not for getting initial
+    credentials.  This should fix password change issues when, for
+    example, krb5.conf requests that all tickets be proxiable but
+    kadmin/changepw doesn't allow proxiable credentials.  Thanks to
+    Florian Best for the bug report.
+
     When built against recent versions of Heimdal with richer status codes
     from PKINIT attempts, report to the user the reason for a PKINIT
     failure.  Based on work by Henry Jacques.

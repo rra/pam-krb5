@@ -8,7 +8,7 @@
  *
  * Copyright 2010, 2011, 2012, 2014
  *     The Board of Trustees of the Leland Stanford Junior University
- * Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2014, 2015
+ * Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2014, 2015, 2017
  *     Russ Allbery <eagle@eyrie.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
@@ -352,9 +352,16 @@ password_auth(struct pam_args *args, krb5_creds *creds,
      * otherwise change the error to invalid password.
      */
     if (retval == KRB5KDC_ERR_KEY_EXP) {
-        retval = krb5_get_init_creds_password(ctx->context, creds,
-                     ctx->princ, (char *) pass, pamk5_prompter_krb5, args, 0,
-                     (char *) "kadmin/changepw", opts);
+        krb5_get_init_creds_opt *heimdal_opts = NULL;
+
+        retval = krb5_get_init_creds_opt_alloc(ctx->context, &heimdal_opts);
+        if (retval == 0) {
+            set_credential_options(args, opts, 1);
+            retval = krb5_get_init_creds_password(ctx->context, creds,
+                         ctx->princ, (char *) pass, pamk5_prompter_krb5, args,
+                         0, (char *) "kadmin/changepw", heimdal_opts);
+            krb5_get_init_creds_opt_free(ctx->context, heimdal_opts);
+        }
         if (retval == 0) {
             retval = KRB5KDC_ERR_KEY_EXP;
             krb5_free_cred_contents(ctx->context, creds);
