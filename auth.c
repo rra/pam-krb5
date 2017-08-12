@@ -153,6 +153,7 @@ set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
 
     krb5_get_init_creds_opt_set_default_flags(c, "pam", args->realm, opts);
     if (!service) {
+        krb5_get_init_creds_opt_set_proxiable(opts, 0);
         if (config->forwardable)
             krb5_get_init_creds_opt_set_forwardable(opts, 1);
         if (config->ticket_lifetime != 0)
