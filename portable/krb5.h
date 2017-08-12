@@ -170,7 +170,7 @@ krb5_error_code krb5_get_init_creds_opt_alloc(krb5_context,
 # define krb5_get_init_creds_opt_free(c, o) free(o)
 #endif
 
-/* MIT-specific. */
+/* Not available in versions of Heimdal prior to 7.0.1. */
 #ifndef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_CHANGE_PASSWORD_PROMPT
 # define krb5_get_init_creds_opt_set_change_password_prompt(o, f) /* empty */
 #endif
