@@ -19,6 +19,11 @@ pam-krb5 4.8 (unreleased)
 
     Fix expired password tests to work with Heimdal 7.0.1 and later.
 
+    Better document that the default Kerberos library ticket cache
+    location is not used (and why), and how to set configuration
+    parameters in krb5.conf.  Thanks, Matthew Gabeler-Lee.  (Debian
+    Bug#872943)
+
     Rename the script to bootstrap from a Git checkout to bootstrap,
     matching the emerging consensus in the Autoconf world.
 
