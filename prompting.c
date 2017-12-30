@@ -4,9 +4,9 @@
  * Handles all interaction with the PAM conversation, either directly or
  * indirectly through the Kerberos libraries.
  *
+ * Copyright 2005, 2006, 2007, 2009, 2014, 2017 Russ Allbery <eagle@eyrie.org>
  * Copyright 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
- * Copyright 2005, 2006, 2007, 2009, 2014 Russ Allbery <eagle@eyrie.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  *
@@ -18,6 +18,7 @@
 #include <portable/pam.h>
 #include <portable/system.h>
 
+#include <assert.h>
 #include <errno.h>
 
 #include <internal.h>
@@ -271,6 +272,7 @@ pamk5_prompter_krb5(krb5_context context UNUSED, void *data, const char *name,
         pam_prompts++;
     }
     if (banner != NULL && !args->silent) {
+        assert(pam_prompts < total_prompts);
         msg[pam_prompts]->msg = strdup(banner);
         if (msg[pam_prompts]->msg == NULL)
             goto cleanup;
@@ -295,6 +297,7 @@ pamk5_prompter_krb5(krb5_context context UNUSED, void *data, const char *name,
                           prompts[i].prompt, has_colon ? "" : ": ");
         if (status < 0)
             goto cleanup;
+        assert(pam_prompts < total_prompts);
         msg[pam_prompts]->msg_style = prompts[i].hidden ? PAM_PROMPT_ECHO_OFF
                                                         : PAM_PROMPT_ECHO_ON;
         pam_prompts++;
@@ -333,7 +336,7 @@ pamk5_prompter_krb5(krb5_context context UNUSED, void *data, const char *name,
          * the password.
          */
         memcpy(prompts[i].reply->data, resp[pam_prompts].resp, len + 1);
-        prompts[i].reply->length = len;
+        prompts[i].reply->length = (unsigned int) len;
     }
     retval = 0;
 

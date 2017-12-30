@@ -43,7 +43,12 @@
 struct vector *
 vector_new(void)
 {
-    return calloc(1, sizeof(struct vector));
+    struct vector *vector;
+
+    vector = calloc(1, sizeof(struct vector));
+    vector->allocated = 1;
+    vector->strings = calloc(1, sizeof(char *));
+    return vector;
 }
 
 
@@ -89,15 +94,12 @@ vector_resize(struct vector *vector, size_t size)
             free(vector->strings[i]);
         vector->count = size;
     }
-    if (size == 0) {
-        free(vector->strings);
-        vector->strings = NULL;
-    } else {
-        strings = reallocarray(vector->strings, size, sizeof(char *));
-        if (strings == NULL)
-            return false;
-        vector->strings = strings;
-    }
+    if (size == 0)
+        size = 1;
+    strings = reallocarray(vector->strings, size, sizeof(char *));
+    if (strings == NULL)
+        return false;
+    vector->strings = strings;
     vector->allocated = size;
     return true;
 }

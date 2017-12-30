@@ -5,6 +5,7 @@
  * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
+ * Copyright 2017 Russ Allbery <eagle@eyrie.org>
  * Copyright 2006, 2007, 2009, 2011, 2012, 2013, 2014
  *     The Board of Trustees of the Leland Stanford Junior University
  *
@@ -107,11 +108,11 @@ void kerberos_cleanup_conf(void);
 #ifdef HAVE_KRB5
 
 /* Bail out with an error, appending the Kerberos error message. */
-void bail_krb5(krb5_context, krb5_error_code, const char *format, ...)
+void bail_krb5(krb5_context, long, const char *format, ...)
     __attribute__((__noreturn__, __nonnull__(3), __format__(printf, 3, 4)));
 
 /* Report a diagnostic with Kerberos error to stderr prefixed with #. */
-void diag_krb5(krb5_context, krb5_error_code, const char *format, ...)
+void diag_krb5(krb5_context, long, const char *format, ...)
     __attribute__((__nonnull__(3), __format__(printf, 3, 4)));
 
 /*

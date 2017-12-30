@@ -6,10 +6,10 @@
  * the appropriate internal functions.  This interface is used by both the
  * authentication and the password groups.
  *
- * Copyright 2010, 2011, 2012, 2014
- *     The Board of Trustees of the Leland Stanford Junior University
  * Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2014, 2015, 2017
  *     Russ Allbery <eagle@eyrie.org>
+ * Copyright 2010, 2011, 2012, 2014
+ *     The Board of Trustees of the Leland Stanford Junior University
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  *
@@ -185,7 +185,7 @@ set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
         if (config->preauth_opt != NULL && config->preauth_opt->count > 0) {
             size_t i;
             char *name, *value;
-            char save;
+            char save = '\0';
 
             for (i = 0; i < config->preauth_opt->count; i++) {
                 name = config->preauth_opt->strings[i];
@@ -743,7 +743,7 @@ pamk5_password_auth(struct pam_args *args, const char *service,
 {
     struct context *ctx;
     krb5_get_init_creds_opt *opts = NULL;
-    krb5_error_code retval;
+    krb5_error_code retval = 0;
     int status = PAM_SUCCESS;
     bool retry, prompt;
     bool creds_valid = false;
@@ -1078,7 +1078,7 @@ pamk5_authenticate(struct pam_args *args)
         pamret = pamk5_cache_init_random(args, creds);
 
 done:
-    if (creds != NULL) {
+    if (creds != NULL && ctx != NULL) {
         krb5_free_cred_contents(ctx->context, creds);
         free(creds);
     }

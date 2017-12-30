@@ -4,7 +4,7 @@
  * This file is part of C TAP Harness.  The current version plus supporting
  * documentation is at <https://www.eyrie.org/~eagle/software/c-tap-harness/>.
  *
- * Copyright 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016
+ * Copyright 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017
  *     Russ Allbery <eagle@eyrie.org>
  * Copyright 2001, 2002, 2004, 2005, 2006, 2007, 2008, 2011, 2012, 2014
  *     The Board of Trustees of the Leland Stanford Junior University
@@ -89,14 +89,21 @@ void skip_block(unsigned long count, const char *reason, ...)
 
 /*
  * Check an expected value against a seen value.  Returns true if the test
- * passes and false if it fails.
+ * passes and false if it fails.  is_bool takes an int since the bool type
+ * isn't fully portable yet, but interprets both arguments for their truth
+ * value, not for their numeric value.
  */
+int is_bool(int wanted, int seen, const char *format, ...)
+    __attribute__((__format__(printf, 3, 4)));
 int is_int(long wanted, long seen, const char *format, ...)
     __attribute__((__format__(printf, 3, 4)));
 int is_string(const char *wanted, const char *seen, const char *format, ...)
     __attribute__((__format__(printf, 3, 4)));
 int is_hex(unsigned long wanted, unsigned long seen, const char *format, ...)
     __attribute__((__format__(printf, 3, 4)));
+int is_blob(const void *wanted, const void *seen, size_t, const char *format,
+            ...)
+    __attribute__((__format__(printf, 4, 5)));
 
 /* Bail out with an error.  sysbail appends strerror(errno). */
 void bail(const char *format, ...)

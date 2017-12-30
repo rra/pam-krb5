@@ -9,6 +9,7 @@
  * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
+ * Copyright 2017 Russ Allbery <eagle@eyrie.org>
  * Copyright 2010, 2011, 2014
  *     The Board of Trustees of the Leland Stanford Junior University
  *
@@ -231,7 +232,7 @@ pam_getenvlist(pam_handle_t *pamh)
     size_t i;
 
     if (pamh->environ == NULL) {
-        pamh->environ = malloc(sizeof(char **));
+        pamh->environ = malloc(sizeof(char *));
         if (pamh->environ == NULL)
             return NULL;
         pamh->environ[0] = NULL;
@@ -272,7 +273,7 @@ fail:
 int
 pam_putenv(pam_handle_t *pamh, const char *setting)
 {
-    char *copy;
+    char *copy = NULL;
     const char *equals;
     size_t namelen;
     bool delete = false;

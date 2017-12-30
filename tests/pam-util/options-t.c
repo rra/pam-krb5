@@ -57,7 +57,7 @@ struct pam_config {
 #define K(name) (#name), offsetof(struct pam_config, name)
 
 /* The rules specifying the configuration options. */
-struct option options[] = {
+static struct option options[] = {
     { K(cells),       true,  LIST   (NULL)  },
     { K(debug),       true,  BOOL   (false) },
     { K(expires),     true,  TIME   (10)    },
@@ -65,7 +65,7 @@ struct option options[] = {
     { K(minimum_uid), true,  NUMBER (0)     },
     { K(program),     true,  STRING (NULL)  },
 };
-const size_t optlen = sizeof(options) / sizeof(options[0]);
+static const size_t optlen = sizeof(options) / sizeof(options[0]);
 
 /*
  * A macro used to parse the various ways of spelling booleans.  This reuses
