@@ -1,21 +1,24 @@
 # Automake makefile for pam-krb5.
 #
 # Written by Russ Allbery <eagle@eyrie.org>
+# Copyright 2005, 2006, 2007, 2014, 2017 Russ Allbery <eagle@eyrie.org>
 # Copyright 2009, 2011, 2012
 #     The Board of Trustees of the Leland Stanford Junior University
-# Copyright 2005, 2006, 2007, 2014 Russ Allbery <eagle@eyrie.org>
 # Copyright 2005 Andres Salomon <dilinger@debian.org>
 # Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
 #
 # See LICENSE for licensing terms.
 
 ACLOCAL_AMFLAGS = -I m4
-EXTRA_DIST = .gitignore LICENSE autogen pam_krb5.map pam_krb5.pod	 \
-	pam_krb5.sym tests/README tests/TESTS tests/config/README	 \
-	tests/data/generate-krb5-conf tests/data/krb5-pam.conf		 \
-	tests/data/krb5.conf tests/data/scripts tests/data/valgrind.supp \
-	tests/docs/pod-spelling-t tests/docs/pod-t tests/fakepam/README	 \
-	tests/tap/libtap.sh
+EXTRA_DIST = .gitignore .travis.yml LICENSE README.md bootstrap		    \
+	docs/metadata pam_krb5.map pam_krb5.pod pam_krb5.sym tests/README   \
+	tests/TESTS tests/config/README tests/data/generate-krb5-conf	    \
+	tests/data/krb5-pam.conf tests/data/krb5.conf tests/data/perl.conf  \
+	tests/data/scripts tests/data/valgrind.supp			    \
+	tests/docs/pod-spelling-t tests/docs/pod-t tests/docs/urls-t	    \
+	tests/fakepam/README tests/tap/libtap.sh tests/tap/perl/Test/RRA.pm \
+	tests/tap/perl/Test/RRA/Automake.pm				    \
+	tests/tap/perl/Test/RRA/Config.pm
 
 # Everything we build needs the Kerbeors headers and library flags.
 AM_CPPFLAGS = $(KRB5_CPPFLAGS)
@@ -53,26 +56,12 @@ MAINTAINERCLEANFILES = Makefile.in aclocal.m4 build-aux/compile		 \
 	config.h.in config.h.in~ configure m4/libtool.m4 m4/ltoptions.m4 \
 	m4/ltsugar.m4 m4/ltversion.m4 m4/lt~obsolete.m4 pam_krb5.5
 
-# A set of flags for warnings.	Add -O because gcc won't find some warnings
-# without optimization turned on.  Desirable warnings that can't be turned
-# on due to other problems:
-#
-#     -Wconversion	http://bugs.debian.org/488884 (htons warnings)
-#
-# Last checked against gcc 4.8.2 (2014-04-12).	-D_FORTIFY_SOURCE=2 enables
-# warn_unused_result attribute markings on glibc functions on Linux, which
-# catches a few more issues.
-WARNINGS = -g -O -fstrict-overflow -fstrict-aliasing -D_FORTIFY_SOURCE=2    \
-	-Wall -Wextra -Wendif-labels -Wformat=2 -Winit-self -Wswitch-enum   \
-	-Wstrict-overflow=5 -Wfloat-equal -Wdeclaration-after-statement	    \
-	-Wshadow -Wpointer-arith -Wbad-function-cast -Wcast-align	    \
-	-Wwrite-strings -Wjump-misses-init -Wlogical-op -Wstrict-prototypes \
-	-Wold-style-definition -Wmissing-prototypes -Wnormalized=nfc	    \
-	-Wpacked -Wredundant-decls -Wnested-externs -Winline -Wvla -Werror
-
+# Separate target for a human to request building everything with as many
+# compiler warnings enabled as possible.
 warnings:
-	$(MAKE) V=0 CFLAGS='$(WARNINGS)' KRB5_CPPFLAGS='$(KRB5_CPPFLAGS_GCC)'
-	$(MAKE) V=0 CFLAGS='$(WARNINGS)' \
+	$(MAKE) V=0 CFLAGS='$(WARNINGS_CFLAGS) $(AM_CFLAGS)' \
+	    KRB5_CPPFLAGS='$(KRB5_CPPFLAGS_GCC)'
+	$(MAKE) V=0 CFLAGS='$(WARNINGS_CFLAGS) $(AM_CFLAGS)' \
 	    KRB5_CPPFLAGS='$(KRB5_CPPFLAGS_GCC)' $(check_PROGRAMS)
 
 # The bits below are for the test suite, not for the main package.
@@ -86,10 +75,9 @@ check_PROGRAMS = tests/runtests tests/module/alt-auth-t			    \
 	tests/pam-util/logging-t tests/pam-util/options-t		    \
 	tests/pam-util/vector-t tests/portable/asprintf-t		    \
 	tests/portable/mkstemp-t tests/portable/snprintf-t		    \
-	tests/portable/strlcat-t tests/portable/strlcpy-t		    \
 	tests/portable/strndup-t
-tests_runtests_CPPFLAGS = -DSOURCE='"$(abs_top_srcdir)/tests"' \
-	-DBUILD='"$(abs_top_builddir)/tests"'
+tests_runtests_CPPFLAGS = -DC_TAP_SOURCE='"$(abs_top_srcdir)/tests"' \
+	-DC_TAP_BUILD='"$(abs_top_builddir)/tests"'
 check_LIBRARIES = tests/fakepam/libfakepam.a tests/tap/libtap.a
 tests_fakepam_libfakepam_a_SOURCES = tests/fakepam/config.c		   \
 	tests/fakepam/data.c tests/fakepam/general.c			   \
@@ -161,18 +149,12 @@ tests_portable_mkstemp_t_LDADD = tests/tap/libtap.a portable/libportable.la
 tests_portable_snprintf_t_SOURCES = tests/portable/snprintf-t.c \
 	tests/portable/snprintf.c
 tests_portable_snprintf_t_LDADD = tests/tap/libtap.a portable/libportable.la
-tests_portable_strlcat_t_SOURCES = tests/portable/strlcat-t.c \
-        tests/portable/strlcat.c
-tests_portable_strlcat_t_LDADD = tests/tap/libtap.a portable/libportable.la
-tests_portable_strlcpy_t_SOURCES = tests/portable/strlcpy-t.c \
-        tests/portable/strlcpy.c
-tests_portable_strlcpy_t_LDADD = tests/tap/libtap.a portable/libportable.la
 tests_portable_strndup_t_SOURCES = tests/portable/strndup-t.c \
 	tests/portable/strndup.c
 tests_portable_strndup_t_LDADD = tests/tap/libtap.a portable/libportable.la
 
 check-local: $(check_PROGRAMS)
-	cd tests && ./runtests -l $(abs_top_srcdir)/tests/TESTS
+	cd tests && ./runtests -l '$(abs_top_srcdir)/tests/TESTS'
 
 # Used by maintainers to run the test suite under valgrind.
 check-valgrind: $(check_PROGRAMS)

@@ -8,6 +8,7 @@
  *
  * Written by Russ Allbery <eagle@eyrie.org>
  * Contributions from Sam Hartman and Yair Yarom
+ * Copyright 2017 Russ Allbery <eagle@eyrie.org>
  * Copyright 2010, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *
@@ -62,8 +63,8 @@ cache_init_anonymous(struct pam_args *args, krb5_ccache *ccache)
         putil_debug_krb5(args, retval, "cannot find realm for anonymous FAST");
         return retval;
     }
-    retval = krb5_build_principal_ext(c, &princ, strlen(realm), realm,
-                 strlen(KRB5_WELLKNOWN_NAME), KRB5_WELLKNOWN_NAME,
+    retval = krb5_build_principal_ext(c, &princ, (unsigned int) strlen(realm),
+                 realm, strlen(KRB5_WELLKNOWN_NAME), KRB5_WELLKNOWN_NAME,
                  strlen(KRB5_ANON_NAME), KRB5_ANON_NAME, NULL);
     if (retval != 0) {
         krb5_free_default_realm(c, realm);
@@ -77,7 +78,7 @@ cache_init_anonymous(struct pam_args *args, krb5_ccache *ccache)
      * memory cache whose name is based on the pointer value of our Kerberos
      * context, since that should be unique among threads.
      */
-    if (asprintf(&name, "MEMORY:%p", c) < 0) {
+    if (asprintf(&name, "MEMORY:%p", (void *) c) < 0) {
         putil_crit(args, "malloc failure: %s", strerror(errno));
         retval = errno;
         goto done;

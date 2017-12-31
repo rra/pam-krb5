@@ -6,6 +6,7 @@
  * protecting it against various attacks.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
+ * Copyright 2017 Russ Allbery <eagle@eyrie.org>
  * Copyright 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *
@@ -42,7 +43,8 @@ anon_fast_works(void)
     retval = krb5_get_default_realm(ctx, &realm);
     if (retval != 0)
         bail("cannot get default realm");
-    retval = krb5_build_principal_ext(ctx, &princ, strlen(realm), realm,
+    retval = krb5_build_principal_ext(ctx, &princ,
+                 (unsigned int) strlen(realm), realm,
                  strlen(KRB5_WELLKNOWN_NAME), KRB5_WELLKNOWN_NAME,
                  strlen(KRB5_ANON_NAME), KRB5_ANON_NAME, NULL);
     if (retval != 0)

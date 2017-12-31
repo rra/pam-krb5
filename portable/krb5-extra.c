@@ -7,7 +7,7 @@
  * Kerberos libraries are fully capable, this file will be skipped.
  *
  * The canonical version of this file is maintained in the rra-c-util package,
- * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
+ * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
  *
@@ -34,6 +34,8 @@
 #   include <ibm_svc/krb5_svc.h>
 #  elif defined(HAVE_ET_COM_ERR_H)
 #   include <et/com_err.h>
+#  elif defined(HAVE_KERBEROSV5_COM_ERR_H)
+#   include <kerberosv5/com_err.h>
 #  else
 #   include <com_err.h>
 #  endif
@@ -47,7 +49,10 @@
  * This string is returned for unknown error messages.  We use a static
  * variable so that we can be sure not to free it.
  */
+#if !defined(HAVE_KRB5_GET_ERROR_MESSAGE) \
+    || !defined(HAVE_KRB5_FREE_ERROR_MESSAGE)
 static const char error_unknown[] = "unknown error";
+#endif
 
 
 #ifndef HAVE_KRB5_CC_GET_FULL_NAME

@@ -1,0 +1,83 @@
+{
+    "name": "pam-krb5",
+    "version": "4.8",
+    "synopsis": "PAM module for Kerberos authentication",
+    "maintainer": "Russ Allbery <eagle@eyrie.org>",
+    "copyrights": [
+        {
+            "holder": "Russ Allbery <eagle@eyrie.org>",
+            "years": "2005-2010, 2014-2015, 2017",
+        },
+        {
+            "holder": "The Board of Trustees of the Leland Stanford Junior University",
+            "years": "2009-2011",
+        },
+        {
+            "holder": "Andres Salomon <dilinger@debian.org>",
+            "years": "2005",
+        },
+        {
+            "holder": "Frank Cusack <fcusack@fcusack.com>",
+            "years": "1999-2000",
+        },
+    ],
+    "license": "BSD-3-clause-or-GPL-1+",
+    "build": {
+        "autoconf": "2.64",
+        "automake": "1.11",
+        "autotools": true,
+        "kerberos": true,
+        "manpages": true,
+        "reduced_depends": true,
+        "type": "Autoconf",
+    },
+    "support": {
+        "email": "eagle@eyrie.org",
+        "github": "rra/pam-krb5",
+        "web": "https://www.eyrie.org/~eagle/software/pam-krb5/",
+    },
+    "vcs": {
+        "type": "Git",
+        "url": "https://git.eyrie.org/git/kerberos/pam-krb5.git",
+        "browse": "https://git.eyrie.org/?p=kerberos/pam-krb5.git",
+        "github": "rra/pam-krb5",
+        "openhub": "https://www.openhub.net/p/pamkrb5",
+    },
+    "readme": {
+        "sections": [
+            { "title": "Configuring" },
+            { "title": "Debugging" },
+            { "title": "Implementation Notes" },
+            { "title": "History and Acknowledgements" },
+        ],
+    },
+    "quote": {
+        "author": "Joyce McGreevy",
+        "title": "\"Look, ma, no hands!\"",
+        "work": "Salon",
+        "date": "2003-11-17",
+    },
+    "distribution": {
+        "section": "kerberos",
+        "tarname": "pam-krb5",
+        "version": "pam-krb5",
+    },
+    "packaging": {
+        "debian": "libpam-krb5",
+    },
+    "advisories": [
+        {
+            "date": "2009-02-11",
+            "versions": "3.12 and earlier",
+            "threshold": "3.13",
+        },
+    ],
+    "docs": {
+        "user": [
+            {
+                "name": "pam-krb5",
+                "title": "Manual page",
+            },
+        ],
+    },
+}

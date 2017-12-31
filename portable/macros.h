@@ -2,7 +2,7 @@
  * Portability macros used in include files.
  *
  * The canonical version of this file is maintained in the rra-c-util package,
- * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
+ * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
  *
@@ -37,7 +37,8 @@
  * variadic macro support.
  */
 #if !defined(__attribute__) && !defined(__alloc_size__)
-# if __GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 3)
+# if (__GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 3)) \
+    && !defined(__clang__)
 #  define __alloc_size__(spec, args...) /* empty */
 # endif
 #endif

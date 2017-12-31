@@ -8,9 +8,9 @@
  * static functions and export a function table instead.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
+ * Copyright 2005, 2006, 2007, 2008, 2009, 2017 Russ Allbery <eagle@eyrie.org>
  * Copyright 2011
  *     The Board of Trustees of the Leland Stanford Junior University
- * Copyright 2005, 2006, 2007, 2008, 2009 Russ Allbery <eagle@eyrie.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  *
@@ -185,7 +185,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
         pamret = PAM_AUTHTOK_ERR;
         goto done;
     }
-    pamret = pamk5_context_fetch(args);
+    pamk5_context_fetch(args);
     ENTRY(args, flags);
 
     /* We only support password changes. */

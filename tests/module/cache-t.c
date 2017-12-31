@@ -7,6 +7,7 @@
  * created (so without setuid and with chown doing nothing).
  *
  * Written by Russ Allbery <eagle@eyrie.org>
+ * Copyright 2017 Russ Allbery <eagle@eyrie.org>
  * Copyright 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *
@@ -83,10 +84,9 @@ check_cache(pam_handle_t *pamh, const struct script_config *config, void *data)
 
     /* Retrieve the krbtgt for the realm and check properties. */
     code = krb5_build_principal_ext(ctx, &tgtprinc,
-                                    strlen(extra->realm), extra->realm,
-                                    KRB5_TGS_NAME_SIZE, KRB5_TGS_NAME,
-                                    strlen(extra->realm), extra->realm,
-                                    NULL);
+               (unsigned int) strlen(extra->realm), extra->realm,
+               KRB5_TGS_NAME_SIZE, KRB5_TGS_NAME,
+               strlen(extra->realm), extra->realm, NULL);
     if (code != 0)
         bail("cannot create krbtgt principal name");
     memset(&in, 0, sizeof(in));

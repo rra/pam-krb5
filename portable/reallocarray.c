@@ -7,7 +7,7 @@
  * and checks for overflow so that the caller doesn't need to.
  *
  * The canonical version of this file is maintained in the rra-c-util package,
- * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
+ * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
  *
@@ -52,5 +52,11 @@ reallocarray(void *ptr, size_t nmemb, size_t size)
             errno = ENOMEM;
             return NULL;
         }
+
+    /* Avoid a zero-size allocation. */
+    if (nmemb == 0 || size == 0) {
+        nmemb = 1;
+        size = 1;
+    }
     return realloc(ptr, nmemb * size);
 }

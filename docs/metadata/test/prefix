@@ -1,0 +1,10 @@
+pam-krb5 comes with a comprehensive test suite, but it requires some
+configuration in order to test anything other than low-level utility
+functions.  For the full test suite, you will need to have a running KDC
+in which you can create two test accounts, one with admin access to the
+other.  Using a test KDC environment, if you have one, is recommended.
+
+Follow the instructions in `tests/config/README` to configure the test
+suite.
+
+Now, you can run the test suite with:

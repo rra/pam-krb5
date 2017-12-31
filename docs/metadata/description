@@ -1,0 +1,22 @@
+pam-krb5 provides a Kerberos PAM module that supports authentication, user
+ticket cache handling, simple authorization (via .k5login or checking
+Kerberos principals against local usernames), and password changing.  It
+can be configured through either options in the PAM configuration itself
+or through entries in the system krb5.conf file, and it tries to work
+around PAM implementation flaws in commonly-used PAM-enabled applications
+such as OpenSSH and xdm.  It supports both PKINIT and FAST to the extent
+that the underlying Kerberos libraries support these features.
+
+This is not the Kerberos PAM module maintained on Sourceforge and used on
+Red Hat systems.  It is an independent implementation that, if it ever
+shared any common code, diverged long ago.  It supports some features that
+the Sourceforge module does not (particularly around authorization), and
+does not support some options (particularly ones not directly related to
+Kerberos) that it does.  This module will never support Kerberos v4 or
+AFS.  For an AFS session module that works with this module (or any other
+Kerberos PAM module), see
+[pam-afs-session](https://www.eyrie.org/~eagle/software/pam-afs-session/).
+
+If there are other options besides AFS and Kerberos v4 support from the
+Sourceforge PAM module that you're missing in this module, please let me
+know.

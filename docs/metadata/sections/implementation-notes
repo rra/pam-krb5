@@ -1,0 +1,135 @@
+The normal sequence of actions taken for a user login is:
+
+```
+    pam_authenticate
+    pam_setcred(PAM_ESTABLISH_CRED)
+    pam_open_session
+    pam_acct_mgmt
+```
+
+and then at logout:
+
+```
+    pam_close_session
+```
+
+followed by closing the open PAM session.  The corresponding `pam_sm_*`
+functions in this module are called when an application calls those public
+interface functions.  Not all applications call all of those functions, or
+in particularly that order, although `pam_authenticate` is always first
+and has to be.
+
+When `pam_authenticate` is called, pam-krb5 creates a temporary ticket
+cache in `/tmp` and sets the PAM environment variable `PAM_KRB5CCNAME` to
+point to it.  This ticket cache will be automatically destroyed when the
+PAM session is closed and is there only to pass the initial credentials to
+the call to `pam_setcred`.  The module would use a memory cache, but
+memory caches will only work if the application preserves the PAM
+environment between the calls to `pam_authenticate` and `pam_setcred`.
+Most do, but OpenSSH notoriously does not and calls `pam_authenticate` in
+a subprocess, so this method is used to pass the tickets to the
+`pam_setcred` call in a different process.
+
+`pam_authenticate` does a complete authentication, including checking the
+resulting TGT by obtaining a service ticket for the local host if
+possible, but this requires read access to the system keytab.  If the
+keytab doesn't exist, can't be read, or doesn't include the appropriate
+credentials, the default is to accept the authentication.  This can be
+controlled by setting `verify_ap_req_nofail` to true in `[libdefaults]` in
+`/etc/krb5.conf`.  `pam_authenticate` also does a basic authorization
+check, by default calling `krb5_kuserok` (which uses `~/.k5login` if
+available and falls back to checking that the principal corresponds to the
+account name).  This can be customized with several options documented in
+the pam_krb5(5) man page.
+
+pam-krb5 treats `pam_open_session` and `pam_setcred(PAM_ESTABLISH_CRED)`
+as synonymous, as some applications call one and some call the other.
+Both copy the initial credentials from the temporary cache into a
+permanent cache for this session and set `KRB5CCNAME` in the environment.
+It will remember when the credential cache has been established and then
+avoid doing any duplicate work afterwards, since some applications call
+`pam_setcred` or `pam_open_session` multiple times (most notably X.Org 7
+and earlier xdm, which also throws away the module settings the last time
+it calls them).
+
+`pam_acct_mgmt` finds the ticket cache, reads it in to obtain the
+authenticated principal, and then does is another authorization check
+against `.k5login` or the local account name as described above.
+
+After the call to `pam_setcred` or `pam_open_session`, the ticket cache
+will be destroyed whenever the calling application either destroys the PAM
+environment or calls `pam_close_session`, which it should do on user
+logout.
+
+The normal sequence of events when refreshing a ticket cache (such as
+inside a screensaver) is:
+
+```
+    pam_authenticate
+    pam_setcred(PAM_REINITIALIZE_CRED)
+    pam_acct_mgmt
+```
+
+(`PAM_REFRESH_CRED` may be used instead.)  Authentication proceeds as
+above.  At the `pam_setcred` stage, rather than creating a new ticket
+cache, the module instead finds the current ticket cache (from the
+`KRB5CCNAME` environment variable or the default ticket cache location
+from the Kerberos library) and then reinitializes it with the credentials
+from the temporary `pam_authenticate` ticket cache.  When refreshing a
+ticket cache, the application should not open a session.  Calling
+`pam_acct_mgmt` is optional; pam-krb5 doesn't do anything different when
+it's called in this case.
+
+If `pam_authenticate` apparently didn't succeed, or if an account was
+configured to be ignored via `ignore_root` or `minimum_uid`, `pam_setcred`
+(and therefore `pam_open_session`) and `pam_acct_mgmt` return
+`PAM_IGNORE`, which tells the PAM library to proceed as if that module
+wasn't listed in the PAM configuration at all.  `pam_authenticate`,
+however, returns failure in the ignored user case by default, since
+otherwise a configuration using `ignore_root` with pam-krb5 as the only
+PAM module would allow anyone to log in as root without a password.  There
+doesn't appear to be a case where returning `PAM_IGNORE` instead would
+improve the module's behavior, but if you know of a case, please let me
+know.
+
+By default, `pam_authenticate` intentionally does not follow the PAM
+standard for handling expired accounts and instead returns failure from
+`pam_authenticate` unless the Kerberos libraries are able to change the
+account password during authentication.  Too many applications either do
+not call `pam_acct_mgmt` or ignore its exit status.  The fully correct PAM
+behavior (returning success from `pam_authenticate` and
+`PAM_NEW_AUTHTOK_REQD` from `pam_acct_mgmt`) can be enabled with the
+`defer_pwchange` option.
+
+The `defer_pwchange` option is unfortunately somewhat tricky to implement.
+In this case, the calling sequence is:
+
+```
+    pam_authenticate
+    pam_acct_mgmt
+    pam_chauthtok
+    pam_setcred
+    pam_open_session
+```
+
+During the first `pam_authenticate`, we can't obtain credentials and
+therefore a ticket cache since the password is expired.  But
+`pam_authenticate` isn't called again after `pam_chauthtok`, so
+`pam_chauthtok` has to create a ticket cache.  We however don't want it to
+do this for the normal password change (`passwd`) case.
+
+What we do is set a flag in our PAM data structure saying that we're
+processing an expired password, and `pam_chauthtok`, if it sees that flag,
+redoes the authentication with password prompting disabled after it
+finishes changing the password.
+
+Unfortunately, when handling password changes this way, `pam_chauthtok`
+will always have to prompt the user for their current password again even
+though they just typed it.  This is because the saved authentication
+tokens are cleared after `pam_authenticate` returns, for security reasons.
+We could hack around this by saving the password in our PAM data
+structure, but this would let the application gain access to it (exactly
+what the clearing is intended to prevent) and breaks a PAM library
+guarantee.  We could also work around this by having `pam_authenticate`
+get the `kadmin/changepw` authenticator in the expired password case and
+store it for `pam_chauthtok`, but it doesn't seem worth the hassle.

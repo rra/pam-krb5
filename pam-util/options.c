@@ -6,7 +6,7 @@
  * from a Kerberos krb5.conf file and fill out the struct.
  *
  * The canonical version of this file is maintained in the rra-c-util package,
- * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
+ * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
  * Copyright 2006, 2007, 2008, 2010, 2011, 2013, 2014
@@ -157,7 +157,7 @@ putil_args_defaults(struct pam_args *args, const struct option options[],
             break;
         case TYPE_TIME:
             tp = CONF_TIME(args->config, options[opt].location);
-            *tp = options[opt].defaults.number;
+            *tp = (krb5_deltat) options[opt].defaults.number;
             break;
         case TYPE_STRING:
             sp = CONF_STRING(args->config, options[opt].location);
@@ -213,7 +213,7 @@ default_boolean(struct pam_args *args, const char *section, const char *realm,
         rdata = &realm_struct;
         realm_struct.magic = KV5M_DATA;
         realm_struct.data = (void *) realm;
-        realm_struct.length = strlen(realm);
+        realm_struct.length = (unsigned int) strlen(realm);
     }
 #endif
 
@@ -252,7 +252,7 @@ default_number(struct pam_args *args, const char *section, const char *realm,
         rdata = &realm_struct;
         realm_struct.magic = KV5M_DATA;
         realm_struct.data = (void *) realm;
-        realm_struct.length = strlen(realm);
+        realm_struct.length = (unsigned int) strlen(realm);
     }
 #endif
 
@@ -295,7 +295,7 @@ default_time(struct pam_args *args, const char *section, const char *realm,
         rdata = &realm_struct;
         realm_struct.magic = KV5M_DATA;
         realm_struct.data = (void *) realm;
-        realm_struct.length = strlen(realm);
+        realm_struct.length = (unsigned int) strlen(realm);
     }
 #endif
 
@@ -339,7 +339,7 @@ default_string(struct pam_args *args, const char *section, const char *realm,
         rdata = &realm_struct;
         realm_struct.magic = KV5M_DATA;
         realm_struct.data = (void *) realm;
-        realm_struct.length = strlen(realm);
+        realm_struct.length = (unsigned int) strlen(realm);
     }
 #endif
 

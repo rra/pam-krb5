@@ -10,7 +10,7 @@
  * of src/lib/krb5/krb/appdefault.c from MIT Kerberos 1.4.4.
  *
  * The canonical version of this file is maintained in the rra-c-util package,
- * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
+ * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Copyright (C) 1985-2005 by the Massachusetts Institute of Technology.
  * For license information, see the end of this file.

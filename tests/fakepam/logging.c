@@ -7,7 +7,7 @@
  * implementation.
  *
  * The canonical version of this file is maintained in the rra-c-util package,
- * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
+ * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
  * Copyright 2010, 2011, 2012, 2014
@@ -94,7 +94,7 @@ output_add(struct output *output, int priority, const char *string)
  * codes used by the system PAM library.
  */
 const char *
-pam_strerror(pam_handle_t *pamh UNUSED, int code)
+pam_strerror(PAM_STRERROR_CONST pam_handle_t *pamh UNUSED, int code)
 {
     switch (code) {
     case PAM_SUCCESS:     return "No error";

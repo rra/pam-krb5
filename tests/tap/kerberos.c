@@ -12,9 +12,10 @@
  * are available.
  *
  * The canonical version of this file is maintained in the rra-c-util package,
- * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
+ * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
+ * Copyright 2017 Russ Allbery <eagle@eyrie.org>
  * Copyright 2006, 2007, 2009, 2010, 2011, 2012, 2013, 2014
  *     The Board of Trustees of the Leland Stanford Junior University
  *
@@ -55,7 +56,9 @@
  * Disable the requirement that format strings be literals, since it's easier
  * to handle the possible patterns for kinit commands as an array.
  */
-#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 2) || defined(__clang__)
+# pragma GCC diagnostic ignored "-Wformat-nonliteral"
+#endif
 
 
 /*
@@ -359,7 +362,7 @@ kerberos_setup(enum kerberos_needs needs)
     path = test_file_path("config/pkinit-principal");
     if (path != NULL)
         file = fopen(path, "r");
-    if (file != NULL) {
+    if (path != NULL && file != NULL) {
         if (fgets(buffer, sizeof(buffer), file) == NULL)
             bail("cannot read %s", path);
         if (buffer[strlen(buffer) - 1] != '\n')
@@ -455,17 +458,19 @@ kerberos_generate_conf(const char *realm)
 
 
 /*
- * Report a Kerberos error and bail out.
+ * Report a Kerberos error and bail out.  Takes a long instead of a
+ * krb5_error_code because it can also handle a kadm5_ret_t (which may be a
+ * different size).
  */
 void
-bail_krb5(krb5_context ctx, krb5_error_code code, const char *format, ...)
+bail_krb5(krb5_context ctx, long code, const char *format, ...)
 {
     const char *k5_msg = NULL;
     char *message;
     va_list args;
 
     if (ctx != NULL)
-        k5_msg = krb5_get_error_message(ctx, code);
+        k5_msg = krb5_get_error_message(ctx, (krb5_error_code) code);
     va_start(args, format);
     bvasprintf(&message, format, args);
     va_end(args);
@@ -477,17 +482,19 @@ bail_krb5(krb5_context ctx, krb5_error_code code, const char *format, ...)
 
 
 /*
- * Report a Kerberos error as a diagnostic to stderr.
+ * Report a Kerberos error as a diagnostic to stderr.  Takes a long instead of
+ * a krb5_error_code because it can also handle a kadm5_ret_t (which may be a
+ * different size).
  */
 void
-diag_krb5(krb5_context ctx, krb5_error_code code, const char *format, ...)
+diag_krb5(krb5_context ctx, long code, const char *format, ...)
 {
     const char *k5_msg = NULL;
     char *message;
     va_list args;
 
     if (ctx != NULL)
-        k5_msg = krb5_get_error_message(ctx, code);
+        k5_msg = krb5_get_error_message(ctx, (krb5_error_code) code);
     va_start(args, format);
     bvasprintf(&message, format, args);
     va_end(args);
@@ -522,14 +529,12 @@ kerberos_keytab_principal(krb5_context ctx, const char *path)
     if (status != 0)
         bail_krb5(ctx, status, "error reading %s", path);
     status = krb5_kt_next_entry(ctx, keytab, &entry, &cursor);
-    if (status == 0) {
-        status = krb5_copy_principal(ctx, entry.principal, &princ);
-        if (status != 0)
-            bail_krb5(ctx, status, "error copying principal from %s", path);
-        krb5_kt_free_entry(ctx, &entry);
-    }
     if (status != 0)
         bail("no principal found in keytab file %s", path);
+    status = krb5_copy_principal(ctx, entry.principal, &princ);
+    if (status != 0)
+        bail_krb5(ctx, status, "error copying principal from %s", path);
+    krb5_kt_free_entry(ctx, &entry);
     krb5_kt_end_seq_get(ctx, keytab, &cursor);
     krb5_kt_close(ctx, keytab);
     return princ;

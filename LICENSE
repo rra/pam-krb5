@@ -7,7 +7,7 @@ Comment: This file documents the copyright statements and licenses for
  range specifies every single year in that closed interval.
 Copyright: 1999-2000 Frank Cusack <fcusack@fcusack.com>
   2005 Andres Salomon <dilinger@debian.org>
-  2005-2010, 2014 Russ Allbery <eagle@eyrie.org>
+  2005-2010, 2014-2015, 2017 Russ Allbery <eagle@eyrie.org>
   2008-2014
     The Board of Trustees of the Leland Stanford Junior University
 License: BSD-3-clause or GPL-1+
@@ -15,31 +15,31 @@ License: BSD-3-clause or GPL-1+
 Files: *
 Copyright: 1999-2000 Frank Cusack <fcusack@fcusack.com>
   2005 Andres Salomon <dilinger@debian.org>
-  2005-2010, 2014 Russ Allbery <eagle@eyrie.org>
+  2005-2010, 2014-2015, 2017 Russ Allbery <eagle@eyrie.org>
   2008-2014 The Board of Trustees of the Leland Stanford Junior University
 License: BSD-3-clause or GPL-1+
 
 Files: Makefile.in
-Copyright: 1994-2013 Free Software Foundation, Inc.
+Copyright: 1994-2017 Free Software Foundation, Inc.
   1999-2000 Frank Cusack <fcusack@fcusack.com>
   2005 Andres Salomon <dilinger@debian.org>
-  2005-2007, 2014 Russ Allbery <eagle@eyrie.org>
+  2005-2007, 2014, 2017 Russ Allbery <eagle@eyrie.org>
   2009, 2011-2012
     The Board of Trustees of the Leland Stanford Junior University
 License: FSF-unlimited, and BSD-3-clause or GPL-1+
 
 Files: aclocal.m4 m4/ltoptions.m4 m4/ltsugar.m4 m4/ltversion.m4
  m4/lt~obsolete.m4
-Copyright: 1996-2014 Free Software Foundation, Inc.
+Copyright: 1996-2017 Free Software Foundation, Inc.
 License: FSF-unlimited
 
 Files: build-aux/ar-lib build-aux/compile build-aux/depcomp
  build-aux/missing
-Copyright: 1996-2013 Free Software Foundation, Inc.
+Copyright: 1996-2017 Free Software Foundation, Inc.
 License: GPL-2+ with Autoconf exception or BSD-3-clause or GPL-1+
 
 Files: build-aux/config.guess build-aux/config.sub
-Copyright: 1992-2014 Free Software Foundation, Inc.
+Copyright: 1992-2017 Free Software Foundation, Inc.
 License: GPL-3+ with Autoconf exception or BSD-3-clause or GPL-1+
 
 Files: build-aux/install-sh
@@ -70,19 +70,35 @@ License: X11
  Consortium.
 
 Files: build-aux/ltmain.sh
-Copyright: 1996-2001, 2003-2011 Free Software Foundation, Inc.
-License: GPL-2+ with Libtool exception or BSD-3-clause or GPL-1+
+Copyright: 1996-2015 Free Software Foundation, Inc.
+License: GPL-2+ with Libtool exception or BSD-3-clause or GPL-1+, and GPL-3+ with Libtool exception or BSD-3-clause or GPL-1+, and GPL-3+
 
 Files: configure
-Copyright: 1992-2012 Free Software Foundation, Inc.
+Copyright: 1992-1996, 1998-2012, 2014 Free Software Foundation, Inc.
 License: FSF-configure, and GPL-2+ with Libtool exception or BSD-3-clause or GPL-1+
 
-Files: m4/kadm5clnt.m4 m4/krb5-config.m4 m4/krb5.m4 m4/ld-version.m4
- m4/lib-depends.m4 m4/lib-helper.m4 m4/lib-pathname.m4 m4/pam-const.m4
- m4/snprintf.m4
+Files: m4/cc-flags.m4
+Copyright: 2006, 2009, 2016 Internet Systems Consortium, Inc.
+  2016-2017 Russ Allbery <eagle@eyrie.org>
+License: ISC
+ Permission to use, copy, modify, and distribute this software for any
+ purpose with or without fee is hereby granted, provided that the above
+ copyright notice and this permission notice appear in all copies.
+ .
+ THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY
+ SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+Files: m4/clang.m4 m4/kadm5clnt.m4 m4/krb5-config.m4 m4/krb5.m4
+ m4/ld-version.m4 m4/lib-depends.m4 m4/lib-helper.m4 m4/lib-pathname.m4
+ m4/pam-const.m4 m4/snprintf.m4
 Copyright: 2005-2014
     The Board of Trustees of the Leland Stanford Junior University
-  2007 Russ Allbery <eagle@eyrie.org>
+  2007, 2015 Russ Allbery <eagle@eyrie.org>
   2007-2008 Markus Moeller
   2008-2010 Free Software Foundation, Inc.
 License: unlimited
@@ -91,23 +107,25 @@ License: unlimited
  notice is preserved.
 
 Files: m4/libtool.m4
-Copyright: 1996-2001, 2003-2011 Free Software Foundation, Inc.
+Copyright: 1996-2001, 2003-2015 Free Software Foundation, Inc.
 License: FSF-unlimited, and GPL-2+ with Libtool exception or BSD-3-clause or GPL-1+
 
 Files: pam-util/args.c pam-util/args.h pam-util/logging.c
  pam-util/logging.h pam-util/options.c pam-util/options.h
  tests/data/generate-krb5-conf tests/data/valgrind.supp
- tests/docs/pod-spelling-t tests/docs/pod-t tests/fakepam/config.c
- tests/fakepam/data.c tests/fakepam/general.c tests/fakepam/internal.h
- tests/fakepam/kuserok.c tests/fakepam/logging.c tests/fakepam/pam.h
- tests/fakepam/script.c tests/fakepam/script.h tests/pam-util/args-t.c
- tests/pam-util/fakepam-t.c tests/pam-util/logging-t.c
- tests/pam-util/options-t.c tests/runtests.c tests/tap/basic.c
- tests/tap/basic.h tests/tap/kadmin.c tests/tap/kadmin.h
+ tests/docs/pod-spelling-t tests/docs/pod-t tests/docs/urls-t
+ tests/fakepam/config.c tests/fakepam/data.c tests/fakepam/general.c
+ tests/fakepam/internal.h tests/fakepam/kuserok.c tests/fakepam/logging.c
+ tests/fakepam/pam.h tests/fakepam/script.c tests/fakepam/script.h
+ tests/pam-util/args-t.c tests/pam-util/fakepam-t.c
+ tests/pam-util/logging-t.c tests/pam-util/options-t.c tests/runtests.c
+ tests/tap/basic.c tests/tap/basic.h tests/tap/kadmin.c tests/tap/kadmin.h
  tests/tap/kerberos.c tests/tap/kerberos.h tests/tap/libtap.sh
- tests/tap/macros.h tests/tap/process.c tests/tap/process.h
- tests/tap/string.c tests/tap/string.h
-Copyright: 2000-2002, 2004-2014 Russ Allbery <eagle@eyrie.org>
+ tests/tap/macros.h tests/tap/perl/Test/RRA.pm
+ tests/tap/perl/Test/RRA/Automake.pm tests/tap/perl/Test/RRA/Config.pm
+ tests/tap/process.c tests/tap/process.h tests/tap/string.c
+ tests/tap/string.h
+Copyright: 2000-2002, 2004-2017 Russ Allbery <eagle@eyrie.org>
   2001-2002, 2004-2014
     The Board of Trustees of the Leland Stanford Junior University
 License: Expat
@@ -134,12 +152,10 @@ Files: pam-util/vector.c pam-util/vector.h portable/asprintf.c
  portable/dummy.c portable/issetugid.c portable/kadmin.h
  portable/krb5-extra.c portable/krb5.h portable/macros.h portable/mkstemp.c
  portable/pam.h portable/pam_syslog.c portable/pam_vsyslog.c
- portable/reallocarray.c portable/stdbool.h portable/strlcat.c
- portable/strlcpy.c portable/strndup.c portable/system.h
- tests/pam-util/vector-t.c tests/portable/asprintf-t.c
- tests/portable/mkstemp-t.c tests/portable/strlcat-t.c
- tests/portable/strlcpy-t.c tests/portable/strndup-t.c
-Copyright: no copyright notice, see License
+ portable/reallocarray.c portable/stdbool.h portable/strndup.c
+ portable/system.h tests/pam-util/vector-t.c tests/portable/asprintf-t.c
+ tests/portable/mkstemp-t.c tests/portable/strndup-t.c
+Copyright: no copyright notice, see License below
 License: rra-public-domain
  The authors hereby relinquish any claim to any copyright that they may
  have in this work, whether granted under contract or by operation of law
@@ -149,9 +165,8 @@ License: rra-public-domain
  entity from copying, publishing, distributing or creating derivative
  works of this work.
 
-Files: pam_krb5.5 pam_krb5.pod tests/README tests/config/README
- tests/fakepam/README
-Copyright: 2005-2012, 2014 Russ Allbery <eagle@eyrie.org>
+Files: pam_krb5.5 pam_krb5.pod
+Copyright: 2005-2010, 2014 Russ Allbery <eagle@eyrie.org>
   2008-2014 The Board of Trustees of the Leland Stanford Junior University
 License: all-permissive
  Copying and distribution of this file, with or without modification, are
@@ -298,6 +313,17 @@ Comment: The option described in the license has been accepted and these
  files are distributed under the same terms as the package as a whole, as
  described at the top of this file.
 
+License: GPL-3+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ .
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
 License: GPL-3+ with Autoconf exception
  This file is free software; you can redistribute it and/or modify it
  under the terms of the GNU General Public License as published by the
@@ -318,6 +344,25 @@ License: GPL-3+ with Autoconf exception
  distribution terms that you use for the rest of that program.  This
  Exception is an additional permission under section 7 of the GNU General
  Public License, version 3 ("GPLv3").
+Comment: The option described in the license has been accepted and these
+ files are distributed under the same terms as the package as a whole, as
+ described at the top of this file.
+
+License: GPL-3+ with Libtool exception
+ GNU Libtool is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 3 of the License, or
+ (at your option) any later version.
+ .
+ As a special exception to the GNU General Public License, if you
+ distribute this file as part of a program or library that is built
+ using GNU Libtool, you may include this file under the same
+ distribution terms that you use for the rest of that program.
+ .
+ GNU Libtool is distributed in the hope that it will be useful, but
+ WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
 Comment: The option described in the license has been accepted and these
  files are distributed under the same terms as the package as a whole, as
  described at the top of this file.
