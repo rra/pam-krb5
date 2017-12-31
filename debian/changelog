@@ -6,6 +6,7 @@ libpam-krb5 (4.8-1) UNRELEASED; urgency=medium
     - Report PKINIT failure reasons when built with new Heimdal versions.
     - Better document that the default Kerberos library ticket cache
       location is not used and why.  (Closes: #872943)
+  * Update to debhelper compatibility level V11.
 
  -- Russ Allbery <rra@debian.org>  Sat, 30 Dec 2017 19:49:23 -0800
 
