@@ -12,6 +12,7 @@ libpam-krb5 (4.8-1) UNRELEASED; urgency=medium
     - Use https URLs in debian/copyright.
   * Use https in the debian/watch URL.
   * Refresh upstream signing key.
+  * Remove trailing whitespace from debian/changelog.
 
  -- Russ Allbery <rra@debian.org>  Sat, 30 Dec 2017 19:49:23 -0800
 
@@ -440,7 +441,7 @@ libpam-krb5 (3.11-1) unstable; urgency=low
     file.
   * Add Vcs-Git and Vcs-Browser control fields.
   * Update standards version to 3.8.0 (no changes required).
-  
+
  -- Russ Allbery <rra@debian.org>  Thu, 10 Jul 2008 17:07:15 -0700
 
 libpam-krb5 (3.10-1) unstable; urgency=low
@@ -745,7 +746,7 @@ libpam-krb5 (1.0-10) unstable; urgency=low
 libpam-krb5 (1.0-9) unstable; urgency=high
 
   * Upload with no code changes in order to pick up symbol versions,
-    Closes: #260372 
+    Closes: #260372
   * High urgency because we want this to make it into sarge.
   * Don't build-depend on libdb2-dev, Closes: #248517
 
@@ -809,5 +810,3 @@ libpam-heimdal (1.0-1) unstable; urgency=low
   * Initial Release.
 
  -- Brian May <bam@debian.org>  Fri, 17 Nov 2000 10:32:40 +1100
-
-
