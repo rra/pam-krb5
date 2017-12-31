@@ -11,6 +11,7 @@ libpam-krb5 (4.8-1) UNRELEASED; urgency=medium
     - Change priority of libpam-heimdal to optional.
     - Use https URLs in debian/copyright.
   * Use https in the debian/watch URL.
+  * Remove now-unnecessary configuration to force xz compression.
   * Refresh upstream signing key.
   * Remove trailing whitespace from debian/changelog.
 
