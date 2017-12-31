@@ -11,14 +11,6 @@
    don't. */
 #undef HAVE_DECL_SNPRINTF
 
-/* Define to 1 if you have the declaration of `strlcat', and to 0 if you
-   don't. */
-#undef HAVE_DECL_STRLCAT
-
-/* Define to 1 if you have the declaration of `strlcpy', and to 0 if you
-   don't. */
-#undef HAVE_DECL_STRLCPY
-
 /* Define to 1 if you have the declaration of `vsnprintf', and to 0 if you
    don't. */
 #undef HAVE_DECL_VSNPRINTF
@@ -47,11 +39,20 @@
 /* Define to enable kadmin client features. */
 #undef HAVE_KADM5CLNT
 
+/* Define to 1 if you have the `kadm5_init_krb5_context' function. */
+#undef HAVE_KADM5_INIT_KRB5_CONTEXT
+
 /* Define to 1 if you have the `kadm5_init_with_skey_ctx' function. */
 #undef HAVE_KADM5_INIT_WITH_SKEY_CTX
 
 /* Define to 1 if you have the <kadm5/kadm5_err.h> header file. */
 #undef HAVE_KADM5_KADM5_ERR_H
+
+/* Define to 1 if you have the <kerberosv5/com_err.h> header file. */
+#undef HAVE_KERBEROSV5_COM_ERR_H
+
+/* Define to 1 if you have the <kerberosv5/krb5.h> header file. */
+#undef HAVE_KERBEROSV5_KRB5_H
 
 /* Define to enable Kerberos features. */
 #undef HAVE_KRB5
@@ -143,6 +144,9 @@
 /* Define to 1 if you have the `krb5_principal_get_realm' function. */
 #undef HAVE_KRB5_PRINCIPAL_GET_REALM
 
+/* Define to 1 if you have the `krb5_principal_set_comp_string' function. */
+#undef HAVE_KRB5_PRINCIPAL_SET_COMP_STRING
+
 /* Define to 1 if the system has the type `krb5_realm'. */
 #undef HAVE_KRB5_REALM
 
@@ -172,6 +176,9 @@
 
 /* Define to 1 if you have the `pam_getenv' function. */
 #undef HAVE_PAM_GETENV
+
+/* Define to 1 if you have the `pam_getenvlist' function. */
+#undef HAVE_PAM_GETENVLIST
 
 /* Define to 1 if you have the `pam_modutil_getpwnam' function. */
 #undef HAVE_PAM_MODUTIL_GETPWNAM
@@ -230,12 +237,6 @@
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
 
-/* Define to 1 if you have the `strlcat' function. */
-#undef HAVE_STRLCAT
-
-/* Define to 1 if you have the `strlcpy' function. */
-#undef HAVE_STRLCPY
-
 /* Define to 1 if you have the `strndup' function. */
 #undef HAVE_STRNDUP
 
@@ -263,8 +264,7 @@
 /* Define to 1 if the system has the type `_Bool'. */
 #undef HAVE__BOOL
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
 #undef LT_OBJDIR
 
 /* The name of the PAM module, used by the pam_vsyslog replacement. */
@@ -293,6 +293,9 @@
 
 /* Define to const if PAM uses const in pam_get_item, empty otherwise. */
 #undef PAM_CONST
+
+/* Define to const if PAM uses const in pam_strerror, empty otherwise. */
+#undef PAM_STRERROR_CONST
 
 /* The size of `long', as computed by sizeof. */
 #undef SIZEOF_LONG

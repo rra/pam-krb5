@@ -6,7 +6,7 @@
  * not be available on the local system.
  *
  * The canonical version of this file is maintained in the rra-c-util package,
- * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
+ * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
  *
@@ -59,6 +59,26 @@
 /* Solaris 8 has deficient PAM. */
 #ifndef PAM_AUTHTOK_RECOVER_ERR
 # define PAM_AUTHTOK_RECOVER_ERR PAM_AUTHTOK_ERR
+#endif
+
+/*
+ * Mac OS X 10 doesn't define these.  They're meant to be logically or'd with
+ * an exit status in pam_set_data, so define them to 0 if not defined to
+ * deactivate them.
+ */
+#ifndef PAM_DATA_REPLACE
+# define PAM_DATA_REPLACE 0
+#endif
+#ifndef PAM_DATA_SILENT
+# define PAM_DATA_SILENT 0
+#endif
+
+/*
+ * Mac OS X 10 apparently doesn't use PAM_BAD_ITEM and returns PAM_SYMBOL_ERR
+ * instead.
+ */
+#ifndef PAM_BAD_ITEM
+# define PAM_BAD_ITEM PAM_SYMBOL_ERR
 #endif
 
 /*

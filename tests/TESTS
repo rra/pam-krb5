@@ -1,5 +1,6 @@
 docs/pod
 docs/pod-spelling
+docs/urls
 module/alt-auth
 module/bad-authtok
 module/basic
@@ -21,6 +22,4 @@ pam-util/vector
 portable/asprintf
 portable/mkstemp
 portable/snprintf
-portable/strlcat
-portable/strlcpy
 portable/strndup

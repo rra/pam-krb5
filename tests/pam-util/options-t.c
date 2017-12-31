@@ -2,7 +2,7 @@
  * PAM option parsing test suite.
  *
  * The canonical version of this file is maintained in the rra-c-util package,
- * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
+ * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
  * Copyright 2010, 2011, 2012, 2013, 2014
@@ -57,7 +57,7 @@ struct pam_config {
 #define K(name) (#name), offsetof(struct pam_config, name)
 
 /* The rules specifying the configuration options. */
-struct option options[] = {
+static struct option options[] = {
     { K(cells),       true,  LIST   (NULL)  },
     { K(debug),       true,  BOOL   (false) },
     { K(expires),     true,  TIME   (10)    },
@@ -65,7 +65,7 @@ struct option options[] = {
     { K(minimum_uid), true,  NUMBER (0)     },
     { K(program),     true,  STRING (NULL)  },
 };
-const size_t optlen = sizeof(options) / sizeof(options[0]);
+static const size_t optlen = sizeof(options) / sizeof(options[0]);
 
 /*
  * A macro used to parse the various ways of spelling booleans.  This reuses
@@ -330,7 +330,7 @@ main(void)
     /* Test for Kerberos krb5.conf option parsing. */
     krb5conf = test_file_path("data/krb5-pam.conf");
     if (krb5conf == NULL)
-        bail("cannot find data/krb5.conf");
+        bail("cannot find data/krb5-pam.conf");
     if (setenv("KRB5_CONFIG", krb5conf, 1) < 0)
         sysbail("cannot set KRB5_CONFIG");
     krb5_free_context(args->ctx);

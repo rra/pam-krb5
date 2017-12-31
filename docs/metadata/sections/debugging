@@ -1,0 +1,28 @@
+The first step when debugging any problems with this module is to add
+`debug` to the PAM options for the module (either in the PAM configuration
+or in `krb5.conf`).  This will significantly increase the logging from the
+module and should provide a trace of exactly what failed and any available
+error information.
+
+Many Kerberos authentication problems are due to configuration issues in
+`krb5.conf`.  If pam-krb5 doesn't work, first check that `kinit` works on
+the same system.  That will test your basic Kerberos configuration.  If
+the system has a keytab file installed that's readable by the process
+doing authentication via PAM, make sure that the keytab is current and
+contains a key for `host/<system>` where <system> is the fully-qualified
+hostname.  pam-krb5 prevents KDC spoofing by checking the user's
+credentials when possible, but this means that if a keytab is present it
+must be correct or authentication will fail.  You can check the keytab
+with `klist -k` and `kinit -k`.
+
+Be sure that all libraries and modules, including PAM modules, loaded by a
+program use the same Kerberos libraries.  Sometimes programs that use PAM,
+such as current versions of OpenSSH, also link against Kerberos directly.
+If your sshd is linked against one set of Kerberos libraries and pam-krb5
+is linked against a different set of Kerberos libraries, this will often
+cause problems (such as segmentation faults, bus errors, assertions, or
+other strange behavior).  Similar issues apply to the com_err library or
+any other library used by both modules and shared libraries and by the
+application that loads them.  If your OS ships Kerberos libraries, it's
+usually best if possible to build all Kerberos software on the system
+against those libraries.

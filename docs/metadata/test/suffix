@@ -1,0 +1,10 @@
+The default libkadm5clnt library on the system must match the
+implementation of your KDC for the module/expired test to work, since the
+two kadmin protocols are not compatible.  If you use the MIT library
+against a Heimdal server, the test will be skipped; if you use the Heimdal
+library against an MIT server, the test suite may hang.
+
+Several `module/expired` tests are expected to fail with Heimdal 1.5 due
+to a bug in Heimdal with reauthenticating immediately after a
+library-mediated password change of an expired password.  This is fixed in
+later releases of Heimdal.

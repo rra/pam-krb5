@@ -22,7 +22,7 @@
  * the portable helper library.  Also provides some standard #defines.
  *
  * The canonical version of this file is maintained in the rra-c-util package,
- * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
+ * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
  *
@@ -135,12 +135,6 @@ extern int mkstemp(char *);
 #endif
 #if !HAVE_REALLOCARRAY
 extern void *reallocarray(void *, size_t, size_t);
-#endif
-#if !HAVE_DECL_STRLCAT
-extern size_t strlcat(char *, const char *, size_t);
-#endif
-#if !HAVE_DECL_STRLCPY
-extern size_t strlcpy(char *, const char *, size_t);
 #endif
 #if !HAVE_STRNDUP
 extern char *strndup(const char *, size_t);

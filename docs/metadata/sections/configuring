@@ -1,0 +1,136 @@
+Just installing the module does not enable it or change anything about
+your system authentication configuration.  To use the module for all
+system authentication on Debian systems, put something like:
+
+```
+    auth  sufficient   pam_krb5.so minimum_uid=1000
+    auth  required     pam_unix.so try_first_pass nullok_secure
+```
+
+in `/etc/pam.d/common-auth`, something like:
+
+```
+    session  optional  pam_krb5.so minimum_uid=1000
+    session  required  pam_unix.so
+```
+
+in `/etc/pam.d/common-session`, and something like:
+
+```
+    account  required  pam_krb5.so minimum_uid=1000
+    account  required  pam_unix.so
+```
+
+in `/etc/pam.d/common-account`.  The `minimum_uid` setting tells the PAM
+module to pass on any users with a UID lower than 1000, thereby bypassing
+Kerberos authentication for the root account and any system accounts.  You
+normally want to do this since otherwise, if the network is down, the
+Kerberos authentication can time out and make it difficult to log in as
+root and fix matters.  This also avoids problems with Kerberos principals
+that happen to match system accounts accidentally getting access to those
+accounts.
+
+Be sure to include the module in the session group as well as the auth
+group.  Without the session entry, the user's ticket cache will not be
+created properly for ssh logins (among possibly others).
+
+If your users should normally all use Kerberos passwords exclusively,
+putting something like:
+
+```
+    password sufficient pam_krb5.so minimum_uid=1000
+    password required   pam_unix.so try_first_pass obscure md5
+```
+
+in `/etc/pam.d/common-password` will change users' passwords in Kerberos
+by default and then only fall back on Unix if that doesn't work.  (You can
+make this tighter by using the more complex new-style PAM configuration.)
+If you instead want to synchronize local and Kerberos passwords and change
+them both at the same time, you can do something like:
+
+```
+    password required   pam_unix.so obscure sha512
+    password required   pam_krb5.so use_authtok minimum_uid=1000
+```
+
+If you have multiple environments that you want to synchronize and you
+don't want password changes to continue if the Kerberos password change
+fails, use the `clear_on_fail` option.  For example:
+
+```
+    password required   pam_krb5.so clear_on_fail minimum_uid=1000
+    password required   pam_unix.so use_authtok obscure sha512
+    password required   pam_smbpass.so use_authtok
+```
+
+In this case, if `pam_krb5` cannot change the password (due to password
+strength rules on the KDC, for example), it will clear the stored password
+(because of the `clear_on_fail` option), and since `pam_unix` and
+`pam_smbpass` are both configured with `use_authtok`, they will both fail.
+`clear_on_fail` is not the default because it would interfere with the
+more common pattern of falling back to local passwords if the user doesn't
+exist in Kerberos.
+
+If you use a more complex configuration with the Linux PAM `[]` syntax for
+the session and account groups, note that `pam_krb5` returns a status of
+ignore, not success, if the user didn't log on with Kerberos.  You may
+need to handle that explicitly with `ignore=ignore` in your action list.
+
+There are many, many other possibilities.  See the Linux PAM documentation
+for all the configuration options.
+
+On Red Hat systems, modify `/etc/pam.d/system-auth` instead, which
+contains all of the configuration for the different stacks.
+
+You can also use pam-krb5 only for specific services.  In that case,
+modify the files in `/etc/pam.d` for that particular service to use
+`pam_krb5.so` for authentication.  For services that are using passwords
+over TLS to authenticate users, you may want to use the `ignore_k5login`
+and `no_ccache` options to the authenticate module.  `.k5login`
+authorization is only meaningful for local accounts and ticket caches are
+usually (although not always) only useful for interactive sessions.
+
+Configuring the module for Solaris is both simpler and less flexible,
+since Solaris (at least Solaris 8 and 9, which are the last versions of
+Solaris with which this module was extensively tested) use a single
+`/etc/pam.conf` file that contains configuration for all programs.  For
+console login on Solaris, try something like:
+
+```
+    login auth sufficient /usr/local/lib/security/pam_krb5.so minimum_uid=100
+    login auth required /usr/lib/security/pam_unix_auth.so.1 use_first_pass
+    login account required /usr/local/lib/security/pam_krb5.so minimum_uid=100
+    login account required /usr/lib/security/pam_unix_account.so.1
+    login session required /usr/local/lib/security/pam_krb5.so retain_after_close minimum_uid=100
+    login session required /usr/lib/security/pam_unix_session.so.1
+```
+
+A similar configuration could be used for other services, such as ssh.
+See the pam.conf(5) man page for more information.  When using this module
+with Solaris login (at least on Solaris 8 and 9), you will probably also
+need to add `retain_after_close` to the PAM configuration to avoid having
+the user's credentials deleted before they are logged in.
+
+The Solaris Kerberos library reportedly does not support prompting for a
+password change of an expired account during authentication.  Supporting
+password change for expired accounts on Solaris with native Kerberos may
+therefore require setting the `defer_pwchange` or `force_pwchange` option
+for selected login applications.  See the description and warnings about
+that option in the pam_krb5(5) man page.
+
+Some configuration options may be put in the `krb5.conf` file used by your
+Kerberos libraries (usually `/etc/krb5.conf` or
+`/usr/local/etc/krb5.conf`) instead or in addition to the PAM
+configuration.  See the man page for more details.
+
+The Kerberos library, via pam-krb5, will prompt the user to change their
+password if their password is expired, but when using OpenSSH, this will
+only work when `ChallengeResponseAuthentication` is enabled.  Unless this
+option is enabled, OpenSSH doesn't pass PAM messages to the user and can
+only respond to a simple password prompt.
+
+If you are using MIT Kerberos, be aware that users whose passwords are
+expired will not be prompted to change their password unless the KDC
+configuration for your realm in `[realms]` in `krb5.conf` contains a
+`master_kdc` setting or, if using DNS SRV records, you have a DNS entry
+for `_kerberos-master` as well as `_kerberos`.

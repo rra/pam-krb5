@@ -1,5 +1,59 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 4.8 (2017-12-30)
+
+    When verifying that an expired password can still be used to get
+    kadmin/changepw credentials, correctly set the credential options for
+    getting password change credentials, not for getting initial
+    credentials.  This should fix password change issues when, for
+    example, krb5.conf requests that all tickets be proxiable but
+    kadmin/changepw doesn't allow proxiable credentials.  Thanks to
+    Florian Best for the bug report.
+
+    When built against recent versions of Heimdal with richer status codes
+    from PKINIT attempts, report to the user the reason for a PKINIT
+    failure.  Based on work by Henry Jacques.
+
+    Document the test suite configuration files required to run the PKINIT
+    tests.
+
+    Fix expired password tests to work with Heimdal 7.0.1 and later.
+
+    Better document that the default Kerberos library ticket cache
+    location is not used (and why), and how to set configuration
+    parameters in krb5.conf.  Thanks, Matthew Gabeler-Lee.  (Debian
+    Bug#872943)
+
+    Compile cleanly under GCC 7 and Clang warnings and Clang's static
+    analyzer.
+
+    Rename the script to bootstrap from a Git checkout to bootstrap,
+    matching the emerging consensus in the Autoconf world.
+
+    Update to rra-c-util 7.0:
+
+    * Fix new warnings in GCC 7.
+    * Support a warning build under Clang.
+    * Avoid zero-length allocations in reallocarray and vector.
+    * Probe for warning flags instead of hard-coding a list.
+    * New test for obsolete URLs and email addresses.
+    * Remove unused portable replacements for strlcpy and strlcat.
+    * Use C_TAP_SOURCE and C_TAP_BUILD environment variables in tests.
+    * Fix portability defines for anonymous principal strings.
+    * Clear errno on pam_modutil_getpwnam to improve other testing.
+    * Add portability defines for macOS's PAM implementation.
+    * Add new Autoconf macro to probe for pam_strerror const usage.
+    * Support Solaris 10's included Kerberos.
+
+    Update to C TAP Harness 4.2:
+
+    * Avoid zero-length allocations in breallocarray.
+    * Add is_blob and is_bool functions.
+    * Use C_TAP_SOURCE and C_TAP_BUILD environment variables in tests.
+    * Fix segfault in runtests with an empty test list.
+    * Display verbose test results with -v or C_TAP_VERBOSE.
+    * Test infrastructure builds cleanly with Clang warnings.
+
 pam-krb5 4.7 (2014-12-25)
 
     Add a no_update_user option that disables the normal update of the

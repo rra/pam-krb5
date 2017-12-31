@@ -1,0 +1,8 @@
+The module will be installed in `/usr/local/lib/security` by default,
+except on 64-bit versions of Linux which will use
+`/usr/local/lib64/security` to match the default PAM configuration.  You
+can change the installation locations with the `--prefix`, `--mandir`, and
+`--libdir` options to configure.  The module will always be installed in a
+subdirectory named `security` under the specified libdir.  On Linux, use
+`--prefix=/usr` to install the man page into `/usr/share/man` and the PAM
+module in `/lib/security` or `/lib64/security`.

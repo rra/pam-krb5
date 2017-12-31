@@ -1,0 +1,36 @@
+Originally written by Frank Cusack <fcusack@fcusack.com>, with the
+following acknowledgement:
+
+> Thanks to Naomaru Itoi <itoi@eecs.umich.edu>, Curtis King
+> <curtis.king@cul.ca>, and Derrick Brashear <shadow@dementia.org>, all of
+> whom have written and made available Kerberos 4/5 modules.  Although no
+> code in this module is directly from these author's modules, (except the
+> get_user_info() routine in support.c; derived from whichever of these
+> authors originally wrote the first module the other 2 copied from), it
+> was extremely helpful to look over their code which aided in my design.
+
+The module was then patched for the FreeBSD ports collection with
+additional modifications by unknown maintainers and then was modified by
+Joel Kociolek <joko@logidee.com> to be usable with Debian GNU/Linux.
+
+It was packaged by Sam Hartman as the Kerberos v5 PAM module for Debian
+and improved and modified by him and later by Russ Allbery to fix bugs and
+add additional features.  It was then adopted by Andres Salomon, who added
+support for refreshing credentials.
+
+The current distribution is maintained by Russ Allbery, who also added
+support for reading configuration from `krb5.conf`, added many features
+for compatibility with the Sourceforge module, commented and standardized
+the formatting of the code, and overhauled the documentation.
+
+Thanks to Douglas E. Engert for the initial implementation of PKINIT
+support.  I have since modified and reworked it extensively, so any bugs
+or compilation problems are my fault.
+
+Thanks to Markus Moeller for lots of debugging and multiple patches and
+suggestions for improved portability.
+
+Thanks to Booker Bense for the implementation of the `alt_auth_map`
+option.
+
+Thanks to Sam Hartman for the FAST support implementation.

@@ -6,7 +6,7 @@
  * arguments.  Ensure that libportable always contains at least one symbol.
  *
  * The canonical version of this file is maintained in the rra-c-util package,
- * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
+ * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
  *
@@ -22,7 +22,7 @@
 #include <portable/macros.h>
 
 /* Prototype to avoid gcc warnings and set visibility. */
-int portable_dummy(void) __attribute__((__visibility__("hidden")));
+int portable_dummy(void) __attribute__((__const__, __visibility__("hidden")));
 
 int
 portable_dummy(void)

@@ -88,6 +88,12 @@ By default, the cache will be named F</tmp/krb5cc_UID_RANDOM> where UID is
 the user's UID and RANDOM is six randomly-chosen letters.  This can be
 configured with the I<ccache> and I<ccache_dir> options.
 
+pam-krb5 does not use the default ticket cache location or
+I<default_cc_name> in the C<[libdefaults]> section of F<krb5.conf>.  The
+default cache location would share a cache for all sessions of the same
+user, which causes confusing behavior when the user logs out of one of
+multiple sessions.
+
 If pam_setcred() initializes a new ticket cache, it will also set up that
 ticket cache so that it will be deleted when the PAM session is closed.
 Normally, the calling program (B<login>, B<sshd>, etc.) will run the
@@ -162,11 +168,11 @@ separating whitespace.  Whitespace in option arguments is not supported in
 the PAM configuration.
 
 To set an option for the PAM module in the system F<krb5.conf> file, put
-that option in the [appdefaults] section.  All options must be followed by
-an equal sign (=) and a value, so for boolean options add C<= true>.  The
-Kerberos PAM module will look for options either at the top level of the
-[appdefaults] section or in a subsection named C<pam>, inside or outside a
-section for the realm.  For example, the following fragment of a
+that option in the C<[appdefaults]> section.  All options must be followed
+by an equal sign (=) and a value, so for boolean options add C<= true>.
+The Kerberos PAM module will look for options either at the top level of
+the C<[appdefaults]> section or in a subsection named C<pam>, inside or
+outside a section for the realm.  For example, the following fragment of a
 F<krb5.conf> file would set I<forwardable> to true, I<minimum_uid> to
 1000, and set I<ignore_k5login> only if the realm is EXAMPLE.COM.
 
@@ -236,11 +242,12 @@ module multiple times with multiple default realms set with I<realm>, but
 it is very limited: only two realms can be tried, and the alternate realm
 is always tried first.
 
-This option can be set in F<krb5.conf>, although normally it doesn't make
-sense to do that; normally it is used in the PAM options of configuration
-for specific programs.  It is only applicable to the auth and account
-groups.  If this option is set for the auth group, be sure to set it for
-the account group as well or account authorization may fail.
+This option can be set in C<[appdefaults]> in F<krb5.conf>, although
+normally it doesn't make sense to do that; normally it is used in the PAM
+options of configuration for specific programs.  It is only applicable to
+the auth and account groups.  If this option is set for the auth group, be
+sure to set it for the account group as well or account authorization may
+fail.
 
 =item force_alt_auth
 
@@ -250,8 +257,8 @@ KDC returns principal unknown does the Kerberos PAM module fall back to
 normal authentication.  This can be used to force authentication with an
 alternate instance.  If I<alt_auth_map> is not set, it has no effect.
 
-This option can be set in F<krb5.conf> and is only applicable to the auth
-group.
+This option can be set in C<[appdefaults]> in F<krb5.conf> and is only
+applicable to the auth group.
 
 =item ignore_k5login
 
@@ -262,8 +269,8 @@ and the user portion of the principal matches the local account name, but
 this can be customized by setting up an aname to localname mapping in
 F<krb5.conf>.
 
-This option can be set in F<krb5.conf> and is only applicable to the auth
-and account groups.
+This option can be set in C<[appdefaults]> in F<krb5.conf> and is only
+applicable to the auth and account groups.
 
 =item ignore_root
 
@@ -275,7 +282,7 @@ PAM library to proceed as if they weren't mentioned in the PAM
 configuration.  This option is supported and will remain, but normally you
 want to use I<minimum_uid> instead.
 
-This option can be set in F<krb5.conf>.
+This option can be set in C<[appdefaults]> in F<krb5.conf>.
 
 =item minimum_uid=<uid>
 
@@ -293,7 +300,7 @@ recommended since Kerberos requires a network connection).  It provides
 some defense in depth against user principals that happen to match a
 system account incorrectly authenticating as that system account.
 
-This option can be set in F<krb5.conf>.
+This option can be set in C<[appdefaults]> in F<krb5.conf>.
 
 =item only_alt_auth
 
@@ -303,8 +310,8 @@ authentication in all cases and overrides I<search_k5login> and
 I<force_alt_auth>.  If I<alt_auth_map> is not set, it has no effect and
 the standard authentication behavior is used.
 
-This option can be set in F<krb5.conf> and is only applicable to the auth
-group.
+This option can be set in C<[appdefaults]> in F<krb5.conf> and is only
+applicable to the auth group.
 
 =item search_k5login
 
@@ -321,8 +328,8 @@ F<.k5login> file, the behavior is the same as normal.  Using this option
 requires that the user's F<.k5login> file be readable at the time of
 authentication.
 
-This option can be set in F<krb5.conf> and is only applicable to the auth
-group.
+This option can be set in C<[appdefaults]> in F<krb5.conf> and is only
+applicable to the auth group.
 
 =back
 
@@ -353,8 +360,8 @@ I<anon_fast> are set, the ticket cache named by I<fast_ccache> will be
 tried first, and the Kerberos PAM module will fall back on attempting
 anonymous PKINIT if that cache could not be used.
 
-This option can be set in F<krb5.conf> and is only applicable to the auth
-and password groups.
+This option can be set in C<[appdefaults]> in F<krb5.conf> and is only
+applicable to the auth and password groups.
 
 The operation is the same as if using the I<fast_ccache> option, but the
 cache is created and destroyed automatically.  If both I<fast_ccache> and
@@ -389,8 +396,8 @@ I<fast_ccache> and I<anon_fast> are set, the ticket cache named by
 I<fast_ccache> will be tried first, and the Kerberos PAM module will fall
 back on attempting anonymous PKINIT if that cache could not be used.
 
-This option can be set in F<krb5.conf> and is only applicable to the auth
-and password groups.
+This option can be set in C<[appdefaults]> in F<krb5.conf> and is only
+applicable to the auth and password groups.
 
 =item forwardable
 
@@ -398,8 +405,8 @@ and password groups.
 although it can only be set to false in F<krb5.conf>), this overrides the
 Kerberos library default set in the [libdefaults] section of F<krb5.conf>.
 
-This option can be set in F<krb5.conf> and is only applicable to the auth
-group.
+This option can be set in C<[appdefaults]> in F<krb5.conf> and is only
+applicable to the auth group.
 
 =item keytab=<path>
 
@@ -410,8 +417,8 @@ that use this PAM module for authentication may wish to point it to
 another keytab the application can read.  The first principal found in the
 keytab will be used as the principal for credential verification.
 
-This option can be set in F<krb5.conf> and is only applicable to the auth
-group.
+This option can be set in C<[appdefaults]> in F<krb5.conf> and is only
+applicable to the auth group.
 
 =item realm=<realm>
 
@@ -434,8 +441,8 @@ used to verify credentials, see the I<user_realm> option.
 C<2d4h10m> or a time in minutes.  If set, this overrides the Kerberos
 library default set in the [libdefaults] section of F<krb5.conf>.
 
-This option can be set in F<krb5.conf> and is only applicable to the auth
-group.
+This option can be set in C<[appdefaults]> in F<krb5.conf> and is only
+applicable to the auth group.
 
 =item ticket_lifetime=<lifetime>
 
@@ -444,8 +451,8 @@ should be a Kerberos lifetime string such as C<2d4h10m> or a time in
 minutes.  If set, this overrides the Kerberos library default set in the
 [libdefaults] section of F<krb5.conf>.
 
-This option can be set in F<krb5.conf> and is only applicable to the auth
-group.
+This option can be set in C<[appdefaults]> in F<krb5.conf> and is only
+applicable to the auth group.
 
 =item user_realm
 
@@ -492,8 +499,8 @@ It therefore isn't the default.  Turn it on (and list pam_krb5 first after
 pam_cracklib if used) when synchronizing passwords between multiple
 environments.
 
-This option can be set in F<krb5.conf> and is only applicable to the
-password group.
+This option can be set in C<[appdefaults]> in F<krb5.conf> and is only
+applicable to the password group.
 
 =item debug
 
@@ -501,7 +508,7 @@ password group.
 LOG_DEBUG priority, including entry and exit from each of the external PAM
 interfaces (except pam_close_session).
 
-This option can be set in F<krb5.conf>.
+This option can be set in C<[appdefaults]> in F<krb5.conf>.
 
 =item defer_pwchange
 
@@ -528,8 +535,13 @@ support prompting for password changes during authentication), and then
 only for specific applications known to call pam_acct_mgmt() and check its
 return status properly.
 
-This option can be set in F<krb5.conf> and is only applicable to the auth
-group.
+This option is only supported when pam-krb5 is built with MIT Kerberos.
+If built against Heimdal, this option does nothing and normal expired
+password change handling still happens.  (Heimdal is missing the required
+API to implement this option, at least as of version 1.6.)
+
+This option can be set in C<[appdefaults]> in F<krb5.conf> and is only
+applicable to the auth group.
 
 =item fail_pwchange
 
@@ -539,8 +551,8 @@ group.  If this option is set, expired passwords are instead treated as an
 authentication failure identical to an incorrect password.  Also see
 I<defer_pwchange> and I<force_pwchange>.
 
-This option can be set in F<krb5.conf> and is only applicable to the auth
-group.
+This option can be set in C<[appdefaults]> in F<krb5.conf> and is only
+applicable to the auth group.
 
 =item force_pwchange
 
@@ -554,8 +566,8 @@ However, some system Kerberos libraries (such as Solaris's) have password
 change prompting disabled in the Kerberos library; on those systems, you
 can set this option to simulate the normal library behavior.
 
-This option can be set in F<krb5.conf> and is only applicable to the auth
-group.
+This option can be set in C<[appdefaults]> in F<krb5.conf> and is only
+applicable to the auth group.
 
 =item no_update_user
 
@@ -565,8 +577,8 @@ the PAM_USER variable for this PAM session to the canonicalized local
 name.  Setting this option disables this behavior and leaves PAM_USER set
 to the initial authentication identity.
 
-This option can be set in F<krb5.conf> and is only applicable to the auth
-group.
+This option can be set in C<[appdefaults]> in F<krb5.conf> and is only
+applicable to the auth group.
 
 =item silent
 
@@ -598,8 +610,8 @@ anchors.  This is normally a reference to a file containing the trusted
 certificate authorities.  This option is only used if I<try_pkinit> or
 I<use_pkinit> are set.
 
-This option can be set in F<krb5.conf> and is only applicable to the auth
-and password groups.
+This option can be set in C<[appdefaults]> in F<krb5.conf> and is only
+applicable to the auth and password groups.
 
 =item pkinit_prompt
 
@@ -612,8 +624,8 @@ set, a user who wishes to use a password instead can just press Enter and
 then enter their password as normal.  This option is only used if
 I<try_pkinit> or I<use_pkinit> are set.
 
-This option can be set in F<krb5.conf> and is only applicable to the auth
-and password groups.
+This option can be set in C<[appdefaults]> in F<krb5.conf> and is only
+applicable to the auth and password groups.
 
 =item pkinit_user=<userid>
 
@@ -628,8 +640,8 @@ user certificate or to other types of user IDs.  See the Kerberos library
 documentation for more details.  This option is only used if I<try_pkinit>
 or I<use_pkinit> are set.
 
-This option can be set in F<krb5.conf> and is only applicable to the auth
-and password groups.
+This option can be set in C<[appdefaults]> in F<krb5.conf> and is only
+applicable to the auth and password groups.
 
 =item preauth_opt=<option>
 
@@ -651,11 +663,11 @@ Any settings made with this option are applied after the I<pkinit_anchors>
 and I<pkinit_user> options, so if an equivalent setting is made via
 I<preauth_opt>, it will probably override the other setting.
 
-This option can be set in F<krb5.conf> and is only applicable to the auth
-and password groups.  Note that there is no way to remove a setting made
-in F<krb5.conf> using the PAM configuration, but options set in the PAM
-configuration are applied after options set in F<krb5.conf> and therefore
-may override earlier settings.
+This option can be set in C<[appdefaults]> in F<krb5.conf> and is only
+applicable to the auth and password groups.  Note that there is no way to
+remove a setting made in F<krb5.conf> using the PAM configuration, but
+options set in the PAM configuration are applied after options set in
+F<krb5.conf> and therefore may override earlier settings.
 
 =item try_pkinit
 
@@ -672,8 +684,8 @@ modules.  This is a bug in the interaction between the module and MIT
 Kerberos that requires some reworking of the PKINIT authentication method
 to fix.
 
-This option can be set in F<krb5.conf> and is only applicable to the auth
-and password groups.
+This option can be set in C<[appdefaults]> in F<krb5.conf> and is only
+applicable to the auth and password groups.
 
 =item use_pkinit
 
@@ -684,8 +696,8 @@ against Heimdal 0.8rc1 or later.  MIT Kerberos doesn't provide a method to
 enforce use of PKINIT, so I<try_pkinit> must be used with that
 implementation instead.
 
-This option can be set in F<krb5.conf> and is only applicable to the auth
-and password groups.
+This option can be set in C<[appdefaults]> in F<krb5.conf> and is only
+applicable to the auth and password groups.
 
 =back
 
@@ -709,8 +721,8 @@ the empty string removes the word before "password:" entirely.
 If set in the PAM configuration, <banner> may not contain whitespace.  If
 you want a value containing whitespace, set it in F<krb5.conf>.
 
-This option can be set in F<krb5.conf> and is only applicable to the
-password group.
+This option can be set in C<[appdefaults]> in F<krb5.conf> and is only
+applicable to the password group.
 
 =item expose_account
 
@@ -727,8 +739,8 @@ OpenSSH may cause problems for some ssh clients that only recognize
 I<search_k5login> is enabled since the principal displayed would be
 inaccurate.
 
-This option can be set in F<krb5.conf> and is only applicable to the auth
-and password groups.
+This option can be set in C<[appdefaults]> in F<krb5.conf> and is only
+applicable to the auth and password groups.
 
 =item force_first_pass
 
@@ -844,8 +856,8 @@ will be replaced by randomly generated characters and the ticket cache
 will be created using mkstemp(3).  This is strongly recommended if
 <pattern> points to a world-writable directory.
 
-This option can be set in F<krb5.conf> and is only applicable to the auth
-and session groups.
+This option can be set in C<[appdefaults]> in F<krb5.conf> and is only
+applicable to the auth and session groups.
 
 =item ccache_dir=<directory>
 
@@ -863,8 +875,8 @@ also want to set I<ccache_dir> to move those temporary caches to some
 other location.  This will allow pam_krb5 to continue working even if the
 system F</tmp> directory is full.
 
-This option can be set in F<krb5.conf> and is only applicable to the auth
-and session groups.
+This option can be set in C<[appdefaults]> in F<krb5.conf> and is only
+applicable to the auth and session groups.
 
 =item no_ccache
 
@@ -893,8 +905,8 @@ B<kdestroy> in the shell's logout configuration or run a temporary file
 removal program to avoid accumulating hundreds of ticket caches in
 F</tmp>.
 
-This option can be set in F<krb5.conf> and is only applicable to the auth
-and session groups.
+This option can be set in C<[appdefaults]> in F<krb5.conf> and is only
+applicable to the auth and session groups.
 
 =back
 
@@ -1026,6 +1038,6 @@ warranty.
 kadmin(8), kdestroy(1), krb5.conf(5), pam(7), passwd(1), syslog(3)
 
 The current version of this module is available from its web page at
-L<http://www.eyrie.org/~eagle/software/pam-krb5/>.
+L<https://www.eyrie.org/~eagle/software/pam-krb5/>.
 
 =cut

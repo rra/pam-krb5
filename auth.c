@@ -6,10 +6,10 @@
  * the appropriate internal functions.  This interface is used by both the
  * authentication and the password groups.
  *
+ * Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2014, 2015, 2017
+ *     Russ Allbery <eagle@eyrie.org>
  * Copyright 2010, 2011, 2012, 2014
  *     The Board of Trustees of the Leland Stanford Junior University
- * Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2014
- *     Russ Allbery <eagle@eyrie.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
  *
@@ -185,7 +185,7 @@ set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
         if (config->preauth_opt != NULL && config->preauth_opt->count > 0) {
             size_t i;
             char *name, *value;
-            char save;
+            char save = '\0';
 
             for (i = 0; i < config->preauth_opt->count; i++) {
                 name = config->preauth_opt->strings[i];
@@ -339,7 +339,7 @@ password_auth(struct pam_args *args, krb5_creds *creds,
         }
     }
 
-    /* Do thet authentication. */
+    /* Do the authentication. */
     retval = krb5_get_init_creds_password(ctx->context, creds, ctx->princ,
                  (char *) pass, pamk5_prompter_krb5, args, 0,
                  (char *) service, opts);
@@ -352,9 +352,16 @@ password_auth(struct pam_args *args, krb5_creds *creds,
      * otherwise change the error to invalid password.
      */
     if (retval == KRB5KDC_ERR_KEY_EXP) {
-        retval = krb5_get_init_creds_password(ctx->context, creds,
-                     ctx->princ, (char *) pass, pamk5_prompter_krb5, args, 0,
-                     (char *) "kadmin/changepw", opts);
+        krb5_get_init_creds_opt *heimdal_opts = NULL;
+
+        retval = krb5_get_init_creds_opt_alloc(ctx->context, &heimdal_opts);
+        if (retval == 0) {
+            set_credential_options(args, opts, 1);
+            retval = krb5_get_init_creds_password(ctx->context, creds,
+                         ctx->princ, (char *) pass, pamk5_prompter_krb5, args,
+                         0, (char *) "kadmin/changepw", heimdal_opts);
+            krb5_get_init_creds_opt_free(ctx->context, heimdal_opts);
+        }
         if (retval == 0) {
             retval = KRB5KDC_ERR_KEY_EXP;
             krb5_free_cred_contents(ctx->context, creds);
@@ -680,6 +687,49 @@ verify_creds(struct pam_args *args, krb5_creds *creds)
 
 
 /*
+ * Give the user a nicer error message when we've attempted PKINIT without
+ * success.  We can only do this if the rich status codes are available.
+ * Currently, this only works with Heimdal.
+ */
+static void UNUSED
+report_pkinit_error(struct pam_args *args, krb5_error_code retval UNUSED)
+{
+    const char *message;
+
+#ifdef HAVE_HX509_ERR_H
+    switch (retval) {
+# ifdef HX509_PKCS11_PIN_LOCKED
+    case HX509_PKCS11_PIN_LOCKED:
+        message = "PKINIT failed: user PIN locked";
+        break;
+# endif
+# ifdef HX509_PKCS11_PIN_EXPIRED
+    case HX509_PKCS11_PIN_EXPIRED:
+        message = "PKINIT failed: user PIN expired";
+        break;
+# endif
+# ifdef HX509_PKCS11_PIN_INCORRECT
+    case HX509_PKCS11_PIN_INCORRECT:
+        message = "PKINIT failed: user PIN incorrect";
+        break;
+# endif
+# ifdef HX509_PKCS11_PIN_NOT_INITIALIZED
+    case HX509_PKCS11_PIN_NOT_INITIALIZED:
+        message = "PKINIT fialed: user PIN not initialized";
+        break;
+# endif
+    default:
+        message = "PKINIT failed";
+        break;
+    }
+#else
+    message = "PKINIT failed";
+#endif
+    pamk5_conv(args, message, PAM_TEXT_INFO, NULL);
+}
+
+
+/*
  * Prompt the user for a password and authenticate the password with the KDC.
  * If correct, fill in creds with the obtained TGT or ticket.  service, if
  * non-NULL, specifies the service to get tickets for; the only interesting
@@ -693,7 +743,7 @@ pamk5_password_auth(struct pam_args *args, const char *service,
 {
     struct context *ctx;
     krb5_get_init_creds_opt *opts = NULL;
-    krb5_error_code retval;
+    krb5_error_code retval = 0;
     int status = PAM_SUCCESS;
     bool retry, prompt;
     bool creds_valid = false;
@@ -728,11 +778,14 @@ pamk5_password_auth(struct pam_args *args, const char *service,
         retval = pkinit_auth(args, service, creds);
         if (retval == 0)
             goto verify;
-        putil_debug_krb5(args, retval, "pkinit failed");
+        putil_debug_krb5(args, retval, "PKINIT failed");
         if (retval != HX509_PKCS11_NO_TOKEN && retval != HX509_PKCS11_NO_SLOT)
             goto done;
-        if (retval != 0 && args->config->use_pkinit)
-            goto done;
+        if (retval != 0) {
+            report_pkinit_error(args, retval);
+            if (args->config->use_pkinit)
+                goto done;
+        }
     }
 #else
     if (args->config->use_pkinit) {
@@ -1025,7 +1078,7 @@ pamk5_authenticate(struct pam_args *args)
         pamret = pamk5_cache_init_random(args, creds);
 
 done:
-    if (creds != NULL) {
+    if (creds != NULL && ctx != NULL) {
         krb5_free_cred_contents(ctx->context, creds);
         free(creds);
     }

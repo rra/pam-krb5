@@ -5,7 +5,7 @@
  * for testing, and some general utility functions.
  *
  * The canonical version of this file is maintained in the rra-c-util package,
- * which can be found at <http://www.eyrie.org/~eagle/software/rra-c-util/>.
+ * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
  * Copyright 2010, 2011, 2014
@@ -34,6 +34,7 @@
 #include <portable/pam.h>
 #include <portable/system.h>
 
+#include <errno.h>
 #include <pwd.h>
 
 #include <tests/fakepam/pam.h>
@@ -130,8 +131,10 @@ pam_modutil_getpwnam(pam_handle_t *pamh UNUSED, const char *name)
 {
     if (pwd_info != NULL && strcmp(pwd_info->pw_name, name) == 0)
         return pwd_info;
-    else
+    else {
+        errno = 0;
         return NULL;
+    }
 }
 #else
 struct passwd *
@@ -139,7 +142,9 @@ getpwnam(const char *name)
 {
     if (pwd_info != NULL && strcmp(pwd_info->pw_name, name) == 0)
         return pwd_info;
-    else
+    else {
+        errno = 0;
         return NULL;
+    }
 }
 #endif
