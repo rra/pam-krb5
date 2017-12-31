@@ -1,3 +1,14 @@
+libpam-krb5 (4.8-1) UNRELEASED; urgency=medium
+
+  * New upstream release.
+    - Correctly set credential options when verifying that an expired
+      password can be used to get kadmin/changepw credentials.
+    - Report PKINIT failure reasons when built with new Heimdal versions.
+    - Better document that the default Kerberos library ticket cache
+      location is not used and why.  (Closes: #872943)
+
+ -- Russ Allbery <rra@debian.org>  Sat, 30 Dec 2017 19:49:23 -0800
+
 libpam-krb5 (4.7-4) unstable; urgency=medium
 
   * Re-add libpam-heimdal now that Heimdal upstream has released a new
