@@ -1,17 +1,17 @@
 dnl Autoconf configuration for pam-krb5.
 dnl
 dnl Written by Russ Allbery <eagle@eyrie.org>
-dnl Copyright 2009, 2010, 2011, 2012, 2013
-dnl     The Board of Trustees of the Leland Stanford Junior University
 dnl Copyright 2005, 2006, 2007, 2008, 2009, 2014, 2017
 dnl     Russ Allbery <eagle@eyrie.org>
+dnl Copyright 2009, 2010, 2011, 2012, 2013
+dnl     The Board of Trustees of the Leland Stanford Junior University
 dnl Copyright 2005 Andres Salomon <dilinger@debian.org>
 dnl Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
 dnl
 dnl See LICENSE for licensing terms.
 
 AC_PREREQ([2.64])
-AC_INIT([pam-krb5], [4.7], [eagle@eyrie.org])
+AC_INIT([pam-krb5], [4.8], [eagle@eyrie.org])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_LIBOBJ_DIR([portable])
 AC_CONFIG_MACRO_DIR([m4])

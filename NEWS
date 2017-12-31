@@ -1,6 +1,6 @@
                       User-Visible pam-krb5 Changes
 
-pam-krb5 4.8 (unreleased)
+pam-krb5 4.8 (2017-12-30)
 
     When verifying that an expired password can still be used to get
     kadmin/changepw credentials, correctly set the credential options for

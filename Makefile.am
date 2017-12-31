@@ -1,21 +1,24 @@
 # Automake makefile for pam-krb5.
 #
 # Written by Russ Allbery <eagle@eyrie.org>
+# Copyright 2005, 2006, 2007, 2014, 2017 Russ Allbery <eagle@eyrie.org>
 # Copyright 2009, 2011, 2012
 #     The Board of Trustees of the Leland Stanford Junior University
-# Copyright 2005, 2006, 2007, 2014, 2017 Russ Allbery <eagle@eyrie.org>
 # Copyright 2005 Andres Salomon <dilinger@debian.org>
 # Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
 #
 # See LICENSE for licensing terms.
 
 ACLOCAL_AMFLAGS = -I m4
-EXTRA_DIST = .gitignore .travis.yml LICENSE bootstrap pam_krb5.map	    \
-	pam_krb5.pod pam_krb5.sym tests/README tests/TESTS		    \
-	tests/config/README tests/data/generate-krb5-conf		    \
-	tests/data/krb5-pam.conf tests/data/krb5.conf tests/data/scripts    \
-	tests/data/valgrind.supp tests/docs/pod-spelling-t tests/docs/pod-t \
-	tests/fakepam/README tests/tap/libtap.sh
+EXTRA_DIST = .gitignore .travis.yml LICENSE README.md bootstrap		    \
+	docs/metadata pam_krb5.map pam_krb5.pod pam_krb5.sym tests/README   \
+	tests/TESTS tests/config/README tests/data/generate-krb5-conf	    \
+	tests/data/krb5-pam.conf tests/data/krb5.conf tests/data/perl.conf  \
+	tests/data/scripts tests/data/valgrind.supp			    \
+	tests/docs/pod-spelling-t tests/docs/pod-t tests/docs/urls-t	    \
+	tests/fakepam/README tests/tap/libtap.sh tests/tap/perl/Test/RRA.pm \
+	tests/tap/perl/Test/RRA/Automake.pm				    \
+	tests/tap/perl/Test/RRA/Config.pm
 
 # Everything we build needs the Kerbeors headers and library flags.
 AM_CPPFLAGS = $(KRB5_CPPFLAGS)
