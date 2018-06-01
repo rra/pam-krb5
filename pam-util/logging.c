@@ -255,8 +255,10 @@ putil_log_failure(struct pam_args *pargs, const char *fmt, ...)
         name = pargs->user;
     va_start(args, fmt);
     msg = format(fmt, args);
-    if (msg == NULL)
+    if (msg == NULL) {
+        va_end(args);
         return;
+    }
     va_end(args);
     pam_get_item(pargs->pamh, PAM_RUSER, (PAM_CONST void **) &ruser);
     pam_get_item(pargs->pamh, PAM_RHOST, (PAM_CONST void **) &rhost);
