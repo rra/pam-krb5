@@ -9,7 +9,8 @@
  * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
- * Copyright 2005, 2006, 2007, 2009, 2010, 2012, 2013
+ * Copyright 2015, 2018 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2005-2007, 2009-2010, 2012-2013
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -29,6 +30,8 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
+ *
+ * SPDX-License-Identifier: MIT
  */
 
 #include <config.h>
@@ -255,9 +258,9 @@ putil_log_failure(struct pam_args *pargs, const char *fmt, ...)
         name = pargs->user;
     va_start(args, fmt);
     msg = format(fmt, args);
+    va_end(args);
     if (msg == NULL)
         return;
-    va_end(args);
     pam_get_item(pargs->pamh, PAM_RUSER, (PAM_CONST void **) &ruser);
     pam_get_item(pargs->pamh, PAM_RHOST, (PAM_CONST void **) &rhost);
     pam_get_item(pargs->pamh, PAM_TTY, (PAM_CONST void **) &tty);
