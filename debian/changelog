@@ -6,6 +6,7 @@ libpam-krb5 (4.8-2) UNRELEASED; urgency=medium
     - Install the upstream release notes as NEWS.gz, not changelog.gz.
     - Add Rules-Requires-Root: no.
   * Add upstream release tag pattern to debian/gbp.conf.
+  * Bump watch file version to 4.
   * Refresh upstream signing key.
 
  -- Russ Allbery <rra@debian.org>  Fri, 31 Aug 2018 10:48:15 -0700
