@@ -1,6 +1,10 @@
 libpam-krb5 (4.8-2) UNRELEASED; urgency=medium
 
   * Move canonical packaging repository to salsa.debian.org.
+  * Update standards version to 4.2.1.
+    - Enable verbose test output.
+    - Install the upstream release notes as NEWS.gz, not changelog.gz.
+    - Add Rules-Requires-Root: no.
   * Add upstream release tag pattern to debian/gbp.conf.
   * Refresh upstream signing key.
 

@@ -3,6 +3,9 @@
 # Enable compiler hardening flags.
 export DEB_BUILD_MAINT_OPTIONS = hardening=+bindnow
 
+# Enable verbose test output.
+export C_TAP_VERBOSE = 1
+
 DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
 
 %:
@@ -45,6 +48,3 @@ override_dh_auto_install:
 	    debian/libpam-krb5/usr/share/pam-configs/krb5
 	install -m 644 debian/pam-auth-update \
 	    debian/libpam-heimdal/usr/share/pam-configs/krb5
-
-override_dh_installchangelogs:
-	dh_installchangelogs NEWS
