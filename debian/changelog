@@ -1,4 +1,4 @@
-libpam-krb5 (4.8-2) UNRELEASED; urgency=medium
+libpam-krb5 (4.8-2) unstable; urgency=medium
 
   * Move canonical packaging repository to salsa.debian.org.
   * Update standards version to 4.2.1.
@@ -9,7 +9,7 @@ libpam-krb5 (4.8-2) UNRELEASED; urgency=medium
   * Bump watch file version to 4.
   * Refresh upstream signing key.
 
- -- Russ Allbery <rra@debian.org>  Fri, 31 Aug 2018 10:48:15 -0700
+ -- Russ Allbery <rra@debian.org>  Fri, 31 Aug 2018 10:57:00 -0700
 
 libpam-krb5 (4.8-1) unstable; urgency=medium
 
