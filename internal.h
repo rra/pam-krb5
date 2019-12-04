@@ -59,6 +59,7 @@ struct pam_config {
     bool force_alt_auth;         /* Alt principal must be used if it exists. */
     bool ignore_k5login;         /* Don't check .k5login files. */
     bool ignore_root;            /* Skip authentication for root. */
+    struct vector *mappings;     /* regex patterns to map principals. */
     long minimum_uid;            /* Ignore users below this UID. */
     bool only_alt_auth;          /* Alt principal must be used. */
     bool search_k5login;         /* Try password with each line of .k5login. */
@@ -203,6 +204,12 @@ krb5_error_code pamk5_alt_auth(struct pam_args *, const char *service,
                                krb5_get_init_creds_opt *, const char *pass,
                                krb5_creds *);
 int pamk5_alt_auth_verify(struct pam_args *);
+
+/* mappings support. */
+krb5_error_code pamk5_mappings_auth(struct pam_args *, const char *service,
+                                    krb5_get_init_creds_opt *,
+                                    const char *pass, krb5_creds *);
+int pamk5_mappings_auth_verify(struct pam_args *);
 
 /* FAST support.  Set up FAST protection of authentication. */
 void pamk5_fast_setup(struct pam_args *, krb5_get_init_creds_opt *);

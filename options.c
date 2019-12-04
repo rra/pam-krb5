@@ -48,6 +48,7 @@ static const struct option options[] = {
     { K(ignore_k5login),     true,  BOOL   (false) },
     { K(ignore_root),        true,  BOOL   (false) },
     { K(keytab),             true,  STRING (NULL)  },
+    { K(mappings),           true,  LIST   (NULL)  },
     { K(minimum_uid),        true,  NUMBER (0)     },
     { K(no_ccache),          false, BOOL   (false) },
     { K(no_prompt),          true,  BOOL   (false) },
@@ -230,6 +231,7 @@ pamk5_free(struct pam_args *args)
         free(config->ccache_dir);
         free(config->fast_ccache);
         free(config->keytab);
+        vector_free(config->mappings);
         free(config->pkinit_anchors);
         free(config->pkinit_user);
         vector_free(config->preauth_opt);

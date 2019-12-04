@@ -284,6 +284,19 @@ want to use I<minimum_uid> instead.
 
 This option can be set in C<[appdefaults]> in F<krb5.conf>.
 
+=item mappings=regex1 regex2 [...]
+
+[2.0] Specifies that pam_krb5 should derive the user's principal name
+from the Unix user name by first checking if the user name matches
+C<regex1>, and formulating a principal name using C<regex2>.  For
+example, "B<mappings = ^EXAMPLE\\(.*)$ $1@EXAMPLE.COM>" would map any
+user with a name of the form "EXAMPLE\whatever" to a principal name of
+"whatever@EXAMPLE.COM".  This is primarily targeted at allowing pam_krb5
+to be used to authenticate users whose user information is provided by
+F<winbindd>(8).  This will frequently require the reverse to be
+configured by setting up an auth_to_local rule elsewhere in
+F<krb5.conf>(5).
+
 =item minimum_uid=<uid>
 
 [2.0] Do not do anything if the authenticated account name corresponds to

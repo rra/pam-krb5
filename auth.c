@@ -591,8 +591,7 @@ password_auth_attempt(struct pam_args *args, const char *service,
     /*
      * First, try authenticating as the alternate principal if one were
      * configured.  If that fails or wasn't configured, continue on to trying
-     * search_k5login or a regular authentication unless configuration
-     * indicates that regular authentication should not be attempted.
+     * a mappings login.
      */
     if (args->config->alt_auth_map != NULL) {
         retval = pamk5_alt_auth(args, service, opts, pass, creds);
@@ -610,6 +609,18 @@ password_auth_attempt(struct pam_args *args, const char *service,
         if (args->config->force_alt_auth)
             if (retval != KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN)
                 return retval;
+    }
+
+    /*
+     * Next try authentication as a mapped user if any mappings were
+     * configured.  If that fails or wasn't configured continue on with
+     * search_k5login or a regular authentication unless configuration
+     * indicates that regular authentication should not be attempted.
+     */
+    if (args->config->mappings != NULL) {
+        retval = pamk5_mappings_auth(args, service, opts, pass, creds);
+        if (retval == 0)
+            return retval;
     }
 
     /* Attempt regular authentication, via either search_k5login or normal. */

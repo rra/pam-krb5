@@ -93,6 +93,15 @@ pamk5_authorized(struct pam_args *args)
     }
 
     /*
+     * As with alt_auth_map mappings serves as a .k5login equivalent.
+     */
+    if (args->config->mappings != NULL) {
+        status = pamk5_mappings_auth_verify(args);
+        if (status == PAM_SUCCESS || status == PAM_SERVICE_ERR)
+            return status;
+    }
+
+    /*
      * If the name to which we're authenticating contains @ (is fully
      * qualified), it must match the principal exactly.
      */
