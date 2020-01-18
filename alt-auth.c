@@ -156,8 +156,8 @@ pamk5_alt_auth(struct pam_args *args, const char *service,
      * principal.  Return the Kerberos status code.
      */
     retval = krb5_get_init_creds_password(ctx->context, creds, princ,
-                (char *) pass, pamk5_prompter_krb5, args, 0,
-                (char *) service, opts);
+                                          (char *) pass, pamk5_prompter_krb5,
+                                          args, 0, (char *) service, opts);
     if (retval != 0) {
         putil_debug_krb5(args, retval, "alternate authentication failed");
         krb5_free_principal(ctx->context, princ);
@@ -202,8 +202,8 @@ pamk5_alt_auth_verify(struct pam_args *args)
     }
     retval = krb5_parse_name(ctx->context, name, &princ);
     if (retval != 0) {
-        putil_err_krb5(args, retval,
-                       "cannot parse mapped principal name %s", mapped);
+        putil_err_krb5(args, retval, "cannot parse mapped principal name %s",
+                       mapped);
         goto done;
     }
     retval = krb5_unparse_name(ctx->context, princ, &mapped);
@@ -220,8 +220,8 @@ pamk5_alt_auth_verify(struct pam_args *args)
     if (strcmp(authed, mapped) == 0)
         status = PAM_SUCCESS;
     else {
-        putil_debug(args, "mapped user %s does not match principal %s",
-                    mapped, authed);
+        putil_debug(args, "mapped user %s does not match principal %s", mapped,
+                    authed);
         status = PAM_AUTH_ERR;
     }
 

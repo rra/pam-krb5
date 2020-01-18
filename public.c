@@ -24,8 +24,8 @@
 #define PAM_SM_SESSION
 
 #include <config.h>
-#include <portable/system.h>
 #include <portable/pam.h>
+#include <portable/system.h>
 
 #include <internal.h>
 #include <pam-util/args.h>
@@ -76,8 +76,7 @@ done:
  * here, since many applications don't call pam_acct_mgmt.
  */
 PAM_EXTERN int
-pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
-                    const char **argv)
+pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
     struct pam_args *args;
     int pamret;
@@ -208,8 +207,7 @@ done:
  * The main PAM interface for opening a session.
  */
 PAM_EXTERN int
-pam_sm_open_session(pam_handle_t *pamh, int flags, int argc,
-                    const char **argv)
+pam_sm_open_session(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
     struct pam_args *args;
     int pamret;

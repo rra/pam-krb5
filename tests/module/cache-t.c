@@ -83,18 +83,18 @@ check_cache(pam_handle_t *pamh, const struct script_config *config, void *data)
     is_string(config->extra[0], principal, "...and matches our principal");
 
     /* Retrieve the krbtgt for the realm and check properties. */
-    code = krb5_build_principal_ext(ctx, &tgtprinc,
-               (unsigned int) strlen(extra->realm), extra->realm,
-               KRB5_TGS_NAME_SIZE, KRB5_TGS_NAME,
-               strlen(extra->realm), extra->realm, NULL);
+    code = krb5_build_principal_ext(
+        ctx, &tgtprinc, (unsigned int) strlen(extra->realm), extra->realm,
+        KRB5_TGS_NAME_SIZE, KRB5_TGS_NAME, strlen(extra->realm), extra->realm,
+        NULL);
     if (code != 0)
         bail("cannot create krbtgt principal name");
     memset(&in, 0, sizeof(in));
     memset(&out, 0, sizeof(out));
     in.server = tgtprinc;
     in.client = princ;
-    code = krb5_cc_retrieve_cred(ctx, ccache, KRB5_TC_MATCH_SRV_NAMEONLY,
-                                 &in, &out);
+    code = krb5_cc_retrieve_cred(ctx, ccache, KRB5_TC_MATCH_SRV_NAMEONLY, &in,
+                                 &out);
     is_int(0, code, "able to get krbtgt credentials");
     ok(out.times.endtime > time(NULL) + 30 * 60, "...good for 30 minutes");
     krb5_free_cred_contents(ctx, &out);

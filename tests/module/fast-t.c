@@ -43,10 +43,10 @@ anon_fast_works(void)
     retval = krb5_get_default_realm(ctx, &realm);
     if (retval != 0)
         bail("cannot get default realm");
-    retval = krb5_build_principal_ext(ctx, &princ,
-                 (unsigned int) strlen(realm), realm,
-                 strlen(KRB5_WELLKNOWN_NAME), KRB5_WELLKNOWN_NAME,
-                 strlen(KRB5_ANON_NAME), KRB5_ANON_NAME, NULL);
+    retval = krb5_build_principal_ext(
+        ctx, &princ, (unsigned int) strlen(realm), realm,
+        strlen(KRB5_WELLKNOWN_NAME), KRB5_WELLKNOWN_NAME,
+        strlen(KRB5_ANON_NAME), KRB5_ANON_NAME, NULL);
     if (retval != 0)
         bail("cannot construct anonymous principal");
     krb5_free_default_realm(ctx, realm);
@@ -58,8 +58,8 @@ anon_fast_works(void)
         bail("cannot create credential options");
     krb5_get_init_creds_opt_set_anonymous(opts, 1);
     krb5_get_init_creds_opt_set_tkt_life(opts, 60);
-    retval = krb5_get_init_creds_password(ctx, &creds, princ, NULL, NULL,
-                                          NULL, 0, NULL, opts);
+    retval = krb5_get_init_creds_password(ctx, &creds, princ, NULL, NULL, NULL,
+                                          0, NULL, opts);
 
     /* Clean up. */
     if (princ != NULL)

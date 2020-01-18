@@ -5,12 +5,11 @@
  * internal functions.  Retrieves configuration information from krb5.conf and
  * parses the PAM configuration.
  *
- * Copyright 2011, 2012
+ * Copyright 2005-2010, 2014, 2020 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2011-2012
  *     The Board of Trustees of the Leland Stanford Junior University
- * Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2014
- *     Russ Allbery <eagle@eyrie.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
- * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
+ * Copyright 1999-2000 Frank Cusack <fcusack@fcusack.com>
  *
  * See LICENSE for licensing terms.
  */
@@ -29,6 +28,7 @@
 
 /* Our option definition.  Must be sorted. */
 #define K(name) (#name), offsetof(struct pam_config, name)
+/* clang-format off */
 static const struct option options[] = {
     { K(alt_auth_map),       true,  STRING (NULL)  },
     { K(anon_fast),          true,  BOOL   (false) },
@@ -72,6 +72,7 @@ static const struct option options[] = {
     { K(use_pkinit),         true,  BOOL   (false) },
     { K(user_realm),         true,  STRING (NULL)  },
 };
+/* clang-format on */
 static const size_t optlen = sizeof(options) / sizeof(options[0]);
 
 
@@ -88,11 +89,13 @@ pamk5_init(pam_handle_t *pamh, int flags, int argc, const char **argv)
     struct pam_config *config = NULL;
 
     args = putil_args_new(pamh, flags);
-    if (args == NULL)
+    if (args == NULL) {
         return NULL;
+    }
     config = calloc(1, sizeof(struct pam_config));
-    if (config == NULL)
+    if (config == NULL) {
         goto nomem;
+    }
     args->config = config;
 
     /*
@@ -118,14 +121,18 @@ pamk5_init(pam_handle_t *pamh, int flags, int argc, const char **argv)
         putil_args_free(args);
         return NULL;
     }
-    if (!putil_args_krb5(args, "pam", options, optlen))
+    if (!putil_args_krb5(args, "pam", options, optlen)) {
         goto fail;
-    if (!putil_args_parse(args, argc, argv, options, optlen))
+    }
+    if (!putil_args_parse(args, argc, argv, options, optlen)) {
         goto fail;
-    if (config->debug)
+    }
+    if (config->debug) {
         args->debug = true;
-    if (config->silent)
+    }
+    if (config->silent) {
         args->silent = true;
+    }
 
     /* An empty banner should be treated the same as not having one. */
     if (config->banner != NULL && config->banner[0] == '\0') {
@@ -153,32 +160,37 @@ pamk5_init(pam_handle_t *pamh, int flags, int argc, const char **argv)
      * which isn't the password they'll use (that's the whole point of
      * search_k5login).
      */
-    if (config->search_k5login)
+    if (config->search_k5login) {
         config->expose_account = 0;
+    }
 
     /* UIDs are unsigned on some systems. */
-    if (config->minimum_uid < 0)
+    if (config->minimum_uid < 0) {
         config->minimum_uid = 0;
+    }
 
     /*
      * Warn if PKINIT options were set and PKINIT isn't supported.  The MIT
      * method (krb5_get_init_creds_opt_set_pa) can't support use_pkinit.
      */
 #ifndef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT
-# ifndef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PA
-    if (config->try_pkinit)
+#    ifndef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PA
+    if (config->try_pkinit) {
         putil_err(args, "try_pkinit requested but PKINIT not available");
-# endif
-    if (config->use_pkinit)
+    }
+#    endif
+    if (config->use_pkinit) {
         putil_err(args, "use_pkinit requested but PKINIT not available or"
-                  " cannot be enforced");
+                        " cannot be enforced");
+    }
 #endif
 
     /* Warn if the FAST option was set and FAST isn't supported. */
 #ifndef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_FAST_CCACHE_NAME
-    if (config->fast_ccache || config->anon_fast)
+    if (config->fast_ccache || config->anon_fast) {
         putil_err(args, "fast_ccache or anon_fast requested but FAST not"
-                  " supported by Kerberos libraries");
+                        " supported by Kerberos libraries");
+    }
 #endif
 
     /* If tracing was requested enable it if possible. */
@@ -194,8 +206,9 @@ pamk5_init(pam_handle_t *pamh, int flags, int argc, const char **argv)
                            config->trace);
     }
 #else
-    if (config->trace != NULL)
+    if (config->trace != NULL) {
         putil_err(args, "trace logging requested but not supported");
+    }
 #endif
 
     return args;

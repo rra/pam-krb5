@@ -79,8 +79,10 @@ cache_init_from_cache(struct pam_args *args, const char *ccname,
         status = krb5_cc_store_cred(ctx->context, *cache, &creds);
         krb5_free_cred_contents(ctx->context, &creds);
         if (status != 0) {
-            putil_err_krb5(args, status, "cannot store additional credentials"
-                           " in %s", ccname);
+            putil_err_krb5(args, status,
+                           "cannot store additional credentials"
+                           " in %s",
+                           ccname);
             pamret = PAM_SERVICE_ERR;
             goto done;
         }
@@ -199,7 +201,7 @@ create_session_context(struct pam_args *args)
     tmpname = pamk5_get_krb5ccname(args, "PAM_KRB5CCNAME");
     if (tmpname == NULL) {
         putil_debug(args, "unable to get PAM_KRB5CCNAME, assuming"
-                    " non-Kerberos login");
+                          " non-Kerberos login");
         pamret = PAM_IGNORE;
         goto fail;
     }
@@ -339,7 +341,7 @@ pamk5_setcred(struct pam_args *args, bool refresh)
          */
         if (getuid() != geteuid() || getgid() != getegid()) {
             putil_err(args, "credential reinitialization in a setuid context"
-                      " ignored");
+                            " ignored");
             pamret = PAM_SUCCESS;
             goto done;
         }
@@ -424,7 +426,7 @@ pamk5_setcred(struct pam_args *args, bool refresh)
         status = chown(cache_name, uid, gid);
     if (status == -1) {
         putil_crit(args, "chown of ticket cache failed: %s", strerror(errno));
-        pamret = PAM_SERVICE_ERR;       
+        pamret = PAM_SERVICE_ERR;
         goto done;
     }
     pamret = pamk5_set_krb5ccname(args, cache_name, "KRB5CCNAME");

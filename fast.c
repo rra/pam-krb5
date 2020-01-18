@@ -8,7 +8,7 @@
  *
  * Written by Russ Allbery <eagle@eyrie.org>
  * Contributions from Sam Hartman and Yair Yarom
- * Copyright 2017 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2017, 2020 Russ Allbery <eagle@eyrie.org>
  * Copyright 2010, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *
@@ -63,9 +63,10 @@ cache_init_anonymous(struct pam_args *args, krb5_ccache *ccache)
         putil_debug_krb5(args, retval, "cannot find realm for anonymous FAST");
         return retval;
     }
-    retval = krb5_build_principal_ext(c, &princ, (unsigned int) strlen(realm),
-                 realm, strlen(KRB5_WELLKNOWN_NAME), KRB5_WELLKNOWN_NAME,
-                 strlen(KRB5_ANON_NAME), KRB5_ANON_NAME, NULL);
+    retval = krb5_build_principal_ext(
+        c, &princ, (unsigned int) strlen(realm), realm,
+        strlen(KRB5_WELLKNOWN_NAME), KRB5_WELLKNOWN_NAME,
+        strlen(KRB5_ANON_NAME), KRB5_ANON_NAME, NULL);
     if (retval != 0) {
         krb5_free_default_realm(c, realm);
         putil_debug_krb5(args, retval, "cannot create anonymous principal");
@@ -85,8 +86,9 @@ cache_init_anonymous(struct pam_args *args, krb5_ccache *ccache)
     }
     retval = krb5_cc_resolve(c, name, ccache);
     if (retval != 0) {
-        putil_err_krb5(args, retval, "cannot create anonymous FAST credential"
-                       " cache %s", name);
+        putil_err_krb5(args, retval,
+                       "cannot create anonymous FAST credential cache %s",
+                       name);
         goto done;
     }
 
@@ -98,14 +100,14 @@ cache_init_anonymous(struct pam_args *args, krb5_ccache *ccache)
     }
     krb5_get_init_creds_opt_set_anonymous(opts, 1);
     krb5_get_init_creds_opt_set_tkt_life(opts, 60);
-# ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_OUT_CCACHE
+#    ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_OUT_CCACHE
     krb5_get_init_creds_opt_set_out_ccache(c, opts, *ccache);
-# endif
+#    endif
     retval = krb5_get_init_creds_password(c, &creds, princ, NULL, NULL, NULL,
                                           0, NULL, opts);
     if (retval != 0) {
-        putil_debug_krb5(args, retval, "cannot obtain anonymous credentials"
-                         " for FAST");
+        putil_debug_krb5(args, retval,
+                         "cannot obtain anonymous credentials for FAST");
         goto done;
     }
     creds_valid = true;
@@ -116,7 +118,7 @@ cache_init_anonymous(struct pam_args *args, krb5_ccache *ccache)
      * credentials when initializing the ticket cache, since the realm will
      * not match the realm of our input principal.
      */
-# ifndef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_OUT_CCACHE
+#    ifndef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_OUT_CCACHE
     retval = krb5_cc_initialize(c, *ccache, creds.client);
     if (retval != 0) {
         putil_err_krb5(args, retval, "cannot initialize FAST ticket cache");
@@ -127,9 +129,9 @@ cache_init_anonymous(struct pam_args *args, krb5_ccache *ccache)
         putil_err_krb5(args, retval, "cannot store FAST credentials");
         goto done;
     }
-# endif /* !HAVE_KRB5_GET_INIT_CREDS_OPT_SET_OUT_CCACHE */
+#    endif /* !HAVE_KRB5_GET_INIT_CREDS_OPT_SET_OUT_CCACHE */
 
- done:
+done:
     if (retval != 0 && *ccache != NULL) {
         krb5_cc_destroy(c, *ccache);
         *ccache = NULL;
@@ -143,7 +145,7 @@ cache_init_anonymous(struct pam_args *args, krb5_ccache *ccache)
         krb5_free_cred_contents(c, &creds);
     return retval;
 }
-#endif /* HAVE_KRB5_GET_INIT_CREDS_OPT_SET_ANONYMOUS */
+#endif     /* HAVE_KRB5_GET_INIT_CREDS_OPT_SET_ANONYMOUS */
 
 
 /*
@@ -172,8 +174,10 @@ fast_setup_cache(struct pam_args *args)
     }
     retval = krb5_cc_get_principal(c, ccache, &princ);
     if (retval != 0) {
-        putil_debug_krb5(args, retval, "failed to get principal from FAST"
-                         " ccache %s", cache);
+        putil_debug_krb5(args, retval,
+                         "failed to get principal from FAST"
+                         " ccache %s",
+                         cache);
         krb5_cc_close(c, ccache);
         return NULL;
     } else {
@@ -214,7 +218,8 @@ fast_setup_anon(struct pam_args *args)
     }
     retval = krb5_cc_get_full_name(c, ccache, &cache);
     if (retval != 0) {
-        putil_debug_krb5(args, retval, "cannot get name of anonymous FAST"
+        putil_debug_krb5(args, retval,
+                         "cannot get name of anonymous FAST"
                          " credential cache");
         krb5_cc_destroy(c, ccache);
         return NULL;

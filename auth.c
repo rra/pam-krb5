@@ -6,12 +6,12 @@
  * the appropriate internal functions.  This interface is used by both the
  * authentication and the password groups.
  *
- * Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2014, 2015, 2017
+ * Copyright 2005-2010, 2014-2015, 2017, 2020
  *     Russ Allbery <eagle@eyrie.org>
- * Copyright 2010, 2011, 2012, 2014
+ * Copyright 2010-2012, 2014
  *     The Board of Trustees of the Leland Stanford Junior University
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
- * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
+ * Copyright 1999-2000 Frank Cusack <fcusack@fcusack.com>
  *
  * See LICENSE for licensing terms.
  */
@@ -23,7 +23,7 @@
 
 #include <errno.h>
 #ifdef HAVE_HX509_ERR_H
-# include <hx509_err.h>
+#    include <hx509_err.h>
 #endif
 #include <pwd.h>
 #include <sys/stat.h>
@@ -38,10 +38,10 @@
  * This will cause the right thing to happen with the logic around PKINIT.
  */
 #ifndef HX509_PKCS11_NO_TOKEN
-# define HX509_PKCS11_NO_TOKEN 0
+#    define HX509_PKCS11_NO_TOKEN 0
 #endif
 #ifndef HX509_PKCS11_NO_SLOT
-# define HX509_PKCS11_NO_SLOT 0
+#    define HX509_PKCS11_NO_SLOT 0
 #endif
 
 
@@ -60,7 +60,7 @@ parse_name(struct pam_args *args)
     char *user_realm;
     char *user = ctx->name;
     char *newuser = NULL;
-    char kuser[65] = "";        /* MAX_USERNAME == 65 (MIT Kerberos 1.4.1). */
+    char kuser[65] = ""; /* MAX_USERNAME == 65 (MIT Kerberos 1.4.1). */
     krb5_error_code k5_errno;
     int retval;
 
@@ -156,12 +156,13 @@ set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
         if (config->forwardable)
             krb5_get_init_creds_opt_set_forwardable(opts, 1);
         if (config->ticket_lifetime != 0)
-            krb5_get_init_creds_opt_set_tkt_life(opts, config->ticket_lifetime);
+            krb5_get_init_creds_opt_set_tkt_life(opts,
+                                                 config->ticket_lifetime);
         if (config->renew_lifetime != 0)
             krb5_get_init_creds_opt_set_renew_life(opts,
                                                    config->renew_lifetime);
-        krb5_get_init_creds_opt_set_change_password_prompt(opts,
-            (config->defer_pwchange || config->fail_pwchange) ? 0 : 1);
+        krb5_get_init_creds_opt_set_change_password_prompt(
+            opts, (config->defer_pwchange || config->fail_pwchange) ? 0 : 1);
     } else {
         krb5_get_init_creds_opt_set_forwardable(opts, 0);
         krb5_get_init_creds_opt_set_proxiable(opts, 0);
@@ -197,8 +198,8 @@ set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
                     *value = '\0';
                     value++;
                 }
-                krb5_get_init_creds_opt_set_pa(c, opts,
-                    name, (value != NULL) ? value : "yes");
+                krb5_get_init_creds_opt_set_pa(
+                    c, opts, name, (value != NULL) ? value : "yes");
                 if (value != NULL)
                     value[-1] = save;
             }
@@ -230,12 +231,12 @@ static int
 maybe_retrieve_password(struct pam_args *args, int authtok, const char **pass)
 {
     int status;
-    const bool try = args->config->try_first_pass;
+    const bool try_first = args->config->try_first_pass;
     const bool use = args->config->use_first_pass;
     const bool force = args->config->force_first_pass;
 
     *pass = NULL;
-    if (!try && !use && !force)
+    if (!try_first && !use && !force)
         return PAM_SUCCESS;
     status = pam_get_item(args->pamh, authtok, (PAM_CONST void **) pass);
     if (*pass != NULL && **pass == '\0') {
@@ -341,8 +342,8 @@ password_auth(struct pam_args *args, krb5_creds *creds,
 
     /* Do the authentication. */
     retval = krb5_get_init_creds_password(ctx->context, creds, ctx->princ,
-                 (char *) pass, pamk5_prompter_krb5, args, 0,
-                 (char *) service, opts);
+                                          (char *) pass, pamk5_prompter_krb5,
+                                          args, 0, (char *) service, opts);
 
     /*
      * Heimdal may return an expired key error even if the password is
@@ -357,9 +358,10 @@ password_auth(struct pam_args *args, krb5_creds *creds,
         retval = krb5_get_init_creds_opt_alloc(ctx->context, &heimdal_opts);
         if (retval == 0) {
             set_credential_options(args, opts, 1);
-            retval = krb5_get_init_creds_password(ctx->context, creds,
-                         ctx->princ, (char *) pass, pamk5_prompter_krb5, args,
-                         0, (char *) "kadmin/changepw", heimdal_opts);
+            retval = krb5_get_init_creds_password(
+                ctx->context, creds, ctx->princ, (char *) pass,
+                pamk5_prompter_krb5, args, 0, (char *) "kadmin/changepw",
+                heimdal_opts);
             krb5_get_init_creds_opt_free(ctx->context, heimdal_opts);
         }
         if (retval == 0) {
@@ -411,8 +413,8 @@ k5login_password_auth(struct pam_args *args, krb5_creds *creds,
     if (pwd == NULL || filename == NULL || access(filename, R_OK) != 0) {
         free(filename);
         return krb5_get_init_creds_password(ctx->context, creds, ctx->princ,
-                   (char *) pass, pamk5_prompter_krb5, args, 0,
-                   (char *) service, opts);
+                                            (char *) pass, pamk5_prompter_krb5,
+                                            args, 0, (char *) service, opts);
     }
 
     /*
@@ -464,11 +466,11 @@ k5login_password_auth(struct pam_args *args, krb5_creds *creds,
         if (service == NULL)
             putil_debug(args, "attempting authentication as %s", line);
         else
-            putil_debug(args, "attempting authentication as %s for %s",
-                        line, service);
-        retval = krb5_get_init_creds_password(ctx->context, creds, princ,
-                    (char *) pass, pamk5_prompter_krb5, args, 0,
-                    (char *) service, opts);
+            putil_debug(args, "attempting authentication as %s for %s", line,
+                        service);
+        retval = krb5_get_init_creds_password(
+            ctx->context, creds, princ, (char *) pass, pamk5_prompter_krb5,
+            args, 0, (char *) service, opts);
 
         /*
          * If that worked, update ctx->princ and return success.  Otherwise,
@@ -550,16 +552,17 @@ pkinit_auth(struct pam_args *args, const char *service, krb5_creds **creds)
     if (retval != 0)
         return retval;
     set_credential_options(args, opts, service != NULL);
-    retval = krb5_get_init_creds_opt_set_pkinit(ctx->context, opts,
-                  ctx->princ, args->config->pkinit_user,
-                  args->config->pkinit_anchors, NULL, NULL, 0,
-                  pamk5_prompter_krb5, args, NULL);
+    retval = krb5_get_init_creds_opt_set_pkinit(
+        ctx->context, opts, ctx->princ, args->config->pkinit_user,
+        args->config->pkinit_anchors, NULL, NULL, 0, pamk5_prompter_krb5, args,
+        NULL);
     if (retval != 0)
         goto done;
 
     /* Finally, do the actual work and return the results. */
-    retval = krb5_get_init_creds_password(ctx->context, *creds, ctx->princ,
-                 NULL, NULL, args, 0, (char *) service, opts);
+    retval =
+        krb5_get_init_creds_password(ctx->context, *creds, ctx->princ, NULL,
+                                     NULL, args, 0, (char *) service, opts);
 
 done:
     krb5_get_init_creds_opt_free(ctx->context, opts);
@@ -698,26 +701,26 @@ report_pkinit_error(struct pam_args *args, krb5_error_code retval UNUSED)
 
 #ifdef HAVE_HX509_ERR_H
     switch (retval) {
-# ifdef HX509_PKCS11_PIN_LOCKED
+#    ifdef HX509_PKCS11_PIN_LOCKED
     case HX509_PKCS11_PIN_LOCKED:
         message = "PKINIT failed: user PIN locked";
         break;
-# endif
-# ifdef HX509_PKCS11_PIN_EXPIRED
+#    endif
+#    ifdef HX509_PKCS11_PIN_EXPIRED
     case HX509_PKCS11_PIN_EXPIRED:
         message = "PKINIT failed: user PIN expired";
         break;
-# endif
-# ifdef HX509_PKCS11_PIN_INCORRECT
+#    endif
+#    ifdef HX509_PKCS11_PIN_INCORRECT
     case HX509_PKCS11_PIN_INCORRECT:
         message = "PKINIT failed: user PIN incorrect";
         break;
-# endif
-# ifdef HX509_PKCS11_PIN_NOT_INITIALIZED
+#    endif
+#    ifdef HX509_PKCS11_PIN_NOT_INITIALIZED
     case HX509_PKCS11_PIN_NOT_INITIALIZED:
         message = "PKINIT fialed: user PIN not initialized";
         break;
-# endif
+#    endif
     default:
         message = "PKINIT failed";
         break;
@@ -866,7 +869,8 @@ pamk5_password_auth(struct pam_args *args, const char *service,
                  || retval == KRB5_GET_IN_TKT_LOOP
                  || retval == KRB5_BAD_ENCTYPE));
 
-verify: UNUSED
+verify:
+    UNUSED
     /*
      * If we think we succeeded, whether through the regular path or via
      * PKINIT, try to verify the credentials.  Don't do this if we're
@@ -952,7 +956,7 @@ pamk5_authenticate(struct pam_args *args)
     /* Temporary backward compatibility. */
     if (args->config->use_authtok && !args->config->force_first_pass) {
         putil_err(args, "use_authtok option in authentication group should"
-                  " be changed to force_first_pass");
+                        " be changed to force_first_pass");
         args->config->force_first_pass = true;
     }
 
@@ -1013,8 +1017,9 @@ pamk5_authenticate(struct pam_args *args)
             ctx->expired = 1;
             pamret = PAM_SUCCESS;
         } else if (args->config->force_pwchange) {
-            pam_syslog(args->pamh, LOG_INFO, "user %s password expired,"
-                       " forcing password change", ctx->name);
+            pam_syslog(args->pamh, LOG_INFO,
+                       "user %s password expired, forcing password change",
+                       ctx->name);
             pamk5_conv(args, "Password expired.  You must change it now.",
                        PAM_TEXT_INFO, NULL);
             pamret = pam_get_item(args->pamh, PAM_AUTHTOK,

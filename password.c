@@ -133,12 +133,13 @@ change_password(struct pam_args *args, const char *pass)
      * principal for Heimdal.  So we're stuck with an #ifdef.
      */
 #ifdef HAVE_KRB5_MIT
-    retval = krb5_set_password(ctx->context, ctx->creds, (char *) pass,
-                 NULL, &result_code, &result_code_string, &result_string);
+    retval =
+        krb5_set_password(ctx->context, ctx->creds, (char *) pass, NULL,
+                          &result_code, &result_code_string, &result_string);
 #else
-    retval = krb5_set_password(ctx->context, ctx->creds, (char *) pass,
-                 ctx->princ, &result_code, &result_code_string,
-                 &result_string);
+    retval =
+        krb5_set_password(ctx->context, ctx->creds, (char *) pass, ctx->princ,
+                          &result_code, &result_code_string, &result_string);
 #endif
 
     /* Everything from here on is just handling diagnostics and output. */
@@ -157,12 +158,11 @@ change_password(struct pam_args *args, const char *pass)
         putil_debug(args, "krb5_change_password: %s",
                     (char *) result_code_string.data);
         retval = PAM_AUTHTOK_ERR;
-        status = asprintf(&output, "%.*s%s%.*s",
-                          (int) result_code_string.length,
-                          (char *) result_code_string.data,
-                          result_string.length == 0 ? "" : ": ",
-                          (int) result_string.length,
-                          (char *) result_string.data);
+        status =
+            asprintf(&output, "%.*s%s%.*s", (int) result_code_string.length,
+                     (char *) result_code_string.data,
+                     result_string.length == 0 ? "" : ": ",
+                     (int) result_string.length, (char *) result_string.data);
         if (status < 0)
             putil_crit(args, "asprintf failed: %s", strerror(errno));
         else {

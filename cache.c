@@ -172,8 +172,8 @@ pamk5_cache_init_random(struct pam_args *args, krb5_creds *creds)
     pamret = pamk5_cache_mkstemp(args, cache_name);
     if (pamret != PAM_SUCCESS)
         goto done;
-    pamret = pamk5_cache_init(args, cache_name, creds,
-                              &args->config->ctx->cache);
+    pamret =
+        pamk5_cache_init(args, cache_name, creds, &args->config->ctx->cache);
     if (pamret != PAM_SUCCESS)
         goto done;
     putil_debug(args, "temporarily storing credentials in %s", cache_name);

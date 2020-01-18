@@ -92,8 +92,8 @@ pamk5_get_password(struct pam_args *args, const char *prefix, char **password)
             if (retval < 0)
                 goto fail;
         } else {
-            retval = asprintf(&prompt, "%s%s%s password: ", prefix, bspace,
-                              banner);
+            retval =
+                asprintf(&prompt, "%s%s%s password: ", prefix, bspace, banner);
             if (retval < 0)
                 goto fail;
         }
@@ -135,7 +135,7 @@ pamk5_conv(struct pam_args *args, const char *message, int type,
         return PAM_SUCCESS;
     pamret = pam_get_item(args->pamh, PAM_CONV, (PAM_CONST void **) &conv);
     if (pamret != PAM_SUCCESS)
-	return pamret;
+        return pamret;
     if (conv->conv == NULL)
         return PAM_CONV_ERR;
     pmsg = &msg;
@@ -143,7 +143,7 @@ pamk5_conv(struct pam_args *args, const char *message, int type,
     msg.msg = (PAM_CONST char *) message;
     pamret = conv->conv(1, &pmsg, &resp, conv->appdata_ptr);
     if (pamret != PAM_SUCCESS)
-	return pamret;
+        return pamret;
 
     /*
      * Only expect a response for PAM_PROMPT_ECHO_OFF or PAM_PROMPT_ECHO_ON
@@ -157,7 +157,7 @@ pamk5_conv(struct pam_args *args, const char *message, int type,
      */
     want_reply = (type == PAM_PROMPT_ECHO_OFF || type == PAM_PROMPT_ECHO_ON);
     if (resp == NULL || resp->resp == NULL)
-	pamret = want_reply ? PAM_CONV_ERR : PAM_SUCCESS;
+        pamret = want_reply ? PAM_CONV_ERR : PAM_SUCCESS;
     else if (want_reply && response != NULL) {
         *response = resp->resp;
         pamret = PAM_SUCCESS;
@@ -290,23 +290,22 @@ pamk5_prompter_krb5(krb5_context context UNUSED, void *data, const char *name,
          * colon and space already and only adding it if there is not.
          */
         len = strlen(prompts[i].prompt);
-        has_colon = (len > 2
-                     && prompts[i].prompt[len - 1] == ' '
+        has_colon = (len > 2 && prompts[i].prompt[len - 1] == ' '
                      && prompts[i].prompt[len - 2] == ':');
         status = asprintf((char **) &msg[pam_prompts]->msg, "%s%s",
                           prompts[i].prompt, has_colon ? "" : ": ");
         if (status < 0)
             goto cleanup;
         assert(pam_prompts < total_prompts);
-        msg[pam_prompts]->msg_style = prompts[i].hidden ? PAM_PROMPT_ECHO_OFF
-                                                        : PAM_PROMPT_ECHO_ON;
+        msg[pam_prompts]->msg_style =
+            prompts[i].hidden ? PAM_PROMPT_ECHO_OFF : PAM_PROMPT_ECHO_ON;
         pam_prompts++;
     }
 
     /* Call into the application conversation function. */
     pamret = conv->conv(pam_prompts, (PAM_CONST struct pam_message **) msg,
                         &resp, conv->appdata_ptr);
-    if (pamret != 0) 
+    if (pamret != 0)
         goto cleanup;
     if (resp == NULL)
         goto cleanup;

@@ -27,7 +27,7 @@ struct passwd;
 struct vector;
 
 /* Used for unused parameters to silence gcc warnings. */
-#define UNUSED  __attribute__((__unused__))
+#define UNUSED __attribute__((__unused__))
 
 /*
  * An authentication context, including all the data we want to preserve
@@ -36,15 +36,15 @@ struct vector;
  * as the first argument to most internal functions.
  */
 struct context {
-    char *name;                 /* Username being authenticated. */
-    krb5_context context;       /* Kerberos context. */
-    krb5_ccache cache;          /* Active credential cache, if any. */
-    krb5_principal princ;       /* Principal being authenticated. */
-    int expired;                /* If set, account was expired. */
-    int dont_destroy_cache;     /* If set, don't destroy cache on shutdown. */
-    int initialized;            /* If set, ticket cache initialized. */
-    krb5_creds *creds;          /* Credentials for password changing. */
-    krb5_ccache fast_cache;     /* Temporary credential cache for FAST. */
+    char *name;             /* Username being authenticated. */
+    krb5_context context;   /* Kerberos context. */
+    krb5_ccache cache;      /* Active credential cache, if any. */
+    krb5_principal princ;   /* Principal being authenticated. */
+    int expired;            /* If set, account was expired. */
+    int dont_destroy_cache; /* If set, don't destroy cache on shutdown. */
+    int initialized;        /* If set, ticket cache initialized. */
+    krb5_creds *creds;      /* Credentials for password changing. */
+    krb5_ccache fast_cache; /* Temporary credential cache for FAST. */
 };
 
 /*
@@ -55,33 +55,33 @@ struct context {
  */
 struct pam_config {
     /* Authorization. */
-    char *alt_auth_map;          /* An sprintf pattern to map principals. */
-    bool force_alt_auth;         /* Alt principal must be used if it exists. */
-    bool ignore_k5login;         /* Don't check .k5login files. */
-    bool ignore_root;            /* Skip authentication for root. */
-    long minimum_uid;            /* Ignore users below this UID. */
-    bool only_alt_auth;          /* Alt principal must be used. */
-    bool search_k5login;         /* Try password with each line of .k5login. */
+    char *alt_auth_map;  /* An sprintf pattern to map principals. */
+    bool force_alt_auth; /* Alt principal must be used if it exists. */
+    bool ignore_k5login; /* Don't check .k5login files. */
+    bool ignore_root;    /* Skip authentication for root. */
+    long minimum_uid;    /* Ignore users below this UID. */
+    bool only_alt_auth;  /* Alt principal must be used. */
+    bool search_k5login; /* Try password with each line of .k5login. */
 
     /* Kerberos behavior. */
-    char *fast_ccache;          /* Cache containing armor ticket. */
-    bool anon_fast;             /* sets up an anonymous fast armor cache */
-    bool forwardable;           /* Obtain forwardable tickets. */
-    char *keytab;               /* Keytab for credential validation. */
-    char *realm;                /* Default realm for Kerberos. */
-    krb5_deltat renew_lifetime; /* Renewable lifetime of credentials. */
+    char *fast_ccache;           /* Cache containing armor ticket. */
+    bool anon_fast;              /* sets up an anonymous fast armor cache */
+    bool forwardable;            /* Obtain forwardable tickets. */
+    char *keytab;                /* Keytab for credential validation. */
+    char *realm;                 /* Default realm for Kerberos. */
+    krb5_deltat renew_lifetime;  /* Renewable lifetime of credentials. */
     krb5_deltat ticket_lifetime; /* Lifetime of credentials. */
-    char *user_realm;           /* Default realm for user principals. */
+    char *user_realm;            /* Default realm for user principals. */
 
     /* PAM behavior. */
-    bool clear_on_fail;         /* Delete saved password on change failure. */
-    bool debug;                 /* Log debugging information. */
-    bool defer_pwchange;        /* Defer expired account fail to account. */
-    bool fail_pwchange;         /* Treat expired password as auth failure. */
-    bool force_pwchange;        /* Change expired passwords in auth. */
-    bool no_update_user;        /* Don't update PAM_USER with local name. */
-    bool silent;                /* Suppress text and errors (PAM_SILENT). */
-    char *trace;                /* File name for trace logging. */
+    bool clear_on_fail;  /* Delete saved password on change failure. */
+    bool debug;          /* Log debugging information. */
+    bool defer_pwchange; /* Defer expired account fail to account. */
+    bool fail_pwchange;  /* Treat expired password as auth failure. */
+    bool force_pwchange; /* Change expired passwords in auth. */
+    bool no_update_user; /* Don't update PAM_USER with local name. */
+    bool silent;         /* Suppress text and errors (PAM_SILENT). */
+    char *trace;         /* File name for trace logging. */
 
     /* PKINIT. */
     char *pkinit_anchors;       /* Trusted certificates, usually per realm. */
@@ -92,20 +92,20 @@ struct pam_config {
     bool use_pkinit;            /* Require PKINIT. */
 
     /* Prompting. */
-    char *banner;               /* Addition to password changing prompts. */
-    bool expose_account;        /* Display principal in password prompts. */
-    bool force_first_pass;      /* Require a previous password be stored. */
-    bool no_prompt;             /* Let Kerberos handle password prompting. */
-    bool prompt_principal;      /* Prompt for the Kerberos principal. */
-    bool try_first_pass;        /* Try the previously entered password. */
-    bool use_authtok;           /* Use the stored new password for changes. */
-    bool use_first_pass;        /* Always use the previous password. */
+    char *banner;          /* Addition to password changing prompts. */
+    bool expose_account;   /* Display principal in password prompts. */
+    bool force_first_pass; /* Require a previous password be stored. */
+    bool no_prompt;        /* Let Kerberos handle password prompting. */
+    bool prompt_principal; /* Prompt for the Kerberos principal. */
+    bool try_first_pass;   /* Try the previously entered password. */
+    bool use_authtok;      /* Use the stored new password for changes. */
+    bool use_first_pass;   /* Always use the previous password. */
 
     /* Ticket caches. */
-    char *ccache;               /* Path to write ticket cache to. */
-    char *ccache_dir;           /* Directory for ticket cache. */
-    bool no_ccache;             /* Don't create a ticket cache. */
-    bool retain_after_close;    /* Don't destroy the cache on session end. */
+    char *ccache;            /* Path to write ticket cache to. */
+    char *ccache_dir;        /* Directory for ticket cache. */
+    bool no_ccache;          /* Don't create a ticket cache. */
+    bool retain_after_close; /* Don't destroy the cache on session end. */
 
     /* The authentication context, which bundles together Kerberos data. */
     struct context *ctx;
@@ -146,8 +146,7 @@ int pamk5_setcred(struct pam_args *, bool refresh);
  * If possible, the initial credentials are verified by checking them against
  * the local system key.
  */
-int pamk5_password_auth(struct pam_args *, const char *service,
-                        krb5_creds **);
+int pamk5_password_auth(struct pam_args *, const char *service, krb5_creds **);
 
 /*
  * Prompt the user for a new password, twice so that they can confirm.  Sets
@@ -178,9 +177,8 @@ int pamk5_conv(struct pam_args *, const char *, int, char **);
 int pamk5_get_password(struct pam_args *, const char *, char **);
 
 /* Prompting function for the Kerberos libraries. */
-krb5_error_code pamk5_prompter_krb5(krb5_context, void *data,
-                                    const char *name, const char *banner,
-                                    int, krb5_prompt *);
+krb5_error_code pamk5_prompter_krb5(krb5_context, void *data, const char *name,
+                                    const char *banner, int, krb5_prompt *);
 
 /* Check the user with krb5_kuserok or the configured equivalent. */
 int pamk5_authorized(struct pam_args *);

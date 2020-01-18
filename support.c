@@ -68,7 +68,7 @@ pamk5_authorized(struct pam_args *args)
     krb5_error_code retval;
     int status;
     struct passwd *pwd;
-    char kuser[65];             /* MAX_USERNAME == 65 (MIT Kerberos 1.4.1). */
+    char kuser[65]; /* MAX_USERNAME == 65 (MIT Kerberos 1.4.1). */
 
     if (args == NULL || args->config == NULL || args->config->ctx == NULL
         || args->config->ctx->context == NULL)
