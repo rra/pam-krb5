@@ -7,7 +7,7 @@
  * created (so without setuid and with chown doing nothing).
  *
  * Written by Russ Allbery <eagle@eyrie.org>
- * Copyright 2017 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2017, 2020 Russ Allbery <eagle@eyrie.org>
  * Copyright 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *
@@ -149,6 +149,7 @@ main(void)
 
     /* Change the authenticating user and test search_k5login. */
     pwd.pw_name = (char *) "testuser";
+    pam_set_pwd(&pwd);
     config.user = "testuser";
     basprintf(&k5login, "%s/.k5login", pwd.pw_dir);
     file = fopen(k5login, "w");
@@ -166,6 +167,7 @@ main(void)
 
     /* Test search_k5login when no .k5login file exists. */
     pwd.pw_name = krbconf->username;
+    pam_set_pwd(&pwd);
     config.user = krbconf->username;
     diag("testing search_k5login with no .k5login file");
     run_script("data/scripts/cache/search-k5login", &config);

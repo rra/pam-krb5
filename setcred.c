@@ -5,12 +5,12 @@
  * to create the user's ticket cache.  The shared code is abstracted here into
  * the pamk5_setcred function.
  *
- * Copyright 2005, 2006, 2007, 2008, 2009, 2014, 2017
+ * Copyright 2005-2009, 2014, 2017, 2020
  *     Russ Allbery <eagle@eyrie.org>
  * Copyright 2011
  *     The Board of Trustees of the Leland Stanford Junior University
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
- * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
+ * Copyright 1999-2000 Frank Cusack <fcusack@fcusack.com>
  *
  * See LICENSE for licensing terms.
  */
@@ -20,6 +20,7 @@
 #include <portable/pam.h>
 #include <portable/system.h>
 
+#include <assert.h>
 #include <errno.h>
 #include <pwd.h>
 
@@ -267,8 +268,8 @@ pamk5_setcred(struct pam_args *args, bool refresh)
      * with its weird PAM handling, so we're going to cobble up a new context
      * for ourselves.
      */
-    pamk5_context_fetch(args);
-    if (args->config->ctx == NULL) {
+    pamret = pamk5_context_fetch(args);
+    if (pamret != PAM_SUCCESS) {
         putil_debug(args, "no context found, creating one");
         pamret = create_session_context(args);
         if (pamret != PAM_SUCCESS || args->config->ctx == NULL)

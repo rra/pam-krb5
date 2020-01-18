@@ -156,6 +156,14 @@ tests_portable_strndup_t_LDADD = tests/tap/libtap.a portable/libportable.la
 check-local: $(check_PROGRAMS)
 	cd tests && ./runtests -l '$(abs_top_srcdir)/tests/TESTS'
 
+# Used by maintainers to check the source code with cppcheck.
+check-cppcheck:
+	cd $(abs_top_srcdir) &&						\
+	    find . -name .git -prune -o -name '*.[ch]' -print		\
+	    | cppcheck -q --force --error-exitcode=2 --file-list=-	\
+		--suppressions-list=tests/data/cppcheck.supp		\
+		--enable=warning,performance,portability,style
+
 # Used by maintainers to run the test suite under valgrind.
 check-valgrind: $(check_PROGRAMS)
 	rm -rf $(abs_top_builddir)/tmp-valgrind

@@ -1,11 +1,11 @@
 /*
  * Internal prototypes and structures for pam-krb5.
  *
+ * Copyright 2005-2009, 2014, 2020 Russ Allbery <eagle@eyrie.org>
  * Copyright 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
- * Copyright 2005, 2006, 2007, 2008, 2009, 2014 Russ Allbery <eagle@eyrie.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
- * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
+ * Copyright 1999-2000 Frank Cusack <fcusack@fcusack.com>
  *
  * See LICENSE for licensing terms.
  */

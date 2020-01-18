@@ -7,6 +7,7 @@
  * avoid requiring user configuration).
  *
  * Written by Russ Allbery <eagle@eyrie.org>
+ * Copyright 2020 Russ Allbery <eagle@eyrie.org>
  * Copyright 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *
@@ -97,7 +98,6 @@ main(void)
     diag("re-running username-map with fully-qualified PAM user");
     run_script("data/scripts/alt-auth/username-map", &config);
     free(user);
-    config.user = krbconf->username;
 
     /*
      * Add the password and make the user match our authentication principal,

@@ -4,11 +4,11 @@
  * The context structure is the internal state maintained by the pam-krb5
  * module between calls to the various public interfaces.
  *
+ * Copyright 2005-2009, 2014, 2020 Russ Allbery <eagle@eyrie.org>
  * Copyright 2011
  *     The Board of Trustees of the Leland Stanford Junior University
- * Copyright 2005, 2006, 2007, 2008, 2009, 2014 Russ Allbery <eagle@eyrie.org>
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
- * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
+ * Copyright 1999-2000 Frank Cusack <fcusack@fcusack.com>
  *
  * See LICENSE for licensing terms.
  */
@@ -92,7 +92,7 @@ pamk5_context_fetch(struct pam_args *args)
     pamret = pam_get_data(args->pamh, "pam_krb5", (void *) &args->config->ctx);
     if (pamret != PAM_SUCCESS)
         args->config->ctx = NULL;
-    if (pamret == 0 && args->config->ctx == NULL)
+    if (pamret == PAM_SUCCESS && args->config->ctx == NULL)
         return PAM_SERVICE_ERR;
     if (args->config->ctx != NULL)
         args->user = args->config->ctx->name;
