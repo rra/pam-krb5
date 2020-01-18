@@ -115,7 +115,7 @@ END_DECLS
 /* Macros to record entry and exit from the main PAM functions. */
 #define ENTRY(args, flags) \
     if (args->debug)       \
-        putil_log_entry((args), __func__, (flags));
+        putil_log_entry((args), __func__, (flags))
 /* clang-format off */
 #define EXIT(args, pamret)                                             \
     if (args != NULL && args->debug)                                   \
