@@ -4,13 +4,13 @@
  * Handles all interaction with the PAM conversation, either directly or
  * indirectly through the Kerberos libraries.
  *
- * Copyright 2005, 2006, 2007, 2009, 2014, 2017 Russ Allbery <eagle@eyrie.org>
- * Copyright 2011, 2012
+ * Copyright 2005-2007, 2009, 2014, 2017, 2020 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2011-2012
  *     The Board of Trustees of the Leland Stanford Junior University
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
- * Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
+ * Copyright 1999-2000 Frank Cusack <fcusack@fcusack.com>
  *
- * See LICENSE for licensing terms.
+ * SPDX-License-Identifier: BSD-3-clause or GPL-1+
  */
 
 #include <config.h>

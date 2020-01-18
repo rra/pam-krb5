@@ -5,14 +5,13 @@
  * to create the user's ticket cache.  The shared code is abstracted here into
  * the pamk5_setcred function.
  *
- * Copyright 2005-2009, 2014, 2017, 2020
- *     Russ Allbery <eagle@eyrie.org>
+ * Copyright 2005-2009, 2014, 2017, 2020 Russ Allbery <eagle@eyrie.org>
  * Copyright 2011
  *     The Board of Trustees of the Leland Stanford Junior University
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999-2000 Frank Cusack <fcusack@fcusack.com>
  *
- * See LICENSE for licensing terms.
+ * SPDX-License-Identifier: BSD-3-clause or GPL-1+
  */
 
 #include <config.h>

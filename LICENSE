@@ -5,12 +5,6 @@ Comment: This file documents the copyright statements and licenses for
  .
  For any copyright year range specified as YYYY-ZZZZ in this file, the
  range specifies every single year in that closed interval.
-Copyright: 1999-2000 Frank Cusack <fcusack@fcusack.com>
-  2005 Andres Salomon <dilinger@debian.org>
-  2005-2010, 2014-2015, 2017 Russ Allbery <eagle@eyrie.org>
-  2008-2014
-    The Board of Trustees of the Leland Stanford Junior University
-License: BSD-3-clause or GPL-1+
 
 Files: *
 Copyright: 1999-2000 Frank Cusack <fcusack@fcusack.com>

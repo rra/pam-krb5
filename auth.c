@@ -13,7 +13,7 @@
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
  * Copyright 1999-2000 Frank Cusack <fcusack@fcusack.com>
  *
- * See LICENSE for licensing terms.
+ * SPDX-License-Identifier: BSD-3-clause or GPL-1+
  */
 
 #include <config.h>

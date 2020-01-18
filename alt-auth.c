@@ -10,10 +10,11 @@
  *
  * Original support written by Booker Bense <bbense@slac.stanford.edu>
  * Further updates by Russ Allbery <eagle@eyrie.org>
- * Copyright 2008, 2009, 2010, 2011, 2012
+ * Copyright 2020 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2008-2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *
- * See LICENSE for licensing terms.
+ * SPDX-License-Identifier: BSD-3-clause or GPL-1+
  */
 
 #include <config.h>

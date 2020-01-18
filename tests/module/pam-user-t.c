@@ -6,9 +6,9 @@
  * (which requires additional work to test the cache ownership).
  *
  * Written by Russ Allbery <eagle@eyrie.org>
- * Copyright 2014 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2014, 2020 Russ Allbery <eagle@eyrie.org>
  *
- * See LICENSE for licensing terms.
+ * SPDX-License-Identifier: BSD-3-clause or GPL-1+
  */
 
 #include <config.h>

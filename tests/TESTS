@@ -1,5 +1,6 @@
 docs/pod
 docs/pod-spelling
+docs/spdx-license
 module/alt-auth
 module/bad-authtok
 module/basic
