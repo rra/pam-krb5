@@ -10,7 +10,8 @@
  * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
- * Copyright 2010, 2011, 2013
+ * Copyright 2020 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2010-2011, 2013
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -30,6 +31,8 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
+ *
+ * SPDX-License-Identifier: MIT
  */
 
 #ifndef PAM_UTIL_OPTIONS_H
@@ -37,7 +40,7 @@
 
 #include <config.h>
 #ifdef HAVE_KRB5
-# include <portable/krb5.h>
+#    include <portable/krb5.h>
 #endif
 #include <portable/macros.h>
 #include <portable/stdbool.h>
@@ -102,12 +105,14 @@ struct option {
  * specifies how to convert the configuration into a struct.  They provide an
  * initializer for the type and default fields.
  */
+/* clang-format off */
 #define BOOL(def)    TYPE_BOOLEAN, { (def),     0,  NULL,  NULL }
 #define NUMBER(def)  TYPE_NUMBER,  {     0, (def),  NULL,  NULL }
 #define TIME(def)    TYPE_TIME,    {     0, (def),  NULL,  NULL }
 #define STRING(def)  TYPE_STRING,  {     0,     0, (def),  NULL }
 #define LIST(def)    TYPE_LIST,    {     0,     0,  NULL, (def) }
 #define STRLIST(def) TYPE_STRLIST, {     0,     0, (def),  NULL }
+/* clang-format on */
 
 /*
  * The user of this file should also define a macro of the following form:
@@ -146,8 +151,7 @@ BEGIN_DECLS
  * putil_args_parse(), since neither of those functions set defaults.
  */
 bool putil_args_defaults(struct pam_args *, const struct option options[],
-                         size_t optlen)
-    __attribute__((__nonnull__));
+                         size_t optlen) __attribute__((__nonnull__));
 
 /*
  * Fill out options from krb5.conf.  Takes the PAM args structure, the name of

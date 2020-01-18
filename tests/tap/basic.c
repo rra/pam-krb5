@@ -12,9 +12,9 @@
  * This file is part of C TAP Harness.  The current version plus supporting
  * documentation is at <https://www.eyrie.org/~eagle/software/c-tap-harness/>.
  *
- * Copyright 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017
- *     Russ Allbery <eagle@eyrie.org>
- * Copyright 2001, 2002, 2004, 2005, 2006, 2007, 2008, 2011, 2012, 2013, 2014
+ * Written by Russ Allbery <eagle@eyrie.org>
+ * Copyright 2009-2019 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2001-2002, 2004-2008, 2011-2014
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -34,6 +34,8 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
+ *
+ * SPDX-License-Identifier: MIT
  */
 
 #include <errno.h>
@@ -43,9 +45,9 @@
 #include <stdlib.h>
 #include <string.h>
 #ifdef _WIN32
-# include <direct.h>
+#    include <direct.h>
 #else
-# include <sys/stat.h>
+#    include <sys/stat.h>
 #endif
 #include <sys/types.h>
 #include <unistd.h>
@@ -54,8 +56,8 @@
 
 /* Windows provides mkdir and rmdir under different names. */
 #ifdef _WIN32
-# define mkdir(p, m) _mkdir(p)
-# define rmdir(p)    _rmdir(p)
+#    define mkdir(p, m) _mkdir(p)
+#    define rmdir(p)    _rmdir(p)
 #endif
 
 /*
@@ -70,7 +72,7 @@ unsigned long testnum = 1;
  * We can get the highest test count from testnum.
  */
 static unsigned long _planned = 0;
-static unsigned long _failed  = 0;
+static unsigned long _failed = 0;
 
 /*
  * Store the PID of the process that called plan() and only summarize
@@ -99,6 +101,8 @@ static int _aborted = 0;
  */
 struct cleanup_func {
     test_cleanup_func func;
+    test_cleanup_func_with_data func_with_data;
+    void *data;
     struct cleanup_func *next;
 };
 static struct cleanup_func *cleanup_funcs = NULL;
@@ -124,16 +128,15 @@ static struct diag_file *diag_files = NULL;
  * print_desc, which has to be done in a macro.  Assumes that format is the
  * argument immediately before the variadic arguments.
  */
-#define PRINT_DESC(prefix, format)              \
-    do {                                        \
-        if (format != NULL) {                   \
-            va_list args;                       \
-            if (prefix != NULL)                 \
-                printf("%s", prefix);           \
-            va_start(args, format);             \
-            vprintf(format, args);              \
-            va_end(args);                       \
-        }                                       \
+#define PRINT_DESC(prefix, format)  \
+    do {                            \
+        if (format != NULL) {       \
+            va_list args;           \
+            printf("%s", prefix);   \
+            va_start(args, format); \
+            vprintf(format, args);  \
+            va_end(args);           \
+        }                           \
     } while (0)
 
 
@@ -170,7 +173,7 @@ concat(const char *first, ...)
     length++;
 
     /* Create the string. */
-    result = bmalloc(length);
+    result = bcalloc_type(length, char);
     va_start(args, first);
     offset = 0;
     for (string = first; string != NULL; string = va_arg(args, const char *)) {
@@ -184,6 +187,68 @@ concat(const char *first, ...)
 
 
 /*
+ * Helper function for check_diag_files to handle a single line in a diag
+ * file.
+ *
+ * The general scheme here used is as follows: read one line of output.  If we
+ * get NULL, check for an error.  If there was one, bail out of the test
+ * program; otherwise, return, and the enclosing loop will check for EOF.
+ *
+ * If we get some data, see if it ends in a newline.  If it doesn't end in a
+ * newline, we have one of two cases: our buffer isn't large enough, in which
+ * case we resize it and try again, or we have incomplete data in the file, in
+ * which case we rewind the file and will try again next time.
+ *
+ * Returns a boolean indicating whether the last line was incomplete.
+ */
+static int
+handle_diag_file_line(struct diag_file *file, fpos_t where)
+{
+    int size;
+    size_t length;
+
+    /* Read the next line from the file. */
+    size = file->bufsize > INT_MAX ? INT_MAX : (int) file->bufsize;
+    if (fgets(file->buffer, size, file->file) == NULL) {
+        if (ferror(file->file))
+            sysbail("cannot read from %s", file->name);
+        return 0;
+    }
+
+    /*
+     * See if the line ends in a newline.  If not, see which error case we
+     * have.
+     */
+    length = strlen(file->buffer);
+    if (file->buffer[length - 1] != '\n') {
+        int incomplete = 0;
+
+        /* Check whether we ran out of buffer space and resize if so. */
+        if (length < file->bufsize - 1)
+            incomplete = 1;
+        else {
+            file->bufsize += BUFSIZ;
+            file->buffer =
+                breallocarray_type(file->buffer, file->bufsize, char);
+        }
+
+        /*
+         * On either incomplete lines or too small of a buffer, rewind
+         * and read the file again (on the next pass, if incomplete).
+         * It's simpler than trying to double-buffer the file.
+         */
+        if (fsetpos(file->file, &where) < 0)
+            sysbail("cannot set position in %s", file->name);
+        return incomplete;
+    }
+
+    /* We saw a complete line.  Print it out. */
+    printf("# %s", file->buffer);
+    return 0;
+}
+
+
+/*
  * Check all registered diag_files for any output.  We only print out the
  * output if we see a complete line; otherwise, we wait for the next newline.
  */
@@ -192,20 +257,10 @@ check_diag_files(void)
 {
     struct diag_file *file;
     fpos_t where;
-    size_t length;
-    int size, incomplete;
+    int incomplete;
 
     /*
-     * Walk through each file and read each line of output available.  The
-     * general scheme here used is as follows: try to read a line of output at
-     * a time.  If we get NULL, check for EOF; on EOF, advance to the next
-     * file.
-     *
-     * If we get some data, see if it ends in a newline.  If it doesn't end in
-     * a newline, we have one of two cases: our buffer isn't large enough, in
-     * which case we resize it and try again, or we have incomplete data in
-     * the file, in which case we rewind the file and will try again next
-     * time.
+     * Walk through each file and read each line of output available.
      */
     for (file = diag_files; file != NULL; file = file->next) {
         clearerr(file->file);
@@ -217,41 +272,7 @@ check_diag_files(void)
         /* Continue until we get EOF or an incomplete line of data. */
         incomplete = 0;
         while (!feof(file->file) && !incomplete) {
-            size = file->bufsize > INT_MAX ? INT_MAX : (int) file->bufsize;
-            if (fgets(file->buffer, size, file->file) == NULL) {
-                if (ferror(file->file))
-                    sysbail("cannot read from %s", file->name);
-                continue;
-            }
-
-            /*
-             * See if the line ends in a newline.  If not, see which error
-             * case we have.  Use UINT_MAX as a substitute for SIZE_MAX (see
-             * the comment for breallocarray).
-             */
-            length = strlen(file->buffer);
-            if (file->buffer[length - 1] != '\n') {
-                if (length < file->bufsize - 1)
-                    incomplete = 1;
-                else {
-                    if (file->bufsize >= UINT_MAX - BUFSIZ)
-                        sysbail("line too long in %s", file->name);
-                    file->bufsize += BUFSIZ;
-                    file->buffer = brealloc(file->buffer, file->bufsize);
-                }
-
-                /*
-                 * On either incomplete lines or too small of a buffer, rewind
-                 * and read the file again (on the next pass, if incomplete).
-                 * It's simpler than trying to double-buffer the file.
-                 */
-                if (fsetpos(file->file, &where) < 0)
-                    sysbail("cannot set position in %s", file->name);
-                continue;
-            }
-
-            /* We saw a complete line.  Print it out. */
-            printf("# %s", file->buffer);
+            incomplete = handle_diag_file_line(file, where);
         }
     }
 }
@@ -304,7 +325,13 @@ finish(void)
      */
     primary = (_process == 0 || getpid() == _process);
     while (cleanup_funcs != NULL) {
-        cleanup_funcs->func(success, primary);
+        if (cleanup_funcs->func_with_data) {
+            void *data = cleanup_funcs->data;
+
+            cleanup_funcs->func_with_data(success, primary, data);
+        } else {
+            cleanup_funcs->func(success, primary);
+        }
         current = cleanup_funcs;
         cleanup_funcs = cleanup_funcs->next;
         free(current);
@@ -489,22 +516,21 @@ skip_block(unsigned long count, const char *reason, ...)
 
 
 /*
- * Takes an expected boolean value and a seen boolean value and assumes the
- * test passes if the truth value of both match.
+ * Takes two boolean values and requires the truth value of both match.
  */
 int
-is_bool(int wanted, int seen, const char *format, ...)
+is_bool(int left, int right, const char *format, ...)
 {
     int success;
 
     fflush(stderr);
     check_diag_files();
-    success = (!!wanted == !!seen);
+    success = (!!left == !!right);
     if (success)
         printf("ok %lu", testnum++);
     else {
-        diag("wanted: %s", !!wanted ? "true" : "false");
-        diag("  seen: %s", !!seen ? "true" : "false");
+        diag(" left: %s", !!left ? "true" : "false");
+        diag("right: %s", !!right ? "true" : "false");
         printf("not ok %lu", testnum++);
         _failed++;
     }
@@ -515,22 +541,21 @@ is_bool(int wanted, int seen, const char *format, ...)
 
 
 /*
- * Takes an expected integer and a seen integer and assumes the test passes
- * if those two numbers match.
+ * Takes two integer values and requires they match.
  */
 int
-is_int(long wanted, long seen, const char *format, ...)
+is_int(long left, long right, const char *format, ...)
 {
     int success;
 
     fflush(stderr);
     check_diag_files();
-    success = (wanted == seen);
+    success = (left == right);
     if (success)
         printf("ok %lu", testnum++);
     else {
-        diag("wanted: %ld", wanted);
-        diag("  seen: %ld", seen);
+        diag(" left: %ld", left);
+        diag("right: %ld", right);
         printf("not ok %lu", testnum++);
         _failed++;
     }
@@ -541,26 +566,31 @@ is_int(long wanted, long seen, const char *format, ...)
 
 
 /*
- * Takes a string and what the string should be, and assumes the test passes
- * if those strings match (using strcmp).
+ * Takes two strings and requires they match (using strcmp).  NULL arguments
+ * are permitted and handled correctly.
  */
 int
-is_string(const char *wanted, const char *seen, const char *format, ...)
+is_string(const char *left, const char *right, const char *format, ...)
 {
     int success;
 
-    if (wanted == NULL)
-        wanted = "(null)";
-    if (seen == NULL)
-        seen = "(null)";
     fflush(stderr);
     check_diag_files();
-    success = (strcmp(wanted, seen) == 0);
+
+    /* Compare the strings, being careful of NULL. */
+    if (left == NULL)
+        success = (right == NULL);
+    else if (right == NULL)
+        success = 0;
+    else
+        success = (strcmp(left, right) == 0);
+
+    /* Report the results. */
     if (success)
         printf("ok %lu", testnum++);
     else {
-        diag("wanted: %s", wanted);
-        diag("  seen: %s", seen);
+        diag(" left: %s", left == NULL ? "(null)" : left);
+        diag("right: %s", right == NULL ? "(null)" : right);
         printf("not ok %lu", testnum++);
         _failed++;
     }
@@ -571,22 +601,22 @@ is_string(const char *wanted, const char *seen, const char *format, ...)
 
 
 /*
- * Takes an expected unsigned long and a seen unsigned long and assumes the
- * test passes if the two numbers match.  Otherwise, reports them in hex.
+ * Takes two unsigned longs and requires they match.  On failure, reports them
+ * in hex.
  */
 int
-is_hex(unsigned long wanted, unsigned long seen, const char *format, ...)
+is_hex(unsigned long left, unsigned long right, const char *format, ...)
 {
     int success;
 
     fflush(stderr);
     check_diag_files();
-    success = (wanted == seen);
+    success = (left == right);
     if (success)
         printf("ok %lu", testnum++);
     else {
-        diag("wanted: %lx", (unsigned long) wanted);
-        diag("  seen: %lx", (unsigned long) seen);
+        diag(" left: %lx", (unsigned long) left);
+        diag("right: %lx", (unsigned long) right);
         printf("not ok %lu", testnum++);
         _failed++;
     }
@@ -597,12 +627,11 @@ is_hex(unsigned long wanted, unsigned long seen, const char *format, ...)
 
 
 /*
- * Takes pointers to an expected region of memory and a seen region of memory
- * and assumes the test passes if the len bytes onwards from them match.
- * Otherwise reports any bytes which didn't match.
+ * Takes pointers to a regions of memory and requires that len bytes from each
+ * match.  Otherwise reports any bytes which didn't match.
  */
 int
-is_blob(const void *wanted, const void *seen, size_t len, const char *format,
+is_blob(const void *left, const void *right, size_t len, const char *format,
         ...)
 {
     int success;
@@ -610,17 +639,17 @@ is_blob(const void *wanted, const void *seen, size_t len, const char *format,
 
     fflush(stderr);
     check_diag_files();
-    success = (memcmp(wanted, seen, len) == 0);
+    success = (memcmp(left, right, len) == 0);
     if (success)
         printf("ok %lu", testnum++);
     else {
-        const unsigned char *wanted_c = wanted;
-        const unsigned char *seen_c = seen;
+        const unsigned char *left_c = (const unsigned char *) left;
+        const unsigned char *right_c = (const unsigned char *) right;
 
         for (i = 0; i < len; i++) {
-            if (wanted_c[i] != seen_c[i])
-                diag("offset %lu: wanted %02x, seen %02x", (unsigned long) i,
-                     wanted_c[i], seen_c[i]);
+            if (left_c[i] != right_c[i])
+                diag("offset %lu: left %02x, right %02x", (unsigned long) i,
+                     left_c[i], right_c[i]);
         }
         printf("not ok %lu", testnum++);
         _failed++;
@@ -725,12 +754,12 @@ diag_file_add(const char *name)
 {
     struct diag_file *file, *prev;
 
-    file = bcalloc(1, sizeof(struct diag_file));
+    file = bcalloc_type(1, struct diag_file);
     file->name = bstrdup(name);
     file->file = fopen(file->name, "r");
     if (file->file == NULL)
         sysbail("cannot open %s", name);
-    file->buffer = bmalloc(BUFSIZ);
+    file->buffer = bcalloc_type(BUFSIZ, char);
     file->bufsize = BUFSIZ;
     if (diag_files == NULL)
         diag_files = file;
@@ -778,7 +807,7 @@ bcalloc(size_t n, size_t size)
 
     p = calloc(n, size);
     if (p == NULL)
-        sysbail("failed to calloc %lu", (unsigned long)(n * size));
+        sysbail("failed to calloc %lu", (unsigned long) (n * size));
     return p;
 }
 
@@ -849,7 +878,7 @@ bstrdup(const char *s)
     size_t len;
 
     len = strlen(s) + 1;
-    p = malloc(len);
+    p = (char *) malloc(len);
     if (p == NULL)
         sysbail("failed to strdup %lu bytes", (unsigned long) len);
     memcpy(p, s, len);
@@ -870,11 +899,11 @@ bstrndup(const char *s, size_t n)
     size_t length;
 
     /* Don't assume that the source string is nul-terminated. */
-    for (p = s; (size_t) (p - s) < n && *p != '\0'; p++)
+    for (p = s; (size_t)(p - s) < n && *p != '\0'; p++)
         ;
-    length = (size_t) (p - s);
-    copy = malloc(length + 1);
-    if (p == NULL)
+    length = (size_t)(p - s);
+    copy = (char *) malloc(length + 1);
+    if (copy == NULL)
         sysbail("failed to strndup %lu bytes", (unsigned long) length);
     memcpy(copy, s, length);
     copy[length] = '\0';
@@ -893,7 +922,7 @@ test_file_path(const char *file)
 {
     char *base;
     char *path = NULL;
-    const char *envs[] = { "C_TAP_BUILD", "C_TAP_SOURCE", NULL };
+    const char *envs[] = {"C_TAP_BUILD", "C_TAP_SOURCE", NULL};
     int i;
 
     for (i = 0; envs[i] != NULL; i++) {
@@ -962,6 +991,22 @@ test_tmpdir_free(char *path)
     free(path);
 }
 
+static void
+register_cleanup(test_cleanup_func func,
+                 test_cleanup_func_with_data func_with_data, void *data)
+{
+    struct cleanup_func *cleanup, **last;
+
+    cleanup = bcalloc_type(1, struct cleanup_func);
+    cleanup->func = func;
+    cleanup->func_with_data = func_with_data;
+    cleanup->data = data;
+    cleanup->next = NULL;
+    last = &cleanup_funcs;
+    while (*last != NULL)
+        last = &(*last)->next;
+    *last = cleanup;
+}
 
 /*
  * Register a cleanup function that is called when testing ends.  All such
@@ -970,13 +1015,15 @@ test_tmpdir_free(char *path)
 void
 test_cleanup_register(test_cleanup_func func)
 {
-    struct cleanup_func *cleanup, **last;
+    register_cleanup(func, NULL, NULL);
+}
 
-    cleanup = bmalloc(sizeof(struct cleanup_func));
-    cleanup->func = func;
-    cleanup->next = NULL;
-    last = &cleanup_funcs;
-    while (*last != NULL)
-        last = &(*last)->next;
-    *last = cleanup;
+/*
+ * Same as above, but also allows an opaque pointer to be passed to the cleanup
+ * function.
+ */
+void
+test_cleanup_register_with_data(test_cleanup_func_with_data func, void *data)
+{
+    register_cleanup(NULL, func, data);
 }

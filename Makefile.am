@@ -1,7 +1,7 @@
 # Automake makefile for pam-krb5.
 #
 # Written by Russ Allbery <eagle@eyrie.org>
-# Copyright 2005, 2006, 2007, 2014, 2017 Russ Allbery <eagle@eyrie.org>
+# Copyright 2005, 2006, 2007, 2014, 2017, 2020 Russ Allbery <eagle@eyrie.org>
 # Copyright 2009, 2011, 2012
 #     The Board of Trustees of the Leland Stanford Junior University
 # Copyright 2005 Andres Salomon <dilinger@debian.org>
@@ -166,3 +166,9 @@ check-valgrind: $(check_PROGRAMS)
 	    --suppressions=$(abs_top_srcdir)/tests/data/valgrind.supp	\
 	    --trace-children-skip="/bin/sh,*/cat,*/cut,*/expr,*/getopt,*/kinit,*/ls,*/mkdir,*/rm,*/rmdir,*/sed,*/sleep,*/wc,*/data/generate-krb5-conf,*/docs/*-t" \
 	    tests/runtests -l $(abs_top_srcdir)/tests/TESTS
+
+# Used by maintainers to reformat all source code using clang-format and
+# excluding some files.
+reformat:
+	find . -name '*.[ch]' \! -name snprintf.c \! -name krb5-profile.c \
+	     -print | xargs clang-format-10 -style=file -i

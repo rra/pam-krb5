@@ -9,14 +9,16 @@
  * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
+ * Copyright 2015 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2011, 2013
+ *     The Board of Trustees of the Leland Stanford Junior University
  *
- * The authors hereby relinquish any claim to any copyright that they may have
- * in this work, whether granted under contract or by operation of law or
- * international treaty, and hereby commit to the public, at large, that they
- * shall not, at any time in the future, seek to enforce any copyright in this
- * work against any person or entity, or prevent any person or entity from
- * copying, publishing, distributing or creating derivative works of this
- * work.
+ * Copying and distribution of this file, with or without modification, are
+ * permitted in any medium without royalty provided the copyright notice and
+ * this notice are preserved.  This file is offered as-is, without any
+ * warranty.
+ *
+ * SPDX-License-Identifier: FSFAP
  */
 
 #ifndef PORTABLE_KADMIN_H
@@ -26,9 +28,9 @@
 
 #include <kadm5/admin.h>
 #ifdef HAVE_KADM5_KADM5_ERR_H
-# include <kadm5/kadm5_err.h>
+#    include <kadm5/kadm5_err.h>
 #else
-# include <kadm5/kadm_err.h>
+#    include <kadm5/kadm_err.h>
 #endif
 
 /*
@@ -38,21 +40,21 @@
  * general just in case.)
  */
 #ifndef KADM5_API_VERSION
-# ifdef KADM5_API_VERSION_3
-#  define KADM5_API_VERSION KADM5_API_VERSION_3
-# else
-#  define KADM5_API_VERSION KADM5_API_VERSION_2
-# endif
+#    ifdef KADM5_API_VERSION_3
+#        define KADM5_API_VERSION KADM5_API_VERSION_3
+#    else
+#        define KADM5_API_VERSION KADM5_API_VERSION_2
+#    endif
 #endif
 
 /* Heimdal doesn't define KADM5_PASS_Q_GENERIC. */
 #ifndef KADM5_PASS_Q_GENERIC
-# define KADM5_PASS_Q_GENERIC KADM5_PASS_Q_DICT
+#    define KADM5_PASS_Q_GENERIC KADM5_PASS_Q_DICT
 #endif
 
 /* Heimdal doesn't define KADM5_MISSING_KRB5_CONF_PARAMS. */
 #ifndef KADM5_MISSING_KRB5_CONF_PARAMS
-# define KADM5_MISSING_KRB5_CONF_PARAMS KADM5_MISSING_CONF_PARAMS
+#    define KADM5_MISSING_KRB5_CONF_PARAMS KADM5_MISSING_CONF_PARAMS
 #endif
 
 /*
@@ -60,7 +62,7 @@
  * Kerberos context.  With Heimdal, just use krb5_init_context.
  */
 #ifndef HAVE_KADM5_INIT_KRB5_CONTEXT
-# define kadm5_init_krb5_context(c) krb5_init_context(c)
+#    define kadm5_init_krb5_context(c) krb5_init_context(c)
 #endif
 
 /*
@@ -72,9 +74,9 @@
  * so that we can use the KADM5_ADMIN_SERVICE define.
  */
 #ifndef HAVE_KADM5_INIT_WITH_SKEY_CTX
-# define kadm5_init_with_skey_ctx(c, u, k, s, p, sv, av, h) \
-    kadm5_init_with_skey((c), (u), (k), (char *) (s), (p), (sv), (av), NULL, \
-                         (h))
+#    define kadm5_init_with_skey_ctx(c, u, k, s, p, sv, av, h)             \
+        kadm5_init_with_skey((c), (u), (k), (char *) (s), (p), (sv), (av), \
+                             NULL, (h))
 #endif
 
 #endif /* !PORTABLE_KADMIN_H */

@@ -10,7 +10,7 @@
  * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
- * Copyright 2010, 2011, 2012
+ * Copyright 2010-2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -30,14 +30,16 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
+ *
+ * SPDX-License-Identifier: MIT
  */
- 
+
 #ifndef FAKEPAM_PAM_H
 #define FAKEPAM_PAM_H 1
 
 #include <config.h>
-#include <portable/pam.h>
 #include <portable/macros.h>
+#include <portable/pam.h>
 
 /* Used inside the fake PAM library to hold data items. */
 struct fakepam_data {
@@ -73,7 +75,7 @@ struct output {
     struct {
         int priority;
         char *line;
-    } *lines;
+    } * lines;
 };
 
 BEGIN_DECLS

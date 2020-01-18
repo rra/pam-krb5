@@ -1,6 +1,5 @@
 docs/pod
 docs/pod-spelling
-docs/urls
 module/alt-auth
 module/bad-authtok
 module/basic
@@ -23,3 +22,4 @@ portable/asprintf
 portable/mkstemp
 portable/snprintf
 portable/strndup
+style/obsolete-strings

@@ -1,5 +1,25 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 4.9 (unreleased)
+
+    Update to rra-c-util 8.1:
+
+    * Drop support for Perl 5.6.
+    * Reformat all C source using clang-format 10.
+    * Remove bogus snprintf tests.
+    * Fix misplaced va_end in the pam-util putil_log_failure function.
+    * Skip checking for krb5-config on the path if a prefix was given.
+    * Add SPDX-License-Identifier headers to all substantial source files.
+
+    Update to C TAP Harness 4.6:
+
+    * Fixed malloc error checking in bstrndup.
+    * Fix (harmless) allocation error in runtests driver.
+    * Add support for valgrind testing via test list options.
+    * Report test failures as left and right, not wanted and seen.
+    * Fix is_string comparisons involving NULL pointers and "(null)".
+    * Add SPDX-License-Identifier headers to all substantial source files.
+
 pam-krb5 4.8 (2017-12-30)
 
     When verifying that an expired password can still be used to get

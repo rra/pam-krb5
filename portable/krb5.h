@@ -20,14 +20,16 @@
  * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
+ * Copyright 2015, 2017, 2020 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2010-2014
+ *     The Board of Trustees of the Leland Stanford Junior University
  *
- * The authors hereby relinquish any claim to any copyright that they may have
- * in this work, whether granted under contract or by operation of law or
- * international treaty, and hereby commit to the public, at large, that they
- * shall not, at any time in the future, seek to enforce any copyright in this
- * work against any person or entity, or prevent any person or entity from
- * copying, publishing, distributing or creating derivative works of this
- * work.
+ * Copying and distribution of this file, with or without modification, are
+ * permitted in any medium without royalty provided the copyright notice and
+ * this notice are preserved.  This file is offered as-is, without any
+ * warranty.
+ *
+ * SPDX-License-Identifier: FSFAP
  */
 
 #ifndef PORTABLE_KRB5_H
@@ -38,44 +40,44 @@
  * stripped-down version of config.h with a different name.
  */
 #ifndef CONFIG_H_INCLUDED
-# include <config.h>
+#    include <config.h>
 #endif
 #include <portable/macros.h>
 
 #if defined(HAVE_KRB5_H)
-# include <krb5.h>
+#    include <krb5.h>
 #elif defined(HAVE_KERBEROSV5_KRB5_H)
-# include <kerberosv5/krb5.h>
+#    include <kerberosv5/krb5.h>
 #else
-# include <krb5/krb5.h>
+#    include <krb5/krb5.h>
 #endif
 #include <stdlib.h>
 
 /* Heimdal: KRB5_WELLKNOWN_NAME, MIT: KRB5_WELLKNOWN_NAMESTR. */
 #ifndef KRB5_WELLKNOWN_NAME
-# ifdef KRB5_WELLKNOWN_NAMESTR
-#  define KRB5_WELLKNOWN_NAME KRB5_WELLKNOWN_NAMESTR
-# else
-#  define KRB5_WELLKNOWN_NAME "WELLKNOWN"
-# endif
+#    ifdef KRB5_WELLKNOWN_NAMESTR
+#        define KRB5_WELLKNOWN_NAME KRB5_WELLKNOWN_NAMESTR
+#    else
+#        define KRB5_WELLKNOWN_NAME "WELLKNOWN"
+#    endif
 #endif
 
 /* Heimdal: KRB5_ANON_NAME, MIT: KRB5_ANONYMOUS_PRINCSTR. */
 #ifndef KRB5_ANON_NAME
-# ifdef KRB5_ANONYMOUS_PRINCSTR
-#  define KRB5_ANON_NAME KRB5_ANONYMOUS_PRINCSTR
-# else
-#  define KRB5_ANON_NAME "ANONYMOUS"
-# endif
+#    ifdef KRB5_ANONYMOUS_PRINCSTR
+#        define KRB5_ANON_NAME KRB5_ANONYMOUS_PRINCSTR
+#    else
+#        define KRB5_ANON_NAME "ANONYMOUS"
+#    endif
 #endif
 
 /* Heimdal: KRB5_ANON_REALM, MIT: KRB5_ANONYMOUS_REALMSTR. */
 #ifndef KRB5_ANON_REALM
-# ifdef KRB5_ANONYMOUS_REALMSTR
-#  define KRB5_ANON_REALM KRB5_ANONYMOUS_REALMSTR
-# else
-#  define KRB5_ANON_REALM "WELLKNOWN:ANONYMOUS"
-# endif
+#    ifdef KRB5_ANONYMOUS_REALMSTR
+#        define KRB5_ANON_REALM KRB5_ANONYMOUS_REALMSTR
+#    else
+#        define KRB5_ANON_REALM "WELLKNOWN:ANONYMOUS"
+#    endif
 #endif
 
 BEGIN_DECLS
@@ -105,7 +107,7 @@ krb5_error_code krb5_cc_get_full_name(krb5_context, krb5_ccache, char **);
 
 /* Heimdal: krb5_data_free, MIT: krb5_free_data_contents. */
 #ifdef HAVE_KRB5_DATA_FREE
-# define krb5_free_data_contents(c, d) krb5_data_free(d)
+#    define krb5_free_data_contents(c, d) krb5_data_free(d)
 #endif
 
 /*
@@ -114,7 +116,7 @@ krb5_error_code krb5_cc_get_full_name(krb5_context, krb5_ccache, char **);
  * Kerberos library.  Use krb5_xfree instead.
  */
 #ifndef HAVE_KRB5_FREE_DEFAULT_REALM
-# define krb5_free_default_realm(c, r) krb5_xfree(r)
+#    define krb5_free_default_realm(c, r) krb5_xfree(r)
 #endif
 
 /*
@@ -125,16 +127,16 @@ krb5_error_code krb5_cc_get_full_name(krb5_context, krb5_ccache, char **);
  * really do about it.
  */
 #ifndef HAVE_KRB5_FREE_STRING
-# ifdef HAVE_KRB5_XFREE
-#  define krb5_free_string(c, s) krb5_xfree(s)
-# else
-#  define krb5_free_string(c, s) free(s)
-# endif
+#    ifdef HAVE_KRB5_XFREE
+#        define krb5_free_string(c, s) krb5_xfree(s)
+#    else
+#        define krb5_free_string(c, s) free(s)
+#    endif
 #endif
 
 /* Heimdal: krb5_xfree, MIT: krb5_free_unparsed_name. */
 #ifdef HAVE_KRB5_XFREE
-# define krb5_free_unparsed_name(c, p) krb5_xfree(p)
+#    define krb5_free_unparsed_name(c, p) krb5_xfree(p)
 #endif
 
 /*
@@ -163,21 +165,22 @@ krb5_error_code krb5_get_init_creds_opt_alloc(krb5_context,
                                               krb5_get_init_creds_opt **);
 #endif
 #ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_FREE
-# ifndef HAVE_KRB5_GET_INIT_CREDS_OPT_FREE_2_ARGS
-#  define krb5_get_init_creds_opt_free(c, o) krb5_get_init_creds_opt_free(o)
-# endif
+#    ifndef HAVE_KRB5_GET_INIT_CREDS_OPT_FREE_2_ARGS
+#        define krb5_get_init_creds_opt_free(c, o) \
+            krb5_get_init_creds_opt_free(o)
+#    endif
 #else
-# define krb5_get_init_creds_opt_free(c, o) free(o)
+#    define krb5_get_init_creds_opt_free(c, o) free(o)
 #endif
 
 /* Not available in versions of Heimdal prior to 7.0.1. */
 #ifndef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_CHANGE_PASSWORD_PROMPT
-# define krb5_get_init_creds_opt_set_change_password_prompt(o, f) /* empty */
+#    define krb5_get_init_creds_opt_set_change_password_prompt(o, f) /* */
 #endif
 
 /* Heimdal-specific. */
 #ifndef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_DEFAULT_FLAGS
-# define krb5_get_init_creds_opt_set_default_flags(c, p, r, o) /* empty */
+#    define krb5_get_init_creds_opt_set_default_flags(c, p, r, o) /* empty */
 #endif
 
 /*
@@ -186,11 +189,12 @@ krb5_error_code krb5_get_init_creds_opt_alloc(krb5_context,
  * versions take.  Adjust if needed.  This function is Heimdal-specific.
  */
 #ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT
-# ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT_9_ARGS
-#  define krb5_get_init_creds_opt_set_pkinit(c, o, p, u, a, l, r, f, m, d, s) \
-    krb5_get_init_creds_opt_set_pkinit((c), (o), (p), (u), (a), (f), (m), \
-                                       (d), (s));
-# endif
+#    ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT_9_ARGS
+#        define krb5_get_init_creds_opt_set_pkinit(c, o, p, u, a, l, r, f, m, \
+                                                   d, s)                      \
+            krb5_get_init_creds_opt_set_pkinit((c), (o), (p), (u), (a), (f),  \
+                                               (m), (d), (s));
+#    endif
 #endif
 
 /*
@@ -198,7 +202,7 @@ krb5_error_code krb5_get_init_creds_opt_alloc(krb5_context,
  * called in a setuid context.
  */
 #ifndef HAVE_KRB5_INIT_SECURE_CONTEXT
-# define krb5_init_secure_context(c) krb5_init_context(c)
+#    define krb5_init_secure_context(c) krb5_init_context(c)
 #endif
 
 /*
@@ -207,7 +211,7 @@ krb5_error_code krb5_get_init_creds_opt_alloc(krb5_context,
  * present in older MIT Kerberos libraries but not prototyped.
  */
 #if !HAVE_DECL_KRB5_KT_FREE_ENTRY
-# define krb5_kt_free_entry(c, e) krb5_free_keytab_entry_contents((c), (e))
+#    define krb5_kt_free_entry(c, e) krb5_free_keytab_entry_contents((c), (e))
 #endif
 
 /*
@@ -224,8 +228,8 @@ const char *krb5_principal_get_realm(krb5_context, krb5_const_principal);
  * Heimdal.  Current MIT provides both.
  */
 #ifndef HAVE_KRB5_SET_PASSWORD
-# define krb5_set_password(c, cr, pw, p, rc, rcs, rs) \
-    krb5_change_password((c), (cr), (pw), (rc), (rcs), (rs))
+#    define krb5_set_password(c, cr, pw, p, rc, rcs, rs) \
+        krb5_change_password((c), (cr), (pw), (rc), (rcs), (rs))
 #endif
 
 /*
@@ -233,7 +237,7 @@ const char *krb5_principal_get_realm(krb5_context, krb5_const_principal);
  * krb5_verify_init_creds function but not this function.
  */
 #ifndef HAVE_KRB5_VERIFY_INIT_CREDS_OPT_INIT
-void krb5_verify_init_creds_opt_init(krb5_verify_init_creds_opt *opt)
+void krb5_verify_init_creds_opt_init(krb5_verify_init_creds_opt *opt);
 #endif
 
 /* Undo default visibility change. */

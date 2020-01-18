@@ -8,11 +8,16 @@ dnl
 dnl and defines HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT_9_ARGS if it takes
 dnl only nine arguments.
 dnl
+dnl Written by Russ Allbery <eagle@eyrie.org>
+dnl Copyright 2007, 2018 Russ Allbery <eagle@eyrie.org>
 dnl Copyright 2011
 dnl     The Board of Trustees of the Leland Stanford Junior University
-dnl Copyright 2007 Russ Allbery <eagle@eyrie.org>
 dnl
-dnl See LICENSE for licensing terms.
+dnl This file is free software; the authors give unlimited permission to copy
+dnl and/or distribute it, with or without modifications, as long as this
+dnl notice is preserved.
+dnl
+dnl SPDX-License-Identifier: FSFULLR
 
 dnl Check whether krb5_get_init_creds_opt_set_pkinit takes eleven arguments
 dnl (0.8 release candidates and later) or only nine (0.7).  Defines

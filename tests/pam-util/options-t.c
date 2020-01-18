@@ -5,7 +5,8 @@
  * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
- * Copyright 2010, 2011, 2012, 2013, 2014
+ * Copyright 2020 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2010-2014
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,6 +26,8 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
+ *
+ * SPDX-License-Identifier: MIT
  */
 
 #include <config.h>
@@ -58,12 +61,14 @@ struct pam_config {
 
 /* The rules specifying the configuration options. */
 static struct option options[] = {
+    /* clang-format off */
     { K(cells),       true,  LIST   (NULL)  },
     { K(debug),       true,  BOOL   (false) },
     { K(expires),     true,  TIME   (10)    },
     { K(ignore_root), false, BOOL   (true)  },
     { K(minimum_uid), true,  NUMBER (0)     },
     { K(program),     true,  STRING (NULL)  },
+    /* clang-format on */
 };
 static const size_t optlen = sizeof(options) / sizeof(options[0]);
 
@@ -80,7 +85,7 @@ static const size_t optlen = sizeof(options) / sizeof(options[0]);
         ok(status, "Parse of %s", (a));                                 \
         is_int((v), (c), "...and value is correct");                    \
         ok(pam_output() == NULL, "...and no output");                   \
-    } while (0);
+    } while (0)
 
 /*
  * A macro used to test error reporting from putil_args_parse().  This reuses
@@ -88,22 +93,20 @@ static const size_t optlen = sizeof(options) / sizeof(options[0]);
  * calling putil_args_parse() on it.  It then recovers the error message and
  * expects it to match the severity and error message given.
  */
-#define TEST_ERROR(a, p, e)                                             \
-    do {                                                                \
-        argv_err[0] = (a);                                              \
-        status = putil_args_parse(args, 1, argv_err, options, optlen);  \
-        ok(status, "Parse of %s", (a));                                 \
-        seen = pam_output();                                            \
-        if (seen == NULL)                                               \
-            ok_block(2, false, "...no error output");                   \
-        else {                                                          \
-            is_int((p), seen->lines[0].priority,                        \
-                   "...priority for %s", (a));                          \
-            is_string((e), seen->lines[0].line,                         \
-                      "...error for %s", (a));                          \
-        }                                                               \
-        pam_output_free(seen);                                          \
-    } while (0);
+#define TEST_ERROR(a, p, e)                                                  \
+    do {                                                                     \
+        argv_err[0] = (a);                                                   \
+        status = putil_args_parse(args, 1, argv_err, options, optlen);       \
+        ok(status, "Parse of %s", (a));                                      \
+        seen = pam_output();                                                 \
+        if (seen == NULL)                                                    \
+            ok_block(2, false, "...no error output");                        \
+        else {                                                               \
+            is_int((p), seen->lines[0].priority, "...priority for %s", (a)); \
+            is_string((e), seen->lines[0].line, "...error for %s", (a));     \
+        }                                                                    \
+        pam_output_free(seen);                                               \
+    } while (0)
 
 
 /*
@@ -135,25 +138,29 @@ main(void)
 {
     pam_handle_t *pamh;
     struct pam_args *args;
-    struct pam_conv conv = { NULL, NULL };
+    struct pam_conv conv = {NULL, NULL};
     bool status;
     struct vector *cells;
     char *program;
     struct output *seen;
-    const char *argv_bool[2] = { NULL, NULL };
-    const char *argv_err[2] = { NULL, NULL };
-    const char *argv_empty[] = { NULL };
+    const char *argv_bool[2] = {NULL, NULL};
+    const char *argv_err[2] = {NULL, NULL};
+    const char *argv_empty[] = {NULL};
 #ifdef HAVE_KRB5
-    const char *argv_all[] = {
-        "cells=stanford.edu,ir.stanford.edu", "debug", "expires=1d",
-        "ignore_root", "minimum_uid=1000", "program=/bin/true"
-    };
+    const char *argv_all[] = {"cells=stanford.edu,ir.stanford.edu",
+                              "debug",
+                              "expires=1d",
+                              "ignore_root",
+                              "minimum_uid=1000",
+                              "program=/bin/true"};
     char *krb5conf;
 #else
-    const char *argv_all[] = {
-        "cells=stanford.edu,ir.stanford.edu", "debug", "expires=86400",
-        "ignore_root", "minimum_uid=1000", "program=/bin/true"
-    };
+    const char *argv_all[] = {"cells=stanford.edu,ir.stanford.edu",
+                              "debug",
+                              "expires=86400",
+                              "ignore_root",
+                              "minimum_uid=1000",
+                              "program=/bin/true"};
 #endif
 
     if (pam_start("test", NULL, &conv, &pamh) != PAM_SUCCESS)
@@ -230,8 +237,7 @@ main(void)
         is_string("bar.com", args->config->cells->strings[1],
                   "...second is bar.com");
     }
-    is_string("/bin/false", args->config->program,
-              "...program is /bin/false");
+    is_string("/bin/false", args->config->program, "...program is /bin/false");
     status = putil_args_parse(args, 6, argv_all, options, optlen);
     ok(status, "Parse of full argv after defaults");
     if (args->config->cells == NULL)
@@ -308,12 +314,10 @@ main(void)
 
     /* Test for various parsing errors. */
     args->config = config_new();
-    TEST_ERROR("debug=", LOG_ERR,
-               "invalid boolean in setting: debug=");
+    TEST_ERROR("debug=", LOG_ERR, "invalid boolean in setting: debug=");
     TEST_ERROR("debug=truth", LOG_ERR,
                "invalid boolean in setting: debug=truth");
-    TEST_ERROR("minimum_uid", LOG_ERR,
-               "value missing for option minimum_uid");
+    TEST_ERROR("minimum_uid", LOG_ERR, "value missing for option minimum_uid");
     TEST_ERROR("minimum_uid=", LOG_ERR,
                "value missing for option minimum_uid=");
     TEST_ERROR("minimum_uid=foo", LOG_ERR,

@@ -35,6 +35,8 @@
  * This code is based on code written by Patrick Powell (papowell@astart.com)
  * It may be used for any purpose as long as this notice remains intact
  * on all source code distributions
+ *
+ * There is no SPDX-License-Identifier registered for this license.
  */
 
 /**************************************************************
@@ -712,7 +714,7 @@ static int fmtfp (char *buffer, size_t *currlen, size_t maxlen,
       if (intpart != 0)
 	{
 	  /* For each digit of INTPART, print one less fractional digit. */
-	  LLONG temp = intpart;
+	  LLONG temp;
 	  for (temp = intpart; temp != 0; temp /= 10)
 	    --max;
 	  if (max < 0)

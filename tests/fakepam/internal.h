@@ -5,7 +5,7 @@
  * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
- * Copyright 2011, 2012
+ * Copyright 2011-2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,6 +25,8 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
+ *
+ * SPDX-License-Identifier: MIT
  */
 
 #ifndef FAKEPAM_INTERNAL_H
@@ -42,10 +44,10 @@ typedef int (*pam_call)(pam_handle_t *, int, int, const char **);
 
 /* The possible PAM groups as element numbers in an array of options. */
 enum group_type {
-    GROUP_ACCOUNT  = 0,
-    GROUP_AUTH     = 1,
+    GROUP_ACCOUNT = 0,
+    GROUP_AUTH = 1,
     GROUP_PASSWORD = 2,
-    GROUP_SESSION  = 3,
+    GROUP_SESSION = 3,
 };
 
 /* Holds a PAM argc and argv. */
