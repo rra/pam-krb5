@@ -1,8 +1,7 @@
 dnl Autoconf configuration for pam-krb5.
 dnl
 dnl Written by Russ Allbery <eagle@eyrie.org>
-dnl Copyright 2005-2009, 2014, 2017, 2020
-dnl     Russ Allbery <eagle@eyrie.org>
+dnl Copyright 2005-2009, 2014, 2017, 2020 Russ Allbery <eagle@eyrie.org>
 dnl Copyright 2009-2013
 dnl     The Board of Trustees of the Leland Stanford Junior University
 dnl Copyright 2005 Andres Salomon <dilinger@debian.org>
@@ -33,6 +32,10 @@ AC_PROG_INSTALL
 LT_INIT([disable-static])
 AC_CANONICAL_HOST
 RRA_LD_VERSION_SCRIPT
+
+dnl Only used for the test suite.
+AC_ARG_VAR([PATH_VALGRIND], [Path to valgrind for the test suite])
+AC_PATH_PROG([PATH_VALGRIND], [valgrind])
 
 dnl Probe for the functionality of the PAM libraries and their include file
 dnl naming.  Mac OS X puts them in pam/* instead of security/*.

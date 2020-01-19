@@ -164,16 +164,21 @@ check-cppcheck:
 		--suppressions-list=tests/data/cppcheck.supp		\
 		--enable=warning,performance,portability,style
 
-# Used by maintainers to run the test suite under valgrind.
+# The full path to valgrind and its options, used when doing valgrind
+# testing.
+VALGRIND_COMMAND = $(PATH_VALGRIND) --leak-check=full			\
+        --trace-children=yes						\
+	--trace-children-skip=/bin/sh,*/generate-krb5-conf		\
+	--suppressions=$(abs_top_srcdir)/tests/data/valgrind.supp	\
+        --log-file=$(abs_top_builddir)/tests/tmp/valgrind/log.%p
+
+# Used by maintainers to run the main test suite under valgrind.
 check-valgrind: $(check_PROGRAMS)
-	rm -rf $(abs_top_builddir)/tmp-valgrind
-	mkdir $(abs_top_builddir)/tmp-valgrind
-	valgrind --leak-check=full --leak-check=full			\
-	    --show-reachable=yes --trace-children=yes			\
-	    --log-file=$(abs_top_builddir)/tmp-valgrind/log.%p		\
-	    --suppressions=$(abs_top_srcdir)/tests/data/valgrind.supp	\
-	    --trace-children-skip="/bin/sh,*/cat,*/cut,*/expr,*/getopt,*/kinit,*/ls,*/mkdir,*/rm,*/rmdir,*/sed,*/sleep,*/wc,*/data/generate-krb5-conf,*/docs/*-t" \
-	    tests/runtests -l $(abs_top_srcdir)/tests/TESTS
+	rm -rf $(abs_top_builddir)/tests/tmp
+	mkdir $(abs_top_builddir)/tests/tmp
+	mkdir $(abs_top_builddir)/tests/tmp/valgrind
+	C_TAP_VALGRIND="$(VALGRIND_COMMAND)" tests/runtests \
+	    -l '$(abs_top_srcdir)/tests/TESTS'
 
 # Used by maintainers to reformat all source code using clang-format and
 # excluding some files.
