@@ -68,14 +68,14 @@ warnings:
 check_PROGRAMS = tests/runtests tests/module/alt-auth-t			    \
 	tests/module/bad-authtok-t tests/module/basic-t			    \
 	tests/module/cache-cleanup-t tests/module/cache-t		    \
-	tests/module/expired-t tests/module/fast-t tests/module/no-cache-t  \
-	tests/module/pam-user-t tests/module/password-t			    \
-	tests/module/pkinit-t tests/module/realm-t tests/module/stacked-t   \
-	tests/module/trace-t tests/pam-util/args-t tests/pam-util/fakepam-t \
-	tests/pam-util/logging-t tests/pam-util/options-t		    \
-	tests/pam-util/vector-t tests/portable/asprintf-t		    \
-	tests/portable/mkstemp-t tests/portable/snprintf-t		    \
-	tests/portable/strndup-t
+	tests/module/expired-t tests/module/fast-anon-t tests/module/fast-t \
+	tests/module/no-cache-t tests/module/pam-user-t			    \
+	tests/module/password-t tests/module/pkinit-t tests/module/realm-t  \
+	tests/module/stacked-t tests/module/trace-t tests/pam-util/args-t   \
+	tests/pam-util/fakepam-t tests/pam-util/logging-t		    \
+	tests/pam-util/options-t tests/pam-util/vector-t		    \
+	tests/portable/asprintf-t tests/portable/mkstemp-t		    \
+	tests/portable/snprintf-t tests/portable/strndup-t
 tests_runtests_CPPFLAGS = -DC_TAP_SOURCE='"$(abs_top_srcdir)/tests"' \
 	-DC_TAP_BUILD='"$(abs_top_builddir)/tests"'
 check_LIBRARIES = tests/fakepam/libfakepam.a tests/tap/libtap.a
@@ -110,6 +110,8 @@ tests_module_cache_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
 tests_module_expired_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a	\
 	portable/libportable.la $(KADM5CLNT_LDFLAGS) $(KADM5CLNT_LIBS)	\
 	$(KRB5_LIBS)
+tests_module_fast_anon_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
+	portable/libportable.la $(KRB5_LIBS)
 tests_module_fast_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
 	portable/libportable.la $(KRB5_LIBS)
 tests_module_no_cache_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
