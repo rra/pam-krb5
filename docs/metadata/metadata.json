@@ -42,6 +42,7 @@
         "browse": "https://git.eyrie.org/?p=kerberos/pam-krb5.git",
         "github": "rra/pam-krb5",
         "openhub": "https://www.openhub.net/p/pamkrb5",
+        "travis": "rra/pam-krb5",
     },
     "readme": {
         "sections": [

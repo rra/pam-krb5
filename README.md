@@ -1,5 +1,10 @@
 # pam-krb5 4.8
 
+[![Build
+status](https://travis-ci.org/rra/pam-krb5.svg?branch=master)](https://travis-ci.org/rra/pam-krb5)
+[![Debian
+package](https://img.shields.io/debian/v/libpam-krb5)](https://tracker.debian.org/pkg/libpam-krb5)
+
 Copyright 2005-2010, 2014-2015, 2017 Russ Allbery <eagle@eyrie.org>.
 Copyright 2009-2011 The Board of Trustees of the Leland Stanford Junior
 University.  Copyright 2005 Andres Salomon <dilinger@debian.org>.
@@ -153,7 +158,8 @@ path:
 
 Pass `--enable-silent-rules` to configure for a quieter build (similar to
 the Linux kernel).  Use `make warnings` instead of `make` to build with
-full GCC compiler warnings (requires a relatively current version of GCC).
+full GCC compiler warnings (requires either GCC or Clang and may require a
+relatively current version of the compiler).
 
 You can pass the `--enable-reduced-depends` flag to configure to try to
 minimize the shared library dependencies encoded in the binaries.  This
@@ -203,6 +209,15 @@ Several `module/expired` tests are expected to fail with Heimdal 1.5 due
 to a bug in Heimdal with reauthenticating immediately after a
 library-mediated password change of an expired password.  This is fixed in
 later releases of Heimdal.
+
+To run the full test suite, Perl 5.8 or later is required.  The following
+additional Perl modules will be used if present:
+
+* Test::Pod
+* Test::Spelling
+
+All are available on CPAN.  Those tests will be skipped if the modules are
+not available.
 
 ## Configuring
 
@@ -631,6 +646,10 @@ licenses, all of which are compatible with the above general package
 license but which may require preservation of additional notices.  All
 required notices, and detailed information about the licensing of each
 file, are recorded in the LICENSE file.
+
+Files covered by a license with an assigned SPDX License Identifier
+include SPDX-License-Identifier tags to enable automated processing of
+license information.  See https://spdx.org/licenses/ for more information.
 
 For any copyright range specified by files in this package as YYYY-ZZZZ,
 the range specifies every single year in that closed interval.

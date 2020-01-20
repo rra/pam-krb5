@@ -42,11 +42,11 @@ DESCRIPTION
   support Kerberos v4 or AFS.  For an AFS session module that works with
   this module (or any other Kerberos PAM module), see pam-afs-session [1].
 
+  [1] https://www.eyrie.org/~eagle/software/pam-afs-session/
+
   If there are other options besides AFS and Kerberos v4 support from the
   Sourceforge PAM module that you're missing in this module, please let me
   know.
-
-  [1] https://www.eyrie.org/~eagle/software/pam-afs-session/
 
 REQUIREMENTS
 
@@ -149,7 +149,8 @@ BUILDING AND INSTALLATION
 
   Pass --enable-silent-rules to configure for a quieter build (similar to
   the Linux kernel).  Use make warnings instead of make to build with full
-  GCC compiler warnings (requires a relatively current version of GCC).
+  compiler warnings (requires either GCC or Clang and may require a
+  relatively current version of the compiler).
 
   You can pass the --enable-reduced-depends flag to configure to try to
   minimize the shared library dependencies encoded in the binaries.  This
@@ -195,6 +196,15 @@ TESTING
   to a bug in Heimdal with reauthenticating immediately after a
   library-mediated password change of an expired password.  This is fixed
   in later releases of Heimdal.
+
+  To run the full test suite, Perl 5.8 or later is required.  The
+  following additional Perl modules will be used if present:
+
+  * Test::Pod
+  * Test::Spelling
+
+  All are available on CPAN.  Those tests will be skipped if the modules
+  are not available.
 
 CONFIGURING
 
@@ -609,6 +619,11 @@ LICENSE
   package license but which may require preservation of additional
   notices.  All required notices, and detailed information about the
   licensing of each file, are recorded in the LICENSE file.
+
+  Files covered by a license with an assigned SPDX License Identifier
+  include SPDX-License-Identifier tags to enable automated processing of
+  license information.  See https://spdx.org/licenses/ for more
+  information.
 
   For any copyright range specified by files in this package as YYYY-ZZZZ,
   the range specifies every single year in that closed interval.
