@@ -172,7 +172,7 @@ set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
 
     /*
      * Set options for PKINIT.  Only used with MIT Kerberos; Heimdal's
-     * implementatin of PKINIT uses a separate API instead of setting
+     * implementation of PKINIT uses a separate API instead of setting
      * get_init_creds options.
      */
 #ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PA

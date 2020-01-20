@@ -45,7 +45,7 @@ password
 
 pkinit-cert
 
-    Certificate and private key (concatinated together) for PKINIT
+    Certificate and private key (concatenated together) for PKINIT
     authentication for the user listed in the pkinit-principal file.
     Optional; PKINIT checks will be skipped if this file isn't present.
 

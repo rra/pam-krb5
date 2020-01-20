@@ -143,7 +143,7 @@ pam-krb5 4.6 (2012-06-02)
     Add a no_prompt option to suppress the PAM module's prompt for the
     user's password and defer all prompting to the Kerberos library.  This
     allows the Kerberos library to have complete control of the prompting
-    process, which may be desireable if authentication mechanisms other
+    process, which may be desirable if authentication mechanisms other
     than password are in use.  Be aware that, with this option set, the
     PAM module has no control over the contents of the prompt and cannot
     store the user's password in the PAM data.  Based on a patch by Yair

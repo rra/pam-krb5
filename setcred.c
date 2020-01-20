@@ -453,7 +453,7 @@ pamk5_setcred(struct pam_args *args, bool refresh)
             goto done;
     }
 
-    /* Detroy the temporary cache and put the new cache in the context. */
+    /* Destroy the temporary cache and put the new cache in the context. */
     krb5_cc_destroy(ctx->context, ctx->cache);
     ctx->cache = cache;
     cache = NULL;
