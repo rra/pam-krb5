@@ -2,7 +2,8 @@
  * Basic tests for the pam-krb5 module.
  *
  * This test case includes all tests that can be done without having Kerberos
- * configured and a username and password available.
+ * configured and a username and password available, and without any special
+ * configuration.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
  * Copyright 2020 Russ Allbery <eagle@eyrie.org>

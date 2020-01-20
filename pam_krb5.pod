@@ -45,6 +45,10 @@ temporary ticket cache and writes it out to a persistent ticket cache
 owned by the user or uses the temporary ticket cache to refresh an
 existing user ticket cache.
 
+Passwords as long or longer than PAM_MAX_RESP_SIZE octets (normally 512
+octets) will be rejected, since excessively long passwords can be used as
+a denial of service attack.
+
 After doing the initial authentication, the Kerberos PAM module will
 attempt to obtain tickets for a key in the local system keytab and then
 verify those tickets.  Unless this step is performed, the authentication
@@ -122,6 +126,10 @@ credentials for the special Kerberos principal C<kadmin/changepw>.  It
 then prompts the user for a new password, twice to ensure that the user
 entered it properly (again, unless configured to use an already entered
 password), and then does a Kerberos password change.
+
+Passwords as long or longer than PAM_MAX_RESP_SIZE octets (normally 512
+octets) will be rejected, since excessively long passwords can be used as
+a denial of service attack.
 
 Unlike the normal Unix password module, this module will allow any user to
 change any other user's password if they know the old password.  Also,

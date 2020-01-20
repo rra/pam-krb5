@@ -246,6 +246,11 @@ maybe_retrieve_password(struct pam_args *args, int authtok, const char **pass)
         }
         *pass = NULL;
     }
+    if (*pass != NULL && strlen(*pass) > PAM_MAX_RESP_SIZE - 1) {
+        putil_debug(args, "rejecting password longer than %d",
+                    PAM_MAX_RESP_SIZE - 1);
+        return PAM_AUTH_ERR;
+    }
     if (force && (status != PAM_SUCCESS || *pass == NULL)) {
         putil_debug_pam(args, status, "no stored password");
         return PAM_AUTH_ERR;
@@ -284,6 +289,13 @@ prompt_password(struct pam_args *args, int authtok, const char **pass)
     }
     if (password[0] == '\0') {
         putil_debug(args, "rejecting empty password");
+        free(password);
+        return PAM_AUTH_ERR;
+    }
+    if (strlen(password) > PAM_MAX_RESP_SIZE - 1) {
+        putil_debug(args, "rejecting password longer than %d",
+                    PAM_MAX_RESP_SIZE - 1);
+        memset(password, 0, strlen(password));
         free(password);
         return PAM_AUTH_ERR;
     }

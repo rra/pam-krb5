@@ -9,7 +9,7 @@
  * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
- * Copyright 2015 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2015, 2020 Russ Allbery <eagle@eyrie.org>
  * Copyright 2010-2011, 2014
  *     The Board of Trustees of the Leland Stanford Junior University
  *
@@ -81,6 +81,11 @@
  */
 #ifndef PAM_BAD_ITEM
 #    define PAM_BAD_ITEM PAM_SYMBOL_ERR
+#endif
+
+/* We use this as a limit on password length, so make sure it's defined. */
+#ifndef PAM_MAX_RESP_SIZE
+#    define PAM_MAX_RESP_SIZE 512
 #endif
 
 /*

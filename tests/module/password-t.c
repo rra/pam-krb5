@@ -50,9 +50,27 @@ main(void)
     plan_lazy();
 
     /*
+     * First test trying to change the password to something that's
+     * excessively long.
+     */
+    newpass = bcalloc_type(PAM_MAX_RESP_SIZE + 1, char);
+    memset(newpass, 'a', PAM_MAX_RESP_SIZE);
+    config.newpass = newpass;
+    run_script("data/scripts/password/too-long", &config);
+    run_script("data/scripts/password/too-long-debug", &config);
+
+    /* Test use_authtok with an excessively long password. */
+    config.newpass = NULL;
+    config.authtok = newpass;
+    run_script("data/scripts/password/authtok-too-long", &config);
+    run_script("data/scripts/password/authtok-too-long-debug", &config);
+
+    /*
      * Change the password to something new.  This needs to be sufficiently
      * random that it's unlikely to fall afoul of password strength checking.
      */
+    free(newpass);
+    config.authtok = NULL;
     basprintf(&newpass, "ngh1,a%lu nn9af6%lu", (unsigned long) getpid(),
               (unsigned long) time(NULL));
     config.newpass = newpass;

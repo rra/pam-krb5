@@ -2,6 +2,11 @@
 
 pam-krb5 4.9 (unreleased)
 
+    Reject passwords as long or longer than PAM_MAX_RESP_SIZE (normally
+    512 octets), since extremely long passwords can be used for a denial
+    of service attack via the Kerberos string to key function.  Thanks to
+    Florian Best for pointing out this issue and suggesting a good fix.
+
     Update to rra-c-util 8.1:
 
     * Drop support for Perl 5.6.

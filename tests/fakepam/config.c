@@ -108,6 +108,7 @@ static const struct {
     /* clang-format off */
     {"PAM_AUTH_ERR",         PAM_AUTH_ERR        },
     {"PAM_AUTHINFO_UNAVAIL", PAM_AUTHINFO_UNAVAIL},
+    {"PAM_AUTHTOK_ERR",      PAM_AUTHTOK_ERR     },
     {"PAM_IGNORE",           PAM_IGNORE          },
     {"PAM_NEW_AUTHTOK_REQD", PAM_NEW_AUTHTOK_REQD},
     {"PAM_SESSION_ERR",      PAM_SESSION_ERR     },

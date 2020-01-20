@@ -47,6 +47,12 @@ pamk5_password_prompt(struct pam_args *args, char **pass)
             pamret = PAM_AUTHTOK_ERR;
             goto done;
         }
+        if (strlen(tmp) > PAM_MAX_RESP_SIZE - 1) {
+            putil_debug(args, "rejecting password longer than %d",
+                        PAM_MAX_RESP_SIZE - 1);
+            pamret = PAM_AUTHTOK_ERR;
+            goto done;
+        }
         pass1 = strdup((const char *) tmp);
     }
 
@@ -56,6 +62,14 @@ pamk5_password_prompt(struct pam_args *args, char **pass)
         if (pamret != PAM_SUCCESS) {
             putil_debug_pam(args, pamret, "error getting new password");
             pamret = PAM_AUTHTOK_ERR;
+            goto done;
+        }
+        if (strlen(pass1) > PAM_MAX_RESP_SIZE - 1) {
+            putil_debug(args, "rejecting password longer than %d",
+                        PAM_MAX_RESP_SIZE - 1);
+            pamret = PAM_AUTHTOK_ERR;
+            memset(pass1, 0, strlen(pass1));
+            free(pass1);
             goto done;
         }
         pamret = pamk5_get_password(args, "Retype new", &pass2);

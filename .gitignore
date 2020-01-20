@@ -45,6 +45,7 @@
 /tests/module/expired-t
 /tests/module/fast-anon-t
 /tests/module/fast-t
+/tests/module/long-t
 /tests/module/no-cache-t
 /tests/module/pam-user-t
 /tests/module/password-t
