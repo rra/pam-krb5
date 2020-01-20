@@ -1,6 +1,6 @@
 dnl Additional probes for Kerberos PKINIT support.
 dnl
-dnl Additonal Kerberos library probes that check behavior of the library
+dnl Additional Kerberos library probes that check behavior of the library
 dnl relevant to PKINIT support.  Provides the macro:
 dnl
 dnl     RRA_FUNC_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT_ARGS
@@ -9,7 +9,7 @@ dnl and defines HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT_9_ARGS if it takes
 dnl only nine arguments.
 dnl
 dnl Written by Russ Allbery <eagle@eyrie.org>
-dnl Copyright 2007, 2018 Russ Allbery <eagle@eyrie.org>
+dnl Copyright 2007, 2018, 2020 Russ Allbery <eagle@eyrie.org>
 dnl Copyright 2011
 dnl     The Board of Trustees of the Leland Stanford Junior University
 dnl

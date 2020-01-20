@@ -218,7 +218,7 @@ krb5_appdefault_string(krb5_context context, const char *appname, const krb5_dat
  * 
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
- * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  * 
  * Individual source code files are copyright MIT, Cygnus Support,
  * OpenVision, Oracle, Sun Soft, FundsXpress, and others.

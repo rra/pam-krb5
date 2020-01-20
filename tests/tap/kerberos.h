@@ -108,7 +108,7 @@ void kerberos_cleanup(void);
 void kerberos_generate_conf(const char *realm);
 void kerberos_cleanup_conf(void);
 
-/* Thes interfaces are only available with native Kerberos support. */
+/* These interfaces are only available with native Kerberos support. */
 #ifdef HAVE_KRB5
 
 /* Bail out with an error, appending the Kerberos error message. */
