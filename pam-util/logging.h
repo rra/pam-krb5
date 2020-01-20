@@ -113,16 +113,19 @@ END_DECLS
 #endif
 
 /* Macros to record entry and exit from the main PAM functions. */
-#define ENTRY(args, flags) \
-    if (args->debug)       \
-        putil_log_entry((args), __func__, (flags))
-/* clang-format off */
-#define EXIT(args, pamret)                                             \
-    if (args != NULL && args->debug)                                   \
-        pam_syslog((args)->pamh, LOG_DEBUG, "%s: exit (%s)", __func__, \
-                   ((pamret) == PAM_SUCCESS)                           \
-                       ? "success"                                     \
-                       : (((pamret) == PAM_IGNORE) ? "ignore" : "failure"))
-/* clang-format on */
+#define ENTRY(args, flags)                              \
+    do {                                                \
+        if (args->debug)                                \
+            putil_log_entry((args), __func__, (flags)); \
+    } while (0)
+#define EXIT(args, pamret)                                                \
+    do {                                                                  \
+        if (args != NULL && args->debug)                                  \
+            pam_syslog(                                                   \
+                (args)->pamh, LOG_DEBUG, "%s: exit (%s)", __func__,       \
+                ((pamret) == PAM_SUCCESS)                                 \
+                    ? "success"                                           \
+                    : (((pamret) == PAM_IGNORE) ? "ignore" : "failure")); \
+    } while (0)
 
 #endif /* !PAM_UTIL_LOGGING_H */
