@@ -65,13 +65,13 @@ BEGIN {
     # This version should match the corresponding rra-c-util release, but with
     # two digits for the minor version, including a leading zero if necessary,
     # so that it will sort properly.
-    $VERSION = '8.01';
+    $VERSION = '8.02';
 }
 
 # Directories to skip globally when looking for all files, or for directories
 # that could contain Perl files.
 my @GLOBAL_SKIP = qw(
-  .git _build autom4te.cache build-aux perl/_build perl/blib
+  .git .pc _build autom4te.cache build-aux perl/_build perl/blib
 );
 
 # Additional paths to skip when building a list of all files in the
@@ -448,7 +448,7 @@ Russ Allbery <eagle@eyrie.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2014-2015, 2018-2019 Russ Allbery <eagle@eyrie.org>
+Copyright 2014-2015, 2018-2020 Russ Allbery <eagle@eyrie.org>
 
 Copyright 2013 The Board of Trustees of the Leland Stanford Junior University
 

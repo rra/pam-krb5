@@ -7,8 +7,9 @@ pam-krb5 4.9 (unreleased)
     of service attack via the Kerberos string to key function.  Thanks to
     Florian Best for pointing out this issue and suggesting a good fix.
 
-    Update to rra-c-util 8.1:
+    Update to rra-c-util 8.2:
 
+    * Fix support for configuring the test suite with a krb5.conf file.
     * Drop support for Perl 5.6.
     * Reformat all C source using clang-format 10.
     * Remove bogus snprintf tests.
