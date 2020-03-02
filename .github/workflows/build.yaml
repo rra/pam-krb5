@@ -1,0 +1,40 @@
+name: build
+
+on:
+  push:
+    branches:
+      - "*"
+    tags:
+      - "release/*"
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      AUTHOR_TESTING: 1
+      C_TAP_VERBOSE: 1
+
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler:
+          - "gcc"
+          - "clang"
+        kerberos:
+          - "mit"
+          - "heimdal"
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: install
+        run: sudo ci/install
+        env:
+          KERBEROS: ${{ matrix.kerberos }}
+      - name: test
+        run: ci/test
+        env:
+          COMPILER: ${{ matrix.compiler }}

@@ -10,14 +10,15 @@
 # SPDX-License-Identifier: BSD-3-clause or GPL-1+
 
 ACLOCAL_AMFLAGS = -I m4
-EXTRA_DIST = .gitignore .travis.yml LICENSE README.md bootstrap		    \
-	docs/metadata docs/pam_krb5.pod module/pam_krb5.map		    \
-	module/pam_krb5.sym tests/README tests/TESTS tests/config/README    \
-	tests/data/generate-krb5-conf tests/data/krb5-pam.conf		    \
-	tests/data/krb5.conf tests/data/perl.conf tests/data/scripts	    \
-	tests/data/valgrind.supp tests/docs/pod-spelling-t tests/docs/pod-t \
-	tests/docs/urls-t tests/fakepam/README tests/tap/libtap.sh	    \
-	tests/tap/perl/Test/RRA.pm tests/tap/perl/Test/RRA/Automake.pm	    \
+EXTRA_DIST = .gitignore .github .travis.yml LICENSE README.md bootstrap	    \
+	ci/README ci/install ci/test docs/metadata docs/pam_krb5.pod	    \
+	module/pam_krb5.map module/pam_krb5.sym tests/README tests/TESTS    \
+	tests/config/README tests/data/generate-krb5-conf		    \
+	tests/data/krb5-pam.conf tests/data/krb5.conf tests/data/perl.conf  \
+	tests/data/scripts tests/data/valgrind.supp			    \
+	tests/docs/pod-spelling-t tests/docs/pod-t tests/docs/urls-t	    \
+	tests/fakepam/README tests/tap/libtap.sh tests/tap/perl/Test/RRA.pm \
+	tests/tap/perl/Test/RRA/Automake.pm				    \
 	tests/tap/perl/Test/RRA/Config.pm
 
 # Everything we build needs the Kerbeors headers and library flags.
