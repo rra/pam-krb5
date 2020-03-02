@@ -16,14 +16,13 @@ PAM API:
 
 Functionality:
 
- * Find a way to do only PKINIT authentication with no password fallback
-   with MIT Kerberos and then change the authentication flow so that both
-   Heimdal and MIT use the same logic for attempting PKINIT first and then
-   falling back to password.  This will fix failure to store passwords in
-   the PAM data with try_pkinit and MIT Kerberos on password fallback and
-   will allow implementation of use_pkinit for MIT.  Based on discussion
-   with MIT Kerberos upstream, the best approach is probably to configure
-   a custom prompter that refuses to reply to any prompt.
+ * Change the authentication flow so that both Heimdal and MIT use the
+   same logic for attempting PKINIT first and then falling back to
+   password.  This will fix failure to store passwords in the PAM data
+   with try_pkinit and MIT Kerberos on password fallback and will allow
+   implementation of use_pkinit for MIT.  Based on discussion with MIT
+   Kerberos upstream, the best approach is probably to configure a custom
+   prompter that refuses to reply to any prompt.
 
  * Add a daemon that can be used to verify TGTs that can be used when
    pam-krb5 is run as a non-root user and hence doesn't have access to the
@@ -104,7 +103,3 @@ Test suite:
 
  * Find a way of testing the PKINIT identity selection for MIT Kerberos
    with use_pkinit enabled.
-
- * Integrate and automate valgrind testing.  There is currently a
-   check-valgrind option with the beginnings of an exclusion list, but it
-   needs better integration with the rest of the test suite.
