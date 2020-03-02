@@ -1,7 +1,7 @@
 # pam-krb5 4.8
 
 [![Build
-status](https://travis-ci.org/rra/pam-krb5.svg?branch=master)](https://travis-ci.org/rra/pam-krb5)
+status](https://github.com/rra/pam-krb5/workflows/build/badge.svg)](https://github.com/rra/pam-krb5/actions)
 [![Debian
 package](https://img.shields.io/debian/v/libpam-krb5)](https://tracker.debian.org/pkg/libpam-krb5)
 
@@ -57,20 +57,22 @@ not been tested with earlier versions.
 
 For PKINIT support, Heimdal 0.8rc1 or later or MIT Kerberos 1.6.3 or later
 are required.  Earlier MIT Kerberos 1.6 releases have a bug in their
-handling of PKINIT options.
+handling of PKINIT options.  MIT Kerberos 1.12 or later is required to use
+the use_pkinit PAM option.
 
 For FAST (Flexible Authentication Secure Tunneling) support, MIT Kerberos
 1.7 or higher is required.  For anonymous FAST support, anonymous
 authentication (generally anonymous PKINIT) support is required in both
 the Kerberos libraries and in the local KDC.
 
-This module should work on Linux and Solaris (and build with gcc, clang,
-or the Sun C compiler), but has been far more heavily tested on Linux.
-There is beta-quality support for the AIX NAS Kerberos implementation.
-Other PAM implementations will probably require some porting, although
-untested build system support is present for FreeBSD, Mac OS X, and HP-UX.
-I personally can only test on Linux and rely on others to report problems
-on other operating systems.
+This module should work on Linux and build with gcc or clang.  It may
+still work on Solaris and build with the Sun C compiler, but I have only
+tested it on Linux recently.  There is beta-quality support for the AIX
+NAS Kerberos implementation that has not been tested in years.  Other PAM
+implementations will probably require some porting, although untested
+build system support is present for FreeBSD, Mac OS X, and HP-UX.  I
+personally can only test on Linux and rely on others to report problems on
+other operating systems.
 
 Old versions of OpenSSH are known to call `pam_authenticate` followed by
 `pam_setcred(PAM_REINITIALIZE_CRED)` without first calling
