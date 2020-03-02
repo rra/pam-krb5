@@ -295,14 +295,14 @@ prompt_password(struct pam_args *args, int authtok, const char **pass)
     if (strlen(password) > PAM_MAX_RESP_SIZE - 1) {
         putil_debug(args, "rejecting password longer than %d",
                     PAM_MAX_RESP_SIZE - 1);
-        memset(password, 0, strlen(password));
+        explicit_bzero(password, strlen(password));
         free(password);
         return PAM_AUTH_ERR;
     }
 
     /* Set this for the next PAM module. */
     status = pam_set_item(args->pamh, authtok, password);
-    memset(password, 0, strlen(password));
+    explicit_bzero(password, strlen(password));
     free(password);
     if (status != PAM_SUCCESS) {
         putil_err_pam(args, status, "error storing password");
@@ -379,7 +379,7 @@ password_auth(struct pam_args *args, krb5_creds *creds,
         if (retval == 0) {
             retval = KRB5KDC_ERR_KEY_EXP;
             krb5_free_cred_contents(ctx->context, creds);
-            memset(creds, 0, sizeof(krb5_creds));
+            explicit_bzero(creds, sizeof(krb5_creds));
         }
     }
     return retval;

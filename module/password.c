@@ -68,7 +68,7 @@ pamk5_password_prompt(struct pam_args *args, char **pass)
             putil_debug(args, "rejecting password longer than %d",
                         PAM_MAX_RESP_SIZE - 1);
             pamret = PAM_AUTHTOK_ERR;
-            memset(pass1, 0, strlen(pass1));
+            explicit_bzero(pass1, strlen(pass1));
             free(pass1);
             goto done;
         }
@@ -76,21 +76,21 @@ pamk5_password_prompt(struct pam_args *args, char **pass)
         if (pamret != PAM_SUCCESS) {
             putil_debug_pam(args, pamret, "error getting new password");
             pamret = PAM_AUTHTOK_ERR;
-            memset(pass1, 0, strlen(pass1));
+            explicit_bzero(pass1, strlen(pass1));
             free(pass1);
             goto done;
         }
         if (strcmp(pass1, pass2) != 0) {
             putil_debug(args, "new passwords don't match");
             pamk5_conv(args, "Passwords don't match", PAM_ERROR_MSG, NULL);
-            memset(pass1, 0, strlen(pass1));
+            explicit_bzero(pass1, strlen(pass1));
             free(pass1);
-            memset(pass2, 0, strlen(pass2));
+            explicit_bzero(pass2, strlen(pass2));
             free(pass2);
             pamret = PAM_AUTHTOK_ERR;
             goto done;
         }
-        memset(pass2, 0, strlen(pass2));
+        explicit_bzero(pass2, strlen(pass2));
         free(pass2);
 
         /* Save the new password for other modules. */
@@ -246,7 +246,7 @@ pamk5_password_change(struct pam_args *args, bool only_auth)
 
 done:
     if (pass != NULL) {
-        memset(pass, 0, strlen(pass));
+        explicit_bzero(pass, strlen(pass));
         free(pass);
     }
     return pamret;
@@ -374,7 +374,7 @@ pamk5_password(struct pam_args *args, bool only_auth)
 
 done:
     if (pass != NULL) {
-        memset(pass, 0, strlen(pass));
+        explicit_bzero(pass, strlen(pass));
         free(pass);
     }
 

@@ -15,6 +15,10 @@ pam-krb5 4.9 (unreleased)
     of service attack via the Kerberos string to key function.  Thanks to
     Florian Best for pointing out this issue and suggesting a good fix.
 
+    Use explicit_bzero instead of memset, where available, to overwrite
+    the memory used by PAM responses before freeing.  This reduces the
+    lifetime of passwords and other secrets in memory.
+
     Ensure the module/basic test will run properly when the system
     krb5.conf file does not specify a default realm.  Reported by TBK.
 

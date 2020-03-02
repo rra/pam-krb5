@@ -179,7 +179,7 @@ pamk5_conv(struct pam_args *args, const char *message, int type,
         *response = resp->resp;
         pamret = PAM_SUCCESS;
     } else {
-        memset(resp->resp, 0, strlen(resp->resp));
+        explicit_bzero(resp->resp, strlen(resp->resp));
         free(resp->resp);
         pamret = want_reply ? PAM_SUCCESS : PAM_CONV_ERR;
     }
@@ -241,6 +241,27 @@ free_pam_message(struct pam_message **msg, size_t total_prompts)
         free((char *) msg[i]->msg);
     free(*msg);
     free(msg);
+}
+
+
+/*
+ * Free the responses returned by the conversation function.  These may
+ * contain passwords, so we overwrite them before we free them.
+ */
+static void
+free_pam_responses(struct pam_response *resp, size_t total_prompts)
+{
+    size_t i;
+
+    if (resp == NULL)
+        return;
+    for (i = 0; i < total_prompts; i++) {
+        if (resp[i].resp != NULL) {
+            explicit_bzero(resp[i].resp, strlen(resp[i].resp));
+            free(resp[i].resp);
+        }
+    }
+    free(resp);
 }
 
 
@@ -383,20 +404,7 @@ pamk5_prompter_krb5(krb5_context context UNUSED, void *data, const char *name,
 
 cleanup:
     free_pam_message(msg, total_prompts);
-
-    /*
-     * Clean up the responses.  These may contain passwords, so we overwrite
-     * them before we free them.
-     */
-    if (resp != NULL) {
-        for (i = 0; i < total_prompts; i++) {
-            if (resp[i].resp != NULL) {
-                memset(resp[i].resp, 0, strlen(resp[i].resp));
-                free(resp[i].resp);
-            }
-        }
-        free(resp);
-    }
+    free_pam_responses(resp, total_prompts);
     return retval;
 }
 
@@ -529,6 +537,7 @@ pamk5_responder_pkinit(krb5_context context, void *data,
 
         /* Success.  We've chosen an identity. */
         free_pam_message(msg, 2);
+        free_pam_responses(resp, 2);
         identity = challenge->identities + (choice - 1);
     }
 

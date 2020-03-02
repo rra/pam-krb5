@@ -119,6 +119,7 @@ AC_TYPE_LONG_LONG_INT
 AC_CHECK_TYPES([ssize_t], [], [],
     [#include <sys/types.h>])
 RRA_FUNC_SNPRINTF
+AC_CHECK_FUNCS([explicit_bzero])
 AC_REPLACE_FUNCS([asprintf issetugid mkstemp reallocarray strndup])
 
 dnl Try to specify the binding so that any references within the PAM module
