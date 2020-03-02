@@ -99,6 +99,12 @@ Test suite:
 
  * Ensure that the test suite covers all possible PAM options.
 
+ * Figure out why the pin-mit script for module/pkinit prompts twice and
+   check if it's a bug in the module.
+
+ * Find a way of testing the PKINIT identity selection for MIT Kerberos
+   with use_pkinit enabled.
+
  * Integrate and automate valgrind testing.  There is currently a
    check-valgrind option with the beginnings of an exclusion list, but it
    needs better integration with the rest of the test suite.

@@ -1,7 +1,7 @@
 # Test PKINIT auth with a PIN prompt.  -*- conf -*-
 #
-# Disble freshness tokens since they otherwise require a second prompt because
-# the PKCS12 password apparently isn't retained.
+# For some strange reason, this prompts twice.  I suspect this is some sort of
+# a bug, but work around it for now.
 #
 # Written by Russ Allbery <eagle@eyrie.org>
 # Copyright 2014, 2020 Russ Allbery <eagle@eyrie.org>
@@ -11,12 +11,13 @@
 # SPDX-License-Identifier: BSD-3-clause or GPL-1+
 
 [options]
-    auth = no_ccache use_pkinit pkinit_user=PKCS12:%0 preauth_opt=disable_freshness
+    auth = no_ccache use_pkinit pkinit_user=PKCS12:%0
 
 [run]
     authenticate  = PAM_SUCCESS
 
 [prompts]
+    echo_off = PKCS12:%0 PIN: |%1
     echo_off = PKCS12:%0 PIN: |%1
 
 [output]
