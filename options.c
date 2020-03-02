@@ -177,12 +177,15 @@ pamk5_init(pam_handle_t *pamh, int flags, int argc, const char **argv)
 #    ifndef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PA
     if (config->try_pkinit) {
         putil_err(args, "try_pkinit requested but PKINIT not available");
+    } else if (config->use_pkinit) {
+        putil_err(args, "use_pkinit requested but PKINIT not available");
     }
 #    endif
+#    ifndef HAVE_KRB5_RESPONDER_PKINIT_GET_CHALLENGE
     if (config->use_pkinit) {
-        putil_err(args, "use_pkinit requested but PKINIT not available or"
-                        " cannot be enforced");
+        putil_err(args, "use_pkinit requested but PKINIT cannot be enforced");
     }
+#    endif
 #endif
 
     /* Warn if the FAST option was set and FAST isn't supported. */

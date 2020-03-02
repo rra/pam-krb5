@@ -27,13 +27,10 @@
 
 
 /*
- * Prompt for a password.
+ * Build a password prompt.
  *
- * This function handles prompting both for a password for regular
- * authentication and for passwords when changing one's password.  The default
- * prompt is simply "Password:" for the former.  For the latter, a string
- * describing the type of password is passed in as prefix.  In this case, the
- * prompts is:
+ * The default prompt is simply "Password:".  Optionally, a string describing
+ * the type of password is passed in as prefix.  In this case, the prompts is:
  *
  *     <prefix> <banner> password:
  *
@@ -50,14 +47,11 @@
  * username to principal mappings, plus may confuse some ssh clients if sshd
  * passes the prompt back to the client.
  *
- * The entered password is stored in password.  The memory is allocated by the
- * application and returned as part of the PAM conversation.  It must be freed
- * by the caller.
- *
- * Returns a PAM success or error code.
+ * Returns newly-allocated memory or NULL on failure.  The caller is
+ * responsible for freeing.
  */
-int
-pamk5_get_password(struct pam_args *args, const char *prefix, char **password)
+static char *
+build_password_prompt(struct pam_args *args, const char *prefix)
 {
     struct context *ctx = args->config->ctx;
     char *prompt = NULL;
@@ -100,14 +94,36 @@ pamk5_get_password(struct pam_args *args, const char *prefix, char **password)
     }
     if (principal != NULL)
         krb5_free_unparsed_name(ctx->context, principal);
-    retval = pamk5_conv(args, prompt, PAM_PROMPT_ECHO_OFF, password);
-    free(prompt);
-    return retval;
+    return prompt;
 
 fail:
     if (principal != NULL)
         krb5_free_unparsed_name(ctx->context, principal);
-    return PAM_BUF_ERR;
+    return NULL;
+}
+
+
+/*
+ * Prompt for a password.
+ *
+ * The entered password is stored in password.  The memory is allocated by the
+ * application and returned as part of the PAM conversation.  It must be freed
+ * by the caller.
+ *
+ * Returns a PAM success or error code.
+ */
+int
+pamk5_get_password(struct pam_args *args, const char *prefix, char **password)
+{
+    char *prompt = NULL;
+    int retval;
+
+    prompt = build_password_prompt(args, prefix);
+    if (prompt == NULL)
+        return PAM_BUF_ERR;
+    retval = pamk5_conv(args, prompt, PAM_PROMPT_ECHO_OFF, password);
+    free(prompt);
+    return retval;
 }
 
 
@@ -172,7 +188,63 @@ pamk5_conv(struct pam_args *args, const char *message, int type,
 
 
 /*
- * This is the generic prompting function called by both the MIT Kerberos and
+ * Allocate memory to copy all of the prompts into a pam_message.
+ *
+ * Linux PAM and Solaris PAM expect different things here.  Solaris PAM
+ * expects to receive a pointer to a pointer to an array of pam_message
+ * structs.  Linux PAM expects to receive a pointer to an array of pointers to
+ * pam_message structs.  In order for the module to work with either PAM
+ * implementation, we need to set up a structure that is valid either way you
+ * look at it.
+ *
+ * We do this by making msg point to the array of struct pam_message pointers
+ * (what Linux PAM expects), and then make the first one of those pointers
+ * point to the array of pam_message structs.  Solaris will then be happy,
+ * looking at only the first element of the outer array and finding it
+ * pointing to the inner array.  Then, for Linux, we point the other elements
+ * of the outer array to the storage allocated in the inner array.
+ *
+ * All this also means we have to be careful how we free the resulting
+ * structure since it's double-linked in a subtle way.  Thankfully, we get to
+ * free it ourselves.
+ */
+static struct pam_message **
+allocate_pam_message(size_t total_prompts)
+{
+    struct pam_message **msg;
+    size_t i;
+
+    msg = calloc(total_prompts, sizeof(struct pam_message *));
+    if (msg == NULL)
+        return NULL;
+    *msg = calloc(total_prompts, sizeof(struct pam_message));
+    if (*msg == NULL) {
+        free(msg);
+        return NULL;
+    }
+    for (i = 1; i < total_prompts; i++)
+        msg[i] = msg[0] + i;
+    return msg;
+}
+
+
+/*
+ * Free the structure created by allocate_pam_message.
+ */
+static void
+free_pam_message(struct pam_message **msg, size_t total_prompts)
+{
+    size_t i;
+
+    for (i = 0; i < total_prompts; i++)
+        free((char *) msg[i]->msg);
+    free(*msg);
+    free(msg);
+}
+
+
+/*
+ * This is the generic prompting function called by both older MIT Kerberos and
  * Heimdal prompting implementations.  The MIT function takes a name and the
  * Heimdal function doesn't, which is the only difference between the two.
  * Both are simple wrappers that call this function.
@@ -229,38 +301,10 @@ pamk5_prompter_krb5(krb5_context context UNUSED, void *data, const char *name,
     if (conv->conv == NULL)
         return KRB5KRB_ERR_GENERIC;
 
-    /*
-     * Allocate memory to copy all of the prompts into a pam_message.
-     *
-     * Linux PAM and Solaris PAM expect different things here.  Solaris PAM
-     * expects to receive a pointer to a pointer to an array of pam_message
-     * structs.  Linux PAM expects to receive a pointer to an array of
-     * pointers to pam_message structs.  In order for the module to work with
-     * either PAM implementation, we need to set up a structure that is valid
-     * either way you look at it.
-     *
-     * We do this by making msg point to the array of struct pam_message
-     * pointers (what Linux PAM expects), and then make the first one of those
-     * pointers point to the array of pam_message structs.  Solaris will then
-     * be happy, looking at only the first element of the outer array and
-     * finding it pointing to the inner array.  Then, for Linux, we point the
-     * other elements of the outer array to the storage allocated in the inner
-     * array.
-     *
-     * All this also means we have to be careful how we free the resulting
-     * structure since it's double-linked in a subtle way.  Thankfully, we get
-     * to free it ourselves.
-     */
-    msg = calloc(total_prompts, sizeof(struct pam_message *));
+    /* Allocate memory to copy all of the prompts into a pam_message. */
+    msg = allocate_pam_message(total_prompts);
     if (msg == NULL)
         return ENOMEM;
-    *msg = calloc(total_prompts, sizeof(struct pam_message));
-    if (*msg == NULL) {
-        free(msg);
-        return ENOMEM;
-    }
-    for (i = 1; i < total_prompts; i++)
-        msg[i] = msg[0] + i;
 
     /* pam_prompts is an index into msg and a count when we're done. */
     pam_prompts = 0;
@@ -340,10 +384,7 @@ pamk5_prompter_krb5(krb5_context context UNUSED, void *data, const char *name,
     retval = 0;
 
 cleanup:
-    for (i = 0; i < total_prompts; i++)
-        free((char *) msg[i]->msg);
-    free(*msg);
-    free(msg);
+    free_pam_message(msg, total_prompts);
 
     /*
      * Clean up the responses.  These may contain passwords, so we overwrite
@@ -359,4 +400,152 @@ cleanup:
         free(resp);
     }
     return retval;
+}
+
+
+/*
+ * Return a warning string about the PIN status for a PKINIT identity.  This
+ * is used to warn the user if this PKINIT identity has been locked or is near
+ * being locked due to incorrect PINs.  The return value is either an empty
+ * string or starts with a space.
+ */
+static const char *
+pkinit_pin_warning(krb5_responder_pkinit_identity *identity)
+{
+    int flags;
+
+    flags = identity->token_flags;
+    if (flags & KRB5_RESPONDER_PKINIT_FLAGS_TOKEN_USER_PIN_LOCKED)
+        return " (warning: PIN locked)";
+    else if (flags & KRB5_RESPONDER_PKINIT_FLAGS_TOKEN_USER_PIN_FINAL_TRY)
+        return " (warning: PIN final try)";
+    else if (flags & KRB5_RESPONDER_PKINIT_FLAGS_TOKEN_USER_PIN_COUNT_LOW)
+        return " (warning: PIN count low)";
+    else
+        return "";
+}
+
+
+/*
+ * This is the responder callback function used to force PKINIT with newer
+ * versions of MIT Kerberos.  It uses the responder API, which allows
+ * distinguishing between different prompt types.
+ *
+ * It constructs a list of available PKINIT methods if there is more than one
+ * and asks the user to pick the method they want to use.  It then prompts for
+ * the PIN if necessary.
+ */
+krb5_error_code
+pamk5_responder_pkinit(krb5_context context, void *data,
+                       krb5_responder_context rctx)
+{
+    struct pam_args *args = data;
+    struct pam_conv *conv;
+    krb5_responder_pkinit_challenge *challenge;
+    krb5_responder_pkinit_identity **identity;
+    size_t num_identities;
+    krb5_error_code retval;
+    int pamret, ret;
+    char *prompt = NULL;
+    const char *warning;
+    char *pin;
+
+    /*
+     * Retrieve the PKINIT challenge.  If there is none, return, since we
+     * cannot answer any other challenges.
+     */
+    retval = krb5_responder_pkinit_get_challenge(context, rctx, &challenge);
+    if (retval != 0)
+        return retval;
+    if (challenge == NULL || challenge->identities == NULL)
+        return 0;
+
+    /* Obtain the conversation function from the application. */
+    pamret = pam_get_item(args->pamh, PAM_CONV, (PAM_CONST void **) &conv);
+    if (pamret != 0)
+        return KRB5KRB_ERR_GENERIC;
+    if (conv->conv == NULL)
+        return KRB5KRB_ERR_GENERIC;
+
+    /* If there is more than one identity, prompt for which one to use. */
+    num_identities = 0;
+    for (identity = challenge->identities; *identity != NULL; identity++)
+        num_identities++;
+    if (num_identities == 1)
+        identity = challenge->identities;
+    else {
+        struct pam_message **msg;
+        struct pam_response *resp = NULL;
+        char *tmp, *end;
+        unsigned long i, choice;
+
+        /* Allocate memory to copy all of the prompts into a pam_message. */
+        msg = allocate_pam_message(2);
+        if (msg == NULL)
+            return ENOMEM;
+
+        /* Build the prompt. */
+        prompt = strdup("Please choose from the following:\n");
+        if (prompt == NULL) {
+            free_pam_message(msg, 2);
+            return ENOMEM;
+        }
+        i = 0;
+        for (identity = challenge->identities; *identity != NULL; identity++) {
+            warning = pkinit_pin_warning(*identity);
+            ret = asprintf(&tmp, "%s%lu. %s%s\n", prompt, i,
+                           (*identity)->identity, warning);
+            free(prompt);
+            if (ret < 0) {
+                free_pam_message(msg, 2);
+                return ENOMEM;
+            }
+            i++;
+            prompt = tmp;
+        }
+        msg[0]->msg = prompt;
+        prompt = NULL;
+        msg[0]->msg_style = PAM_TEXT_INFO;
+        msg[1]->msg = strdup("Choice: ");
+        if (msg[1]->msg == NULL) {
+            free_pam_message(msg, 2);
+            return ENOMEM;
+        }
+        msg[1]->msg_style = PAM_PROMPT_ECHO_ON;
+
+        /* Ask the application until the user produces a valid response. */
+        do {
+            pamret = conv->conv(2, (PAM_CONST struct pam_message **) msg,
+                                &resp, conv->appdata_ptr);
+            if (pamret != 0 || resp == NULL || resp[1].resp == NULL) {
+                free_pam_message(msg, 2);
+                goto done;
+            }
+            errno = 0;
+            choice = strtoul(resp[1].resp, &end, 10);
+        } while (errno != 0 || *end == '\0' || choice == 0
+                 || choice >= num_identities);
+
+        /* Success.  We've chosen an identity. */
+        free_pam_message(msg, 2);
+        identity = challenge->identities + (choice - 1);
+    }
+
+    /* Prompt for the identity's PIN and answer the challenge. */
+    warning = pkinit_pin_warning(*identity);
+    if (asprintf(&prompt, "%s PIN%s: ", (*identity)->identity, warning) < 0)
+        return ENOMEM;
+    pamret = pamk5_conv(args, prompt, PAM_PROMPT_ECHO_OFF, &pin);
+    free(prompt);
+    if (pamret != 0)
+        goto done;
+    retval = krb5_responder_pkinit_set_answer(context, rctx,
+                                              (*identity)->identity, pin);
+    free(pin);
+    if (retval != 0)
+        return retval;
+
+done:
+    krb5_responder_pkinit_challenge_free(context, rctx, challenge);
+    return 0;
 }

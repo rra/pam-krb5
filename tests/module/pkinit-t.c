@@ -43,17 +43,17 @@ main(void)
      * implementation.  This will improve later.
      */
     plan_lazy();
-#ifdef HAVE_KRB5_HEIMDAL
     run_script("data/scripts/pkinit/basic", &config);
+#ifdef HAVE_KRB5_HEIMDAL
     run_script("data/scripts/pkinit/basic-debug", &config);
-    run_script("data/scripts/pkinit/prompt-use", &config);
 #else
-    run_script("data/scripts/pkinit/no-use-pkinit", &config);
+    run_script("data/scripts/pkinit/basic-debug-mit", &config);
 #endif
+    run_script("data/scripts/pkinit/prompt-use", &config);
     run_script("data/scripts/pkinit/try-pkinit", &config);
+    run_script("data/scripts/pkinit/prompt-try", &config);
 #ifdef HAVE_KRB5_HEIMDAL
     run_script("data/scripts/pkinit/try-pkinit-debug", &config);
-    run_script("data/scripts/pkinit/prompt-try", &config);
 #else
     run_script("data/scripts/pkinit/try-pkinit-debug-mit", &config);
     run_script("data/scripts/pkinit/preauth-opt-mit", &config);

@@ -176,7 +176,7 @@ set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
      * get_init_creds options.
      */
 #ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PA
-    if (config->try_pkinit) {
+    if (config->use_pkinit || config->try_pkinit) {
         if (config->pkinit_user != NULL)
             krb5_get_init_creds_opt_set_pa(c, opts, "X509_user_identity",
                                            config->pkinit_user);
@@ -504,7 +504,8 @@ fail:
 }
 
 
-#if HAVE_KRB5_HEIMDAL && HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT
+#if (HAVE_KRB5_HEIMDAL && HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT) \
+    || (HAVE_KRB5_MIT && HAVE_KRB5_RESPONDER_PKINIT_GET_CHALLENGE)
 /*
  * Attempt authentication via PKINIT.  Currently, this uses an API specific to
  * Heimdal.  Once MIT Kerberos supports PKINIT, some of the details may need
@@ -564,10 +565,15 @@ pkinit_auth(struct pam_args *args, const char *service, krb5_creds **creds)
     if (retval != 0)
         return retval;
     set_credential_options(args, opts, service != NULL);
+#    ifdef HAVE_KRB5_HEIMDAL
     retval = krb5_get_init_creds_opt_set_pkinit(
         ctx->context, opts, ctx->princ, args->config->pkinit_user,
         args->config->pkinit_anchors, NULL, NULL, 0, pamk5_prompter_krb5, args,
         NULL);
+#    else
+    retval = krb5_get_init_creds_opt_set_responder(
+        ctx->context, opts, pamk5_responder_pkinit, args);
+#    endif
     if (retval != 0)
         goto done;
 
@@ -802,9 +808,13 @@ pamk5_password_auth(struct pam_args *args, const char *service,
                 goto done;
         }
     }
-#else
+#elif HAVE_KRB5_MIT && HAVE_KRB5_RESPONDER_PKINIT_GET_CHALLENGE
     if (args->config->use_pkinit) {
-        retval = KRB5_KDC_UNREACH;
+        retval = pkinit_auth(args, service, creds);
+        if (retval == 0)
+            goto verify;
+        putil_debug_krb5(args, retval, "PKINIT failed");
+        report_pkinit_error(args, retval);
         goto done;
     }
 #endif

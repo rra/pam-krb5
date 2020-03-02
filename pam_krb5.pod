@@ -697,12 +697,15 @@ applicable to the auth and password groups.
 
 =item use_pkinit
 
-[3.0] Require PKINIT authentication.  You will probably also need to set
-the I<pkinit_user> configuration option.  If PKINIT fails, authentication
-will fail.  This option is currently only supported if pam-krb5 was built
-against Heimdal 0.8rc1 or later.  MIT Kerberos doesn't provide a method to
-enforce use of PKINIT, so I<try_pkinit> must be used with that
-implementation instead.
+[3.0, 4.9 for MIT Kerberos] Require PKINIT authentication.  You will
+probably also need to set the I<pkinit_user> configuration option.  If
+PKINIT fails, authentication will fail.  This option is only supported if
+pam-krb5 was built against Heimdal 0.8rc1 or later or MIT Kerberos 1.12 or
+later.
+
+Be aware that, with MIT Kerberos, this option is implemented by using a
+responder without a prompter, and thus any informational messages from the
+Kerberos libraries or KDC during authentication will not be displayed.
 
 This option can be set in C<[appdefaults]> in F<krb5.conf> and is only
 applicable to the auth and password groups.
