@@ -26,9 +26,10 @@ else
 fi
 make warnings
 
-# Run the regular tests with valgrind for one of the builds.  Arbitrarily pick
-# the GCC build.  (The assumption here is that other compilers won't produce
-# sufficiently different code as to create memory management problems.)
+# Run the regular tests with valgrind for one of the compilers.  Arbitrarily
+# pick the GCC build.  (The assumption here is that other compilers won't
+# produce sufficiently different code as to create memory management
+# problems.)
 if [ "$COMPILER" = 'gcc' ]; then
     make check-valgrind
 else
@@ -36,7 +37,7 @@ else
 fi
 
 # Run some additional checks for one of the builds.  Arbitrarily pick the GCC
-# build.
-if [ "$COMPILER" = 'gcc' ]; then
+# MIT build.
+if [ "$COMPILER" = 'gcc' ] && [ "$KERBEROS" = 'mit' ]; then
     make check-cppcheck
 fi
