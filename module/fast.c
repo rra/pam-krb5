@@ -267,7 +267,7 @@ pamk5_fast_setup(struct pam_args *args, krb5_get_init_creds_opt *opts)
 {
     krb5_context c = args->config->ctx->context;
     krb5_error_code retval;
-    char *cache = NULL;
+    char *cache;
 
     /* First try to use fast_ccache, and then fall back on anon_fast. */
     cache = fast_setup_cache(args);

@@ -115,7 +115,7 @@ fail:
 int
 pamk5_get_password(struct pam_args *args, const char *prefix, char **password)
 {
-    char *prompt = NULL;
+    char *prompt;
     int retval;
 
     prompt = build_password_prompt(args, prefix);
