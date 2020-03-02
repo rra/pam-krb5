@@ -34,6 +34,11 @@ AC_CANONICAL_HOST
 RRA_LD_VERSION_SCRIPT
 
 dnl Only used for the test suite.
+AC_ARG_VAR([PATH_OPENSSL], [Path to openssl for the test suite])
+AC_PATH_PROG([PATH_OPENSSL], [openssl])
+AS_IF([test x"$PATH_OPENSSL" != x],
+    [AC_DEFINE_UNQUOTED([PATH_OPENSSL], ["$PATH_OPENSSL"],
+        [Define to the full path to openssl for some tests.])])
 AC_ARG_VAR([PATH_VALGRIND], [Path to valgrind for the test suite])
 AC_PATH_PROG([PATH_VALGRIND], [valgrind])
 
