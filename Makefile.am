@@ -11,13 +11,13 @@
 
 ACLOCAL_AMFLAGS = -I m4
 EXTRA_DIST = .gitignore .travis.yml LICENSE README.md bootstrap		    \
-	docs/metadata pam_krb5.map pam_krb5.pod pam_krb5.sym tests/README   \
-	tests/TESTS tests/config/README tests/data/generate-krb5-conf	    \
-	tests/data/krb5-pam.conf tests/data/krb5.conf tests/data/perl.conf  \
-	tests/data/scripts tests/data/valgrind.supp			    \
-	tests/docs/pod-spelling-t tests/docs/pod-t tests/docs/urls-t	    \
-	tests/fakepam/README tests/tap/libtap.sh tests/tap/perl/Test/RRA.pm \
-	tests/tap/perl/Test/RRA/Automake.pm				    \
+	docs/metadata docs/pam_krb5.pod module/pam_krb5.map		    \
+	module/pam_krb5.sym tests/README tests/TESTS tests/config/README    \
+	tests/data/generate-krb5-conf tests/data/krb5-pam.conf		    \
+	tests/data/krb5.conf tests/data/perl.conf tests/data/scripts	    \
+	tests/data/valgrind.supp tests/docs/pod-spelling-t tests/docs/pod-t \
+	tests/docs/urls-t tests/fakepam/README tests/tap/libtap.sh	    \
+	tests/tap/perl/Test/RRA.pm tests/tap/perl/Test/RRA/Automake.pm	    \
 	tests/tap/perl/Test/RRA/Config.pm
 
 # Everything we build needs the Kerbeors headers and library flags.
@@ -34,27 +34,29 @@ pam_util_libpamutil_la_SOURCES = pam-util/args.c pam-util/args.h	\
 	pam-util/options.h pam-util/vector.c pam-util/vector.h
 
 if HAVE_LD_VERSION_SCRIPT
-    VERSION_LDFLAGS = -Wl,--version-script=${srcdir}/pam_krb5.map
+    VERSION_LDFLAGS = -Wl,--version-script=${srcdir}/module/pam_krb5.map
 else
-    VERSION_LDFLAGS = -export-symbols ${srcdir}/pam_krb5.sym
+    VERSION_LDFLAGS = -export-symbols ${srcdir}/module/pam_krb5.sym
 endif
 
 pamdir = $(libdir)/security
-pam_LTLIBRARIES = pam_krb5.la
-pam_krb5_la_SOURCES = account.c alt-auth.c auth.c cache.c context.c fast.c \
-	internal.h options.c password.c prompting.c public.c setcred.c	   \
-	support.c
-pam_krb5_la_LDFLAGS = -module -shared -avoid-version $(VERSION_LDFLAGS) \
-	$(AM_LDFLAGS)
-pam_krb5_la_LIBADD = pam-util/libpamutil.la portable/libportable.la \
+pam_LTLIBRARIES = module/pam_krb5.la
+module_pam_krb5_la_SOURCES = module/account.c module/alt-auth.c		\
+	module/auth.c module/cache.c module/context.c module/fast.c	\
+	module/internal.h module/options.c module/password.c		\
+	module/prompting.c module/public.c module/setcred.c		\
+	module/support.c
+module_pam_krb5_la_LDFLAGS = -module -shared \
+	-avoid-version $(VERSION_LDFLAGS) $(AM_LDFLAGS)
+module_pam_krb5_la_LIBADD = pam-util/libpamutil.la portable/libportable.la \
 	$(KRB5_LIBS)
-dist_man_MANS = pam_krb5.5
+dist_man_MANS = docs/pam_krb5.5
 
 MAINTAINERCLEANFILES = Makefile.in aclocal.m4 build-aux/compile		 \
 	build-aux/config.guess build-aux/config.sub build-aux/depcomp	 \
 	build-aux/install-sh build-aux/ltmain.sh build-aux/missing	 \
-	config.h.in config.h.in~ configure m4/libtool.m4 m4/ltoptions.m4 \
-	m4/ltsugar.m4 m4/ltversion.m4 m4/lt~obsolete.m4 pam_krb5.5
+	config.h.in config.h.in~ configure docs/pam_krb5.5 m4/libtool.m4 \
+	m4/ltoptions.m4 m4/ltsugar.m4 m4/ltversion.m4 m4/lt~obsolete.m4
 
 # Separate target for a human to request building everything with as many
 # compiler warnings enabled as possible.
@@ -92,9 +94,11 @@ tests_tap_libtap_a_SOURCES = tests/tap/basic.c tests/tap/basic.h	\
 
 # The list of objects and libraries used for module testing by programs that
 # link with the fake PAM library or with both it and the module.
-MODULE_OBJECTS = account.lo alt-auth.lo auth.lo cache.lo context.lo fast.lo \
-	options.lo password.lo prompting.lo public.lo setcred.lo support.lo \
-	pam-util/libpamutil.la tests/fakepam/libfakepam.a
+MODULE_OBJECTS = module/account.lo module/alt-auth.lo module/auth.lo	   \
+	module/cache.lo module/context.lo module/fast.lo module/options.lo \
+	module/password.lo module/prompting.lo module/public.lo		   \
+	module/setcred.lo module/support.lo pam-util/libpamutil.la	   \
+	tests/fakepam/libfakepam.a
 
 # The test programs themselves.
 tests_module_alt_auth_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \

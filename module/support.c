@@ -21,7 +21,7 @@
 #include <errno.h>
 #include <pwd.h>
 
-#include <internal.h>
+#include <module/internal.h>
 #include <pam-util/args.h>
 #include <pam-util/logging.h>
 

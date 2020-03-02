@@ -23,6 +23,7 @@
 /config.log
 /config.status
 /configure
+/docs/pam_krb5.5
 /libtool
 /m4/libtool.m4
 /m4/ltoptions.m4
@@ -30,7 +31,6 @@
 /m4/ltversion.m4
 /m4/lt~obsolete.m4
 /pam-krb5-*
-/pam_krb5.5
 /stamp-h1
 /tests/config/admin-keytab
 /tests/config/keytab
