@@ -245,10 +245,8 @@ free_pam_message(struct pam_message **msg, size_t total_prompts)
 
 
 /*
- * This is the generic prompting function called by both older MIT Kerberos and
- * Heimdal prompting implementations.  The MIT function takes a name and the
- * Heimdal function doesn't, which is the only difference between the two.
- * Both are simple wrappers that call this function.
+ * This is the generic prompting function called by both MIT Kerberos and
+ * Heimdal prompting implementations.
  *
  * There are a lot of structures and different layers of code at work here,
  * making this code quite confusing.  This function is a prompter function to
@@ -326,19 +324,18 @@ pamk5_prompter_krb5(krb5_context context UNUSED, void *data, const char *name,
     }
     for (i = 0; i < num_prompts; i++) {
         int status;
-        size_t len;
         bool has_colon;
+        const char *prompt = prompts[i].prompt;
+        size_t len = strlen(prompts[i].prompt);
+        char **message = (char **) &msg[pam_prompts]->msg;
 
         /*
          * Heimdal adds the trailing colon and space, while MIT does not.
          * Work around the difference by looking to see if there's a trailing
          * colon and space already and only adding it if there is not.
          */
-        len = strlen(prompts[i].prompt);
-        has_colon = (len > 2 && prompts[i].prompt[len - 1] == ' '
-                     && prompts[i].prompt[len - 2] == ':');
-        status = asprintf((char **) &msg[pam_prompts]->msg, "%s%s",
-                          prompts[i].prompt, has_colon ? "" : ": ");
+        has_colon = (len > 2 && memcmp(&prompt[len - 2], ": ", 2) == 0);
+        status = asprintf(message, "%s%s", prompt, has_colon ? "" : ": ");
         if (status < 0)
             goto cleanup;
         assert(pam_prompts < total_prompts);
