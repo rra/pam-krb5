@@ -495,7 +495,7 @@ Setting this option provides a way to work around this behavior.  If this
 option is set and a Kerberos password change is attempted and fails (due
 to network errors or password strength checking on the KDC, for example),
 this module will clear the stored password in the PAM stack.  This will
-force any subsequent modules that have use_authtok set to fail so that
+force any subsequent modules that have I<use_authtok> set to fail so that
 those environments won't get out of sync with the password in Kerberos.
 The Kerberos PAM module will not meddle with the stored password if it
 skips the user due to configuration such as minimum_uid.
