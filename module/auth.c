@@ -504,9 +504,9 @@ fail:
 }
 
 
-#if (defined(HAVE_KRB5_HEIMDAL)                                 \
-     && defined(HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT))       \
-    || (defined(HAVE_KRB5_MIT)                                  \
+#if (defined(HAVE_KRB5_HEIMDAL)                           \
+     && defined(HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT)) \
+    || (defined(HAVE_KRB5_MIT)                            \
         && defined(HAVE_KRB5_RESPONDER_PKINIT_GET_CHALLENGE))
 /*
  * Attempt authentication via PKINIT.  Currently, this uses an API specific to

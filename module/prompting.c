@@ -54,44 +54,45 @@ static char *
 build_password_prompt(struct pam_args *args, const char *prefix)
 {
     struct context *ctx = args->config->ctx;
-    char *prompt = NULL;
     char *principal = NULL;
+    const char *banner, *bspace;
+    char *prompt, *tmp;
+    bool expose_account;
     krb5_error_code k5_errno;
     int retval;
 
+    /* If we're exposing the account, format the principal name. */
     if (args->config->expose_account || prefix != NULL)
         if (ctx != NULL && ctx->context != NULL && ctx->princ != NULL) {
             k5_errno = krb5_unparse_name(ctx->context, ctx->princ, &principal);
             if (k5_errno != 0)
                 putil_debug_krb5(args, k5_errno, "krb5_unparse_name failed");
         }
-    if (prefix == NULL) {
-        if (args->config->expose_account && principal != NULL) {
-            if (asprintf(&prompt, "Password for %s: ", principal) < 0)
-                goto fail;
-        } else {
-            prompt = strdup("Password: ");
-            if (prompt == NULL)
-                goto fail;
-        }
-    } else {
-        const char *banner;
-        const char *bspace;
 
+    /* Build the part of the prompt without the principal name. */
+    if (prefix == NULL)
+        tmp = strdup("Password");
+    else {
         banner = (args->config->banner == NULL) ? "" : args->config->banner;
         bspace = (args->config->banner == NULL) ? "" : " ";
-        if (args->config->expose_account && principal != NULL) {
-            retval = asprintf(&prompt, "%s%s%s password for %s: ", prefix,
-                              bspace, banner, principal);
-            if (retval < 0)
-                goto fail;
-        } else {
-            retval =
-                asprintf(&prompt, "%s%s%s password: ", prefix, bspace, banner);
-            if (retval < 0)
-                goto fail;
-        }
+        retval = asprintf(&tmp, "%s%s%s password", prefix, bspace, banner);
+        if (retval < 0)
+            tmp = NULL;
     }
+    if (tmp == NULL)
+        goto fail;
+
+    /* Add the principal, if desired, and the colon and space. */
+    expose_account = args->config->expose_account && principal != NULL;
+    if (expose_account)
+        retval = asprintf(&prompt, "%s for %s: ", tmp, principal);
+    else
+        retval = asprintf(&prompt, "%s: ", tmp);
+    free(tmp);
+    if (retval < 0)
+        goto fail;
+
+    /* Clean up and return. */
     if (principal != NULL)
         krb5_free_unparsed_name(ctx->context, principal);
     return prompt;
@@ -404,8 +405,7 @@ cleanup:
 
 
 /* The rest of this file is only used with recent MIT Kerberos. */
-#if defined(HAVE_KRB5_MIT) \
-    && defined(HAVE_KRB5_RESPONDER_PKINIT_GET_CHALLENGE)
+#if defined(HAVE_KRB5_MIT) && defined(HAVE_KRB5_RESPONDER_PKINIT_GET_CHALLENGE)
 
 /*
  * Return a warning string about the PIN status for a PKINIT identity.  This
