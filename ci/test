@@ -11,14 +11,19 @@
 
 set -eux
 
-# Normally, COMPILER is set based on the CI matrix, but provide a default in
-# case someone runs this test by hand.
+# Normally, COMPILER and KERBEROS are set based on the CI matrix, but provide
+# a default in case someone runs this test by hand.
 COMPILER="${COMPILER:-gcc}"
+KERBEROS="${KERBEROS:-mit}"
 
 # Build everything.  Only use warnings when not building with C++, since the
 # probe for warning flags currently doesn't work properly for g++.
 ./bootstrap
-./configure CC="$COMPILER"
+if [ "$KERBEROS" = 'heimdal' ]; then
+    ./configure CC="$COMPILER" PATH_KRB5_CONFIG=/usr/bin/krb5-config.heimdal
+else
+    ./configure CC="$COMPILER"
+fi
 make warnings
 
 # Run the regular tests with valgrind for one of the builds.  Arbitrarily pick

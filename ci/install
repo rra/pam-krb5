@@ -13,12 +13,6 @@ set -eux
 
 # Install packages.
 apt-get update -qq
-apt-get install aspell autoconf automake cppcheck krb5-config \
-        libtest-pod-perl libtest-spelling-perl perl valgrind
-
-# Install the appropriate Kerberos library development package.
-if [ "$KERBEROS" = 'heimdal' ]; then
-    apt-get install heimdal-dev
-else
-    apt-get install libkrb5-dev
-fi
+apt-get install aspell autoconf automake cppcheck heimdal-multidev          \
+        krb5-config libkrb5-dev libtest-pod-perl libtest-spelling-perl perl \
+        valgrind

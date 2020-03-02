@@ -32,9 +32,8 @@ jobs:
       - uses: actions/checkout@v2
       - name: install
         run: sudo ci/install
-        env:
-          KERBEROS: ${{ matrix.kerberos }}
       - name: test
         run: ci/test
         env:
           COMPILER: ${{ matrix.compiler }}
+          KERBEROS: ${{ matrix.kerberos }}
