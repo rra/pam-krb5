@@ -18,6 +18,7 @@
 
 #include <tests/fakepam/script.h>
 #include <tests/tap/basic.h>
+#include <tests/tap/kerberos.h>
 
 
 int
@@ -26,6 +27,12 @@ main(void)
     struct script_config config;
 
     plan_lazy();
+
+    /*
+     * Generate a testing krb5.conf file with a nonexistent default realm so
+     * that this test will run on any system.
+     */
+    kerberos_generate_conf("bogus.example.com");
 
     /* Attempt login as the root user to test ignore_root. */
     memset(&config, 0, sizeof(config));
