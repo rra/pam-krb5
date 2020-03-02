@@ -5,7 +5,10 @@ pam-krb5 4.9 (unreleased)
     Support use_pkinit with MIT Kerberos 1.12 or later.  Be aware that
     this option is implemented by using a responder without a prompter,
     and thus any informational messages from the Kerberos libraries or KDC
-    during authentication will not be displayed.  (Debian Bug#871699)
+    during authentication will not be displayed.  The prompting for
+    multiple PKINIT providers is entirely untested; please let me know if
+    you can test with multiple PKINIT identities and if you find any
+    problems.  (Debian Bug#871699)
 
     Reject passwords as long or longer than PAM_MAX_RESP_SIZE (normally
     512 octets), since extremely long passwords can be used for a denial
