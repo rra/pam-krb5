@@ -13,6 +13,6 @@ set -eux
 
 # Install packages.
 apt-get update -qq
-apt-get install aspell autoconf automake cppcheck heimdal-multidev          \
-        krb5-config libkrb5-dev libtest-pod-perl libtest-spelling-perl perl \
-        valgrind
+apt-get install aspell autoconf automake cppcheck heimdal-multidev      \
+        krb5-config libkrb5-dev libpamg0-dev libtest-pod-perl           \
+        libtest-spelling-perl perl valgrind
