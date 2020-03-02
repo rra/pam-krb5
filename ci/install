@@ -15,4 +15,4 @@ set -eux
 apt-get update -qq
 apt-get install aspell autoconf automake cppcheck heimdal-multidev      \
         krb5-config libkrb5-dev libpam0g-dev libtest-pod-perl           \
-        libtest-spelling-perl perl valgrind
+        libtest-spelling-perl libtool perl valgrind

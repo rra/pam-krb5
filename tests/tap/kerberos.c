@@ -15,7 +15,7 @@
  * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
- * Copyright 2017 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2017, 2020 Russ Allbery <eagle@eyrie.org>
  * Copyright 2006-2007, 2009-2014
  *     The Board of Trustees of the Leland Stanford Junior University
  *
@@ -293,6 +293,9 @@ kerberos_setup(enum kerberos_needs needs)
     char *path;
     char buffer[BUFSIZ];
     FILE *file = NULL;
+
+    /* Abort if the test takes too long to run. */
+    alarm(30);
 
     /* If we were called before, clean up after the previous run. */
     if (config != NULL)

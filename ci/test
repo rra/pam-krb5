@@ -26,6 +26,9 @@ else
 fi
 make warnings
 
+strace tests/runtests -o module/alt-auth
+exit 0
+
 # Run the regular tests with valgrind for one of the compilers.  Arbitrarily
 # pick the GCC build.  (The assumption here is that other compilers won't
 # produce sufficiently different code as to create memory management
