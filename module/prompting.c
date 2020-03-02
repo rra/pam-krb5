@@ -403,6 +403,10 @@ cleanup:
 }
 
 
+/* The rest of this file is only used with recent MIT Kerberos. */
+#if defined(HAVE_KRB5_MIT) \
+    && defined(HAVE_KRB5_RESPONDER_PKINIT_GET_CHALLENGE)
+
 /*
  * Return a warning string about the PIN status for a PKINIT identity.  This
  * is used to warn the user if this PKINIT identity has been locked or is near
@@ -549,3 +553,5 @@ done:
     krb5_responder_pkinit_challenge_free(context, rctx, challenge);
     return 0;
 }
+
+#endif /* HAVE_KRB5_MIT && HAVE_KRB5_RESPONDER_PKINIT_GET_CHALLENGE */

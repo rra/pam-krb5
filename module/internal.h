@@ -181,8 +181,11 @@ krb5_error_code pamk5_prompter_krb5(krb5_context, void *data, const char *name,
                                     const char *banner, int, krb5_prompt *);
 
 /* Responder function that only responds to PKINIT prompts. */
+#if defined(HAVE_KRB5_MIT) \
+    && defined(HAVE_KRB5_RESPONDER_PKINIT_GET_CHALLENGE)
 krb5_error_code pamk5_responder_pkinit(krb5_context, void *data,
                                        krb5_responder_context);
+#endif
 
 /* Check the user with krb5_kuserok or the configured equivalent. */
 int pamk5_authorized(struct pam_args *);

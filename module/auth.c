@@ -504,8 +504,10 @@ fail:
 }
 
 
-#if (HAVE_KRB5_HEIMDAL && HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT) \
-    || (HAVE_KRB5_MIT && HAVE_KRB5_RESPONDER_PKINIT_GET_CHALLENGE)
+#if (defined(HAVE_KRB5_HEIMDAL)                                 \
+     && defined(HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT))       \
+    || (defined(HAVE_KRB5_MIT)                                  \
+        && defined(HAVE_KRB5_RESPONDER_PKINIT_GET_CHALLENGE))
 /*
  * Attempt authentication via PKINIT.  Currently, this uses an API specific to
  * Heimdal.  Once MIT Kerberos supports PKINIT, some of the details may need
@@ -591,7 +593,7 @@ done:
     }
     return retval;
 }
-#endif /* HAVE_KRB5_HEIMDAL && HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT */
+#endif
 
 
 /*
@@ -794,7 +796,8 @@ pamk5_password_auth(struct pam_args *args, const char *service,
      * if PKINIT is not available and use_pkinit was set.  Fake an error code
      * that gives an approximately correct error message.
      */
-#if HAVE_KRB5_HEIMDAL && HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT
+#if defined(HAVE_KRB5_HEIMDAL) \
+    && defined(HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT)
     if (args->config->use_pkinit || args->config->try_pkinit) {
         retval = pkinit_auth(args, service, creds);
         if (retval == 0)
@@ -808,7 +811,8 @@ pamk5_password_auth(struct pam_args *args, const char *service,
                 goto done;
         }
     }
-#elif HAVE_KRB5_MIT && HAVE_KRB5_RESPONDER_PKINIT_GET_CHALLENGE
+#elif defined(HAVE_KRB5_MIT) \
+    && defined(HAVE_KRB5_RESPONDER_PKINIT_GET_CHALLENGE)
     if (args->config->use_pkinit) {
         retval = pkinit_auth(args, service, creds);
         if (retval == 0)
