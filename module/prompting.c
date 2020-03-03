@@ -314,10 +314,15 @@ record_prompt_answers(struct pam_response *resp, int num_prompts,
             return KRB5_LIBOS_CANTREADPWD;
 
         /*
-         * The trailing nul is not included in length, but other applications
-         * expect it to be there.  Therefore, we copy one more byte than the
-         * actual length of the password, but set length to just the length of
-         * the password.
+         * Since the first version of this module, it has copied a nul
+         * character into the prompt data buffer for MIT Kerberos with the
+         * note that "other applications expect it to be there."  I suspect
+         * this is incorrect and nothing cares about this nul, but have
+         * preserved this behavior out of an abundance of caution.
+         *
+         * Note that it shortens the maximum response length we're willing to
+         * accept by one (implemented above) and is the source of one prior
+         * security vulnerability.
          */
         memcpy(prompts[i].reply->data, resp[i].resp, len + 1);
         prompts[i].reply->length = (unsigned int) len;
