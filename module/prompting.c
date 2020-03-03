@@ -266,6 +266,67 @@ free_pam_responses(struct pam_response *resp, size_t total_prompts)
 
 
 /*
+ * Format a Kerberos prompt into a PAM prompt.  Takes a krb5_prompt as input
+ * and writes the resulting PAM prompt into a struct pam_message.
+ */
+static krb5_error_code
+format_prompt(krb5_prompt *prompt, struct pam_message *message)
+{
+    size_t len = strlen(prompt->prompt);
+    bool has_colon;
+    const char *colon;
+    int retval, style;
+
+    /*
+     * Heimdal adds the trailing colon and space, while MIT does not.
+     * Work around the difference by looking to see if there's a trailing
+     * colon and space already and only adding it if there is not.
+     */
+    has_colon = (len > 2 && memcmp(&prompt->prompt[len - 2], ": ", 2) == 0);
+    colon = has_colon ? "" : ": ";
+    retval = asprintf((char **) &message->msg, "%s%s", prompt->prompt, colon);
+    if (retval < 0)
+        return retval;
+    style = prompt->hidden ? PAM_PROMPT_ECHO_OFF : PAM_PROMPT_ECHO_ON;
+    message->msg_style = style;
+    return 0;
+}
+
+
+/*
+ * Given an array of struct pam_response elements, record the responses in the
+ * corresponding krb5_prompt structures.
+ */
+static krb5_error_code
+record_prompt_answers(struct pam_response *resp, int num_prompts,
+                      krb5_prompt *prompts)
+{
+    int i;
+
+    for (i = 0; i < num_prompts; i++) {
+        size_t len, allowed;
+
+        if (resp[i].resp == NULL)
+            return KRB5_LIBOS_CANTREADPWD;
+        len = strlen(resp[i].resp);
+        allowed = prompts[i].reply->length;
+        if (allowed == 0 || len > allowed - 1)
+            return KRB5_LIBOS_CANTREADPWD;
+
+        /*
+         * The trailing nul is not included in length, but other applications
+         * expect it to be there.  Therefore, we copy one more byte than the
+         * actual length of the password, but set length to just the length of
+         * the password.
+         */
+        memcpy(prompts[i].reply->data, resp[i].resp, len + 1);
+        prompts[i].reply->length = (unsigned int) len;
+    }
+    return 0;
+}
+
+
+/*
  * This is the generic prompting function called by both MIT Kerberos and
  * Heimdal prompting implementations.
  *
@@ -297,9 +358,8 @@ pamk5_prompter_krb5(krb5_context context UNUSED, void *data, const char *name,
                     const char *banner, int num_prompts, krb5_prompt *prompts)
 {
     struct pam_args *args = data;
+    int current_prompt, retval, pamret, i, offset;
     int total_prompts = num_prompts;
-    int pam_prompts, pamret, i;
-    int retval = KRB5KRB_ERR_GENERIC;
     struct pam_message **msg;
     struct pam_response *resp = NULL;
     struct pam_conv *conv;
@@ -317,90 +377,63 @@ pamk5_prompter_krb5(krb5_context context UNUSED, void *data, const char *name,
     /* Obtain the conversation function from the application. */
     pamret = pam_get_item(args->pamh, PAM_CONV, (PAM_CONST void **) &conv);
     if (pamret != 0)
-        return KRB5KRB_ERR_GENERIC;
+        return KRB5_LIBOS_CANTREADPWD;
     if (conv->conv == NULL)
-        return KRB5KRB_ERR_GENERIC;
+        return KRB5_LIBOS_CANTREADPWD;
 
     /* Allocate memory to copy all of the prompts into a pam_message. */
     msg = allocate_pam_message(total_prompts);
     if (msg == NULL)
         return ENOMEM;
 
-    /* pam_prompts is an index into msg and a count when we're done. */
-    pam_prompts = 0;
+    /* current_prompt is an index into msg and a count when we're done. */
+    current_prompt = 0;
     if (name != NULL && !args->silent) {
-        msg[pam_prompts]->msg = strdup(name);
-        if (msg[pam_prompts]->msg == NULL)
+        msg[current_prompt]->msg = strdup(name);
+        if (msg[current_prompt]->msg == NULL) {
+            retval = ENOMEM;
             goto cleanup;
-        msg[pam_prompts]->msg_style = PAM_TEXT_INFO;
-        pam_prompts++;
+        }
+        msg[current_prompt]->msg_style = PAM_TEXT_INFO;
+        current_prompt++;
     }
     if (banner != NULL && !args->silent) {
-        assert(pam_prompts < total_prompts);
-        msg[pam_prompts]->msg = strdup(banner);
-        if (msg[pam_prompts]->msg == NULL)
+        assert(current_prompt < total_prompts);
+        msg[current_prompt]->msg = strdup(banner);
+        if (msg[current_prompt]->msg == NULL) {
+            retval = ENOMEM;
             goto cleanup;
-        msg[pam_prompts]->msg_style = PAM_TEXT_INFO;
-        pam_prompts++;
+        }
+        msg[current_prompt]->msg_style = PAM_TEXT_INFO;
+        current_prompt++;
     }
     for (i = 0; i < num_prompts; i++) {
-        int status;
-        bool has_colon;
-        const char *prompt = prompts[i].prompt;
-        size_t len = strlen(prompts[i].prompt);
-        char **message = (char **) &msg[pam_prompts]->msg;
-
-        /*
-         * Heimdal adds the trailing colon and space, while MIT does not.
-         * Work around the difference by looking to see if there's a trailing
-         * colon and space already and only adding it if there is not.
-         */
-        has_colon = (len > 2 && memcmp(&prompt[len - 2], ": ", 2) == 0);
-        status = asprintf(message, "%s%s", prompt, has_colon ? "" : ": ");
-        if (status < 0)
+        assert(current_prompt < total_prompts);
+        retval = format_prompt(&prompts[i], msg[current_prompt]);
+        if (retval < 0)
             goto cleanup;
-        assert(pam_prompts < total_prompts);
-        msg[pam_prompts]->msg_style =
-            prompts[i].hidden ? PAM_PROMPT_ECHO_OFF : PAM_PROMPT_ECHO_ON;
-        pam_prompts++;
+        current_prompt++;
     }
 
     /* Call into the application conversation function. */
-    pamret = conv->conv(pam_prompts, (PAM_CONST struct pam_message **) msg,
+    pamret = conv->conv(total_prompts, (PAM_CONST struct pam_message **) msg,
                         &resp, conv->appdata_ptr);
-    if (pamret != 0)
+    if (pamret != 0 || resp == NULL) {
+        retval = KRB5_LIBOS_CANTREADPWD;
         goto cleanup;
-    if (resp == NULL)
-        goto cleanup;
+    }
 
     /*
-     * Reuse pam_prompts as a starting index and copy the data into the reply
-     * area of the krb5_prompt structs.
+     * Record the answers in the Kerberos data structure.  If name or banner
+     * were provided, skip over the initial PAM responses that correspond to
+     * those messages.
      */
-    pam_prompts = 0;
+    offset = 0;
     if (name != NULL && !args->silent)
-        pam_prompts++;
+        offset++;
     if (banner != NULL && !args->silent)
-        pam_prompts++;
-    for (i = 0; i < num_prompts; i++, pam_prompts++) {
-        size_t len;
-
-        if (resp[pam_prompts].resp == NULL)
-            goto cleanup;
-        len = strlen(resp[pam_prompts].resp);
-        if (len > prompts[i].reply->length)
-            goto cleanup;
-
-        /*
-         * The trailing nul is not included in length, but other applications
-         * expect it to be there.  Therefore, we copy one more byte than the
-         * actual length of the password, but set length to just the length of
-         * the password.
-         */
-        memcpy(prompts[i].reply->data, resp[pam_prompts].resp, len + 1);
-        prompts[i].reply->length = (unsigned int) len;
-    }
-    retval = 0;
+        offset++;
+    retval = record_prompt_answers(resp + offset, num_prompts, prompts);
 
 cleanup:
     free_pam_message(msg, total_prompts);

@@ -2,6 +2,10 @@
 
 pam-krb5 4.9 (unreleased)
 
+    SECURITY: All previous versions of this module could overflow the
+    buffer provided by the underlying Kerberos library for the response to
+    a prompt by writing a single nul character past the end of the buffer.
+
     Support use_pkinit with MIT Kerberos 1.12 or later.  Be aware that
     this option is implemented by using a responder without a prompter,
     and thus any informational messages from the Kerberos libraries or KDC
@@ -18,6 +22,11 @@ pam-krb5 4.9 (unreleased)
     Use explicit_bzero instead of memset, where available, to overwrite
     the memory used by PAM responses before freeing.  This reduces the
     lifetime of passwords and other secrets in memory.
+
+    Return more accurate errors from the Kerberos prompter function if it
+    was unable to prompt for the password.  This may translate into better
+    debug log messages and, in some situations, returning the slightly
+    more accurate PAM_AUTHINFO_UNAVAIL instead of PAM_AUTH_ERR.
 
     Ensure the module/basic test will run properly when the system
     krb5.conf file does not specify a default realm.  Reported by TBK.

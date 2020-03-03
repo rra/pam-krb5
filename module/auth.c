@@ -930,6 +930,7 @@ done:
             status = PAM_ACCT_EXPIRED;
             break;
         case KRB5_KDC_UNREACH:
+        case KRB5_LIBOS_CANTREADPWD:
         case KRB5_REALM_CANT_RESOLVE:
         case KRB5_REALM_UNKNOWN:
             status = PAM_AUTHINFO_UNAVAIL;
