@@ -537,6 +537,7 @@ pam-krb5 3.13 (2009-02-11)
     different Kerberos configuration under the attacker's control,
     possibly resulting in privilege escalation.  Heimdal handles this
     logic within the Kerberos libraries and therefore was not affected.
+    (CVE-2009-0360)
 
     SECURITY: Disable pam_setcred(PAM_REINITIALIZE_CREDS) for setuid
     applications.  If pam_krb5 detects this call in a setuid context, it
@@ -549,7 +550,7 @@ pam-krb5 3.13 (2009-02-11)
     Kerberos credential caches that were left owned by the attacker.
     Setuid screen lock programs may also be affected.  Discovered by Derek
     Chan and reported by Steven Luo.  Thanks to Sam Hartman and Jeffrey
-    Hutzelman for additional analysis.
+    Hutzelman for additional analysis.  (CVE-2009-0361)
 
     If a prefix of /usr is requested at configure time, install the PAM
     module into /lib/security or /lib64/security on Linux, matching the
