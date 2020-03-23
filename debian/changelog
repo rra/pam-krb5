@@ -1,3 +1,11 @@
+libpam-krb5 (4.7-4+deb9u1) stretch-security; urgency=high
+
+  * SECURITY: Fix potential one-byte buffer overflow when the underlying
+    Kerberos library initiates prompting (such as for PKINIT or when the
+    no_prompt PAM option is set).  (CVE-2020-10595)
+
+ -- Russ Allbery <rra@debian.org>  Sun, 22 Mar 2020 21:22:06 -0700
+
 libpam-krb5 (4.7-4) unstable; urgency=medium
 
   * Re-add libpam-heimdal now that Heimdal upstream has released a new
