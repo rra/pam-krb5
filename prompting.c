@@ -321,12 +321,13 @@ pamk5_prompter_krb5(krb5_context context UNUSED, void *data, const char *name,
     if (banner != NULL && !args->silent)
         pam_prompts++;
     for (i = 0; i < num_prompts; i++, pam_prompts++) {
-        size_t len;
+        size_t len, allowed;
 
         if (resp[pam_prompts].resp == NULL)
             goto cleanup;
         len = strlen(resp[pam_prompts].resp);
-        if (len > prompts[i].reply->length)
+        allowed = prompts[i].reply->length;
+        if (allowed == 0 || len > allowed - 1)
             goto cleanup;
 
         /*
