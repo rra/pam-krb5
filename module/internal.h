@@ -180,11 +180,11 @@ int pamk5_get_password(struct pam_args *, const char *, char **);
 krb5_error_code pamk5_prompter_krb5(krb5_context, void *data, const char *name,
                                     const char *banner, int, krb5_prompt *);
 
-/* Responder function that only responds to PKINIT prompts. */
-#if defined(HAVE_KRB5_MIT) && defined(HAVE_KRB5_RESPONDER_PKINIT_GET_CHALLENGE)
-krb5_error_code pamk5_responder_pkinit(krb5_context, void *data,
-                                       krb5_responder_context);
-#endif
+/* Prompting function that doesn't allow passwords. */
+krb5_error_code pamk5_prompter_krb5_no_password(krb5_context, void *data,
+                                                const char *name,
+                                                const char *banner, int,
+                                                krb5_prompt *);
 
 /* Check the user with krb5_kuserok or the configured equivalent. */
 int pamk5_authorized(struct pam_args *);

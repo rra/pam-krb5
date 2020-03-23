@@ -447,155 +447,35 @@ cleanup:
 }
 
 
-/* The rest of this file is only used with recent MIT Kerberos. */
-#if defined(HAVE_KRB5_MIT) && defined(HAVE_KRB5_RESPONDER_PKINIT_GET_CHALLENGE)
-
 /*
- * Return a warning string about the PIN status for a PKINIT identity.  This
- * is used to warn the user if this PKINIT identity has been locked or is near
- * being locked due to incorrect PINs.  The return value is either an empty
- * string or starts with a space.
+ * This is a special version of krb5_prompter_krb5 that returns an error if
+ * the Kerberos library asks for a password.  It is only used with MIT
+ * Kerberos as part of the implementation of try_pkinit and use_pkinit.
+ * (Heimdal has a different API for PKINIT authentication.)
  */
-static const char *
-pkinit_pin_warning(krb5_responder_pkinit_identity *identity)
-{
-    int flags;
-
-    flags = identity->token_flags;
-    if (flags & KRB5_RESPONDER_PKINIT_FLAGS_TOKEN_USER_PIN_LOCKED)
-        return " (warning: PIN locked)";
-    else if (flags & KRB5_RESPONDER_PKINIT_FLAGS_TOKEN_USER_PIN_FINAL_TRY)
-        return " (warning: PIN final try)";
-    else if (flags & KRB5_RESPONDER_PKINIT_FLAGS_TOKEN_USER_PIN_COUNT_LOW)
-        return " (warning: PIN count low)";
-    else
-        return "";
-}
-
-
-/*
- * This is the responder callback function used to force PKINIT with newer
- * versions of MIT Kerberos.  It uses the responder API, which allows
- * distinguishing between different prompt types.
- *
- * It constructs a list of available PKINIT methods if there is more than one
- * and asks the user to pick the method they want to use.  It then prompts for
- * the PIN if necessary.
- */
+#ifdef HAVE_KRB5_GET_PROMPT_TYPES
 krb5_error_code
-pamk5_responder_pkinit(krb5_context context, void *data,
-                       krb5_responder_context rctx)
+pamk5_prompter_krb5_no_password(krb5_context context, void *data,
+                                const char *name, const char *banner,
+                                int num_prompts, krb5_prompt *prompts)
 {
-    struct pam_args *args = data;
-    struct pam_conv *conv;
-    krb5_responder_pkinit_challenge *challenge;
-    krb5_responder_pkinit_identity **identity;
-    size_t num_identities;
-    krb5_error_code retval;
-    int pamret, ret;
-    char *prompt = NULL;
-    const char *warning;
-    char *pin;
+    krb5_prompt_type *ptypes;
+    int i;
 
-    /*
-     * Retrieve the PKINIT challenge.  If there is none, return, since we
-     * cannot answer any other challenges.
-     */
-    retval = krb5_responder_pkinit_get_challenge(context, rctx, &challenge);
-    if (retval != 0)
-        return retval;
-    if (challenge == NULL || challenge->identities == NULL)
-        return 0;
-
-    /* Obtain the conversation function from the application. */
-    pamret = pam_get_item(args->pamh, PAM_CONV, (PAM_CONST void **) &conv);
-    if (pamret != 0)
-        return KRB5KRB_ERR_GENERIC;
-    if (conv->conv == NULL)
-        return KRB5KRB_ERR_GENERIC;
-
-    /* If there is more than one identity, prompt for which one to use. */
-    num_identities = 0;
-    for (identity = challenge->identities; *identity != NULL; identity++)
-        num_identities++;
-    if (num_identities == 1)
-        identity = challenge->identities;
-    else {
-        struct pam_message **msg;
-        struct pam_response *resp = NULL;
-        char *tmp, *end;
-        unsigned long i, choice;
-
-        /* Allocate memory to copy all of the prompts into a pam_message. */
-        msg = allocate_pam_message(2);
-        if (msg == NULL)
-            return ENOMEM;
-
-        /* Build the prompt. */
-        prompt = strdup("Please choose from the following:\n");
-        if (prompt == NULL) {
-            free_pam_message(msg, 2);
-            return ENOMEM;
-        }
-        i = 0;
-        for (identity = challenge->identities; *identity != NULL; identity++) {
-            warning = pkinit_pin_warning(*identity);
-            ret = asprintf(&tmp, "%s%lu. %s%s\n", prompt, i,
-                           (*identity)->identity, warning);
-            free(prompt);
-            if (ret < 0) {
-                free_pam_message(msg, 2);
-                return ENOMEM;
-            }
-            i++;
-            prompt = tmp;
-        }
-        msg[0]->msg = prompt;
-        prompt = NULL;
-        msg[0]->msg_style = PAM_TEXT_INFO;
-        msg[1]->msg = strdup("Choice: ");
-        if (msg[1]->msg == NULL) {
-            free_pam_message(msg, 2);
-            return ENOMEM;
-        }
-        msg[1]->msg_style = PAM_PROMPT_ECHO_ON;
-
-        /* Ask the application until the user produces a valid response. */
-        do {
-            pamret = conv->conv(2, (PAM_CONST struct pam_message **) msg,
-                                &resp, conv->appdata_ptr);
-            if (pamret != 0 || resp == NULL || resp[1].resp == NULL) {
-                free_pam_message(msg, 2);
-                goto done;
-            }
-            errno = 0;
-            choice = strtoul(resp[1].resp, &end, 10);
-        } while (errno != 0 || *end == '\0' || choice == 0
-                 || choice >= num_identities);
-
-        /* Success.  We've chosen an identity. */
-        free_pam_message(msg, 2);
-        free_pam_responses(resp, 2);
-        identity = challenge->identities + (choice - 1);
-    }
-
-    /* Prompt for the identity's PIN and answer the challenge. */
-    warning = pkinit_pin_warning(*identity);
-    if (asprintf(&prompt, "%s PIN%s: ", (*identity)->identity, warning) < 0)
-        return ENOMEM;
-    pamret = pamk5_conv(args, prompt, PAM_PROMPT_ECHO_OFF, &pin);
-    free(prompt);
-    if (pamret != 0)
-        goto done;
-    retval = krb5_responder_pkinit_set_answer(context, rctx,
-                                              (*identity)->identity, pin);
-    free(pin);
-    if (retval != 0)
-        return retval;
-
-done:
-    krb5_responder_pkinit_challenge_free(context, rctx, challenge);
-    return 0;
+    ptypes = krb5_get_prompt_types(context);
+    for (i = 0; i < num_prompts; i++)
+        if (ptypes != NULL && ptypes[i] == KRB5_PROMPT_TYPE_PASSWORD)
+            return KRB5_LIBOS_CANTREADPWD;
+    return pamk5_prompter_krb5(context, data, name, banner, num_prompts,
+                               prompts);
 }
-
-#endif /* HAVE_KRB5_MIT && HAVE_KRB5_RESPONDER_PKINIT_GET_CHALLENGE */
+#else  /* !HAVE_KRB5_GET_PROMPT_TYPES */
+krb5_error_code
+pamk5_prompter_krb5_no_password(krb5_context context, void *data,
+                                const char *name, const char *banner,
+                                int num_prompts, krb5_prompt *prompts)
+{
+    return pamk5_prompter_krb5(context, data, name, banner, num_prompts,
+                               prompts);
+}
+#endif /* !HAVE_KRB5_GET_PROMPT_TYPES */

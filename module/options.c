@@ -181,7 +181,7 @@ pamk5_init(pam_handle_t *pamh, int flags, int argc, const char **argv)
         putil_err(args, "use_pkinit requested but PKINIT not available");
     }
 #    endif
-#    ifndef HAVE_KRB5_RESPONDER_PKINIT_GET_CHALLENGE
+#    ifndef HAVE_KRB5_GET_PROMPT_TYPES
     if (config->use_pkinit) {
         putil_err(args, "use_pkinit requested but PKINIT cannot be enforced");
     }

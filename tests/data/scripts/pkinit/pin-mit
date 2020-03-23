@@ -1,8 +1,5 @@
 # Test PKINIT auth with a PIN prompt.  -*- conf -*-
 #
-# For some strange reason, this prompts twice.  I suspect this is some sort of
-# a bug, but work around it for now.
-#
 # Written by Russ Allbery <eagle@eyrie.org>
 # Copyright 2014, 2020 Russ Allbery <eagle@eyrie.org>
 # Copyright 2010-2011
@@ -17,8 +14,7 @@
     authenticate  = PAM_SUCCESS
 
 [prompts]
-    echo_off = PKCS12:%0 PIN: |%1
-    echo_off = PKCS12:%0 PIN: |%1
+    echo_off = Pass phrase for %0: |%1
 
 [output]
     INFO user %u authenticated as %u
