@@ -5,6 +5,7 @@ pam-krb5 4.9 (unreleased)
     SECURITY: All previous versions of this module could overflow the
     buffer provided by the underlying Kerberos library for the response to
     a prompt by writing a single nul character past the end of the buffer.
+    (CVE-2020-10595)
 
     Support use_pkinit with MIT Kerberos.  (Debian Bug#871699)
 
