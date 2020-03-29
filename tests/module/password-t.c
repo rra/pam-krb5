@@ -7,14 +7,16 @@
  * created (so without setuid and with chown doing nothing).
  *
  * Written by Russ Allbery <eagle@eyrie.org>
- * Copyright 2011, 2012, 2014
+ * Copyright 2020 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2011-2012, 2014
  *     The Board of Trustees of the Leland Stanford Junior University
  *
- * See LICENSE for licensing terms.
+ * SPDX-License-Identifier: BSD-3-clause or GPL-1+
  */
 
 #include <config.h>
 #include <portable/krb5.h>
+#include <portable/pam.h>
 #include <portable/system.h>
 
 #include <pwd.h>
@@ -25,8 +27,22 @@
 #include <tests/fakepam/script.h>
 #include <tests/tap/basic.h>
 #include <tests/tap/kerberos.h>
+#include <tests/tap/macros.h>
 #include <tests/tap/process.h>
 #include <tests/tap/string.h>
+
+
+static void
+check_authtok(pam_handle_t *pamh, const struct script_config *config,
+              void *data UNUSED)
+{
+    int retval;
+    const char *authtok;
+
+    retval = pam_get_item(pamh, PAM_AUTHTOK, (PAM_CONST void **) &authtok);
+    is_int(PAM_SUCCESS, retval, "Found PAM_AUTHTOK");
+    is_string(config->newpass, authtok, "...and it is correct");
+}
 
 
 int
@@ -49,9 +65,27 @@ main(void)
     plan_lazy();
 
     /*
+     * First test trying to change the password to something that's
+     * excessively long.
+     */
+    newpass = bcalloc_type(PAM_MAX_RESP_SIZE + 1, char);
+    memset(newpass, 'a', PAM_MAX_RESP_SIZE);
+    config.newpass = newpass;
+    run_script("data/scripts/password/too-long", &config);
+    run_script("data/scripts/password/too-long-debug", &config);
+
+    /* Test use_authtok with an excessively long password. */
+    config.newpass = NULL;
+    config.authtok = newpass;
+    run_script("data/scripts/password/authtok-too-long", &config);
+    run_script("data/scripts/password/authtok-too-long-debug", &config);
+
+    /*
      * Change the password to something new.  This needs to be sufficiently
      * random that it's unlikely to fall afoul of password strength checking.
      */
+    free(newpass);
+    config.authtok = NULL;
     basprintf(&newpass, "ngh1,a%lu nn9af6%lu", (unsigned long) getpid(),
               (unsigned long) time(NULL));
     config.newpass = newpass;
@@ -100,6 +134,18 @@ main(void)
     config.authtok = krbconf->password;
     config.oldauthtok = newpass;
     run_script("data/scripts/password/authtok-force", &config);
+
+    /*
+     * Ensure PAM_AUTHTOK and PAM_OLDAUTHTOK are set even if the user is
+     * ignored.
+     */
+    config.user = "root";
+    config.authtok = NULL;
+    config.oldauthtok = NULL;
+    config.password = "old-password";
+    config.newpass = "new-password";
+    config.callback = check_authtok;
+    run_script("data/scripts/password/ignore", &config);
 
     free(newpass);
     return 0;

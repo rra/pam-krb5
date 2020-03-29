@@ -10,14 +10,16 @@
  * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
+ * Copyright 2015-2016, 2018 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2010-2012, 2014
+ *     The Board of Trustees of the Leland Stanford Junior University
  *
- * The authors hereby relinquish any claim to any copyright that they may have
- * in this work, whether granted under contract or by operation of law or
- * international treaty, and hereby commit to the public, at large, that they
- * shall not, at any time in the future, seek to enforce any copyright in this
- * work against any person or entity, or prevent any person or entity from
- * copying, publishing, distributing or creating derivative works of this
- * work.
+ * Copying and distribution of this file, with or without modification, are
+ * permitted in any medium without royalty provided the copyright notice and
+ * this notice are preserved.  This file is offered as-is, without any
+ * warranty.
+ *
+ * SPDX-License-Identifier: FSFAP
  */
 
 #include <config.h>
@@ -29,17 +31,17 @@
 
 /* Figure out what header files to include for error reporting. */
 #if !defined(HAVE_KRB5_GET_ERROR_MESSAGE) && !defined(HAVE_KRB5_GET_ERR_TEXT)
-# if !defined(HAVE_KRB5_GET_ERROR_STRING)
-#  if defined(HAVE_IBM_SVC_KRB5_SVC_H)
-#   include <ibm_svc/krb5_svc.h>
-#  elif defined(HAVE_ET_COM_ERR_H)
-#   include <et/com_err.h>
-#  elif defined(HAVE_KERBEROSV5_COM_ERR_H)
-#   include <kerberosv5/com_err.h>
-#  else
-#   include <com_err.h>
-#  endif
-# endif
+#    if !defined(HAVE_KRB5_GET_ERROR_STRING)
+#        if defined(HAVE_IBM_SVC_KRB5_SVC_H)
+#            include <ibm_svc/krb5_svc.h>
+#        elif defined(HAVE_ET_COM_ERR_H)
+#            include <et/com_err.h>
+#        elif defined(HAVE_KERBEROSV5_COM_ERR_H)
+#            include <kerberosv5/com_err.h>
+#        else
+#            include <com_err.h>
+#        endif
+#    endif
 #endif
 
 /* Used for unused parameters to silence gcc warnings. */
@@ -94,17 +96,17 @@ krb5_cc_get_full_name(krb5_context ctx, krb5_ccache ccache, char **out)
 const char *
 krb5_get_error_message(krb5_context ctx UNUSED, krb5_error_code code UNUSED)
 {
-    const char *msg = NULL;
+    const char *msg;
 
-# if defined(HAVE_KRB5_GET_ERROR_STRING)
+#    if defined(HAVE_KRB5_GET_ERROR_STRING)
     msg = krb5_get_error_string(ctx);
-# elif defined(HAVE_KRB5_GET_ERR_TEXT)
+#    elif defined(HAVE_KRB5_GET_ERR_TEXT)
     msg = krb5_get_err_text(ctx, code);
-# elif defined(HAVE_KRB5_SVC_GET_MSG)
+#    elif defined(HAVE_KRB5_SVC_GET_MSG)
     krb5_svc_get_msg(code, (char **) &msg);
-# else
+#    else
     msg = error_message(code);
-# endif
+#    endif
     if (msg == NULL)
         return error_unknown;
     else
@@ -127,11 +129,11 @@ krb5_free_error_message(krb5_context ctx UNUSED, const char *msg)
 {
     if (msg == error_unknown)
         return;
-# if defined(HAVE_KRB5_GET_ERROR_STRING)
+#    if defined(HAVE_KRB5_GET_ERROR_STRING)
     krb5_free_error_string(ctx, (char *) msg);
-# elif defined(HAVE_KRB5_SVC_GET_MSG)
+#    elif defined(HAVE_KRB5_SVC_GET_MSG)
     krb5_free_string(ctx, (char *) msg);
-# endif
+#    endif
 }
 #endif /* !HAVE_KRB5_FREE_ERROR_MESSAGE */
 

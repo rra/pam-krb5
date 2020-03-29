@@ -9,14 +9,15 @@
  * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
+ * Copyright 2008, 2011
+ *     The Board of Trustees of the Leland Stanford Junior University
  *
- * The authors hereby relinquish any claim to any copyright that they may have
- * in this work, whether granted under contract or by operation of law or
- * international treaty, and hereby commit to the public, at large, that they
- * shall not, at any time in the future, seek to enforce any copyright in this
- * work against any person or entity, or prevent any person or entity from
- * copying, publishing, distributing or creating derivative works of this
- * work.
+ * Copying and distribution of this file, with or without modification, are
+ * permitted in any medium without royalty provided the copyright notice and
+ * this notice are preserved.  This file is offered as-is, without any
+ * warranty.
+ *
+ * SPDX-License-Identifier: FSFAP
  */
 
 #ifndef PORTABLE_STDBOOL_H
@@ -27,28 +28,28 @@
  * stripped-down version of config.h with a different name.
  */
 #ifndef CONFIG_H_INCLUDED
-# include <config.h>
+#    include <config.h>
 #endif
 
 #if HAVE_STDBOOL_H
-# include <stdbool.h>
+#    include <stdbool.h>
 #else
-# if HAVE__BOOL
-#  define bool _Bool
-# else
-#  ifdef __cplusplus
+#    if HAVE__BOOL
+#        define bool _Bool
+#    else
+#        ifdef __cplusplus
 typedef bool _Bool;
-#  elif _WIN32
-#   include <windef.h>
-#   define bool BOOL
-#  else
+#        elif _WIN32
+#            include <windef.h>
+#            define bool BOOL
+#        else
 typedef unsigned char _Bool;
-#   define bool _Bool
-#  endif
-# endif
-# define false 0
-# define true  1
-# define __bool_true_false_are_defined 1
+#            define bool _Bool
+#        endif
+#    endif
+#    define false 0
+#    define true 1
+#    define __bool_true_false_are_defined 1
 #endif
 
 /*
@@ -56,7 +57,7 @@ typedef unsigned char _Bool;
  * fail.  Only of interest for programs that also include Perl headers.
  */
 #ifndef HAS_BOOL
-# define HAS_BOOL 1
+#    define HAS_BOOL 1
 #endif
 
 #endif /* !PORTABLE_STDBOOL_H */

@@ -6,10 +6,11 @@
  * that case.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
- * Copyright 2011, 2012
+ * Copyright 2020 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2011-2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *
- * See LICENSE for licensing terms.
+ * SPDX-License-Identifier: BSD-3-clause or GPL-1+
  */
 
 #include <config.h>
@@ -82,19 +83,19 @@ main(void)
      * was introduced at the same time.
      */
 #ifdef HAVE_KRB5_HEIMDAL
-# ifdef HAVE_KRB5_PRINCIPAL_SET_COMP_STRING
+#    ifdef HAVE_KRB5_PRINCIPAL_SET_COMP_STRING
     run_script("data/scripts/expired/basic-heimdal", &config);
     config.newpass = krbconf->password;
     config.password = newpass;
     kerberos_expire_password(krbconf->userprinc, now);
     run_script("data/scripts/expired/basic-heimdal-debug", &config);
-# else
+#    else
     run_script("data/scripts/expired/basic-heimdal-old", &config);
     config.newpass = krbconf->password;
     config.password = newpass;
     kerberos_expire_password(krbconf->userprinc, now);
     run_script("data/scripts/expired/basic-heimdal-old-debug", &config);
-# endif
+#    endif
 #else
     run_script("data/scripts/expired/basic-mit", &config);
     config.newpass = krbconf->password;
@@ -142,9 +143,9 @@ main(void)
      * implementation of krb5_get_init_creds_opt_set_change_password_prompt is
      * incomplete.  See <https://github.com/heimdal/heimdal/issues/322>.
      */
-# ifdef HAVE_KRB5_HEIMDAL
+#    ifdef HAVE_KRB5_HEIMDAL
     skip_block(2, "deferring password changes broken in Heimdal");
-# else
+#    else
     config.newpass = newpass;
     config.password = krbconf->password;
     config.authtok = krbconf->password;
@@ -155,7 +156,7 @@ main(void)
     config.authtok = newpass;
     kerberos_expire_password(krbconf->userprinc, now);
     run_script("data/scripts/expired/defer-mit-debug", &config);
-# endif
+#    endif
 
 #else /* !HAVE_KRB5_GET_INIT_CREDS_OPT_SET_CHANGE_PASSWORD_PROMPT */
 

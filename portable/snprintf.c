@@ -25,6 +25,17 @@
 # define vsnprintf test_vsnprintf
 #endif
 
+/*
+ * __attribute__ is available in gcc 2.5 and later, but only with gcc 2.7
+ * could you use the __format__ form of the attributes, which is what we use
+ * (to avoid confusion with other macros).
+ */
+#ifndef __attribute__
+#    if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 7)
+#        define __attribute__(spec) /* empty */
+#    endif
+#endif
+
 /* Specific to rra-c-util, but only when debugging is enabled. */
 #ifdef DEBUG_SNPRINTF
 # include <util/messages.h>
@@ -35,6 +46,8 @@
  * This code is based on code written by Patrick Powell (papowell@astart.com)
  * It may be used for any purpose as long as this notice remains intact
  * on all source code distributions
+ *
+ * There is no SPDX-License-Identifier registered for this license.
  */
 
 /**************************************************************
@@ -62,7 +75,7 @@
  *    probably requires libm on most operating systems.  Don't yet
  *    support the exponent (e,E) and sigfig (g,G).  Also, fmtint()
  *    was pretty badly broken, it just wasn't being exercised in ways
- *    which showed it, so that's been fixed.  Also, formated the code
+ *    which showed it, so that's been fixed.  Also, formatted the code
  *    to mutt conventions, and removed dead code left over from the
  *    original.  Also, there is now a builtin-test, just compile with:
  *           gcc -DTEST_SNPRINTF -o snprintf snprintf.c -lm
@@ -364,7 +377,7 @@ static int dopr (char *buffer, size_t maxlen, const char *format, va_list args)
 	break;
       case 'X':
 	flags |= DP_F_UP;
-        /* fallthrough */
+        __attribute__((fallthrough));
       case 'x':
 	flags |= DP_F_UNSIGNED;
 	if (cflags == DP_C_SHORT)
@@ -386,7 +399,7 @@ static int dopr (char *buffer, size_t maxlen, const char *format, va_list args)
 	break;
       case 'E':
 	flags |= DP_F_UP;
-        /* fallthrough */
+        __attribute__((fallthrough));
       case 'e':
 	if (cflags == DP_C_LDOUBLE)
 	  fvalue = va_arg (args, LDOUBLE);
@@ -396,7 +409,7 @@ static int dopr (char *buffer, size_t maxlen, const char *format, va_list args)
 	break;
       case 'G':
 	flags |= DP_F_UP;
-        /* fallthrough */
+        __attribute__((fallthrough));
       case 'g':
         flags |= DP_F_FP_G;
 	if (cflags == DP_C_LDOUBLE)
@@ -712,7 +725,7 @@ static int fmtfp (char *buffer, size_t *currlen, size_t maxlen,
       if (intpart != 0)
 	{
 	  /* For each digit of INTPART, print one less fractional digit. */
-	  LLONG temp = intpart;
+	  LLONG temp;
 	  for (temp = intpart; temp != 0; temp /= 10)
 	    --max;
 	  if (max < 0)

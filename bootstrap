@@ -9,4 +9,5 @@ rm -rf autom4te.cache
 
 # Generate manual pages.
 version=`grep '^pam-krb5' NEWS | head -1 | cut -d' ' -f2`
-pod2man --release="$version" --center=pam-krb5 -s 5 pam_krb5.pod > pam_krb5.5
+pod2man --release="$version" --center=pam-krb5 -s 5 docs/pam_krb5.pod \
+    >docs/pam_krb5.5

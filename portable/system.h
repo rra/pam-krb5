@@ -25,14 +25,16 @@
  * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
+ * Copyright 2014, 2016, 2018, 2020 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2006-2011, 2013-2014
+ *     The Board of Trustees of the Leland Stanford Junior University
  *
- * The authors hereby relinquish any claim to any copyright that they may have
- * in this work, whether granted under contract or by operation of law or
- * international treaty, and hereby commit to the public, at large, that they
- * shall not, at any time in the future, seek to enforce any copyright in this
- * work against any person or entity, or prevent any person or entity from
- * copying, publishing, distributing or creating derivative works of this
- * work.
+ * Copying and distribution of this file, with or without modification, are
+ * permitted in any medium without royalty provided the copyright notice and
+ * this notice are preserved.  This file is offered as-is, without any
+ * warranty.
+ *
+ * SPDX-License-Identifier: FSFAP
  */
 
 #ifndef PORTABLE_SYSTEM_H
@@ -46,28 +48,28 @@
 
 /* A set of standard ANSI C headers.  We don't care about pre-ANSI systems. */
 #if HAVE_INTTYPES_H
-# include <inttypes.h>
+#    include <inttypes.h>
 #endif
 #include <limits.h>
 #include <stdarg.h>
 #include <stddef.h>
 #if HAVE_STDINT_H
-# include <stdint.h>
+#    include <stdint.h>
 #endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #if HAVE_STRINGS_H
-# include <strings.h>
+#    include <strings.h>
 #endif
 #include <sys/types.h>
 #if HAVE_UNISTD_H
-# include <unistd.h>
+#    include <unistd.h>
 #endif
 
 /* SCO OpenServer gets int32_t from here. */
 #if HAVE_SYS_BITYPES_H
-# include <sys/bitypes.h>
+#    include <sys/bitypes.h>
 #endif
 
 /* Get the bool type. */
@@ -75,7 +77,7 @@
 
 /* Windows provides snprintf under a different name. */
 #ifdef _WIN32
-# define snprintf _snprintf
+#    define snprintf _snprintf
 #endif
 
 /* Windows does not define ssize_t. */
@@ -88,9 +90,9 @@ typedef ptrdiff_t ssize_t;
  * been defined, all the rest almost certainly have.
  */
 #ifndef STDIN_FILENO
-# define STDIN_FILENO  0
-# define STDOUT_FILENO 1
-# define STDERR_FILENO 2
+#    define STDIN_FILENO  0
+#    define STDOUT_FILENO 1
+#    define STDERR_FILENO 2
 #endif
 
 /*
@@ -98,11 +100,21 @@ typedef ptrdiff_t ssize_t;
  * Autoconf manual, memcpy is a generally portable fallback.
  */
 #ifndef va_copy
-# ifdef __va_copy
-#  define va_copy(d, s) __va_copy((d), (s))
-# else
-#  define va_copy(d, s) memcpy(&(d), &(s), sizeof(va_list))
-# endif
+#    ifdef __va_copy
+#        define va_copy(d, s) __va_copy((d), (s))
+#    else
+#        define va_copy(d, s) memcpy(&(d), &(s), sizeof(va_list))
+#    endif
+#endif
+
+/*
+ * If explicit_bzero is not available, fall back on memset.  This does NOT
+ * provide any of the security guarantees of explicit_bzero and will probably
+ * be optimized away by the compiler.  It just ensures that code will compile
+ * and function on systems without explicit_bzero.
+ */
+#if !HAVE_EXPLICIT_BZERO
+#    define explicit_bzero(s, n) memset((s), 0, (n))
 #endif
 
 BEGIN_DECLS
@@ -118,14 +130,16 @@ BEGIN_DECLS
 #if !HAVE_ASPRINTF
 extern int asprintf(char **, const char *, ...)
     __attribute__((__format__(printf, 2, 3)));
-extern int vasprintf(char **, const char *, va_list);
+extern int vasprintf(char **, const char *, va_list)
+    __attribute__((__format__(printf, 2, 0)));
 #endif
 #if !HAVE_DECL_SNPRINTF
 extern int snprintf(char *, size_t, const char *, ...)
     __attribute__((__format__(printf, 3, 4)));
 #endif
 #if !HAVE_DECL_VSNPRINTF
-extern int vsnprintf(char *, size_t, const char *, va_list);
+extern int vsnprintf(char *, size_t, const char *, va_list)
+    __attribute__((__format__(printf, 3, 0)));
 #endif
 #if !HAVE_ISSETUGID
 extern int issetugid(void);

@@ -14,7 +14,7 @@ Overview
     The goal of this library is that all PAM code should be able to be
     left unchanged and the code just linked with the fakepam library
     rather than the regular PAM library.  The testing code can then call
-    pam_start and pam_end as defind in the fakepam/pam.h header file and
+    pam_start and pam_end as defined in the fakepam/pam.h header file and
     inspect internal PAM state as needed.
 
     The library also provides an interface to exercise a PAM module via an
@@ -255,7 +255,7 @@ License
     This file is part of the documentation of rra-c-util, which can be
     found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
 
-    Copyright 2011, 2012 Russ Allbery <eagle@eyrie.org>
+    Copyright 2011-2012, 2020 Russ Allbery <eagle@eyrie.org>
 
     Copying and distribution of this file, with or without modification,
     are permitted in any medium without royalty provided the copyright

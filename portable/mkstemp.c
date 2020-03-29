@@ -8,14 +8,15 @@
  * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
+ * Copyright 2009, 2011, 2014
+ *     The Board of Trustees of the Leland Stanford Junior University
  *
- * The authors hereby relinquish any claim to any copyright that they may have
- * in this work, whether granted under contract or by operation of law or
- * international treaty, and hereby commit to the public, at large, that they
- * shall not, at any time in the future, seek to enforce any copyright in this
- * work against any person or entity, or prevent any person or entity from
- * copying, publishing, distributing or creating derivative works of this
- * work.
+ * Copying and distribution of this file, with or without modification, are
+ * permitted in any medium without royalty provided the copyright notice and
+ * this notice are preserved.  This file is offered as-is, without any
+ * warranty.
+ *
+ * SPDX-License-Identifier: FSFAP
  */
 
 #include <config.h>
@@ -24,7 +25,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #ifdef HAVE_SYS_TIME_H
-# include <sys/time.h>
+#    include <sys/time.h>
 #endif
 #include <time.h>
 
@@ -34,8 +35,8 @@
  * another name.
  */
 #if TESTING
-# undef mkstemp
-# define mkstemp test_mkstemp
+#    undef mkstemp
+#    define mkstemp test_mkstemp
 int test_mkstemp(char *);
 #endif
 

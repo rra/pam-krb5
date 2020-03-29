@@ -8,7 +8,7 @@
  * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
- * Copyright 2010, 2011, 2014
+ * Copyright 2010-2011, 2014
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -28,6 +28,8 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
+ *
+ * SPDX-License-Identifier: MIT
  */
 
 #include <config.h>
@@ -53,8 +55,7 @@ static struct passwd *pwd_info = NULL;
  */
 int
 pam_start(const char *service_name, const char *user,
-          const struct pam_conv *pam_conversation,
-          pam_handle_t **pamh)
+          const struct pam_conv *pam_conversation, pam_handle_t **pamh)
 {
     struct pam_handle *handle;
 
@@ -91,7 +92,7 @@ pam_end(pam_handle_t *pamh, int status)
     free(pamh->rhost);
     free(pamh->ruser);
     free(pamh->tty);
-    for (item = pamh->data; item != NULL; ) {
+    for (item = pamh->data; item != NULL;) {
         if (item->cleanup != NULL)
             item->cleanup(pamh, item->data, status);
         free(item->name);

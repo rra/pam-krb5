@@ -1,12 +1,12 @@
 {
     "name": "pam-krb5",
-    "version": "4.8",
+    "version": "4.9",
     "synopsis": "PAM module for Kerberos authentication",
     "maintainer": "Russ Allbery <eagle@eyrie.org>",
     "copyrights": [
         {
             "holder": "Russ Allbery <eagle@eyrie.org>",
-            "years": "2005-2010, 2014-2015, 2017",
+            "years": "2005-2010, 2014-2015, 2017, 2020",
         },
         {
             "holder": "The Board of Trustees of the Leland Stanford Junior University",
@@ -42,6 +42,9 @@
         "browse": "https://git.eyrie.org/?p=kerberos/pam-krb5.git",
         "github": "rra/pam-krb5",
         "openhub": "https://www.openhub.net/p/pamkrb5",
+        "status": {
+            "workflow": "build",
+        },
     },
     "readme": {
         "sections": [
@@ -66,6 +69,11 @@
         "debian": "libpam-krb5",
     },
     "advisories": [
+        {
+            "date": "2020-03-30",
+            "versions": "4.8 and earlier",
+            "threshold": "4.9",
+        },
         {
             "date": "2009-02-11",
             "versions": "3.12 and earlier",

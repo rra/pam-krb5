@@ -9,7 +9,8 @@
  * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
- * Copyright 2005, 2006, 2007, 2009, 2010, 2012, 2013
+ * Copyright 2015, 2018, 2020 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2005-2007, 2009-2010, 2012-2013
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -29,11 +30,13 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
+ *
+ * SPDX-License-Identifier: MIT
  */
 
 #include <config.h>
 #ifdef HAVE_KRB5
-# include <portable/krb5.h>
+#    include <portable/krb5.h>
 #endif
 #include <portable/pam.h>
 #include <portable/system.h>
@@ -44,7 +47,7 @@
 #include <pam-util/logging.h>
 
 #ifndef LOG_AUTHPRIV
-# define LOG_AUTHPRIV LOG_AUTH
+#    define LOG_AUTHPRIV LOG_AUTH
 #endif
 
 /* Used for iterating through arrays. */
@@ -58,15 +61,17 @@ static const struct {
     int flag;
     const char *name;
 } FLAGS[] = {
-    { PAM_CHANGE_EXPIRED_AUTHTOK, "expired"   },
-    { PAM_DELETE_CRED,            "delete"    },
-    { PAM_DISALLOW_NULL_AUTHTOK,  "nonull"    },
-    { PAM_ESTABLISH_CRED,         "establish" },
-    { PAM_PRELIM_CHECK,           "prelim"    },
-    { PAM_REFRESH_CRED,           "refresh"   },
-    { PAM_REINITIALIZE_CRED,      "reinit"    },
-    { PAM_SILENT,                 "silent"    },
-    { PAM_UPDATE_AUTHTOK,         "update"    },
+    /* clang-format off */
+    {PAM_CHANGE_EXPIRED_AUTHTOK, "expired"  },
+    {PAM_DELETE_CRED,            "delete"   },
+    {PAM_DISALLOW_NULL_AUTHTOK,  "nonull"   },
+    {PAM_ESTABLISH_CRED,         "establish"},
+    {PAM_PRELIM_CHECK,           "prelim"   },
+    {PAM_REFRESH_CRED,           "refresh"  },
+    {PAM_REINITIALIZE_CRED,      "reinit"   },
+    {PAM_SILENT,                 "silent"   },
+    {PAM_UPDATE_AUTHTOK,         "update"   },
+    /* clang-format on */
 };
 
 
@@ -74,7 +79,7 @@ static const struct {
  * Utility function to format a message into newly allocated memory, reporting
  * an error via syslog if vasprintf fails.
  */
-static char * __attribute__((__format__(printf, 1, 0)))
+static char *__attribute__((__format__(printf, 1, 0)))
 format(const char *fmt, va_list args)
 {
     char *msg;
@@ -165,30 +170,32 @@ log_pam(struct pam_args *pargs, int priority, int status, const char *fmt,
  * generate a putil_<level> function and one for _pam.  Do this with the
  * preprocessor to save duplicate code.
  */
-#define LOG_FUNCTION(level, priority)                                   \
-    void __attribute__((__format__(printf, 2, 3)))                      \
-    putil_ ## level(struct pam_args *pargs, const char *fmt, ...)       \
-    {                                                                   \
-        va_list args;                                                   \
-                                                                        \
-        va_start(args, fmt);                                            \
-        log_vplain(pargs, priority, fmt, args);                         \
-        va_end(args);                                                   \
-    }                                                                   \
-    void __attribute__((__format__(printf, 3, 4)))                      \
-    putil_ ## level ## _pam(struct pam_args *pargs, int status,         \
-                            const char *fmt, ...)                       \
-    {                                                                   \
-        va_list args;                                                   \
-                                                                        \
-        va_start(args, fmt);                                            \
-        log_pam(pargs, priority, status, fmt, args);                    \
-        va_end(args);                                                   \
+/* clang-format off */
+#define LOG_FUNCTION(level, priority)                             \
+    void __attribute__((__format__(printf, 2, 3)))                \
+    putil_ ## level(struct pam_args *pargs, const char *fmt, ...) \
+    {                                                             \
+        va_list args;                                             \
+                                                                  \
+        va_start(args, fmt);                                      \
+        log_vplain(pargs, priority, fmt, args);                   \
+        va_end(args);                                             \
+    }                                                             \
+    void __attribute__((__format__(printf, 3, 4)))                \
+    putil_ ## level ## _pam(struct pam_args *pargs, int status,   \
+                            const char *fmt, ...)                 \
+    {                                                             \
+        va_list args;                                             \
+                                                                  \
+        va_start(args, fmt);                                      \
+        log_pam(pargs, priority, status, fmt, args);              \
+        va_end(args);                                             \
     }
 LOG_FUNCTION(crit,   LOG_CRIT)
 LOG_FUNCTION(err,    LOG_ERR)
 LOG_FUNCTION(notice, LOG_NOTICE)
 LOG_FUNCTION(debug,  LOG_DEBUG)
+/* clang-format on */
 
 
 /*
@@ -255,12 +262,14 @@ putil_log_failure(struct pam_args *pargs, const char *fmt, ...)
         name = pargs->user;
     va_start(args, fmt);
     msg = format(fmt, args);
+    va_end(args);
     if (msg == NULL)
         return;
-    va_end(args);
     pam_get_item(pargs->pamh, PAM_RUSER, (PAM_CONST void **) &ruser);
     pam_get_item(pargs->pamh, PAM_RHOST, (PAM_CONST void **) &rhost);
     pam_get_item(pargs->pamh, PAM_TTY, (PAM_CONST void **) &tty);
+
+    /* clang-format off */
     pam_syslog(pargs->pamh, LOG_NOTICE, "%s; logname=%s uid=%ld euid=%ld"
                " tty=%s ruser=%s rhost=%s", msg,
                (name  != NULL) ? name  : "",
@@ -268,6 +277,8 @@ putil_log_failure(struct pam_args *pargs, const char *fmt, ...)
                (tty   != NULL) ? tty   : "",
                (ruser != NULL) ? ruser : "",
                (rhost != NULL) ? rhost : "");
+    /* clang-format on */
+
     free(msg);
 }
 
@@ -285,7 +296,7 @@ putil_log_failure(struct pam_args *pargs, const char *fmt, ...)
  * authenticated if known, followed by a colon and the formatted Kerberos
  * error.
  */
-static void __attribute__((__format__(printf, 4, 0)))
+__attribute__((__format__(printf, 4, 0))) static void
 log_krb5(struct pam_args *pargs, int priority, int status, const char *fmt,
          va_list args)
 {
@@ -313,6 +324,7 @@ log_krb5(struct pam_args *pargs, int priority, int status, const char *fmt,
  * The public interfaces.  Do this with the preprocessor to save duplicate
  * code.
  */
+/* clang-format off */
 #define LOG_FUNCTION_KRB5(level, priority)                              \
     void __attribute__((__format__(printf, 3, 4)))                      \
     putil_ ## level ## _krb5(struct pam_args *pargs, int status,        \
@@ -328,5 +340,6 @@ LOG_FUNCTION_KRB5(crit,   LOG_CRIT)
 LOG_FUNCTION_KRB5(err,    LOG_ERR)
 LOG_FUNCTION_KRB5(notice, LOG_NOTICE)
 LOG_FUNCTION_KRB5(debug,  LOG_DEBUG)
+/* clang-format on */
 
 #endif /* HAVE_KRB5 */

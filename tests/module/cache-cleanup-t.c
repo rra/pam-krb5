@@ -5,10 +5,11 @@
  * authentication is cleaned up on pam_end, even if no session was opened.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
+ * Copyright 2020 Russ Allbery <eagle@eyrie.org>
  * Copyright 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *
- * See LICENSE for licensing terms.
+ * SPDX-License-Identifier: BSD-3-clause or GPL-1+
  */
 
 #include <config.h>
@@ -50,8 +51,8 @@ main(void)
 
     /*
      * We need to ensure that the only thing in the test temporary directory
-     * is the krb5.conf file that we generated, since we're going to check for
-     * cleanup by looking for any out-of-place files.
+     * is the krb5.conf file that we generated and any valgrind logs, since
+     * we're going to check for cleanup by looking for any out-of-place files.
      */
     tmpdir = opendir(tmppath);
     if (tmpdir == NULL)
@@ -60,6 +61,8 @@ main(void)
         if (strcmp(file->d_name, ".") == 0 || strcmp(file->d_name, "..") == 0)
             continue;
         if (strcmp(file->d_name, "krb5.conf") == 0)
+            continue;
+        if (strcmp(file->d_name, "valgrind") == 0)
             continue;
         basprintf(&path, "%s/%s", tmppath, file->d_name);
         if (unlink(path) < 0)
@@ -83,6 +86,8 @@ main(void)
         if (strcmp(file->d_name, ".") == 0 || strcmp(file->d_name, "..") == 0)
             continue;
         if (strcmp(file->d_name, "krb5.conf") == 0)
+            continue;
+        if (strcmp(file->d_name, "valgrind") == 0)
             continue;
         if (path == NULL)
             basprintf(&path, "%s/%s", tmppath, file->d_name);

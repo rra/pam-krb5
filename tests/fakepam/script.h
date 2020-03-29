@@ -11,7 +11,7 @@
  *
  * Written by Russ Allbery <eagle@eyrie.org>
  * Copyright 2016 Russ Allbery <eagle@eyrie.org>
- * Copyright 2011, 2012
+ * Copyright 2011-2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -31,6 +31,8 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
+ *
+ * SPDX-License-Identifier: MIT
  */
 
 #ifndef TESTS_MODULE_SCRIPT_H
@@ -47,14 +49,14 @@ typedef void (*script_callback)(pam_handle_t *, const struct script_config *,
 
 /* Configuration for the PAM interaction script API. */
 struct script_config {
-    const char *user;           /* Username to pass into pam_start (%u). */
-    const char *password;       /* Substituted for %p in prompts. */
-    const char *newpass;        /* Substituted for %n in prompts. */
-    const char *extra[10];      /* Substituted for %0-%9 in logging. */
-    const char *authtok;        /* Stored as AUTHTOK before PAM. */
-    const char *oldauthtok;     /* Stored as OLDAUTHTOK before PAM. */
-    script_callback callback;   /* Called after PAM, before pam_end. */
-    void *data;                 /* Passed to the callback function. */
+    const char *user;         /* Username to pass into pam_start (%u). */
+    const char *password;     /* Substituted for %p in prompts. */
+    const char *newpass;      /* Substituted for %n in prompts. */
+    const char *extra[10];    /* Substituted for %0-%9 in logging. */
+    const char *authtok;      /* Stored as AUTHTOK before PAM. */
+    const char *oldauthtok;   /* Stored as OLDAUTHTOK before PAM. */
+    script_callback callback; /* Called after PAM, before pam_end. */
+    void *data;               /* Passed to the callback function. */
 };
 
 BEGIN_DECLS

@@ -9,14 +9,16 @@
  * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
+ * Copyright 2015, 2020 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2010-2011, 2014
+ *     The Board of Trustees of the Leland Stanford Junior University
  *
- * The authors hereby relinquish any claim to any copyright that they may have
- * in this work, whether granted under contract or by operation of law or
- * international treaty, and hereby commit to the public, at large, that they
- * shall not, at any time in the future, seek to enforce any copyright in this
- * work against any person or entity, or prevent any person or entity from
- * copying, publishing, distributing or creating derivative works of this
- * work.
+ * Copying and distribution of this file, with or without modification, are
+ * permitted in any medium without royalty provided the copyright notice and
+ * this notice are preserved.  This file is offered as-is, without any
+ * warranty.
+ *
+ * SPDX-License-Identifier: FSFAP
  */
 
 #ifndef PORTABLE_PAM_H
@@ -29,36 +31,36 @@
 #include <sys/types.h>
 
 #ifndef HAVE_PAM_MODUTIL_GETPWNAM
-# include <pwd.h>
+#    include <pwd.h>
 #endif
 #if defined(HAVE_SECURITY_PAM_APPL_H)
-# include <security/pam_appl.h>
-# include <security/pam_modules.h>
+#    include <security/pam_appl.h>
+#    include <security/pam_modules.h>
 #elif defined(HAVE_PAM_PAM_APPL_H)
-# include <pam/pam_appl.h>
-# include <pam/pam_modules.h>
+#    include <pam/pam_appl.h>
+#    include <pam/pam_modules.h>
 #endif
 #if defined(HAVE_SECURITY_PAM_EXT_H)
-# include <security/pam_ext.h>
+#    include <security/pam_ext.h>
 #elif defined(HAVE_PAM_PAM_EXT_H)
-# include <pam/pam_ext.h>
+#    include <pam/pam_ext.h>
 #endif
 #if defined(HAVE_SECURITY_PAM_MODUTIL_H)
-# include <security/pam_modutil.h>
+#    include <security/pam_modutil.h>
 #elif defined(HAVE_PAM_PAM_MODUTIL_H)
-# include <pam/pam_modutil.h>
+#    include <pam/pam_modutil.h>
 #endif
 #include <stdarg.h>
 
 /* Solaris doesn't have these. */
 #ifndef PAM_CONV_AGAIN
-# define PAM_CONV_AGAIN 0
-# define PAM_INCOMPLETE PAM_SERVICE_ERR
+#    define PAM_CONV_AGAIN 0
+#    define PAM_INCOMPLETE PAM_SERVICE_ERR
 #endif
 
 /* Solaris 8 has deficient PAM. */
 #ifndef PAM_AUTHTOK_RECOVER_ERR
-# define PAM_AUTHTOK_RECOVER_ERR PAM_AUTHTOK_ERR
+#    define PAM_AUTHTOK_RECOVER_ERR PAM_AUTHTOK_ERR
 #endif
 
 /*
@@ -67,10 +69,10 @@
  * deactivate them.
  */
 #ifndef PAM_DATA_REPLACE
-# define PAM_DATA_REPLACE 0
+#    define PAM_DATA_REPLACE 0
 #endif
 #ifndef PAM_DATA_SILENT
-# define PAM_DATA_SILENT 0
+#    define PAM_DATA_SILENT 0
 #endif
 
 /*
@@ -78,7 +80,12 @@
  * instead.
  */
 #ifndef PAM_BAD_ITEM
-# define PAM_BAD_ITEM PAM_SYMBOL_ERR
+#    define PAM_BAD_ITEM PAM_SYMBOL_ERR
+#endif
+
+/* We use this as a limit on password length, so make sure it's defined. */
+#ifndef PAM_MAX_RESP_SIZE
+#    define PAM_MAX_RESP_SIZE 512
 #endif
 
 /*
@@ -88,7 +95,7 @@
  * Ensure that's defined for implementations that don't have this.
  */
 #ifndef PAM_EXTERN
-# define PAM_EXTERN
+#    define PAM_EXTERN
 #endif
 
 BEGIN_DECLS
@@ -103,7 +110,7 @@ BEGIN_DECLS
  * Bail for right now.
  */
 #if !HAVE_PAM_MODUTIL_GETPWNAM
-# define pam_modutil_getpwnam(h, u) getpwnam(u)
+#    define pam_modutil_getpwnam(h, u) getpwnam(u)
 #endif
 
 /* Prototype missing optional PAM functions. */
