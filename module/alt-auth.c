@@ -36,7 +36,8 @@
  * on any error.
  */
 int
-pamk5_map_principal(struct pam_args *args, const char *username, char **principal)
+pamk5_map_principal(struct pam_args *args, const char *username,
+                    char **principal)
 {
     char *user = NULL;
     char *realm;

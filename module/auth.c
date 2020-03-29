@@ -566,27 +566,23 @@ pkinit_auth(struct pam_args *args, const char *service, krb5_creds **creds)
     if (retval != 0)
         return retval;
     set_credential_options(args, opts, service != NULL);
+
+    /* Finally, do the actual work and return the results. */
 #    ifdef HAVE_KRB5_HEIMDAL
     retval = krb5_get_init_creds_opt_set_pkinit(
         ctx->context, opts, ctx->princ, args->config->pkinit_user,
         args->config->pkinit_anchors, NULL, NULL, 0, pamk5_prompter_krb5, args,
         NULL);
-#    endif
-    if (retval != 0)
-        goto done;
-
-        /* Finally, do the actual work and return the results. */
-#    ifdef HAVE_KRB5_HEIMDAL
-    retval =
-        krb5_get_init_creds_password(ctx->context, *creds, ctx->princ, NULL,
-                                     NULL, args, 0, (char *) service, opts);
-#    else /* !HAVE_KRB5_HEIMDAL */
+    if (retval == 0)
+        retval = krb5_get_init_creds_password(ctx->context, *creds, ctx->princ,
+                                              NULL, NULL, args, 0,
+                                              (char *) service, opts);
+#    else  /* !HAVE_KRB5_HEIMDAL */
     retval = krb5_get_init_creds_password(
         ctx->context, *creds, ctx->princ, NULL,
         pamk5_prompter_krb5_no_password, args, 0, (char *) service, opts);
-#    endif
+#    endif /* !HAVE_KRB5_HEIMDAL */
 
-done:
     krb5_get_init_creds_opt_free(ctx->context, opts);
     if (retval != 0) {
         krb5_free_cred_contents(ctx->context, *creds);
