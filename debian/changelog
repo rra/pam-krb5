@@ -11,6 +11,7 @@ libpam-krb5 (4.9-1) unstable; urgency=high
     - Fix an edge-case memory leak in pam_chauthtok.
   * Update to debhelper compatibility level V12.
     - Depend on debhelper-compat instead of debhelper.
+  * Update standards version to 4.5.0 (no changes required).
 
  -- Russ Allbery <rra@debian.org>  Sun, 29 Mar 2020 12:58:24 -0700
 
