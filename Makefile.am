@@ -10,16 +10,22 @@
 # SPDX-License-Identifier: BSD-3-clause or GPL-1+
 
 ACLOCAL_AMFLAGS = -I m4
-EXTRA_DIST = .gitignore .github LICENSE README.md bootstrap ci/README	    \
-	ci/install ci/test docs/metadata docs/pam_krb5.pod		    \
+EXTRA_DIST = .clang-format .gitignore .github LICENSE README.md bootstrap   \
+	ci/README ci/files/heimdal/heimdal-kdc ci/files/heimdal/kadmind.acl \
+	ci/files/heimdal/kdc.conf ci/files/heimdal/krb5.conf		    \
+	ci/files/heimdal/pki-mapping ci/files/mit/extensions.client	    \
+	ci/files/mit/extensions.kdc ci/files/mit/kadm5.acl		    \
+	ci/files/mit/kdc.conf ci/files/mit/krb5.conf ci/kdc-setup-heimdal   \
+	ci/kdc-setup-mit ci/install ci/test docs/metadata docs/pam_krb5.pod \
 	module/pam_krb5.map module/pam_krb5.sym tests/README tests/TESTS    \
-	tests/config/README tests/data/generate-krb5-conf		    \
-	tests/data/krb5-pam.conf tests/data/krb5.conf tests/data/perl.conf  \
-	tests/data/scripts tests/data/valgrind.supp			    \
-	tests/docs/pod-spelling-t tests/docs/pod-t tests/docs/urls-t	    \
-	tests/fakepam/README tests/tap/libtap.sh tests/tap/perl/Test/RRA.pm \
-	tests/tap/perl/Test/RRA/Automake.pm				    \
-	tests/tap/perl/Test/RRA/Config.pm
+	tests/config/README tests/data/cppcheck.supp			    \
+	tests/data/generate-krb5-conf tests/data/krb5-pam.conf		    \
+	tests/data/krb5.conf tests/data/perl.conf tests/data/scripts	    \
+	tests/data/valgrind.supp tests/docs/pod-spelling-t tests/docs/pod-t \
+	tests/docs/spdx-license-t tests/fakepam/README tests/tap/libtap.sh  \
+	tests/tap/perl/Test/RRA.pm tests/tap/perl/Test/RRA/Automake.pm	    \
+	tests/tap/perl/Test/RRA/Config.pm tests/style/obsolete-strings-t    \
+	tests/valgrind/logs-t
 
 # Everything we build needs the Kerbeors headers and library flags.
 AM_CPPFLAGS = $(KRB5_CPPFLAGS)
