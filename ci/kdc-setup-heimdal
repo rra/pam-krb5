@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Build a Kerberos test realm.
+# Build a Kerberos test realm for Heimdal.
 #
 # This script automates the process of setting up a Kerberos test realm from
 # scratch suitable for testing pam-krb5.  It is primarily intended to be run

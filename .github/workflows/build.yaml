@@ -32,6 +32,9 @@ jobs:
       - uses: actions/checkout@v2
       - name: install
         run: sudo ci/install
+      - name: kdc-setup-mit
+        run: sudo ci/kdc-setup-mit
+        if: matrix.kerberos == 'mit'
       - name: kdc-setup-heimdal
         run: sudo ci/kdc-setup-heimdal
         if: matrix.kerberos == 'heimdal'
