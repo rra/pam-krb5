@@ -1,3 +1,17 @@
+libpam-krb5 (4.9-1) unstable; urgency=high
+
+  * New upstream release.
+    - Fix potential one-byte buffer overflow when relaying prompts from
+      the underlying Kerberos library.  (CVE-2020-10595)
+    - Support use_pkinit with MIT Kerberos.  (Closes: #871699)
+    - Reject passwords as long or longer than PAM_MAX_RESP_SIZE (512
+      octets) to avoid denial of service attacks.
+    - Use explicit_bzero to erase passwords before freeing.
+    - Return more accurate errors from the Kerberos prompter function.
+    - Fix an edge-case memory leak in pam_chauthtok.
+
+ -- Russ Allbery <rra@debian.org>  Sun, 29 Mar 2020 12:58:24 -0700
+
 libpam-krb5 (4.8-2) unstable; urgency=medium
 
   * Move canonical packaging repository to salsa.debian.org.
