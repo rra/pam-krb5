@@ -29,6 +29,8 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
+ *
+ * SPDX-License-Identifier: MIT
  */
 
 #include <config.h>
@@ -43,7 +45,7 @@ int
 main(void)
 {
     pam_handle_t *pamh;
-    struct pam_conv conv = { NULL, NULL };
+    struct pam_conv conv = {NULL, NULL};
     char **env;
     size_t i;
 

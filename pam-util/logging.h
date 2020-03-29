@@ -5,7 +5,8 @@
  * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
- * Copyright 2006, 2007, 2008, 2009, 2010, 2012, 2013
+ * Copyright 2020 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2006-2010, 2012-2013
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,6 +26,8 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
+ *
+ * SPDX-License-Identifier: MIT
  */
 
 #ifndef PAM_UTIL_LOGGING_H
@@ -33,7 +36,7 @@
 #include <config.h>
 #include <portable/macros.h>
 #ifdef HAVE_KRB5
-# include <portable/krb5.h>
+#    include <portable/krb5.h>
 #endif
 #include <portable/pam.h>
 
@@ -102,21 +105,27 @@ END_DECLS
 
 /* __func__ is C99, but not provided by all implementations. */
 #if (__STDC_VERSION__ < 199901L) && !defined(__func__)
-# if (__GNUC__ >= 2)
-#  define __func__ __FUNCTION__
-# else
-#  define __func__ "<unknown>"
-# endif
+#    if (__GNUC__ >= 2)
+#        define __func__ __FUNCTION__
+#    else
+#        define __func__ "<unknown>"
+#    endif
 #endif
 
 /* Macros to record entry and exit from the main PAM functions. */
-#define ENTRY(args, flags)                                              \
-    if (args->debug)                                                    \
-        putil_log_entry((args), __func__, (flags));
-#define EXIT(args, pamret)                                              \
-    if (args != NULL && args->debug)                                    \
-        pam_syslog((args)->pamh, LOG_DEBUG, "%s: exit (%s)", __func__,  \
-                   ((pamret) == PAM_SUCCESS) ? "success"                \
-                   : (((pamret) == PAM_IGNORE) ? "ignore" : "failure"))
+#define ENTRY(args, flags)                              \
+    do {                                                \
+        if (args->debug)                                \
+            putil_log_entry((args), __func__, (flags)); \
+    } while (0)
+#define EXIT(args, pamret)                                                \
+    do {                                                                  \
+        if (args != NULL && args->debug)                                  \
+            pam_syslog(                                                   \
+                (args)->pamh, LOG_DEBUG, "%s: exit (%s)", __func__,       \
+                ((pamret) == PAM_SUCCESS)                                 \
+                    ? "success"                                           \
+                    : (((pamret) == PAM_IGNORE) ? "ignore" : "failure")); \
+    } while (0)
 
 #endif /* !PAM_UTIL_LOGGING_H */

@@ -13,14 +13,16 @@
  * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
+ * Copyright 2020 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2010-2011
+ *     The Board of Trustees of the Leland Stanford Junior University
  *
- * The authors hereby relinquish any claim to any copyright that they may have
- * in this work, whether granted under contract or by operation of law or
- * international treaty, and hereby commit to the public, at large, that they
- * shall not, at any time in the future, seek to enforce any copyright in this
- * work against any person or entity, or prevent any person or entity from
- * copying, publishing, distributing or creating derivative works of this
- * work.
+ * Copying and distribution of this file, with or without modification, are
+ * permitted in any medium without royalty provided the copyright notice and
+ * this notice are preserved.  This file is offered as-is, without any
+ * warranty.
+ *
+ * SPDX-License-Identifier: FSFAP
  */
 
 #include <config.h>
@@ -32,7 +34,7 @@
 #include <syslog.h>
 
 #ifndef LOG_AUTHPRIV
-# define LOG_AUTHPRIV LOG_AUTH
+#    define LOG_AUTHPRIV LOG_AUTH
 #endif
 
 void
@@ -51,9 +53,11 @@ pam_vsyslog(const pam_handle_t *pamh, int priority, const char *fmt,
                "cannot allocate memory in vasprintf: %m");
         return;
     }
+    /* clang-format off */
     syslog(priority | LOG_AUTHPRIV, MODULE_NAME "%s%s%s: %s",
            (service == NULL) ? "" : "(",
            (service == NULL) ? "" : service,
            (service == NULL) ? "" : ")", msg);
+    /* clang-format on */
     free(msg);
 }

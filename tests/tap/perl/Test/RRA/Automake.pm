@@ -10,15 +10,15 @@
 # All the functions here assume that C_TAP_BUILD and C_TAP_SOURCE are set in
 # the environment.  This is normally done via the C TAP Harness runtests
 # wrapper.
+#
+# SPDX-License-Identifier: MIT
 
 package Test::RRA::Automake;
 
-use 5.006;
+use 5.008;
+use base qw(Exporter);
 use strict;
 use warnings;
-
-# For Perl 5.006 compatibility.
-## no critic (ClassHierarchies::ProhibitExplicitISA)
 
 use Exporter;
 use File::Find qw(find);
@@ -52,13 +52,12 @@ use lib $PERL_BLIB_ARCH;
 use lib $PERL_BLIB_LIB;
 
 # Declare variables that should be set in BEGIN for robustness.
-our (@EXPORT_OK, @ISA, $VERSION);
+our (@EXPORT_OK, $VERSION);
 
 # Set $VERSION and everything export-related in a BEGIN block for robustness
 # against circular module loading (not that we load any modules, but
 # consistency is good).
 BEGIN {
-    @ISA       = qw(Exporter);
     @EXPORT_OK = qw(
       all_files automake_setup perl_dirs test_file_path test_tmpdir
     );
@@ -66,17 +65,22 @@ BEGIN {
     # This version should match the corresponding rra-c-util release, but with
     # two digits for the minor version, including a leading zero if necessary,
     # so that it will sort properly.
-    $VERSION = '7.00';
+    $VERSION = '8.02';
 }
 
 # Directories to skip globally when looking for all files, or for directories
 # that could contain Perl files.
-my @GLOBAL_SKIP = qw(.git _build autom4te.cache build-aux);
+my @GLOBAL_SKIP = qw(
+  .git .pc _build autom4te.cache build-aux perl/_build perl/blib
+);
 
 # Additional paths to skip when building a list of all files in the
 # distribution.  This primarily skips build artifacts that aren't interesting
 # to any of the tests.  These match any path component.
-my @FILES_SKIP = qw(.deps .dirstamp .libs config.h.in~ configure);
+my @FILES_SKIP = qw(
+  .deps .dirstamp .libs aclocal.m4 config.h config.h.in config.h.in~ config.log
+  config.status configure
+);
 
 # The temporary directory created by test_tmpdir, if any.  If this is set,
 # attempt to remove the directory stored here on program exit (but ignore
@@ -99,7 +103,7 @@ sub all_files {
         my $file = $_;
         my $path = $File::Find::name;
         $path =~ s{ \A [.]/ }{}xms;
-        if ($skip{$path} or $files_skip{$file} or $file =~ m{ [.] lo \z }xms) {
+        if ($skip{$path} || $files_skip{$file} || $file =~ m{ [.] lo \z }xms) {
             $File::Find::prune = 1;
             return;
         }
@@ -182,7 +186,7 @@ sub automake_setup {
         @builddirs = File::Spec->splitdir($builddirs);
         pop(@builddirs);
         my $libdir = File::Spec->catdir(@builddirs, $LIBRARY_PATH);
-        my $path = File::Spec->catpath($buildvol, $libdir, q{});
+        my $path   = File::Spec->catpath($buildvol, $libdir, q{});
         if (-d "$path/.libs") {
             $path .= '/.libs';
         }
@@ -222,7 +226,7 @@ sub perl_dirs {
     }
 
     # Convert the skip lists into hashes for convenience.
-    my %skip = map { $_ => 1 } @skip, 'tests';
+    my %skip       = map { $_ => 1 } @skip, 'tests';
     my %skip_tests = map { $_ => 1 } @skip_tests;
 
     # Build the list of top-level directories to test.
@@ -444,7 +448,7 @@ Russ Allbery <eagle@eyrie.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2014, 2015 Russ Allbery <eagle@eyrie.org>
+Copyright 2014-2015, 2018-2020 Russ Allbery <eagle@eyrie.org>
 
 Copyright 2013 The Board of Trustees of the Leland Stanford Junior University
 
@@ -477,3 +481,7 @@ The C TAP Harness test driver and libraries for TAP-based C testing are
 available from L<https://www.eyrie.org/~eagle/software/c-tap-harness/>.
 
 =cut
+
+# Local Variables:
+# copyright-at-end-flag: t
+# End:

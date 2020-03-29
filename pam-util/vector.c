@@ -21,14 +21,16 @@
  * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
+ * Copyright 2017-2018 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2010-2011, 2014
+ *     The Board of Trustees of the Leland Stanford Junior University
  *
- * The authors hereby relinquish any claim to any copyright that they may have
- * in this work, whether granted under contract or by operation of law or
- * international treaty, and hereby commit to the public, at large, that they
- * shall not, at any time in the future, seek to enforce any copyright in this
- * work against any person or entity, or prevent any person or entity from
- * copying, publishing, distributing or creating derivative works of this
- * work.
+ * Copying and distribution of this file, with or without modification, are
+ * permitted in any medium without royalty provided the copyright notice and
+ * this notice are preserved.  This file is offered as-is, without any
+ * warranty.
+ *
+ * SPDX-License-Identifier: FSFAP
  */
 
 #include <config.h>
@@ -209,8 +211,7 @@ split_multi_count(const char *string, const char *seps)
  * partial results.
  */
 struct vector *
-vector_split_multi(const char *string, const char *seps,
-                   struct vector *vector)
+vector_split_multi(const char *string, const char *seps, struct vector *vector)
 {
     const char *p, *start;
     size_t i, count;
@@ -230,7 +231,7 @@ vector_split_multi(const char *string, const char *seps,
     for (start = string, p = string, i = 0; *p != '\0'; p++)
         if (strchr(seps, *p) != NULL) {
             if (start != p) {
-                vector->strings[i] = strndup(start, (size_t) (p - start));
+                vector->strings[i] = strndup(start, (size_t)(p - start));
                 if (vector->strings[i] == NULL)
                     goto fail;
                 i++;
@@ -239,7 +240,7 @@ vector_split_multi(const char *string, const char *seps,
             start = p + 1;
         }
     if (start != p) {
-        vector->strings[i] = strndup(start, (size_t) (p - start));
+        vector->strings[i] = strndup(start, (size_t)(p - start));
         if (vector->strings[i] == NULL)
             goto fail;
         vector->count++;
@@ -266,7 +267,7 @@ vector_exec(const char *path, struct vector *vector)
         if (!vector_resize(vector, vector->count + 1))
             return -1;
     vector->strings[vector->count] = NULL;
-    return execv(path, (char * const *) vector->strings);
+    return execv(path, (char *const *) vector->strings);
 }
 
 
@@ -278,12 +279,11 @@ vector_exec(const char *path, struct vector *vector)
  */
 int
 vector_exec_env(const char *path, struct vector *vector,
-                const char * const env[])
+                const char *const env[])
 {
     if (vector->allocated == vector->count)
         if (!vector_resize(vector, vector->count + 1))
             return -1;
     vector->strings[vector->count] = NULL;
-    return execve(path, (char * const *) vector->strings,
-                  (char * const *) env);
+    return execve(path, (char *const *) vector->strings, (char *const *) env);
 }

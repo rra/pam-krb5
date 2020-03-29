@@ -14,11 +14,11 @@ dnl
 dnl The canonical version of this file is maintained in the rra-c-util
 dnl package, available at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
 dnl
-dnl Copyright 2016, 2017 Russ Allbery <eagle@eyrie.org>
+dnl Copyright 2016-2020 Russ Allbery <eagle@eyrie.org>
 dnl Copyright 2006, 2009, 2016
 dnl     by Internet Systems Consortium, Inc. ("ISC")
 dnl
-dnl Permission to use, copy, modify, and distribute this software for any
+dnl Permission to use, copy, modify, and/or distribute this software for any
 dnl purpose with or without fee is hereby granted, provided that the above
 dnl copyright notice and this permission notice appear in all copies.
 dnl
@@ -29,12 +29,14 @@ dnl SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
 dnl WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 dnl ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
 dnl IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+dnl
+dnl SPDX-License-Identifier: ISC
 
 dnl Used to build the result cache name.
 AC_DEFUN([_RRA_PROG_CC_FLAG_CACHE],
 [translit([rra_cv_compiler_c_$1], [-=+], [___])])
 
-dnl Check whether a given flag is supported by the complier.
+dnl Check whether a given flag is supported by the compiler.
 AC_DEFUN([RRA_PROG_CC_FLAG],
 [AC_REQUIRE([AC_PROG_CC])
  AC_MSG_CHECKING([if $CC supports $1])
@@ -59,7 +61,7 @@ dnl
 dnl   -Wsign-conversion  Too many fiddly changes for the benefit
 dnl   -Wstack-protector  Too many false positives from small buffers
 dnl
-dnl Last checked against gcc 7.2.0 (2017-12-28).  -D_FORTIFY_SOURCE=2 enables
+dnl Last checked against gcc 9.2.1 (2019-09-01).  -D_FORTIFY_SOURCE=2 enables
 dnl warn_unused_result attribute markings on glibc functions on Linux, which
 dnl catches a few more issues.  Add -O2 because gcc won't find some warnings
 dnl without optimization turned on.
@@ -68,6 +70,7 @@ dnl For Clang, we try to use -Weverything, but we have to disable some of the
 dnl warnings:
 dnl
 dnl   -Wcast-qual                     Some structs require casting away const
+dnl   -Wdisabled-macro-expansion      Triggers on libc (sigaction.sa_handler)
 dnl   -Wpadded                        Not an actual problem
 dnl   -Wreserved-id-macros            Autoconf sets several of these normally
 dnl   -Wsign-conversion               Too many fiddly changes for the benefit
@@ -84,9 +87,10 @@ AC_DEFUN([RRA_PROG_CC_WARNINGS_FLAGS],
  AS_IF([test x"$CLANG" = xyes],
     [WARNINGS_CFLAGS="-Werror"
      m4_foreach_w([flag],
-        [-Weverything -Wno-cast-qual -Wno-padded -Wno-sign-conversion
-         -Wno-reserved-id-macro -Wno-tautological-pointer-compare -Wno-undef
-         -Wno-unreachable-code -Wno-unreachable-code-return -Wno-unused-macros
+        [-Weverything -Wno-cast-qual -Wno-disabled-macro-expansion -Wno-padded
+         -Wno-sign-conversion -Wno-reserved-id-macro
+         -Wno-tautological-pointer-compare -Wno-undef -Wno-unreachable-code
+         -Wno-unreachable-code-return -Wno-unused-macros
          -Wno-used-but-marked-unused],
         [RRA_PROG_CC_FLAG(flag,
             [WARNINGS_CFLAGS="${WARNINGS_CFLAGS} flag"])])],

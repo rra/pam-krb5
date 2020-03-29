@@ -7,8 +7,8 @@
 # which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
 #
 # Written by Russ Allbery <eagle@eyrie.org>
-# Copyright 2016 Russ Allbery <eagle@eyrie.org>
-# Copyright 2012, 2013, 2014
+# Copyright 2016, 2019 Russ Allbery <eagle@eyrie.org>
+# Copyright 2012-2014
 #     The Board of Trustees of the Leland Stanford Junior University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
@@ -28,16 +28,19 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
+#
+# SPDX-License-Identifier: MIT
 
-use 5.006;
+use 5.008;
 use strict;
 use warnings;
 
 use lib "$ENV{C_TAP_SOURCE}/tap/perl";
 
-use Test::More;
 use Test::RRA qw(skip_unless_automated use_prereq);
 use Test::RRA::Automake qw(automake_setup perl_dirs);
+
+use Test::More;
 
 # Skip this test for normal user installs, since we normally pre-generate all
 # of the documentation and the end user doesn't care.

@@ -1,24 +1,32 @@
 # Automake makefile for pam-krb5.
 #
 # Written by Russ Allbery <eagle@eyrie.org>
-# Copyright 2005, 2006, 2007, 2014, 2017 Russ Allbery <eagle@eyrie.org>
-# Copyright 2009, 2011, 2012
+# Copyright 2005-2007, 2014, 2017, 2020 Russ Allbery <eagle@eyrie.org>
+# Copyright 2009, 2011-2012
 #     The Board of Trustees of the Leland Stanford Junior University
 # Copyright 2005 Andres Salomon <dilinger@debian.org>
-# Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
+# Copyright 1999-2000 Frank Cusack <fcusack@fcusack.com>
 #
-# See LICENSE for licensing terms.
+# SPDX-License-Identifier: BSD-3-clause or GPL-1+
 
 ACLOCAL_AMFLAGS = -I m4
-EXTRA_DIST = .gitignore .travis.yml LICENSE README.md bootstrap		    \
-	docs/metadata pam_krb5.map pam_krb5.pod pam_krb5.sym tests/README   \
-	tests/TESTS tests/config/README tests/data/generate-krb5-conf	    \
+EXTRA_DIST = .clang-format .gitignore .github LICENSE README.md bootstrap   \
+	ci/README.md ci/files/heimdal/heimdal-kdc			    \
+	ci/files/heimdal/kadmind.acl ci/files/heimdal/kdc.conf		    \
+	ci/files/heimdal/krb5.conf ci/files/heimdal/pki-mapping		    \
+	ci/files/mit/extensions.client ci/files/mit/extensions.kdc	    \
+	ci/files/mit/kadm5.acl ci/files/mit/kdc.conf ci/files/mit/krb5.conf \
+	ci/kdc-setup-heimdal ci/kdc-setup-mit ci/install ci/test	    \
+	docs/metadata docs/pam_krb5.pod module/pam_krb5.map		    \
+	module/pam_krb5.sym tests/README tests/TESTS tests/config/README    \
+	tests/data/cppcheck.supp tests/data/generate-krb5-conf		    \
 	tests/data/krb5-pam.conf tests/data/krb5.conf tests/data/perl.conf  \
 	tests/data/scripts tests/data/valgrind.supp			    \
-	tests/docs/pod-spelling-t tests/docs/pod-t tests/docs/urls-t	    \
-	tests/fakepam/README tests/tap/libtap.sh tests/tap/perl/Test/RRA.pm \
-	tests/tap/perl/Test/RRA/Automake.pm				    \
-	tests/tap/perl/Test/RRA/Config.pm
+	tests/docs/pod-spelling-t tests/docs/pod-t			    \
+	tests/docs/spdx-license-t tests/fakepam/README tests/tap/libtap.sh  \
+	tests/tap/perl/Test/RRA.pm tests/tap/perl/Test/RRA/Automake.pm	    \
+	tests/tap/perl/Test/RRA/Config.pm tests/style/obsolete-strings-t    \
+	tests/valgrind/logs-t
 
 # Everything we build needs the Kerbeors headers and library flags.
 AM_CPPFLAGS = $(KRB5_CPPFLAGS)
@@ -34,27 +42,29 @@ pam_util_libpamutil_la_SOURCES = pam-util/args.c pam-util/args.h	\
 	pam-util/options.h pam-util/vector.c pam-util/vector.h
 
 if HAVE_LD_VERSION_SCRIPT
-    VERSION_LDFLAGS = -Wl,--version-script=${srcdir}/pam_krb5.map
+    VERSION_LDFLAGS = -Wl,--version-script=${srcdir}/module/pam_krb5.map
 else
-    VERSION_LDFLAGS = -export-symbols ${srcdir}/pam_krb5.sym
+    VERSION_LDFLAGS = -export-symbols ${srcdir}/module/pam_krb5.sym
 endif
 
 pamdir = $(libdir)/security
-pam_LTLIBRARIES = pam_krb5.la
-pam_krb5_la_SOURCES = account.c alt-auth.c auth.c cache.c context.c fast.c \
-	internal.h options.c password.c prompting.c public.c setcred.c	   \
-	support.c
-pam_krb5_la_LDFLAGS = -module -shared -avoid-version $(VERSION_LDFLAGS) \
-	$(AM_LDFLAGS)
-pam_krb5_la_LIBADD = pam-util/libpamutil.la portable/libportable.la \
+pam_LTLIBRARIES = module/pam_krb5.la
+module_pam_krb5_la_SOURCES = module/account.c module/alt-auth.c		\
+	module/auth.c module/cache.c module/context.c module/fast.c	\
+	module/internal.h module/options.c module/password.c		\
+	module/prompting.c module/public.c module/setcred.c		\
+	module/support.c
+module_pam_krb5_la_LDFLAGS = -module -shared \
+	-avoid-version $(VERSION_LDFLAGS) $(AM_LDFLAGS)
+module_pam_krb5_la_LIBADD = pam-util/libpamutil.la portable/libportable.la \
 	$(KRB5_LIBS)
-dist_man_MANS = pam_krb5.5
+dist_man_MANS = docs/pam_krb5.5
 
 MAINTAINERCLEANFILES = Makefile.in aclocal.m4 build-aux/compile		 \
 	build-aux/config.guess build-aux/config.sub build-aux/depcomp	 \
 	build-aux/install-sh build-aux/ltmain.sh build-aux/missing	 \
-	config.h.in config.h.in~ configure m4/libtool.m4 m4/ltoptions.m4 \
-	m4/ltsugar.m4 m4/ltversion.m4 m4/lt~obsolete.m4 pam_krb5.5
+	config.h.in config.h.in~ configure docs/pam_krb5.5 m4/libtool.m4 \
+	m4/ltoptions.m4 m4/ltsugar.m4 m4/ltversion.m4 m4/lt~obsolete.m4
 
 # Separate target for a human to request building everything with as many
 # compiler warnings enabled as possible.
@@ -68,14 +78,14 @@ warnings:
 check_PROGRAMS = tests/runtests tests/module/alt-auth-t			    \
 	tests/module/bad-authtok-t tests/module/basic-t			    \
 	tests/module/cache-cleanup-t tests/module/cache-t		    \
-	tests/module/expired-t tests/module/fast-t tests/module/no-cache-t  \
-	tests/module/pam-user-t tests/module/password-t			    \
-	tests/module/pkinit-t tests/module/realm-t tests/module/stacked-t   \
-	tests/module/trace-t tests/pam-util/args-t tests/pam-util/fakepam-t \
-	tests/pam-util/logging-t tests/pam-util/options-t		    \
-	tests/pam-util/vector-t tests/portable/asprintf-t		    \
-	tests/portable/mkstemp-t tests/portable/snprintf-t		    \
-	tests/portable/strndup-t
+	tests/module/expired-t tests/module/fast-anon-t tests/module/fast-t \
+	tests/module/long-t tests/module/no-cache-t tests/module/pam-user-t \
+	tests/module/password-t tests/module/pkinit-t tests/module/realm-t  \
+	tests/module/stacked-t tests/module/trace-t tests/pam-util/args-t   \
+	tests/pam-util/fakepam-t tests/pam-util/logging-t		    \
+	tests/pam-util/options-t tests/pam-util/vector-t		    \
+	tests/portable/asprintf-t tests/portable/mkstemp-t		    \
+	tests/portable/snprintf-t tests/portable/strndup-t
 tests_runtests_CPPFLAGS = -DC_TAP_SOURCE='"$(abs_top_srcdir)/tests"' \
 	-DC_TAP_BUILD='"$(abs_top_builddir)/tests"'
 check_LIBRARIES = tests/fakepam/libfakepam.a tests/tap/libtap.a
@@ -92,9 +102,11 @@ tests_tap_libtap_a_SOURCES = tests/tap/basic.c tests/tap/basic.h	\
 
 # The list of objects and libraries used for module testing by programs that
 # link with the fake PAM library or with both it and the module.
-MODULE_OBJECTS = account.lo alt-auth.lo auth.lo cache.lo context.lo fast.lo \
-	options.lo password.lo prompting.lo public.lo setcred.lo support.lo \
-	pam-util/libpamutil.la tests/fakepam/libfakepam.a
+MODULE_OBJECTS = module/account.lo module/alt-auth.lo module/auth.lo	   \
+	module/cache.lo module/context.lo module/fast.lo module/options.lo \
+	module/password.lo module/prompting.lo module/public.lo		   \
+	module/setcred.lo module/support.lo pam-util/libpamutil.la	   \
+	tests/fakepam/libfakepam.a
 
 # The test programs themselves.
 tests_module_alt_auth_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
@@ -110,7 +122,11 @@ tests_module_cache_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
 tests_module_expired_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a	\
 	portable/libportable.la $(KADM5CLNT_LDFLAGS) $(KADM5CLNT_LIBS)	\
 	$(KRB5_LIBS)
+tests_module_fast_anon_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
+	portable/libportable.la $(KRB5_LIBS)
 tests_module_fast_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
+	portable/libportable.la $(KRB5_LIBS)
+tests_module_long_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
 	portable/libportable.la $(KRB5_LIBS)
 tests_module_no_cache_t_LDADD = $(MODULE_OBJECTS) tests/tap/libtap.a \
 	portable/libportable.la $(KRB5_LIBS)
@@ -156,13 +172,32 @@ tests_portable_strndup_t_LDADD = tests/tap/libtap.a portable/libportable.la
 check-local: $(check_PROGRAMS)
 	cd tests && ./runtests -l '$(abs_top_srcdir)/tests/TESTS'
 
-# Used by maintainers to run the test suite under valgrind.
+# Used by maintainers to check the source code with cppcheck.
+check-cppcheck:
+	cd $(abs_top_srcdir) &&						\
+	    find . -name .git -prune -o -name '*.[ch]' -print		\
+	    | cppcheck -q --force --error-exitcode=2 --file-list=-	\
+		--suppressions-list=tests/data/cppcheck.supp		\
+		--enable=warning,performance,portability,style
+
+# The full path to valgrind and its options, used when doing valgrind
+# testing.
+VALGRIND_COMMAND = $(PATH_VALGRIND) --leak-check=full			\
+        --trace-children=yes						\
+	--trace-children-skip=/bin/sh,*/generate-krb5-conf		\
+	--suppressions=$(abs_top_srcdir)/tests/data/valgrind.supp	\
+        --log-file=$(abs_top_builddir)/tests/tmp/valgrind/log.%p
+
+# Used by maintainers to run the main test suite under valgrind.
 check-valgrind: $(check_PROGRAMS)
-	rm -rf $(abs_top_builddir)/tmp-valgrind
-	mkdir $(abs_top_builddir)/tmp-valgrind
-	valgrind --leak-check=full --leak-check=full			\
-	    --show-reachable=yes --trace-children=yes			\
-	    --log-file=$(abs_top_builddir)/tmp-valgrind/log.%p		\
-	    --suppressions=$(abs_top_srcdir)/tests/data/valgrind.supp	\
-	    --trace-children-skip="/bin/sh,*/cat,*/cut,*/expr,*/getopt,*/kinit,*/ls,*/mkdir,*/rm,*/rmdir,*/sed,*/sleep,*/wc,*/data/generate-krb5-conf,*/docs/*-t" \
-	    tests/runtests -l $(abs_top_srcdir)/tests/TESTS
+	rm -rf $(abs_top_builddir)/tests/tmp
+	mkdir $(abs_top_builddir)/tests/tmp
+	mkdir $(abs_top_builddir)/tests/tmp/valgrind
+	C_TAP_VALGRIND="$(VALGRIND_COMMAND)" tests/runtests \
+	    -l '$(abs_top_srcdir)/tests/TESTS'
+
+# Used by maintainers to reformat all source code using clang-format and
+# excluding some files.
+reformat:
+	find . -name '*.[ch]' \! -name snprintf.c \! -name krb5-profile.c \
+	     -print | xargs clang-format-10 -style=file -i

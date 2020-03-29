@@ -10,7 +10,8 @@
  * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
- * Copyright 2010, 2011, 2012, 2014
+ * Copyright 2020 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2010-2012, 2014
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -30,6 +31,8 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
+ *
+ * SPDX-License-Identifier: MIT
  */
 
 #include <config.h>
@@ -96,6 +99,7 @@ output_add(struct output *output, int priority, const char *string)
 const char *
 pam_strerror(PAM_STRERROR_CONST pam_handle_t *pamh UNUSED, int code)
 {
+    /* clang-format off */
     switch (code) {
     case PAM_SUCCESS:     return "No error";
     case PAM_OPEN_ERR:    return "Failure loading service module";
@@ -105,6 +109,7 @@ pam_strerror(PAM_STRERROR_CONST pam_handle_t *pamh UNUSED, int code)
     case PAM_BUF_ERR:     return "Memory buffer error";
     default:              return "Unknown error";
     }
+    /* clang-format on */
 }
 
 

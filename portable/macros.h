@@ -5,14 +5,16 @@
  * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
+ * Copyright 2015 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2008, 2011-2012
+ *     The Board of Trustees of the Leland Stanford Junior University
  *
- * The authors hereby relinquish any claim to any copyright that they may have
- * in this work, whether granted under contract or by operation of law or
- * international treaty, and hereby commit to the public, at large, that they
- * shall not, at any time in the future, seek to enforce any copyright in this
- * work against any person or entity, or prevent any person or entity from
- * copying, publishing, distributing or creating derivative works of this
- * work.
+ * Copying and distribution of this file, with or without modification, are
+ * permitted in any medium without royalty provided the copyright notice and
+ * this notice are preserved.  This file is offered as-is, without any
+ * warranty.
+ *
+ * SPDX-License-Identifier: FSFAP
  */
 
 #ifndef PORTABLE_MACROS_H
@@ -24,9 +26,9 @@
  * (to avoid confusion with other macros).
  */
 #ifndef __attribute__
-# if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 7)
-#  define __attribute__(spec)   /* empty */
-# endif
+#    if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 7)
+#        define __attribute__(spec) /* empty */
+#    endif
 #endif
 
 /*
@@ -37,10 +39,10 @@
  * variadic macro support.
  */
 #if !defined(__attribute__) && !defined(__alloc_size__)
-# if (__GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 3)) \
-    && !defined(__clang__)
-#  define __alloc_size__(spec, args...) /* empty */
-# endif
+#    if (__GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 3)) \
+        && !defined(__clang__)
+#        define __alloc_size__(spec, args...) /* empty */
+#    endif
 #endif
 
 /*
@@ -50,7 +52,7 @@
  * compilation context, but there's no push and pop available.
  */
 #if !defined(__attribute__) && (defined(__llvm__) || defined(__clang__))
-# pragma GCC diagnostic ignored "-Wattributes"
+#    pragma GCC diagnostic ignored "-Wattributes"
 #endif
 
 /*
@@ -60,11 +62,11 @@
 #undef BEGIN_DECLS
 #undef END_DECLS
 #ifdef __cplusplus
-# define BEGIN_DECLS    extern "C" {
-# define END_DECLS      }
+#    define BEGIN_DECLS extern "C" {
+#    define END_DECLS   }
 #else
-# define BEGIN_DECLS    /* empty */
-# define END_DECLS      /* empty */
+#    define BEGIN_DECLS /* empty */
+#    define END_DECLS   /* empty */
 #endif
 
 #endif /* !PORTABLE_MACROS_H */

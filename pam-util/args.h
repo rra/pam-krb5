@@ -33,6 +33,8 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
+ *
+ * SPDX-License-Identifier: MIT
  */
 
 #ifndef PAM_UTIL_ARGS_H
@@ -40,7 +42,7 @@
 
 #include <config.h>
 #ifdef HAVE_KRB5
-# include <portable/krb5.h>
+#    include <portable/krb5.h>
 #endif
 #include <portable/pam.h>
 #include <portable/stdbool.h>
@@ -49,15 +51,15 @@
 struct pam_config;
 
 struct pam_args {
-    pam_handle_t *pamh;         /* Pointer back to the PAM handle. */
-    struct pam_config *config;  /* Per-module PAM configuration. */
-    bool debug;                 /* Log debugging information. */
-    bool silent;                /* Do not pass text to the application. */
-    const char *user;           /* User being authenticated. */
+    pam_handle_t *pamh;        /* Pointer back to the PAM handle. */
+    struct pam_config *config; /* Per-module PAM configuration. */
+    bool debug;                /* Log debugging information. */
+    bool silent;               /* Do not pass text to the application. */
+    const char *user;          /* User being authenticated. */
 
 #ifdef HAVE_KRB5
-    krb5_context ctx;           /* Context for Kerberos operations. */
-    char *realm;                /* Kerberos realm for configuration. */
+    krb5_context ctx; /* Context for Kerberos operations. */
+    char *realm;      /* Kerberos realm for configuration. */
 #endif
 };
 

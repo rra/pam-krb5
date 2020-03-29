@@ -1,6 +1,11 @@
-# pam-krb5 4.8
+# pam-krb5 4.9
 
-Copyright 2005-2010, 2014-2015, 2017 Russ Allbery <eagle@eyrie.org>.
+[![Build
+status](https://github.com/rra/pam-krb5/workflows/build/badge.svg)](https://github.com/rra/pam-krb5/actions)
+[![Debian
+package](https://img.shields.io/debian/v/libpam-krb5)](https://tracker.debian.org/pkg/libpam-krb5)
+
+Copyright 2005-2010, 2014-2015, 2017, 2020 Russ Allbery <eagle@eyrie.org>.
 Copyright 2009-2011 The Board of Trustees of the Leland Stanford Junior
 University.  Copyright 2005 Andres Salomon <dilinger@debian.org>.
 Copyright 1999-2000 Frank Cusack <fcusack@fcusack.com>.  This software is
@@ -52,20 +57,22 @@ not been tested with earlier versions.
 
 For PKINIT support, Heimdal 0.8rc1 or later or MIT Kerberos 1.6.3 or later
 are required.  Earlier MIT Kerberos 1.6 releases have a bug in their
-handling of PKINIT options.
+handling of PKINIT options.  MIT Kerberos 1.12 or later is required to use
+the use_pkinit PAM option.
 
 For FAST (Flexible Authentication Secure Tunneling) support, MIT Kerberos
 1.7 or higher is required.  For anonymous FAST support, anonymous
 authentication (generally anonymous PKINIT) support is required in both
 the Kerberos libraries and in the local KDC.
 
-This module should work on Linux and Solaris (and build with gcc, clang,
-or the Sun C compiler), but has been far more heavily tested on Linux.
-There is beta-quality support for the AIX NAS Kerberos implementation.
-Other PAM implementations will probably require some porting, although
-untested build system support is present for FreeBSD, Mac OS X, and HP-UX.
-I personally can only test on Linux and rely on others to report problems
-on other operating systems.
+This module should work on Linux and build with gcc or clang.  It may
+still work on Solaris and build with the Sun C compiler, but I have only
+tested it on Linux recently.  There is beta-quality support for the AIX
+NAS Kerberos implementation that has not been tested in years.  Other PAM
+implementations will probably require some porting, although untested
+build system support is present for FreeBSD, Mac OS X, and HP-UX.  I
+personally can only test on Linux and rely on others to report problems on
+other operating systems.
 
 Old versions of OpenSSH are known to call `pam_authenticate` followed by
 `pam_setcred(PAM_REINITIALIZE_CRED)` without first calling
@@ -153,7 +160,8 @@ path:
 
 Pass `--enable-silent-rules` to configure for a quieter build (similar to
 the Linux kernel).  Use `make warnings` instead of `make` to build with
-full GCC compiler warnings (requires a relatively current version of GCC).
+full GCC compiler warnings (requires either GCC or Clang and may require a
+relatively current version of the compiler).
 
 You can pass the `--enable-reduced-depends` flag to configure to try to
 minimize the shared library dependencies encoded in the binaries.  This
@@ -203,6 +211,15 @@ Several `module/expired` tests are expected to fail with Heimdal 1.5 due
 to a bug in Heimdal with reauthenticating immediately after a
 library-mediated password change of an expired password.  This is fixed in
 later releases of Heimdal.
+
+To run the full test suite, Perl 5.8 or later is required.  The following
+additional Perl modules will be used if present:
+
+* Test::Pod
+* Test::Spelling
+
+All are available on CPAN.  Those tests will be skipped if the modules are
+not available.
 
 ## Configuring
 
@@ -582,7 +599,7 @@ requests are gratefully reviewed and normally accepted.
 The pam-krb5 package as a whole is covered by the following copyright
 statement and license:
 
-> Copyright 2005-2010, 2014-2015, 2017
+> Copyright 2005-2010, 2014-2015, 2017, 2020
 >     Russ Allbery <eagle@eyrie.org>
 >
 > Copyright 2009-2011
@@ -631,6 +648,10 @@ licenses, all of which are compatible with the above general package
 license but which may require preservation of additional notices.  All
 required notices, and detailed information about the licensing of each
 file, are recorded in the LICENSE file.
+
+Files covered by a license with an assigned SPDX License Identifier
+include SPDX-License-Identifier tags to enable automated processing of
+license information.  See https://spdx.org/licenses/ for more information.
 
 For any copyright range specified by files in this package as YYYY-ZZZZ,
 the range specifies every single year in that closed interval.

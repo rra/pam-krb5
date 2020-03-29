@@ -12,7 +12,7 @@
  * The canonical version of this file is maintained in the rra-c-util package,
  * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
- * Copyright (C) 1985-2005 by the Massachusetts Institute of Technology.
+ * Copyright 1985-2005 by the Massachusetts Institute of Technology.
  * For license information, see the end of this file.
  */
 
@@ -218,7 +218,7 @@ krb5_appdefault_string(krb5_context context, const char *appname, const krb5_dat
  * 
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
- * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  * 
  * Individual source code files are copyright MIT, Cygnus Support,
  * OpenVision, Oracle, Sun Soft, FundsXpress, and others.
@@ -232,4 +232,6 @@ krb5_appdefault_string(krb5_context context, const char *appname, const krb5_dat
  * manner.  It does NOT prevent a commercial firm from referring to the
  * MIT trademarks in order to convey information (although in doing so,
  * recognition of their trademark status should be given).
+ *
+ * There is no SPDX-License-Identifier registered for this license.
  */

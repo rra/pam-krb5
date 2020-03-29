@@ -1,5 +1,53 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 4.9 (2020-03-30)
+
+    SECURITY: All previous versions of this module could overflow the
+    buffer provided by the underlying Kerberos library for the response to
+    a prompt by writing a single nul character past the end of the buffer.
+    (CVE-2020-10595)
+
+    Support use_pkinit with MIT Kerberos.  (Debian Bug#871699)
+
+    Reject passwords as long or longer than PAM_MAX_RESP_SIZE (normally
+    512 octets), since extremely long passwords can be used for a denial
+    of service attack via the Kerberos string to key function.  Thanks to
+    Florian Best for pointing out this issue and suggesting a good fix.
+
+    Use explicit_bzero instead of memset, where available, to overwrite
+    the memory used by PAM responses before freeing.  This reduces the
+    lifetime of passwords and other secrets in memory.
+
+    Return more accurate errors from the Kerberos prompter function if it
+    was unable to prompt for the password.  This may translate into better
+    debug log messages and, in some situations, returning the slightly
+    more accurate PAM_AUTHINFO_UNAVAIL instead of PAM_AUTH_ERR.
+
+    Fix an edge-case memory leak in pam_chauthtok when prompting for a new
+    password for an ignored user.
+
+    Ensure the module/basic test will run properly when the system
+    krb5.conf file does not specify a default realm.  Reported by TBK.
+
+    Update to rra-c-util 8.2:
+
+    * Fix support for configuring the test suite with a krb5.conf file.
+    * Drop support for Perl 5.6.
+    * Reformat all C source using clang-format 10.
+    * Remove bogus snprintf tests.
+    * Fix misplaced va_end in the pam-util putil_log_failure function.
+    * Skip checking for krb5-config on the path if a prefix was given.
+    * Add SPDX-License-Identifier headers to all substantial source files.
+
+    Update to C TAP Harness 4.6:
+
+    * Fixed malloc error checking in bstrndup.
+    * Fix (harmless) allocation error in runtests driver.
+    * Add support for valgrind testing via test list options.
+    * Report test failures as left and right, not wanted and seen.
+    * Fix is_string comparisons involving NULL pointers and "(null)".
+    * Add SPDX-License-Identifier headers to all substantial source files.
+
 pam-krb5 4.8 (2017-12-30)
 
     When verifying that an expired password can still be used to get
@@ -123,7 +171,7 @@ pam-krb5 4.6 (2012-06-02)
     Add a no_prompt option to suppress the PAM module's prompt for the
     user's password and defer all prompting to the Kerberos library.  This
     allows the Kerberos library to have complete control of the prompting
-    process, which may be desireable if authentication mechanisms other
+    process, which may be desirable if authentication mechanisms other
     than password are in use.  Be aware that, with this option set, the
     PAM module has no control over the contents of the prompt and cannot
     store the user's password in the PAM data.  Based on a patch by Yair
@@ -496,6 +544,7 @@ pam-krb5 3.13 (2009-02-11)
     different Kerberos configuration under the attacker's control,
     possibly resulting in privilege escalation.  Heimdal handles this
     logic within the Kerberos libraries and therefore was not affected.
+    (CVE-2009-0360)
 
     SECURITY: Disable pam_setcred(PAM_REINITIALIZE_CREDS) for setuid
     applications.  If pam_krb5 detects this call in a setuid context, it
@@ -508,7 +557,7 @@ pam-krb5 3.13 (2009-02-11)
     Kerberos credential caches that were left owned by the attacker.
     Setuid screen lock programs may also be affected.  Discovered by Derek
     Chan and reported by Steven Luo.  Thanks to Sam Hartman and Jeffrey
-    Hutzelman for additional analysis.
+    Hutzelman for additional analysis.  (CVE-2009-0361)
 
     If a prefix of /usr is requested at configure time, install the PAM
     module into /lib/security or /lib64/security on Linux, matching the

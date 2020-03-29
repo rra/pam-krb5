@@ -1,17 +1,16 @@
 dnl Autoconf configuration for pam-krb5.
 dnl
 dnl Written by Russ Allbery <eagle@eyrie.org>
-dnl Copyright 2005, 2006, 2007, 2008, 2009, 2014, 2017
-dnl     Russ Allbery <eagle@eyrie.org>
-dnl Copyright 2009, 2010, 2011, 2012, 2013
+dnl Copyright 2005-2009, 2014, 2017, 2020 Russ Allbery <eagle@eyrie.org>
+dnl Copyright 2009-2013
 dnl     The Board of Trustees of the Leland Stanford Junior University
 dnl Copyright 2005 Andres Salomon <dilinger@debian.org>
-dnl Copyright 1999, 2000 Frank Cusack <fcusack@fcusack.com>
+dnl Copyright 1999-2000 Frank Cusack <fcusack@fcusack.com>
 dnl
-dnl See LICENSE for licensing terms.
+dnl SPDX-License-Identifier: BSD-3-clause or GPL-1+
 
 AC_PREREQ([2.64])
-AC_INIT([pam-krb5], [4.8], [eagle@eyrie.org])
+AC_INIT([pam-krb5], [4.9], [eagle@eyrie.org])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_LIBOBJ_DIR([portable])
 AC_CONFIG_MACRO_DIR([m4])
@@ -33,6 +32,15 @@ AC_PROG_INSTALL
 LT_INIT([disable-static])
 AC_CANONICAL_HOST
 RRA_LD_VERSION_SCRIPT
+
+dnl Only used for the test suite.
+AC_ARG_VAR([PATH_OPENSSL], [Path to openssl for the test suite])
+AC_PATH_PROG([PATH_OPENSSL], [openssl])
+AS_IF([test x"$PATH_OPENSSL" != x],
+    [AC_DEFINE_UNQUOTED([PATH_OPENSSL], ["$PATH_OPENSSL"],
+        [Define to the full path to openssl for some tests.])])
+AC_ARG_VAR([PATH_VALGRIND], [Path to valgrind for the test suite])
+AC_PATH_PROG([PATH_VALGRIND], [valgrind])
 
 dnl Probe for the functionality of the PAM libraries and their include file
 dnl naming.  Mac OS X puts them in pam/* instead of security/*.
@@ -73,6 +81,7 @@ AC_CHECK_FUNCS([krb5_cc_get_full_name \
     krb5_get_init_creds_opt_set_fast_ccache_name \
     krb5_get_init_creds_opt_set_out_ccache \
     krb5_get_init_creds_opt_set_pa \
+    krb5_get_prompt_types \
     krb5_init_secure_context \
     krb5_principal_get_realm \
     krb5_principal_set_comp_string \
@@ -110,6 +119,7 @@ AC_TYPE_LONG_LONG_INT
 AC_CHECK_TYPES([ssize_t], [], [],
     [#include <sys/types.h>])
 RRA_FUNC_SNPRINTF
+AC_CHECK_FUNCS([explicit_bzero])
 AC_REPLACE_FUNCS([asprintf issetugid mkstemp reallocarray strndup])
 
 dnl Try to specify the binding so that any references within the PAM module

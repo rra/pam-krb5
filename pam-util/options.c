@@ -9,7 +9,8 @@
  * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
- * Copyright 2006, 2007, 2008, 2010, 2011, 2013, 2014
+ * Copyright 2020 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2006-2008, 2010-2011, 2013-2014
  *     The Board of Trustees of the Leland Stanford Junior University
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -29,11 +30,13 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
+ *
+ * SPDX-License-Identifier: MIT
  */
 
 #include <config.h>
 #ifdef HAVE_KRB5
-# include <portable/krb5.h>
+#    include <portable/krb5.h>
 #endif
 #include <portable/system.h>
 
@@ -52,20 +55,24 @@
  * offset into a pointer to the appropriate type.  Scary violations of the C
  * type system lurk here.
  */
+/* clang-format off */
 #define CONF_BOOL(c, o)   (bool *)          (void *)((char *) (c) + (o))
 #define CONF_NUMBER(c, o) (long *)          (void *)((char *) (c) + (o))
 #define CONF_STRING(c, o) (char **)         (void *)((char *) (c) + (o))
 #define CONF_LIST(c, o)   (struct vector **)(void *)((char *) (c) + (o))
+/* clang-format on */
 
 /*
  * We can only process times properly if we have Kerberos.  If not, they fall
  * back to longs and we convert them as numbers.
  */
+/* clang-format off */
 #ifdef HAVE_KRB5
-# define CONF_TIME(c, o) (krb5_deltat *)(void *)((char *) (c) + (o))
+#    define CONF_TIME(c, o) (krb5_deltat *)(void *)((char *) (c) + (o))
 #else
-# define CONF_TIME(c, o) (long *)       (void *)((char *) (c) + (o))
+#    define CONF_TIME(c, o) (long *)       (void *)((char *) (c) + (o))
 #endif
+/* clang-format on */
 
 
 /*
@@ -201,9 +208,9 @@ default_boolean(struct pam_args *args, const char *section, const char *realm,
                 const char *opt, bool *result)
 {
     int tmp;
-#ifdef HAVE_KRB5_REALM
+#    ifdef HAVE_KRB5_REALM
     krb5_const_realm rdata = realm;
-#else
+#    else
     krb5_data realm_struct;
     const krb5_data *rdata;
 
@@ -215,7 +222,7 @@ default_boolean(struct pam_args *args, const char *section, const char *realm,
         realm_struct.data = (void *) realm;
         realm_struct.length = (unsigned int) strlen(realm);
     }
-#endif
+#    endif
 
     /*
      * The MIT version of krb5_appdefault_boolean takes an int * and the
@@ -240,9 +247,9 @@ default_number(struct pam_args *args, const char *section, const char *realm,
     char *tmp = NULL;
     char *end;
     long value;
-#ifdef HAVE_KRB5_REALM
+#    ifdef HAVE_KRB5_REALM
     krb5_const_realm rdata = realm;
-#else
+#    else
     krb5_data realm_struct;
     const krb5_data *rdata;
 
@@ -254,7 +261,7 @@ default_number(struct pam_args *args, const char *section, const char *realm,
         realm_struct.data = (void *) realm;
         realm_struct.length = (unsigned int) strlen(realm);
     }
-#endif
+#    endif
 
     krb5_appdefault_string(args->ctx, section, rdata, opt, "", &tmp);
     if (tmp != NULL && tmp[0] != '\0') {
@@ -283,9 +290,9 @@ default_time(struct pam_args *args, const char *section, const char *realm,
     char *tmp = NULL;
     krb5_deltat value;
     krb5_error_code retval;
-#ifdef HAVE_KRB5_REALM
+#    ifdef HAVE_KRB5_REALM
     krb5_const_realm rdata = realm;
-#else
+#    else
     krb5_data realm_struct;
     const krb5_data *rdata;
 
@@ -297,7 +304,7 @@ default_time(struct pam_args *args, const char *section, const char *realm,
         realm_struct.data = (void *) realm;
         realm_struct.length = (unsigned int) strlen(realm);
     }
-#endif
+#    endif
 
     krb5_appdefault_string(args->ctx, section, rdata, opt, "", &tmp);
     if (tmp != NULL && tmp[0] != '\0') {
@@ -327,9 +334,9 @@ default_string(struct pam_args *args, const char *section, const char *realm,
                const char *opt, char **result)
 {
     char *value = NULL;
-#ifdef HAVE_KRB5_REALM
+#    ifdef HAVE_KRB5_REALM
     krb5_const_realm rdata = realm;
-#else
+#    else
     krb5_data realm_struct;
     const krb5_data *rdata;
 
@@ -341,7 +348,7 @@ default_string(struct pam_args *args, const char *section, const char *realm,
         realm_struct.data = (void *) realm;
         realm_struct.length = (unsigned int) strlen(realm);
     }
-#endif
+#    endif
 
     krb5_appdefault_string(args->ctx, section, rdata, opt, "", &value);
     if (value != NULL) {
@@ -486,7 +493,7 @@ option_compare(const void *key, const void *member)
     if (p == NULL)
         return strcmp(string, option->name);
     else {
-        length = (size_t) (p - string);
+        length = (size_t)(p - string);
         if (length == 0)
             return -1;
         result = strncmp(string, option->name, length);
@@ -513,6 +520,7 @@ convert_boolean(struct pam_args *args, const char *arg, bool *setting)
         *setting = true;
     else {
         value++;
+        /* clang-format off */
         if      (   strcasecmp(value, "true") == 0
                  || strcasecmp(value, "yes")  == 0
                  || strcasecmp(value, "on")   == 0
@@ -525,6 +533,7 @@ convert_boolean(struct pam_args *args, const char *arg, bool *setting)
             *setting = false;
         else
             putil_err(args, "invalid boolean in setting: %s", arg);
+        /* clang-format on */
     }
 }
 

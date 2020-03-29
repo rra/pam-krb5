@@ -7,11 +7,11 @@
  * created (so without setuid and with chown doing nothing).
  *
  * Written by Russ Allbery <eagle@eyrie.org>
- * Copyright 2017 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2017, 2020 Russ Allbery <eagle@eyrie.org>
  * Copyright 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *
- * See LICENSE for licensing terms.
+ * SPDX-License-Identifier: BSD-3-clause or GPL-1+
  */
 
 #include <config.h>
@@ -83,18 +83,18 @@ check_cache(pam_handle_t *pamh, const struct script_config *config, void *data)
     is_string(config->extra[0], principal, "...and matches our principal");
 
     /* Retrieve the krbtgt for the realm and check properties. */
-    code = krb5_build_principal_ext(ctx, &tgtprinc,
-               (unsigned int) strlen(extra->realm), extra->realm,
-               KRB5_TGS_NAME_SIZE, KRB5_TGS_NAME,
-               strlen(extra->realm), extra->realm, NULL);
+    code = krb5_build_principal_ext(
+        ctx, &tgtprinc, (unsigned int) strlen(extra->realm), extra->realm,
+        KRB5_TGS_NAME_SIZE, KRB5_TGS_NAME, strlen(extra->realm), extra->realm,
+        NULL);
     if (code != 0)
         bail("cannot create krbtgt principal name");
     memset(&in, 0, sizeof(in));
     memset(&out, 0, sizeof(out));
     in.server = tgtprinc;
     in.client = princ;
-    code = krb5_cc_retrieve_cred(ctx, ccache, KRB5_TC_MATCH_SRV_NAMEONLY,
-                                 &in, &out);
+    code = krb5_cc_retrieve_cred(ctx, ccache, KRB5_TC_MATCH_SRV_NAMEONLY, &in,
+                                 &out);
     is_int(0, code, "able to get krbtgt credentials");
     ok(out.times.endtime > time(NULL) + 30 * 60, "...good for 30 minutes");
     krb5_free_cred_contents(ctx, &out);
@@ -149,6 +149,7 @@ main(void)
 
     /* Change the authenticating user and test search_k5login. */
     pwd.pw_name = (char *) "testuser";
+    pam_set_pwd(&pwd);
     config.user = "testuser";
     basprintf(&k5login, "%s/.k5login", pwd.pw_dir);
     file = fopen(k5login, "w");
@@ -166,6 +167,7 @@ main(void)
 
     /* Test search_k5login when no .k5login file exists. */
     pwd.pw_name = krbconf->username;
+    pam_set_pwd(&pwd);
     config.user = krbconf->username;
     diag("testing search_k5login with no .k5login file");
     run_script("data/scripts/cache/search-k5login", &config);
