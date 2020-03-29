@@ -39,8 +39,9 @@ int
 pamk5_map_principal(struct pam_args *args, const char *username,
                     char **principal)
 {
-    char *user = NULL;
     char *realm;
+    char *new_user = NULL;
+    const char *user;
     const char *p;
     size_t needed, offset;
     int oerrno;
@@ -52,16 +53,17 @@ pamk5_map_principal(struct pam_args *args, const char *username,
     /* Need to split off the realm if it is present. */
     realm = strchr(username, '@');
     if (realm == NULL)
-        user = (char *) username;
+        user = username;
     else {
-        user = strdup(username);
-        if (user == NULL)
+        new_user = strdup(username);
+        if (new_user == NULL)
             return errno;
-        realm = strchr(user, '@');
+        realm = strchr(new_user, '@');
         if (realm == NULL)
             goto fail;
         *realm = '\0';
         realm++;
+        user = new_user;
     }
 
     /* Now, allocate a string and build the principal. */
@@ -98,14 +100,13 @@ pamk5_map_principal(struct pam_args *args, const char *username,
         offset += strlen(realm);
     }
     (*principal)[offset] = '\0';
-    if (user != username)
-        free(user);
+    free(new_user);
     return 0;
 
 fail:
-    if (user != NULL && user != username) {
+    if (new_user != NULL) {
         oerrno = errno;
-        free(user);
+        free(new_user);
         errno = oerrno;
     }
     return errno;

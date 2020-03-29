@@ -16,6 +16,7 @@
 
 #include <config.h>
 #include <portable/krb5.h>
+#include <portable/pam.h>
 #include <portable/system.h>
 
 #include <pwd.h>
@@ -26,8 +27,22 @@
 #include <tests/fakepam/script.h>
 #include <tests/tap/basic.h>
 #include <tests/tap/kerberos.h>
+#include <tests/tap/macros.h>
 #include <tests/tap/process.h>
 #include <tests/tap/string.h>
+
+
+static void
+check_authtok(pam_handle_t *pamh, const struct script_config *config,
+              void *data UNUSED)
+{
+    int retval;
+    const char *authtok;
+
+    retval = pam_get_item(pamh, PAM_AUTHTOK, (PAM_CONST void **) &authtok);
+    is_int(PAM_SUCCESS, retval, "Found PAM_AUTHTOK");
+    is_string(config->newpass, authtok, "...and it is correct");
+}
 
 
 int
@@ -119,6 +134,18 @@ main(void)
     config.authtok = krbconf->password;
     config.oldauthtok = newpass;
     run_script("data/scripts/password/authtok-force", &config);
+
+    /*
+     * Ensure PAM_AUTHTOK and PAM_OLDAUTHTOK are set even if the user is
+     * ignored.
+     */
+    config.user = "root";
+    config.authtok = NULL;
+    config.oldauthtok = NULL;
+    config.password = "old-password";
+    config.newpass = "new-password";
+    config.callback = check_authtok;
+    run_script("data/scripts/password/ignore", &config);
 
     free(newpass);
     return 0;

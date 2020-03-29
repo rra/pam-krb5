@@ -98,11 +98,17 @@ pamk5_password_prompt(struct pam_args *args, char **pass)
         if (pamret != PAM_SUCCESS) {
             putil_err_pam(args, pamret, "error storing password");
             pamret = PAM_AUTHTOK_ERR;
+            explicit_bzero(pass1, strlen(pass1));
+            free(pass1);
             goto done;
         }
     }
     if (pass != NULL)
         *pass = pass1;
+    else {
+        explicit_bzero(pass1, strlen(pass1));
+        free(pass1);
+    }
 
 done:
     return pamret;

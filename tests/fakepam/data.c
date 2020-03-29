@@ -9,7 +9,7 @@
  * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
- * Copyright 2017 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2017, 2020 Russ Allbery <eagle@eyrie.org>
  * Copyright 2010-2011, 2014
  *     The Board of Trustees of the Leland Stanford Junior University
  *
@@ -334,8 +334,10 @@ pam_putenv(pam_handle_t *pamh, const char *setting)
         if (delete)
             return PAM_BAD_ITEM;
         env = reallocarray(pamh->environ, (i + 2), sizeof(char *));
-        if (env == NULL)
+        if (env == NULL) {
+            free(copy);
             return PAM_BUF_ERR;
+        }
         pamh->environ = env;
         pamh->environ[i] = copy;
         pamh->environ[i + 1] = NULL;

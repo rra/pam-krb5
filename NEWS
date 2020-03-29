@@ -23,6 +23,9 @@ pam-krb5 4.9 (2020-03-30)
     debug log messages and, in some situations, returning the slightly
     more accurate PAM_AUTHINFO_UNAVAIL instead of PAM_AUTH_ERR.
 
+    Fix an edge-case memory leak in pam_chauthtok when prompting for a new
+    password for an ignored user.
+
     Ensure the module/basic test will run properly when the system
     krb5.conf file does not specify a default realm.  Reported by TBK.
 
