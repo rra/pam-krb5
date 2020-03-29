@@ -1,11 +1,11 @@
-# pam-krb5 4.8
+# pam-krb5 4.9
 
 [![Build
 status](https://github.com/rra/pam-krb5/workflows/build/badge.svg)](https://github.com/rra/pam-krb5/actions)
 [![Debian
 package](https://img.shields.io/debian/v/libpam-krb5)](https://tracker.debian.org/pkg/libpam-krb5)
 
-Copyright 2005-2010, 2014-2015, 2017 Russ Allbery <eagle@eyrie.org>.
+Copyright 2005-2010, 2014-2015, 2017, 2020 Russ Allbery <eagle@eyrie.org>.
 Copyright 2009-2011 The Board of Trustees of the Leland Stanford Junior
 University.  Copyright 2005 Andres Salomon <dilinger@debian.org>.
 Copyright 1999-2000 Frank Cusack <fcusack@fcusack.com>.  This software is
@@ -599,7 +599,7 @@ requests are gratefully reviewed and normally accepted.
 The pam-krb5 package as a whole is covered by the following copyright
 statement and license:
 
-> Copyright 2005-2010, 2014-2015, 2017
+> Copyright 2005-2010, 2014-2015, 2017, 2020
 >     Russ Allbery <eagle@eyrie.org>
 >
 > Copyright 2009-2011

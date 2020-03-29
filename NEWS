@@ -1,6 +1,6 @@
                       User-Visible pam-krb5 Changes
 
-pam-krb5 4.9 (unreleased)
+pam-krb5 4.9 (2020-03-30)
 
     SECURITY: All previous versions of this module could overflow the
     buffer provided by the underlying Kerberos library for the response to

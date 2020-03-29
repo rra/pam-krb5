@@ -1,12 +1,12 @@
 {
     "name": "pam-krb5",
-    "version": "4.8",
+    "version": "4.9",
     "synopsis": "PAM module for Kerberos authentication",
     "maintainer": "Russ Allbery <eagle@eyrie.org>",
     "copyrights": [
         {
             "holder": "Russ Allbery <eagle@eyrie.org>",
-            "years": "2005-2010, 2014-2015, 2017",
+            "years": "2005-2010, 2014-2015, 2017, 2020",
         },
         {
             "holder": "The Board of Trustees of the Leland Stanford Junior University",

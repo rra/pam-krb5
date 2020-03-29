@@ -9,31 +9,48 @@ Comment: This file documents the copyright statements and licenses for
 Files: *
 Copyright: 1999-2000 Frank Cusack <fcusack@fcusack.com>
   2005 Andres Salomon <dilinger@debian.org>
-  2005-2010, 2014-2015, 2017 Russ Allbery <eagle@eyrie.org>
+  2005-2010, 2014-2015, 2017, 2020 Russ Allbery <eagle@eyrie.org>
   2008-2014 The Board of Trustees of the Leland Stanford Junior University
 License: BSD-3-clause or GPL-1+
 
+Files: .clang-format docs/pam_krb5.5 docs/pam_krb5.pod pam-util/vector.c
+ pam-util/vector.h portable/asprintf.c portable/dummy.c
+ portable/issetugid.c portable/kadmin.h portable/krb5-extra.c
+ portable/krb5.h portable/macros.h portable/mkstemp.c portable/pam.h
+ portable/pam_syslog.c portable/pam_vsyslog.c portable/reallocarray.c
+ portable/stdbool.h portable/strndup.c portable/system.h tests/README
+ tests/TESTS tests/config/README tests/data/cppcheck.supp
+ tests/fakepam/README tests/pam-util/vector-t.c tests/portable/asprintf-t.c
+ tests/portable/mkstemp-t.c tests/portable/strndup-t.c
+Copyright: 2005-2012, 2014-2020 Russ Allbery <eagle@eyrie.org>
+  2006-2014 The Board of Trustees of the Leland Stanford Junior University
+License: all-permissive
+ Copying and distribution of this file, with or without modification, are
+ permitted in any medium without royalty provided the copyright notice and
+ this notice are preserved.  This file is offered as-is, without any
+ warranty.
+
 Files: Makefile.in
-Copyright: 1994-2017 Free Software Foundation, Inc.
+Copyright: 1994-2018 Free Software Foundation, Inc.
   1999-2000 Frank Cusack <fcusack@fcusack.com>
   2005 Andres Salomon <dilinger@debian.org>
-  2005-2007, 2014, 2017 Russ Allbery <eagle@eyrie.org>
+  2005-2007, 2014, 2017, 2020 Russ Allbery <eagle@eyrie.org>
   2009, 2011-2012
     The Board of Trustees of the Leland Stanford Junior University
 License: FSF-unlimited, and BSD-3-clause or GPL-1+
 
 Files: aclocal.m4 m4/ltoptions.m4 m4/ltsugar.m4 m4/ltversion.m4
  m4/lt~obsolete.m4
-Copyright: 1996-2017 Free Software Foundation, Inc.
+Copyright: 1996-2018 Free Software Foundation, Inc.
 License: FSF-unlimited
 
 Files: build-aux/ar-lib build-aux/compile build-aux/depcomp
  build-aux/missing
-Copyright: 1996-2017 Free Software Foundation, Inc.
+Copyright: 1996-2018 Free Software Foundation, Inc.
 License: GPL-2+ with Autoconf exception or BSD-3-clause or GPL-1+
 
 Files: build-aux/config.guess build-aux/config.sub
-Copyright: 1992-2017 Free Software Foundation, Inc.
+Copyright: 1992-2018 Free Software Foundation, Inc.
 License: GPL-3+ with Autoconf exception or BSD-3-clause or GPL-1+
 
 Files: build-aux/install-sh
@@ -67,59 +84,22 @@ Files: build-aux/ltmain.sh
 Copyright: 1996-2015 Free Software Foundation, Inc.
 License: GPL-2+ with Libtool exception or BSD-3-clause or GPL-1+, and GPL-3+ with Libtool exception or BSD-3-clause or GPL-1+, and GPL-3+
 
-Files: configure
-Copyright: 1992-1996, 1998-2012, 2014 Free Software Foundation, Inc.
-License: FSF-configure, and GPL-2+ with Libtool exception or BSD-3-clause or GPL-1+
-
-Files: m4/cc-flags.m4
-Copyright: 2006, 2009, 2016 Internet Systems Consortium, Inc.
-  2016-2017 Russ Allbery <eagle@eyrie.org>
-License: ISC
- Permission to use, copy, modify, and distribute this software for any
- purpose with or without fee is hereby granted, provided that the above
- copyright notice and this permission notice appear in all copies.
- .
- THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
- REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY
- SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-
-Files: m4/clang.m4 m4/kadm5clnt.m4 m4/krb5-config.m4 m4/krb5.m4
- m4/ld-version.m4 m4/lib-depends.m4 m4/lib-helper.m4 m4/lib-pathname.m4
- m4/pam-const.m4 m4/snprintf.m4
-Copyright: 2005-2014
-    The Board of Trustees of the Leland Stanford Junior University
-  2007, 2015 Russ Allbery <eagle@eyrie.org>
-  2007-2008 Markus Moeller
-  2008-2010 Free Software Foundation, Inc.
-License: unlimited
- This file is free software; the authors give unlimited permission to copy
- and/or distribute it, with or without modifications, as long as this
- notice is preserved.
-
-Files: m4/libtool.m4
-Copyright: 1996-2001, 2003-2015 Free Software Foundation, Inc.
-License: FSF-unlimited, and GPL-2+ with Libtool exception or BSD-3-clause or GPL-1+
-
-Files: pam-util/args.c pam-util/args.h pam-util/logging.c
- pam-util/logging.h pam-util/options.c pam-util/options.h
- tests/data/generate-krb5-conf tests/data/valgrind.supp
- tests/docs/pod-spelling-t tests/docs/pod-t tests/docs/urls-t
- tests/fakepam/config.c tests/fakepam/data.c tests/fakepam/general.c
- tests/fakepam/internal.h tests/fakepam/kuserok.c tests/fakepam/logging.c
- tests/fakepam/pam.h tests/fakepam/script.c tests/fakepam/script.h
- tests/pam-util/args-t.c tests/pam-util/fakepam-t.c
+Files: ci/install ci/kdc-setup-heimdal ci/kdc-setup-mit ci/test
+ pam-util/args.c pam-util/args.h pam-util/logging.c pam-util/logging.h
+ pam-util/options.c pam-util/options.h tests/data/generate-krb5-conf
+ tests/data/valgrind.supp tests/docs/pod-spelling-t tests/docs/pod-t
+ tests/docs/spdx-license-t tests/fakepam/config.c tests/fakepam/data.c
+ tests/fakepam/general.c tests/fakepam/internal.h tests/fakepam/kuserok.c
+ tests/fakepam/logging.c tests/fakepam/pam.h tests/fakepam/script.c
+ tests/fakepam/script.h tests/pam-util/args-t.c tests/pam-util/fakepam-t.c
  tests/pam-util/logging-t.c tests/pam-util/options-t.c tests/runtests.c
- tests/tap/basic.c tests/tap/basic.h tests/tap/kadmin.c tests/tap/kadmin.h
- tests/tap/kerberos.c tests/tap/kerberos.h tests/tap/libtap.sh
- tests/tap/macros.h tests/tap/perl/Test/RRA.pm
- tests/tap/perl/Test/RRA/Automake.pm tests/tap/perl/Test/RRA/Config.pm
- tests/tap/process.c tests/tap/process.h tests/tap/string.c
- tests/tap/string.h
-Copyright: 2000-2002, 2004-2017 Russ Allbery <eagle@eyrie.org>
+ tests/style/obsolete-strings-t tests/tap/basic.c tests/tap/basic.h
+ tests/tap/kadmin.c tests/tap/kadmin.h tests/tap/kerberos.c
+ tests/tap/kerberos.h tests/tap/libtap.sh tests/tap/macros.h
+ tests/tap/perl/Test/RRA.pm tests/tap/perl/Test/RRA/Automake.pm
+ tests/tap/perl/Test/RRA/Config.pm tests/tap/process.c tests/tap/process.h
+ tests/tap/string.c tests/tap/string.h tests/valgrind/logs-t
+Copyright: 2000-2002, 2004-2020 Russ Allbery <eagle@eyrie.org>
   2001-2002, 2004-2014
     The Board of Trustees of the Leland Stanford Junior University
 License: Expat
@@ -142,31 +122,42 @@ License: Expat
  OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
  THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-Files: pam-util/vector.c pam-util/vector.h portable/asprintf.c
- portable/dummy.c portable/issetugid.c portable/kadmin.h
- portable/krb5-extra.c portable/krb5.h portable/macros.h portable/mkstemp.c
- portable/pam.h portable/pam_syslog.c portable/pam_vsyslog.c
- portable/reallocarray.c portable/stdbool.h portable/strndup.c
- portable/system.h tests/pam-util/vector-t.c tests/portable/asprintf-t.c
- tests/portable/mkstemp-t.c tests/portable/strndup-t.c
-Copyright: no copyright notice, see License below
-License: rra-public-domain
- The authors hereby relinquish any claim to any copyright that they may
- have in this work, whether granted under contract or by operation of law
- or international treaty, and hereby commit to the public, at large, that
- they shall not, at any time in the future, seek to enforce any copyright
- in this work against any person or entity, or prevent any person or
- entity from copying, publishing, distributing or creating derivative
- works of this work.
+Files: configure
+Copyright: 1992-1996, 1998-2012, 2014 Free Software Foundation, Inc.
+License: FSF-configure, and GPL-2+ with Libtool exception or BSD-3-clause or GPL-1+
 
-Files: pam_krb5.5 pam_krb5.pod
-Copyright: 2005-2010, 2014 Russ Allbery <eagle@eyrie.org>
-  2008-2014 The Board of Trustees of the Leland Stanford Junior University
-License: all-permissive
- Copying and distribution of this file, with or without modification, are
- permitted in any medium without royalty provided the copyright notice and
- this notice are preserved.  This file is offered as-is, without any
- warranty.
+Files: m4/cc-flags.m4
+Copyright: 2006, 2009, 2016 Internet Systems Consortium, Inc.
+  2016-2020 Russ Allbery <eagle@eyrie.org>
+License: ISC
+ Permission to use, copy, modify, and distribute this software for any
+ purpose with or without fee is hereby granted, provided that the above
+ copyright notice and this permission notice appear in all copies.
+ .
+ THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY
+ SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+Files: m4/clang.m4 m4/kadm5clnt.m4 m4/krb5-config.m4 m4/krb5-pkinit.m4
+ m4/krb5.m4 m4/ld-version.m4 m4/lib-depends.m4 m4/lib-helper.m4
+ m4/lib-pathname.m4 m4/pam-const.m4 m4/snprintf.m4
+Copyright: 2005-2014
+    The Board of Trustees of the Leland Stanford Junior University
+  2007, 2015, 2018, 2020 Russ Allbery <eagle@eyrie.org>
+  2007-2008 Markus Moeller
+  2008-2010 Free Software Foundation, Inc.
+License: unlimited
+ This file is free software; the authors give unlimited permission to copy
+ and/or distribute it, with or without modifications, as long as this
+ notice is preserved.
+
+Files: m4/libtool.m4
+Copyright: 1996-2001, 2003-2015 Free Software Foundation, Inc.
+License: FSF-unlimited, and GPL-2+ with Libtool exception or BSD-3-clause or GPL-1+
 
 Files: portable/krb5-profile.c
 Copyright: 1985-2005 the Massachusetts Institute of Technology
@@ -192,7 +183,7 @@ License: MIT-Kerberos
  .
  THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
  IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
- WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  .
  Individual source code files are copyright MIT, Cygnus Support,
  OpenVision, Oracle, Sun Soft, FundsXpress, and others.
@@ -209,7 +200,7 @@ License: MIT-Kerberos
 
 Files: portable/snprintf.c tests/portable/snprintf-t.c
 Copyright: 1995 Patrick Powell
-  2000-2006 Russ Allbery <eagle@eyrie.org>
+  2000-2006, 2018-2020 Russ Allbery <eagle@eyrie.org>
   2001 Hrvoje Niksic
   2009-2010 The Board of Trustees of the Leland Stanford Junior University
 License: Powell-snprintf
@@ -276,7 +267,7 @@ License: GPL-2+ with Autoconf exception
  Public License for more details.
  .
  You should have received a copy of the GNU General Public License along
- with this program.  If not, see <http://www.gnu.org/licenses/>.
+ with this program.  If not, see <https://www.gnu.org/licenses/>.
  .
  As a special exception to the GNU General Public License, if you
  distribute this file as part of a program that contains a configuration
@@ -330,7 +321,7 @@ License: GPL-3+ with Autoconf exception
  Public License for more details.
  .
  You should have received a copy of the GNU General Public License along
- with this program; if not, see <http://www.gnu.org/licenses/>.
+ with this program; if not, see <https://www.gnu.org/licenses/>.
  .
  As a special exception to the GNU General Public License, if you
  distribute this file as part of a program that contains a configuration
