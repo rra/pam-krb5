@@ -16,15 +16,22 @@
 #include <config.h>
 #include <portable/system.h>
 
+#include <pwd.h>
+
+#include <tests/fakepam/pam.h>
 #include <tests/fakepam/script.h>
 #include <tests/tap/basic.h>
 #include <tests/tap/kerberos.h>
+#include <tests/tap/string.h>
 
 
 int
 main(void)
 {
     struct script_config config;
+    struct passwd pwd;
+    char *uid;
+    char *uidplus;
 
     plan_lazy();
 
@@ -34,11 +41,27 @@ main(void)
      */
     kerberos_generate_conf("bogus.example.com");
 
-    /* Attempt login as the root user to test ignore_root. */
+    /* Create a fake passwd struct for our user. */
+    memset(&pwd, 0, sizeof(pwd));
+    pwd.pw_name = (char *) "root";
+    pwd.pw_uid = getuid();
+    pwd.pw_gid = getgid();
+    pam_set_pwd(&pwd);
+
+    /*
+     * Attempt login as the root user to test ignore_root.  Set our current
+     * UID and a UID one larger for testing minimum_uid.
+     */
+    basprintf(&uid, "%lu", (unsigned long) pwd.pw_uid);
+    basprintf(&uidplus, "%lu", (unsigned long) pwd.pw_uid + 1);
     memset(&config, 0, sizeof(config));
     config.user = "root";
+    config.extra[0] = uid;
+    config.extra[1] = uidplus;
 
     run_script_dir("data/scripts/basic", &config);
 
+    free(uid);
+    free(uidplus);
     return 0;
 }
