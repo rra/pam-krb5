@@ -9,6 +9,8 @@ libpam-krb5 (4.9-1) unstable; urgency=high
     - Use explicit_bzero to erase passwords before freeing.
     - Return more accurate errors from the Kerberos prompter function.
     - Fix an edge-case memory leak in pam_chauthtok.
+  * Update to debhelper compatibility level V12.
+    - Depend on debhelper-compat instead of debhelper.
 
  -- Russ Allbery <rra@debian.org>  Sun, 29 Mar 2020 12:58:24 -0700
 

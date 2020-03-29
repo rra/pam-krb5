@@ -6,7 +6,7 @@ Uploaders:
  Sam Hartman <hartmans@debian.org>,
 Standards-Version: 4.2.1
 Build-Depends:
- debhelper (>= 11),
+ debhelper-compat (= 12),
  heimdal-multidev,
  krb5-config,
  krb5-multidev,
