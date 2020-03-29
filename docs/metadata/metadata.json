@@ -70,6 +70,11 @@
     },
     "advisories": [
         {
+            "date": "2020-03-30",
+            "versions": "4.8 and earlier",
+            "threshold": "4.9",
+        },
+        {
             "date": "2009-02-11",
             "versions": "3.12 and earlier",
             "threshold": "3.13",
