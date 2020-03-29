@@ -25,6 +25,17 @@
 # define vsnprintf test_vsnprintf
 #endif
 
+/*
+ * __attribute__ is available in gcc 2.5 and later, but only with gcc 2.7
+ * could you use the __format__ form of the attributes, which is what we use
+ * (to avoid confusion with other macros).
+ */
+#ifndef __attribute__
+#    if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 7)
+#        define __attribute__(spec) /* empty */
+#    endif
+#endif
+
 /* Specific to rra-c-util, but only when debugging is enabled. */
 #ifdef DEBUG_SNPRINTF
 # include <util/messages.h>
@@ -366,7 +377,7 @@ static int dopr (char *buffer, size_t maxlen, const char *format, va_list args)
 	break;
       case 'X':
 	flags |= DP_F_UP;
-        /* fallthrough */
+        __attribute__((fallthrough));
       case 'x':
 	flags |= DP_F_UNSIGNED;
 	if (cflags == DP_C_SHORT)
@@ -388,7 +399,7 @@ static int dopr (char *buffer, size_t maxlen, const char *format, va_list args)
 	break;
       case 'E':
 	flags |= DP_F_UP;
-        /* fallthrough */
+        __attribute__((fallthrough));
       case 'e':
 	if (cflags == DP_C_LDOUBLE)
 	  fvalue = va_arg (args, LDOUBLE);
@@ -398,7 +409,7 @@ static int dopr (char *buffer, size_t maxlen, const char *format, va_list args)
 	break;
       case 'G':
 	flags |= DP_F_UP;
-        /* fallthrough */
+        __attribute__((fallthrough));
       case 'g':
         flags |= DP_F_FP_G;
 	if (cflags == DP_C_LDOUBLE)
