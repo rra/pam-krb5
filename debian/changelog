@@ -14,7 +14,7 @@ libpam-krb5 (4.9-1) unstable; urgency=high
   * Update standards version to 4.5.0 (no changes required).
   * Refresh upstream signing key.
 
- -- Russ Allbery <rra@debian.org>  Sun, 29 Mar 2020 12:58:24 -0700
+ -- Russ Allbery <rra@debian.org>  Mon, 30 Mar 2020 19:46:43 -0700
 
 libpam-krb5 (4.8-2) unstable; urgency=medium
 
