@@ -221,6 +221,13 @@ additional Perl modules will be used if present:
 All are available on CPAN.  Those tests will be skipped if the modules are
 not available.
 
+To enable tests that don't detect functionality problems but are used to
+sanity-check the release, set the environment variable `RELEASE_TESTING`
+to a true value.  To enable tests that may be sensitive to the local
+environment or that produce a lot of false positives without uncovering
+many problems, set the environment variable `AUTHOR_TESTING` to a true
+value.
+
 ## Configuring
 
 Just installing the module does not enable it or change anything about
