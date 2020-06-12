@@ -354,7 +354,7 @@ password_auth(struct pam_args *args, krb5_creds *creds,
 
     /* Do the authentication. */
     retval = krb5_get_init_creds_password(ctx->context, creds, ctx->princ,
-                                          (char *) pass, pamk5_prompter_krb5,
+                                          (char *) pass, NULL,
                                           args, 0, (char *) service, opts);
 
     /*
