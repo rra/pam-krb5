@@ -1,5 +1,13 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 4.10 (unreleased)
+
+    When re-retrieving the authenticated principal from the current cache,
+    ensure the stored principal in the authentication context is always
+    either valid or NULL.  Otherwise, a failure of krb5_cc_get_principal
+    could result in a double free.  Thanks to Michael Muehle for the
+    report.
+
 pam-krb5 4.9 (2020-03-30)
 
     SECURITY: All previous versions of this module could overflow the
