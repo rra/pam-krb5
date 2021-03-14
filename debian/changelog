@@ -1,3 +1,10 @@
+libpam-krb5 (4.9-2) unstable; urgency=medium
+
+  * Apply upstream patch to avoid a double free if calling
+    krb5_cc_get_principal on the new cache fails.
+
+ -- Russ Allbery <rra@debian.org>  Sun, 14 Mar 2021 12:31:39 -0700
+
 libpam-krb5 (4.9-1) unstable; urgency=high
 
   * New upstream release.
