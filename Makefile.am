@@ -69,10 +69,10 @@ MAINTAINERCLEANFILES = Makefile.in aclocal.m4 build-aux/compile		 \
 # Separate target for a human to request building everything with as many
 # compiler warnings enabled as possible.
 warnings:
-	$(MAKE) V=0 CFLAGS='$(WARNINGS_CFLAGS) $(AM_CFLAGS)' \
-	    KRB5_CPPFLAGS='$(KRB5_CPPFLAGS_GCC)'
-	$(MAKE) V=0 CFLAGS='$(WARNINGS_CFLAGS) $(AM_CFLAGS)' \
-	    KRB5_CPPFLAGS='$(KRB5_CPPFLAGS_GCC)' $(check_PROGRAMS)
+	$(MAKE) V=0 AM_CFLAGS='$(WARNINGS_CFLAGS) $(AM_CFLAGS)' \
+	    KRB5_CPPFLAGS='$(KRB5_CPPFLAGS_WARNINGS)'
+	$(MAKE) V=0 AM_CFLAGS='$(WARNINGS_CFLAGS) $(AM_CFLAGS)' \
+	    KRB5_CPPFLAGS='$(KRB5_CPPFLAGS_WARNINGS)' $(check_PROGRAMS)
 
 # The bits below are for the test suite, not for the main package.
 check_PROGRAMS = tests/runtests tests/module/alt-auth-t			    \
