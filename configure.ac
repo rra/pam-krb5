@@ -1,7 +1,7 @@
 dnl Autoconf configuration for pam-krb5.
 dnl
 dnl Written by Russ Allbery <eagle@eyrie.org>
-dnl Copyright 2005-2009, 2014, 2017, 2020 Russ Allbery <eagle@eyrie.org>
+dnl Copyright 2005-2009, 2014, 2017, 2020-2021 Russ Allbery <eagle@eyrie.org>
 dnl Copyright 2009-2013
 dnl     The Board of Trustees of the Leland Stanford Junior University
 dnl Copyright 2005 Andres Salomon <dilinger@debian.org>
@@ -114,11 +114,10 @@ AC_CHECK_HEADER([regex.h], [AC_CHECK_FUNCS([regcomp])])
 dnl Other probes of the system libraries.
 AC_HEADER_STDBOOL
 AC_CHECK_HEADERS([strings.h sys/bittypes.h sys/select.h sys/time.h])
-AC_CHECK_DECLS([snprintf, vsnprintf])
+AC_CHECK_DECLS([reallocarray])
 AC_TYPE_LONG_LONG_INT
 AC_CHECK_TYPES([ssize_t], [], [],
     [#include <sys/types.h>])
-RRA_FUNC_SNPRINTF
 AC_CHECK_FUNCS([explicit_bzero])
 AC_REPLACE_FUNCS([asprintf issetugid mkstemp reallocarray strndup])
 

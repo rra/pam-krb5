@@ -1,7 +1,7 @@
 # Automake makefile for pam-krb5.
 #
 # Written by Russ Allbery <eagle@eyrie.org>
-# Copyright 2005-2007, 2014, 2017, 2020 Russ Allbery <eagle@eyrie.org>
+# Copyright 2005-2007, 2014, 2017, 2020-2021 Russ Allbery <eagle@eyrie.org>
 # Copyright 2009, 2011-2012
 #     The Board of Trustees of the Leland Stanford Junior University
 # Copyright 2005 Andres Salomon <dilinger@debian.org>
@@ -85,7 +85,7 @@ check_PROGRAMS = tests/runtests tests/module/alt-auth-t			    \
 	tests/pam-util/fakepam-t tests/pam-util/logging-t		    \
 	tests/pam-util/options-t tests/pam-util/vector-t		    \
 	tests/portable/asprintf-t tests/portable/mkstemp-t		    \
-	tests/portable/snprintf-t tests/portable/strndup-t
+	tests/portable/strndup-t
 tests_runtests_CPPFLAGS = -DC_TAP_SOURCE='"$(abs_top_srcdir)/tests"' \
 	-DC_TAP_BUILD='"$(abs_top_builddir)/tests"'
 check_LIBRARIES = tests/fakepam/libfakepam.a tests/tap/libtap.a
@@ -162,9 +162,6 @@ tests_portable_asprintf_t_LDADD = tests/tap/libtap.a portable/libportable.la
 tests_portable_mkstemp_t_SOURCES = tests/portable/mkstemp-t.c \
 	tests/portable/mkstemp.c
 tests_portable_mkstemp_t_LDADD = tests/tap/libtap.a portable/libportable.la
-tests_portable_snprintf_t_SOURCES = tests/portable/snprintf-t.c \
-	tests/portable/snprintf.c
-tests_portable_snprintf_t_LDADD = tests/tap/libtap.a portable/libportable.la
 tests_portable_strndup_t_SOURCES = tests/portable/strndup-t.c \
 	tests/portable/strndup.c
 tests_portable_strndup_t_LDADD = tests/tap/libtap.a portable/libportable.la
@@ -199,5 +196,5 @@ check-valgrind: $(check_PROGRAMS)
 # Used by maintainers to reformat all source code using clang-format and
 # excluding some files.
 reformat:
-	find . -name '*.[ch]' \! -name snprintf.c \! -name krb5-profile.c \
-	     -print | xargs clang-format-10 -style=file -i
+	find . -name '*.[ch]' \! -name krb5-profile.c -print \
+	    | xargs clang-format -style=file -i

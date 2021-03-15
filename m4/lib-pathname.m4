@@ -16,6 +16,7 @@ dnl The canonical version of this file is maintained in the rra-c-util
 dnl package, available at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
 dnl
 dnl Written by Russ Allbery <eagle@eyrie.org>
+dnl Copyright 2021 Russ Allbery <eagle@eyrie.org>
 dnl Copyright 2008-2009
 dnl     The Board of Trustees of the Leland Stanford Junior University
 dnl
@@ -53,7 +54,7 @@ AC_DEFUN([RRA_SET_LDFLAGS],
     [AS_IF([test x"$3" = x],
         [$1="[$]$1 -L$2/lib"],
         [$1="[$]$1 -L$2/lib/$3"])])
- $1=`echo "[$]$1" | sed -e 's/^ *//'`])
+ $1=`AS_ECHO(["[$]$1"]) | sed -e 's/^ *//'`])
 
 dnl Set libdir to PREFIX/lib{,32,64} as appropriate.
 AC_DEFUN([RRA_SET_LIBDIR],
