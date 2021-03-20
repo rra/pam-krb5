@@ -12,6 +12,7 @@ libpam-krb5 (4.10-1) UNRELEASED; urgency=medium
     complains about the abuse of "or" and the way the licenses are
     structured.
   * Update to debhelper compat level V13.
+  * Update to standards version 4.5.1 (no changes required).
   * Refresh upstream signing key.
 
  -- Russ Allbery <rra@debian.org>  Sat, 20 Mar 2021 12:49:22 -0700
