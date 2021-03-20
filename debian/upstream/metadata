@@ -1,0 +1,8 @@
+Name: pam-krb5
+Contact: Russ Allbery <eagle@eyrie.org>
+Documentation: https://www.eyrie.org/~eagle/software/pam-krb5/
+Bug-Database: https://github.com/rra/pam-krb5/issues
+Bug-Submit: https://github.com/rra/remctl/pam-krb5/new
+Changelog: https://www.eyrie.org/~eagle/software/pam-krb5/news.html
+Repository: https://git.eyrie.org/git/kerberos/pam-krb5.git
+Repository-Browse: https://git.eyrie.org/?p=kerberos/pam-krb5.git
