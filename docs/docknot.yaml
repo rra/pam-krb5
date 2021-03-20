@@ -15,7 +15,7 @@ format: v1
 
 name: pam-krb5
 maintainer: Russ Allbery <eagle@eyrie.org>
-version: '4.9'
+version: '4.10'
 synopsis: PAM module for Kerberos authentication
 
 license:

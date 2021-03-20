@@ -1,6 +1,6 @@
                       User-Visible pam-krb5 Changes
 
-pam-krb5 4.10 (unreleased)
+pam-krb5 4.10 (2021-03-20)
 
     When re-retrieving the authenticated principal from the current cache,
     ensure the stored principal in the authentication context is always

@@ -17,7 +17,7 @@ EXTRA_DIST = .clang-format .gitignore .github LICENSE README.md bootstrap   \
 	ci/files/mit/extensions.client ci/files/mit/extensions.kdc	    \
 	ci/files/mit/kadm5.acl ci/files/mit/kdc.conf ci/files/mit/krb5.conf \
 	ci/kdc-setup-heimdal ci/kdc-setup-mit ci/install ci/test	    \
-	docs/metadata docs/pam_krb5.pod module/pam_krb5.map		    \
+	docs/docknot.yaml docs/pam_krb5.pod module/pam_krb5.map		    \
 	module/pam_krb5.sym tests/README tests/TESTS tests/config/README    \
 	tests/data/cppcheck.supp tests/data/generate-krb5-conf		    \
 	tests/data/krb5-pam.conf tests/data/krb5.conf tests/data/perl.conf  \
