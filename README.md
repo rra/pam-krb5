@@ -1,16 +1,17 @@
-# pam-krb5 4.9
+# pam-krb5
 
 [![Build
 status](https://github.com/rra/pam-krb5/workflows/build/badge.svg)](https://github.com/rra/pam-krb5/actions)
 [![Debian
-package](https://img.shields.io/debian/v/libpam-krb5)](https://tracker.debian.org/pkg/libpam-krb5)
+package](https://img.shields.io/debian/v/libpam-krb5/unstable)](https://tracker.debian.org/pkg/libpam-krb5)
 
-Copyright 2005-2010, 2014-2015, 2017, 2020 Russ Allbery <eagle@eyrie.org>.
-Copyright 2009-2011 The Board of Trustees of the Leland Stanford Junior
-University.  Copyright 2005 Andres Salomon <dilinger@debian.org>.
-Copyright 1999-2000 Frank Cusack <fcusack@fcusack.com>.  This software is
-distributed under a BSD-style license.  Please see the section
-[License](#license) below for more information.
+Copyright 2005-2010, 2014-2015, 2017, 2020-2021 Russ Allbery
+<eagle@eyrie.org>.  Copyright 2009-2011 The Board of Trustees of the
+Leland Stanford Junior University.  Copyright 2005 Andres Salomon
+<dilinger@debian.org>.  Copyright 1999-2000 Frank Cusack
+<fcusack@fcusack.com>.  This software is distributed under a BSD-style
+license.  Please see the section [License](#license) below for more
+information.
 
 ## Blurb
 
@@ -144,11 +145,11 @@ you need to specify a different Kerberos installation root via
 
 You can also individually set the paths to the include directory and the
 library directory with `--with-krb5-include` and `--with-krb5-lib`.  You
-may need to do this if Autoconf can't figure out whether to use lib,
-lib32, or lib64 on your platform.
+may need to do this if Autoconf can't figure out whether to use `lib`,
+`lib32`, or `lib64` on your platform.
 
-To not use krb5-config and force library probing even if there is a
-krb5-config script on your path, set PATH_KRB5_CONFIG to a nonexistent
+To not use `krb5-config` and force library probing even if there is a
+`krb5-config` script on your path, set `PATH_KRB5_CONFIG` to a nonexistent
 path:
 
 ```
@@ -606,7 +607,7 @@ requests are gratefully reviewed and normally accepted.
 The pam-krb5 package as a whole is covered by the following copyright
 statement and license:
 
-> Copyright 2005-2010, 2014-2015, 2017, 2020
+> Copyright 2005-2010, 2014-2015, 2017, 2020-2021
 >     Russ Allbery <eagle@eyrie.org>
 >
 > Copyright 2009-2011

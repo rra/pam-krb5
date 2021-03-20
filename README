@@ -2,7 +2,7 @@
                  (PAM module for Kerberos authentication)
                Maintained by Russ Allbery <eagle@eyrie.org>
 
-  Copyright 2005-2010, 2014-2015, 2017, 2020 Russ Allbery
+  Copyright 2005-2010, 2014-2015, 2017, 2020-2021 Russ Allbery
   <eagle@eyrie.org>.  Copyright 2009-2011 The Board of Trustees of the
   Leland Stanford Junior University.  Copyright 2005 Andres Salomon
   <dilinger@debian.org>.  Copyright 1999-2000 Frank Cusack
@@ -584,7 +584,7 @@ LICENSE
   The pam-krb5 package as a whole is covered by the following copyright
   statement and license:
 
-    Copyright 2005-2010, 2014-2015, 2017, 2020
+    Copyright 2005-2010, 2014-2015, 2017, 2020-2021
         Russ Allbery <eagle@eyrie.org>
     Copyright 2009-2011
         The Board of Trustees of the Leland Stanford Junior University
@@ -601,10 +601,12 @@ LICENSE
 
     2. Redistributions in binary form must reproduce the above copyright
        notice, this list of conditions and the following disclaimer in the
-       documentation and/or other materials provided with the distribution.
+       documentation and/or other materials provided with the
+       distribution.
 
-    3. The name of the author may not be used to endorse or promote products
-       derived from this software without specific prior written permission.
+    3. The name of the author may not be used to endorse or promote
+       products derived from this software without specific prior written
+       permission.
 
     ALTERNATIVELY, this product may be distributed under the terms of the
     GNU General Public License, in which case the provisions of the GPL

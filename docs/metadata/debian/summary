@@ -1,4 +1,0 @@
-Debian packages are available from Debian in Debian 4.0 (etch) and later
-releases as libpam-krb5 and libpam-heimdal.  The former packages are built
-against the MIT Kerberos libraries and the latter against the Heimdal
-libraries.
