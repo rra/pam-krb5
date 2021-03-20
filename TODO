@@ -41,10 +41,6 @@ Functionality:
 
  * Support authentication from a keytab.
 
- * The PAM module currently supports several options that duplicate
-   standard configuration settings for the Kerberos library.  Deprecate
-   the ones where this appears to serve no useful purpose.
-
  * Support disabling of user canonicalization so that the PAM user is
    retained even if the module did an aname to lname mapping.
 

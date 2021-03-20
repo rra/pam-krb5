@@ -41,7 +41,6 @@ pam-util/options        valgrind
 pam-util/vector         valgrind
 portable/asprintf       valgrind
 portable/mkstemp        valgrind
-portable/snprintf       valgrind
 portable/strndup        valgrind
 style/obsolete-strings
 valgrind/logs

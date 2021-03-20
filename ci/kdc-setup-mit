@@ -30,7 +30,7 @@ cp ci/files/mit/krb5.conf /etc/krb5.conf
 # the test to hang.
 cat <<EOF >>/etc/krb5.conf
 [domain_realm]
-    $(hostname -f) = HEIMDAL.TEST
+    $(hostname -f) = MIT.TEST
 EOF
 
 # Create the basic KDC.

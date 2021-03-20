@@ -31,7 +31,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-use 5.008;
+use 5.010;
 use strict;
 use warnings;
 
@@ -51,6 +51,8 @@ my @IGNORE = (
     qr{ \A (NEWS|THANKS|TODO) \z }xms,  # Package license should be fine
     qr{ \A README ( [.] .* )? \z }xms,  # Package license should be fine
     qr{ \A (Makefile|libtool) \z }xms,  # Generated file
+    qr{ [.] l?a \z }xms,                # Created by libtool
+    qr{ [.] o \z }xms,                  # Compiler objects
     qr{ [.] output \z }xms,             # Test data
 );
 my @IGNORE_PATHS = (
@@ -74,8 +76,7 @@ my @IGNORE_PATHS = (
     qr{ \A php/run-tests [.] php \z }xms,      # Created by phpize
     qr{ \A python/ .* [.] egg-info/ }xms,      # Python build files
     qr{ \A tests/config/ (?!README) }xms,      # Test configuration
-    qr{ [.] l?a \z }xms,                       # Created by libtool
-    qr{ [.] o \z }xms,                         # Compiler objects
+    qr{ \A tests/tmp/ }xms,                    # Temporary test files
 );
 ## use critic
 

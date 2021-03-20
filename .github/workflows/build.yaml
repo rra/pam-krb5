@@ -2,8 +2,11 @@ name: build
 
 on:
   push:
-    branches:
-      - "*"
+    branches-ignore:
+      - "debian/**"
+      - "pristine-tar"
+      - "ubuntu/**"
+      - "upstream/**"
     tags:
       - "release/*"
   pull_request:
