@@ -1,5 +1,6 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Contact: Russ Allbery <eagle@eyrie.org>
+Upstream-Name: pam-krb5
 Source: https://www.eyrie.org/~eagle/software/pam-krb5/
 Copyright: 1999-2000 Frank Cusack <fcusack@fcusack.com>
   2005 Andres Salomon <dilinger@debian.org>
