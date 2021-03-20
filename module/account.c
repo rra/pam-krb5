@@ -5,7 +5,7 @@
  * user's authorization against .k5login (or whatever equivalent we've been
  * configured for).
  *
- * Copyright 2005-2009, 2014, 2020 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2005-2009, 2014, 2020-2021 Russ Allbery <eagle@eyrie.org>
  * Copyright 2011
  *     The Board of Trustees of the Leland Stanford Junior University
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
@@ -78,8 +78,10 @@ pamk5_account(struct pam_args *args)
      */
     if (ctx->cache != NULL) {
         putil_debug(args, "retrieving principal from cache");
-        if (ctx->princ != NULL)
+        if (ctx->princ != NULL) {
             krb5_free_principal(ctx->context, ctx->princ);
+            ctx->princ = NULL;
+        }
         retval = krb5_cc_get_principal(ctx->context, ctx->cache, &ctx->princ);
         if (retval != 0) {
             putil_err_krb5(args, retval, "cannot get principal from cache");

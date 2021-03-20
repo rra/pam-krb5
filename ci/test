@@ -16,8 +16,7 @@ set -eux
 COMPILER="${COMPILER:-gcc}"
 KERBEROS="${KERBEROS:-mit}"
 
-# Build everything.  Only use warnings when not building with C++, since the
-# probe for warning flags currently doesn't work properly for g++.
+# Build everything.
 ./bootstrap
 if [ "$KERBEROS" = 'heimdal' ]; then
     ./configure CC="$COMPILER" PATH_KRB5_CONFIG=/usr/bin/krb5-config.heimdal

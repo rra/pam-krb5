@@ -133,21 +133,13 @@ extern int asprintf(char **, const char *, ...)
 extern int vasprintf(char **, const char *, va_list)
     __attribute__((__format__(printf, 2, 0)));
 #endif
-#if !HAVE_DECL_SNPRINTF
-extern int snprintf(char *, size_t, const char *, ...)
-    __attribute__((__format__(printf, 3, 4)));
-#endif
-#if !HAVE_DECL_VSNPRINTF
-extern int vsnprintf(char *, size_t, const char *, va_list)
-    __attribute__((__format__(printf, 3, 0)));
-#endif
 #if !HAVE_ISSETUGID
 extern int issetugid(void);
 #endif
 #if !HAVE_MKSTEMP
 extern int mkstemp(char *);
 #endif
-#if !HAVE_REALLOCARRAY
+#if !HAVE_DECL_REALLOCARRAY
 extern void *reallocarray(void *, size_t, size_t);
 #endif
 #if !HAVE_STRNDUP

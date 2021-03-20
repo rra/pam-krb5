@@ -1,7 +1,7 @@
 # Automake makefile for pam-krb5.
 #
 # Written by Russ Allbery <eagle@eyrie.org>
-# Copyright 2005-2007, 2014, 2017, 2020 Russ Allbery <eagle@eyrie.org>
+# Copyright 2005-2007, 2014, 2017, 2020-2021 Russ Allbery <eagle@eyrie.org>
 # Copyright 2009, 2011-2012
 #     The Board of Trustees of the Leland Stanford Junior University
 # Copyright 2005 Andres Salomon <dilinger@debian.org>
@@ -17,7 +17,7 @@ EXTRA_DIST = .clang-format .gitignore .github LICENSE README.md bootstrap   \
 	ci/files/mit/extensions.client ci/files/mit/extensions.kdc	    \
 	ci/files/mit/kadm5.acl ci/files/mit/kdc.conf ci/files/mit/krb5.conf \
 	ci/kdc-setup-heimdal ci/kdc-setup-mit ci/install ci/test	    \
-	docs/metadata docs/pam_krb5.pod module/pam_krb5.map		    \
+	docs/docknot.yaml docs/pam_krb5.pod module/pam_krb5.map		    \
 	module/pam_krb5.sym tests/README tests/TESTS tests/config/README    \
 	tests/data/cppcheck.supp tests/data/generate-krb5-conf		    \
 	tests/data/krb5-pam.conf tests/data/krb5.conf tests/data/perl.conf  \
@@ -69,10 +69,10 @@ MAINTAINERCLEANFILES = Makefile.in aclocal.m4 build-aux/compile		 \
 # Separate target for a human to request building everything with as many
 # compiler warnings enabled as possible.
 warnings:
-	$(MAKE) V=0 CFLAGS='$(WARNINGS_CFLAGS) $(AM_CFLAGS)' \
-	    KRB5_CPPFLAGS='$(KRB5_CPPFLAGS_GCC)'
-	$(MAKE) V=0 CFLAGS='$(WARNINGS_CFLAGS) $(AM_CFLAGS)' \
-	    KRB5_CPPFLAGS='$(KRB5_CPPFLAGS_GCC)' $(check_PROGRAMS)
+	$(MAKE) V=0 AM_CFLAGS='$(WARNINGS_CFLAGS) $(AM_CFLAGS)' \
+	    KRB5_CPPFLAGS='$(KRB5_CPPFLAGS_WARNINGS)'
+	$(MAKE) V=0 AM_CFLAGS='$(WARNINGS_CFLAGS) $(AM_CFLAGS)' \
+	    KRB5_CPPFLAGS='$(KRB5_CPPFLAGS_WARNINGS)' $(check_PROGRAMS)
 
 # The bits below are for the test suite, not for the main package.
 check_PROGRAMS = tests/runtests tests/module/alt-auth-t			    \
@@ -85,7 +85,7 @@ check_PROGRAMS = tests/runtests tests/module/alt-auth-t			    \
 	tests/pam-util/fakepam-t tests/pam-util/logging-t		    \
 	tests/pam-util/options-t tests/pam-util/vector-t		    \
 	tests/portable/asprintf-t tests/portable/mkstemp-t		    \
-	tests/portable/snprintf-t tests/portable/strndup-t
+	tests/portable/strndup-t
 tests_runtests_CPPFLAGS = -DC_TAP_SOURCE='"$(abs_top_srcdir)/tests"' \
 	-DC_TAP_BUILD='"$(abs_top_builddir)/tests"'
 check_LIBRARIES = tests/fakepam/libfakepam.a tests/tap/libtap.a
@@ -162,9 +162,6 @@ tests_portable_asprintf_t_LDADD = tests/tap/libtap.a portable/libportable.la
 tests_portable_mkstemp_t_SOURCES = tests/portable/mkstemp-t.c \
 	tests/portable/mkstemp.c
 tests_portable_mkstemp_t_LDADD = tests/tap/libtap.a portable/libportable.la
-tests_portable_snprintf_t_SOURCES = tests/portable/snprintf-t.c \
-	tests/portable/snprintf.c
-tests_portable_snprintf_t_LDADD = tests/tap/libtap.a portable/libportable.la
 tests_portable_strndup_t_SOURCES = tests/portable/strndup-t.c \
 	tests/portable/strndup.c
 tests_portable_strndup_t_LDADD = tests/tap/libtap.a portable/libportable.la
@@ -199,5 +196,5 @@ check-valgrind: $(check_PROGRAMS)
 # Used by maintainers to reformat all source code using clang-format and
 # excluding some files.
 reformat:
-	find . -name '*.[ch]' \! -name snprintf.c \! -name krb5-profile.c \
-	     -print | xargs clang-format-10 -style=file -i
+	find . -name '*.[ch]' \! -name krb5-profile.c -print \
+	    | xargs clang-format -style=file -i

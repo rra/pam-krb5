@@ -1,5 +1,24 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 4.10 (2021-03-20)
+
+    When re-retrieving the authenticated principal from the current cache,
+    ensure the stored principal in the authentication context is always
+    either valid or NULL.  Otherwise, a failure of krb5_cc_get_principal
+    could result in a double free.  Thanks to Michael Muehle for the
+    report.
+
+    Update to rra-c-util 9.0:
+
+    * Check that at least one Kerberos header file was found and works.
+    * Use AS_ECHO in all Autoconf macros in preference to echo.
+    * Fix portability of reallocarray on NetBSD systems.
+    * Stop providing a replacement for a broken snprintf.
+
+    Update to C TAP Harness 4.7:
+
+    * Fix warnings with GCC 10.
+
 pam-krb5 4.9 (2020-03-30)
 
     SECURITY: All previous versions of this module could overflow the
