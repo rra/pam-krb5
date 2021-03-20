@@ -1,4 +1,4 @@
-libpam-krb5 (4.10-1) UNRELEASED; urgency=medium
+libpam-krb5 (4.10-1) experimental; urgency=medium
 
   * New upstream release.
     - Incorporate patch to avoid double free if krb5_cc_get_principal
@@ -15,7 +15,7 @@ libpam-krb5 (4.10-1) UNRELEASED; urgency=medium
   * Update to standards version 4.5.1 (no changes required).
   * Refresh upstream signing key.
 
- -- Russ Allbery <rra@debian.org>  Sat, 20 Mar 2021 12:49:22 -0700
+ -- Russ Allbery <rra@debian.org>  Sat, 20 Mar 2021 13:07:17 -0700
 
 libpam-krb5 (4.9-2) unstable; urgency=medium
 
