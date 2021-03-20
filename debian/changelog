@@ -6,6 +6,11 @@ libpam-krb5 (4.10-1) UNRELEASED; urgency=medium
   * Change the default Debian package branch to debian/unstable.
   * Remove the now-unnecessary branch configuration in Vcs-Git.
   * Add debian/upstream/metadata.
+  * Represent the weird license of this package with a new identifier,
+    BSD-3-clause-or-GPL-1+, rather than trying to use a proper disjunction
+    of Debian copyright-format identifiers, since Lintian (rightfully)
+    complains about the abuse of "or" and the way the licenses are
+    structured.
   * Refresh upstream signing key.
 
  -- Russ Allbery <rra@debian.org>  Sat, 20 Mar 2021 12:49:22 -0700

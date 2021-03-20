@@ -3,17 +3,17 @@ Upstream-Contact: Russ Allbery <eagle@eyrie.org>
 Source: https://www.eyrie.org/~eagle/software/pam-krb5/
 Copyright: 1999-2000 Frank Cusack <fcusack@fcusack.com>
   2005 Andres Salomon <dilinger@debian.org>
-  2005-2010, 2014-2015, 2017, 2020 Russ Allbery <eagle@eyrie.org>
+  2005-2010, 2014-2015, 2017, 2020-2021 Russ Allbery <eagle@eyrie.org>
   2008-2014
     The Board of Trustees of the Leland Stanford Junior University
-License: BSD-3-clause or GPL-1+
+License: BSD-3-clause-or-GPL-1+
 
 Files: *
 Copyright: 1999-2000 Frank Cusack <fcusack@fcusack.com>
   2005 Andres Salomon <dilinger@debian.org>
-  2005-2010, 2014-2015, 2017, 2020 Russ Allbery <eagle@eyrie.org>
+  2005-2010, 2014-2015, 2017, 2020-2021 Russ Allbery <eagle@eyrie.org>
   2008-2014 The Board of Trustees of the Leland Stanford Junior University
-License: BSD-3-clause or GPL-1+
+License: BSD-3-clause-or-GPL-1+
 Comment: You can find the GPL version 1 in /usr/share/common-licenses/GPL-1
  on Debian systems.
 
@@ -26,7 +26,7 @@ Files: .clang-format docs/pam_krb5.5 docs/pam_krb5.pod pam-util/vector.c
  tests/TESTS tests/config/README tests/data/cppcheck.supp
  tests/fakepam/README tests/pam-util/vector-t.c tests/portable/asprintf-t.c
  tests/portable/mkstemp-t.c tests/portable/strndup-t.c
-Copyright: 2005-2012, 2014-2020 Russ Allbery <eagle@eyrie.org>
+Copyright: 2005-2012, 2014-2021 Russ Allbery <eagle@eyrie.org>
   2006-2014 The Board of Trustees of the Leland Stanford Junior University
 License: all-permissive
  Copying and distribution of this file, with or without modification, are
@@ -35,27 +35,27 @@ License: all-permissive
  warranty.
 
 Files: Makefile.in
-Copyright: 1994-2018 Free Software Foundation, Inc.
+Copyright: 1994-2020 Free Software Foundation, Inc.
   1999-2000 Frank Cusack <fcusack@fcusack.com>
   2005 Andres Salomon <dilinger@debian.org>
-  2005-2007, 2014, 2017, 2020 Russ Allbery <eagle@eyrie.org>
+  2005-2007, 2014, 2017, 2020-2021 Russ Allbery <eagle@eyrie.org>
   2009, 2011-2012
     The Board of Trustees of the Leland Stanford Junior University
-License: FSF-unlimited, and BSD-3-clause or GPL-1+
+License: FSF-unlimited, and BSD-3-clause-or-GPL-1+
 
 Files: aclocal.m4 m4/ltoptions.m4 m4/ltsugar.m4 m4/ltversion.m4
  m4/lt~obsolete.m4
-Copyright: 1996-2018 Free Software Foundation, Inc.
+Copyright: 1996-2020 Free Software Foundation, Inc.
 License: FSF-unlimited
 
 Files: build-aux/ar-lib build-aux/compile build-aux/depcomp
  build-aux/missing
-Copyright: 1996-2018 Free Software Foundation, Inc.
-License: GPL-2+ with Autoconf exception or BSD-3-clause or GPL-1+
+Copyright: 1996-2020 Free Software Foundation, Inc.
+License: GPL-2+ with Autoconf exception or BSD-3-clause-or-GPL-1+
 
 Files: build-aux/config.guess build-aux/config.sub
 Copyright: 1992-2018 Free Software Foundation, Inc.
-License: GPL-3+ with Autoconf exception or BSD-3-clause or GPL-1+
+License: GPL-3+ with Autoconf exception or BSD-3-clause-or-GPL-1+
 
 Files: build-aux/install-sh
 Copyright: 1994 X Consortium
@@ -86,7 +86,7 @@ License: X11
 
 Files: build-aux/ltmain.sh
 Copyright: 1996-2015 Free Software Foundation, Inc.
-License: GPL-2+ with Libtool exception or BSD-3-clause or GPL-1+, and GPL-3+ with Libtool exception or BSD-3-clause or GPL-1+, and GPL-3+
+License: GPL-2+ with Libtool exception or BSD-3-clause-or-GPL-1+, and GPL-3+ with Libtool exception or BSD-3-clause-or-GPL-1+, and GPL-3+
 
 Files: ci/install ci/kdc-setup-heimdal ci/kdc-setup-mit ci/test
  pam-util/args.c pam-util/args.h pam-util/logging.c pam-util/logging.h
@@ -103,7 +103,7 @@ Files: ci/install ci/kdc-setup-heimdal ci/kdc-setup-mit ci/test
  tests/tap/perl/Test/RRA.pm tests/tap/perl/Test/RRA/Automake.pm
  tests/tap/perl/Test/RRA/Config.pm tests/tap/process.c tests/tap/process.h
  tests/tap/string.c tests/tap/string.h tests/valgrind/logs-t
-Copyright: 2000-2002, 2004-2020 Russ Allbery <eagle@eyrie.org>
+Copyright: 2000-2002, 2004-2021 Russ Allbery <eagle@eyrie.org>
   2001-2002, 2004-2014
     The Board of Trustees of the Leland Stanford Junior University
 License: Expat
@@ -128,11 +128,11 @@ License: Expat
 
 Files: configure
 Copyright: 1992-1996, 1998-2012, 2014 Free Software Foundation, Inc.
-License: FSF-configure, and GPL-2+ with Libtool exception or BSD-3-clause or GPL-1+
+License: FSF-configure, and GPL-2+ with Libtool exception or BSD-3-clause-or-GPL-1+
 
 Files: m4/cc-flags.m4
 Copyright: 2006, 2009, 2016 Internet Systems Consortium, Inc.
-  2016-2020 Russ Allbery <eagle@eyrie.org>
+  2016-2021 Russ Allbery <eagle@eyrie.org>
 License: ISC
  Permission to use, copy, modify, and distribute this software for any
  purpose with or without fee is hereby granted, provided that the above
@@ -148,10 +148,10 @@ License: ISC
 
 Files: m4/clang.m4 m4/kadm5clnt.m4 m4/krb5-config.m4 m4/krb5-pkinit.m4
  m4/krb5.m4 m4/ld-version.m4 m4/lib-depends.m4 m4/lib-helper.m4
- m4/lib-pathname.m4 m4/pam-const.m4 m4/snprintf.m4
+ m4/lib-pathname.m4 m4/pam-const.m4
 Copyright: 2005-2014
     The Board of Trustees of the Leland Stanford Junior University
-  2007, 2015, 2018, 2020 Russ Allbery <eagle@eyrie.org>
+  2007, 2015, 2018, 2020-2021 Russ Allbery <eagle@eyrie.org>
   2007-2008 Markus Moeller
   2008-2010 Free Software Foundation, Inc.
 License: unlimited
@@ -161,7 +161,7 @@ License: unlimited
 
 Files: m4/libtool.m4
 Copyright: 1996-2001, 2003-2015 Free Software Foundation, Inc.
-License: FSF-unlimited, and GPL-2+ with Libtool exception or BSD-3-clause or GPL-1+
+License: FSF-unlimited, and GPL-2+ with Libtool exception or BSD-3-clause-or-GPL-1+
 
 Files: portable/krb5-profile.c
 Copyright: 1985-2005 the Massachusetts Institute of Technology
@@ -202,17 +202,7 @@ License: MIT-Kerberos
  MIT trademarks in order to convey information (although in doing so,
  recognition of their trademark status should be given).
 
-Files: portable/snprintf.c tests/portable/snprintf-t.c
-Copyright: 1995 Patrick Powell
-  2000-2006, 2018-2020 Russ Allbery <eagle@eyrie.org>
-  2001 Hrvoje Niksic
-  2009-2010 The Board of Trustees of the Leland Stanford Junior University
-License: Powell-snprintf
- This code is based on code written by Patrick Powell (papowell@astart.com)
- It may be used for any purpose as long as this notice remains intact
- on all source code distributions
-
-License: BSD-3-clause or GPL-1+
+License: BSD-3-clause-or-GPL-1+
  Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions are
  met:
@@ -363,4 +353,3 @@ Comment: The option described in the license has been accepted and these
  files are distributed under the same terms as the package as a whole, as
  described at the top of this file.  You can find the GPL version 3 in
  /usr/share/common-licenses/GPL-3 on Debian systems.
-
