@@ -14,7 +14,7 @@ Build-Depends:
 Rules-Requires-Root: no
 Homepage: https://www.eyrie.org/~eagle/software/pam-krb5/
 Vcs-Browser: https://salsa.debian.org/debian/libpam-krb5
-Vcs-Git: https://salsa.debian.org/debian/libpam-krb5.git -b debian/master
+Vcs-Git: https://salsa.debian.org/debian/libpam-krb5.git
 
 Package: libpam-krb5
 Architecture: any

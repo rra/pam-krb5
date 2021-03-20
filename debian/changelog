@@ -3,6 +3,8 @@ libpam-krb5 (4.10-1) UNRELEASED; urgency=medium
   * New upstream release.
     - Incorporate patch to avoid double free if krb5_cc_get_principal
       fails on the new cache.
+  * Change the default Debian package branch to debian/unstable.
+  * Remove the now-unnecessary branch configuration in Vcs-Git.
 
  -- Russ Allbery <rra@debian.org>  Sat, 20 Mar 2021 12:49:22 -0700
 
