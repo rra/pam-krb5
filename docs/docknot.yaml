@@ -21,14 +21,14 @@ synopsis: PAM module for Kerberos authentication
 license:
   name: BSD-3-clause-or-GPL-1+
 copyrights:
-- holder: Russ Allbery <eagle@eyrie.org>
-  years: 2005-2010, 2014-2015, 2017, 2020-2021
-- holder: The Board of Trustees of the Leland Stanford Junior University
-  years: 2009-2011
-- holder: Andres Salomon <dilinger@debian.org>
-  years: '2005'
-- holder: Frank Cusack <fcusack@fcusack.com>
-  years: 1999-2000
+  - holder: Russ Allbery <eagle@eyrie.org>
+    years: 2005-2010, 2014-2015, 2017, 2020-2021
+  - holder: The Board of Trustees of the Leland Stanford Junior University
+    years: 2009-2011
+  - holder: Andres Salomon <dilinger@debian.org>
+    years: '2005'
+  - holder: Frank Cusack <fcusack@fcusack.com>
+    years: 1999-2000
 
 build:
   autoconf: '2.64'
