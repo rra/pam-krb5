@@ -1,4 +1,4 @@
-                               pam-krb5 4.9
+                              pam-krb5 4.10
                  (PAM module for Kerberos authentication)
                Maintained by Russ Allbery <eagle@eyrie.org>
 
@@ -109,14 +109,14 @@ BUILDING AND INSTALLATION
   directory is also supported, if you wish, by creating an empty directory
   and then running configure with the correct relative path.
 
-  The module will be installed in /usr/local/lib/security by default,
-  except on 64-bit versions of Linux which will use
-  /usr/local/lib64/security to match the default PAM configuration.  You
-  can change the installation locations with the --prefix, --mandir, and
-  --libdir options to configure.  The module will always be installed in a
-  subdirectory named security under the specified libdir.  On Linux, use
-  --prefix=/usr to install the man page into /usr/share/man and the PAM
-  module in /lib/security or /lib64/security.
+  The module will be installed in /usr/local/lib/security by default, but
+  expect to have to override this using --libdir.  The correct
+  installation path for PAM modules varies considerably between systems.
+  The module will always be installed in a subdirectory named security
+  under the specified value of --libdir.  On Red Hat Linux, for example,
+  --libdir=/usr/lib64 is appropriate to install the module into the system
+  PAM directory.  On Debian's amd64 architecture,
+  --libdir=/usr/lib/x86_64-linux-gnu would be correct.
 
   Normally, configure will use krb5-config to determine the flags to use
   to compile with your Kerberos libraries.  To specify a particular

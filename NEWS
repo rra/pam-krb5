@@ -1,5 +1,13 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 4.11 (unreleased)
+
+    Stop attempting to guess the correct PAM module installation path on
+    Linux systems when --prefix is set to /usr and instead document that
+    --libdir will probably need to be set explicitly.  The previous logic
+    is now broken on Debian usrmerge systems and the guesswork seems too
+    fragile to maintain.
+
 pam-krb5 4.10 (2021-03-20)
 
     When re-retrieving the authenticated principal from the current cache,
