@@ -10,7 +10,7 @@
  * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
- * Copyright 2016, 2018, 2020 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2016, 2018, 2020-2021 Russ Allbery <eagle@eyrie.org>
  * Copyright 2011-2012, 2014
  *     The Board of Trustees of the Leland Stanford Junior University
  *
@@ -302,7 +302,10 @@ run_script(const char *file, const struct script_config *config)
     if (config->oldauthtok != NULL)
         pamh->oldauthtok = bstrdup(config->oldauthtok);
 
-    /* Run the actions and check their return status. */
+    /*
+     * Run the actions and check their return status.  If one of the actions
+     * is to call pam_end, we have to call any callback before then.
+     */
     for (action = work->actions; action != NULL; action = action->next) {
         if (work->options[action->group].argv == NULL)
             status = (*action->call)(pamh, action->flags, 0, argv_empty);
@@ -317,12 +320,12 @@ run_script(const char *file, const struct script_config *config)
     check_output(work->output, output);
     pam_output_free(output);
 
-    /* If we have a test callback, call it now. */
+    /* If we have a test callback we haven't called, call it now. */
     if (config->callback != NULL)
         config->callback(pamh, config, config->data);
 
     /* Free memory and return. */
-    pam_end(pamh, PAM_SUCCESS);
+    pam_end(pamh, work->end_flags);
     action = work->actions;
     while (action != NULL) {
         free(action->name);

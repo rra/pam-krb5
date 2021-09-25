@@ -5,6 +5,7 @@
  * which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
+ * Copyright 2021 Russ Allbery <eagle@eyrie.org>
  * Copyright 2011-2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *
@@ -85,14 +86,15 @@ struct prompts {
 };
 
 /*
- * Holds the complete set of things that we should do.  Currently, this
- * contains only a linked list of actions.
+ * Holds the complete set of things that we should do, configuration for them,
+ * and expected output and return values.
  */
 struct work {
     struct options options[4];
     struct action *actions;
     struct prompts *prompts;
     struct output *output;
+    int end_flags;
 };
 
 BEGIN_DECLS

@@ -2,6 +2,13 @@
 
 pam-krb5 4.11 (unreleased)
 
+    Properly support calling pam_end with PAM_DATA_SILENT by not deleting
+    the underlying ticket cache.  This flag is used when the application
+    is closing the PAM session after a fork to free memory resources, but
+    doesn't intend to free resources external to the process because
+    another process may still depend on them.  Thanks to Andrew G. Morgan
+    for the report.  (GitHub #21)
+
     Stop attempting to guess the correct PAM module installation path on
     Linux systems when --prefix is set to /usr and instead document that
     --libdir will probably need to be set explicitly.  The previous logic
