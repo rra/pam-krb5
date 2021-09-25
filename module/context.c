@@ -164,14 +164,14 @@ pamk5_context_destroy(pam_handle_t *pamh UNUSED, void *data,
     struct context *ctx = (struct context *) data;
 
     /*
-     * Do nothing if the status contains PAM_DATA_SILENT, since in that case we
-     * may be in a child and the parent will still rely on underlying resources
-     * such as the ticket cache to exist.
+     * Do not destroy the cache if the status contains PAM_DATA_SILENT, since
+     * in that case we may be in a child and the parent will still rely on
+     * underlying resources such as the ticket cache to exist.
      */
-    if (PAM_DATA_SILENT != 0 && pam_end_status & PAM_DATA_SILENT)
-        return;
+    if (PAM_DATA_SILENT != 0 && (pam_end_status & PAM_DATA_SILENT))
+        ctx->dont_destroy_cache = true;
 
-    /* Otherwise, just call context_free. */
+    /* The rest of the work is in context_free. */
     if (ctx != NULL)
         context_free(ctx, true);
 }

@@ -610,6 +610,7 @@ parse_end(FILE *script)
             flags |= string_to_status(flag);
             flag = strtok(NULL, "|");
         }
+        free(line);
     }
     if (line != NULL) {
         free(line);

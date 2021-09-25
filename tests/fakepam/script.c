@@ -302,10 +302,7 @@ run_script(const char *file, const struct script_config *config)
     if (config->oldauthtok != NULL)
         pamh->oldauthtok = bstrdup(config->oldauthtok);
 
-    /*
-     * Run the actions and check their return status.  If one of the actions
-     * is to call pam_end, we have to call any callback before then.
-     */
+    /* Run the actions and check their return status. */
     for (action = work->actions; action != NULL; action = action->next) {
         if (work->options[action->group].argv == NULL)
             status = (*action->call)(pamh, action->flags, 0, argv_empty);
@@ -320,7 +317,7 @@ run_script(const char *file, const struct script_config *config)
     check_output(work->output, output);
     pam_output_free(output);
 
-    /* If we have a test callback we haven't called, call it now. */
+    /* If we have a test callback, call it now. */
     if (config->callback != NULL)
         config->callback(pamh, config, config->data);
 
