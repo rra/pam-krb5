@@ -15,6 +15,11 @@ pam-krb5 4.11 (unreleased)
     is now broken on Debian usrmerge systems and the guesswork seems too
     fragile to maintain.
 
+    Update to rra-c-util 10.0:
+
+    * Support Autoconf 2.71 without warnings.
+    * Tests written in Perl now require Perl 5.10 or later.
+
 pam-krb5 4.10 (2021-03-20)
 
     When re-retrieving the authenticated principal from the current cache,

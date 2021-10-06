@@ -213,7 +213,7 @@ to a bug in Heimdal with reauthenticating immediately after a
 library-mediated password change of an expired password.  This is fixed in
 later releases of Heimdal.
 
-To run the full test suite, Perl 5.8 or later is required.  The following
+To run the full test suite, Perl 5.10 or later is required.  The following
 additional Perl modules will be used if present:
 
 * Test::Pod
