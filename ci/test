@@ -5,38 +5,40 @@
 # This script is normally run in a test container or VM, such as via GitHub
 # Actions.
 #
-# Copyright 2015-2020 Russ Allbery <eagle@eyrie.org>
+# Copyright 2015-2021 Russ Allbery <eagle@eyrie.org>
 #
 # SPDX-License-Identifier: MIT
 
 set -eux
 
-# Normally, COMPILER and KERBEROS are set based on the CI matrix, but provide
-# a default in case someone runs this test by hand.
-COMPILER="${COMPILER:-gcc}"
+# Normally, KERBEROS is set based on the CI matrix, but provide a default in
+# case someone runs this test by hand.
 KERBEROS="${KERBEROS:-mit}"
 
-# Build everything.
+# Generate Autotools files.
 ./bootstrap
+
+# Build everything with Clang first, with warnings enabled.
 if [ "$KERBEROS" = 'heimdal' ]; then
-    ./configure CC="$COMPILER" PATH_KRB5_CONFIG=/usr/bin/krb5-config.heimdal
+    ./configure CC=clang PATH_KRB5_CONFIG=/usr/bin/krb5-config.heimdal
 else
-    ./configure CC="$COMPILER"
+    ./configure CC=clang
 fi
 make warnings
 
-# Run the regular tests with valgrind for one of the compilers.  Arbitrarily
-# pick the GCC build.  (The assumption here is that other compilers won't
-# produce sufficiently different code as to create memory management
-# problems.)
-if [ "$COMPILER" = 'gcc' ]; then
-    make check-valgrind
+# Then rebuild everything with GCC with warnings enabled.
+make distclean
+if [ "$KERBEROS" = 'heimdal' ]; then
+    ./configure CC=gcc PATH_KRB5_CONFIG=/usr/bin/krb5-config.heimdal
 else
-    make check
+    ./configure CC=gcc
 fi
+make warnings
 
-# Run some additional checks for one of the builds.  Arbitrarily pick the GCC
-# MIT build.
-if [ "$COMPILER" = 'gcc' ] && [ "$KERBEROS" = 'mit' ]; then
+# Run the tests with valgrind.
+make check-valgrind
+
+# Run additional style tests, but only in the MIT build.
+if [ "$KERBEROS" = "mit" ]; then
     make check-cppcheck
 fi

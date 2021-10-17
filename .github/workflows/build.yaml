@@ -24,9 +24,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        compiler:
-          - "gcc"
-          - "clang"
         kerberos:
           - "mit"
           - "heimdal"
@@ -44,5 +41,4 @@ jobs:
       - name: test
         run: ci/test
         env:
-          COMPILER: ${{ matrix.compiler }}
           KERBEROS: ${{ matrix.kerberos }}

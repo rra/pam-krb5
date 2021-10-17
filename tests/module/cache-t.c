@@ -7,7 +7,7 @@
  * created (so without setuid and with chown doing nothing).
  *
  * Written by Russ Allbery <eagle@eyrie.org>
- * Copyright 2017, 2020 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2017, 2020-2021 Russ Allbery <eagle@eyrie.org>
  * Copyright 2011, 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *
@@ -32,6 +32,7 @@
 /* Additional data used by the cache check callback. */
 struct extra {
     char *realm;
+    char *cache_path;
 };
 
 
@@ -40,12 +41,10 @@ struct extra {
  * cache is for the correct user.
  */
 static void
-check_cache(pam_handle_t *pamh, const struct script_config *config, void *data)
+check_cache(const char *file, const struct script_config *config,
+            const struct extra *extra)
 {
-    struct extra *extra = data;
-    const char *cache, *file;
     struct stat st;
-    char *prefix;
     krb5_error_code code;
     krb5_context ctx = NULL;
     krb5_ccache ccache = NULL;
@@ -54,17 +53,7 @@ check_cache(pam_handle_t *pamh, const struct script_config *config, void *data)
     krb5_creds in, out;
     char *principal = NULL;
 
-    /* Check cache naming, ownership, and permissions. */
-    cache = pam_getenv(pamh, "KRB5CCNAME");
-    ok(cache != NULL, "KRB5CCNAME is set in PAM environment");
-    if (cache == NULL)
-        return;
-    basprintf(&prefix, "FILE:/tmp/krb5cc_%lu_", (unsigned long) getuid());
-    diag("KRB5CCNAME = %s", cache);
-    ok(strncmp(prefix, cache, strlen(prefix)) == 0,
-       "cache file name prefix is correct");
-    free(prefix);
-    file = cache + strlen("FILE:");
+    /* Check ownership and permissions. */
     is_int(0, stat(file, &st), "cache exists");
     is_int(getuid(), st.st_uid, "...with correct UID");
     is_int(getgid(), st.st_gid, "...with correct GID");
@@ -74,7 +63,7 @@ check_cache(pam_handle_t *pamh, const struct script_config *config, void *data)
     code = krb5_init_context(&ctx);
     if (code != 0)
         bail("cannot create Kerberos context");
-    code = krb5_cc_resolve(ctx, cache, &ccache);
+    code = krb5_cc_resolve(ctx, file, &ccache);
     is_int(0, code, "able to resolve Kerberos ticket cache");
     code = krb5_cc_get_principal(ctx, ccache, &princ);
     is_int(0, code, "able to get principal");
@@ -108,6 +97,34 @@ check_cache(pam_handle_t *pamh, const struct script_config *config, void *data)
 }
 
 
+/*
+ * Same as check_cache except unlink the ticket cache afterwards.  Used to
+ * check the ticket cache in cases where the PAM module will not clean it up
+ * afterwards, such as calling pam_end with PAM_DATA_SILENT.
+ */
+static void
+check_cache_callback(pam_handle_t *pamh, const struct script_config *config,
+                     void *data)
+{
+    struct extra *extra = data;
+    const char *cache, *file;
+    char *prefix;
+
+    cache = pam_getenv(pamh, "KRB5CCNAME");
+    ok(cache != NULL, "KRB5CCNAME is set in PAM environment");
+    if (cache == NULL)
+        return;
+    basprintf(&prefix, "FILE:/tmp/krb5cc_%lu_", (unsigned long) getuid());
+    diag("KRB5CCNAME = %s", cache);
+    ok(strncmp(prefix, cache, strlen(prefix)) == 0,
+       "cache file name prefix is correct");
+    free(prefix);
+    file = cache + strlen("FILE:");
+    extra->cache_path = bstrdup(file);
+    check_cache(file, config, extra);
+}
+
+
 int
 main(void)
 {
@@ -123,6 +140,7 @@ main(void)
     memset(&config, 0, sizeof(config));
     config.user = krbconf->username;
     extra.realm = krbconf->realm;
+    extra.cache_path = NULL;
     config.authtok = krbconf->password;
     config.extra[0] = krbconf->userprinc;
 
@@ -143,9 +161,22 @@ main(void)
     run_script("data/scripts/cache/basic", &config);
 
     /* Check the cache status before the session is closed. */
-    config.callback = check_cache;
+    config.callback = check_cache_callback;
     config.data = &extra;
     run_script("data/scripts/cache/open-session", &config);
+    free(extra.cache_path);
+    extra.cache_path = NULL;
+
+    /*
+     * Try again but passing PAM_DATA_SILENT to pam_end.  This should leave
+     * the ticket cache intact.
+     */
+    run_script("data/scripts/cache/end-data-silent", &config);
+    check_cache(extra.cache_path, &config, &extra);
+    if (unlink(extra.cache_path) < 0)
+        sysdiag("unable to unlink temporary cache %s", extra.cache_path);
+    free(extra.cache_path);
+    extra.cache_path = NULL;
 
     /* Change the authenticating user and test search_k5login. */
     pwd.pw_name = (char *) "testuser";
@@ -160,6 +191,8 @@ main(void)
     if (fclose(file) < 0)
         sysbail("cannot flush %s", k5login);
     run_script("data/scripts/cache/search-k5login", &config);
+    free(extra.cache_path);
+    extra.cache_path = NULL;
     config.callback = NULL;
     run_script("data/scripts/cache/search-k5login-debug", &config);
     unlink(k5login);

@@ -1,5 +1,25 @@
                       User-Visible pam-krb5 Changes
 
+pam-krb5 4.11 (2021-10-17)
+
+    Properly support calling pam_end with PAM_DATA_SILENT by not deleting
+    the underlying ticket cache.  This flag is used when the application
+    is closing the PAM session after a fork to free memory resources, but
+    doesn't intend to free resources external to the process because
+    another process may still depend on them.  Thanks to Andrew G. Morgan
+    for the report.  (GitHub #21)
+
+    Stop attempting to guess the correct PAM module installation path on
+    Linux systems when --prefix is set to /usr and instead document that
+    --libdir will probably need to be set explicitly.  The previous logic
+    is now broken on Debian usrmerge systems and the guesswork seems too
+    fragile to maintain.
+
+    Update to rra-c-util 10.0:
+
+    * Support Autoconf 2.71 without warnings.
+    * Tests written in Perl now require Perl 5.10 or later.
+
 pam-krb5 4.10 (2021-03-20)
 
     When re-retrieving the authenticated principal from the current cache,

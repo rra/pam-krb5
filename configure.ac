@@ -10,7 +10,7 @@ dnl
 dnl SPDX-License-Identifier: BSD-3-clause or GPL-1+
 
 AC_PREREQ([2.64])
-AC_INIT([pam-krb5], [4.10], [eagle@eyrie.org])
+AC_INIT([pam-krb5], [4.11], [eagle@eyrie.org])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_LIBOBJ_DIR([portable])
 AC_CONFIG_MACRO_DIR([m4])
@@ -125,11 +125,6 @@ dnl Try to specify the binding so that any references within the PAM module
 dnl are resolved to the functions in that module in preference to any external
 dnl function.
 dnl
-dnl Also, if and only if we're on Linux, make sure that all the symbols in the
-dnl module are resolved, try to adjust for the 32-bit vs. 64-bit library
-dnl paths, install into /lib or /lib64 instead of /usr/lib or /usr/lib64 if
-dnl the prefix is /usr.
-dnl
 dnl More platforms could be handled here.  Contributions welcome.
 AS_CASE([$host],
     [*-hpux*],
@@ -138,16 +133,13 @@ AS_CASE([$host],
         [AM_LDFLAGS="-Wl,+vshlibunsats $AM_LDFLAGS"])],
 
     [*-linux*],
-    [AM_LDFLAGS="-Wl,-z,defs -Wl,-Bsymbolic $AM_LDFLAGS"
-     AS_IF([test x"${prefix}" = x"/usr"],
-        [AS_IF([test x"${libdir}" = x'${exec_prefix}/lib'],
-            [RRA_SET_LIBDIR])])],
+    [AM_LDFLAGS="-Wl,-z,defs -Wl,-Bsymbolic $AM_LDFLAGS"],
 
     [*-solaris2*],
     [AS_IF([test x"$GCC" = x"yes"],
         [AM_LDFLAGS="-Wl,-Bsymbolic $AM_LDFLAGS"],
         [AM_LDFLAGS="-Wl,-xldscope=symbolic $AM_LDFLAGS"])])
 
-AC_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
