@@ -60,11 +60,15 @@ module_pam_krb5_la_LIBADD = pam-util/libpamutil.la portable/libportable.la \
 	$(KRB5_LIBS)
 dist_man_MANS = docs/pam_krb5.5
 
-MAINTAINERCLEANFILES = Makefile.in aclocal.m4 build-aux/compile		 \
-	build-aux/config.guess build-aux/config.sub build-aux/depcomp	 \
-	build-aux/install-sh build-aux/ltmain.sh build-aux/missing	 \
-	config.h.in config.h.in~ configure docs/pam_krb5.5 m4/libtool.m4 \
-	m4/ltoptions.m4 m4/ltsugar.m4 m4/ltversion.m4 m4/lt~obsolete.m4
+# Work around the GNU Coding Standards, which leave all the Autoconf and
+# Automake stuff around after make maintainer-clean, thus making that command
+# mostly worthless.
+DISTCLEANFILES = config.h.in~ configure~
+MAINTAINERCLEANFILES = Makefile.in aclocal.m4 build-aux/compile		    \
+	build-aux/config.guess build-aux/config.sub build-aux/depcomp	    \
+	build-aux/install-sh build-aux/ltmain.sh build-aux/missing	    \
+	config.h.in configure docs/pam_krb5.5 m4/libtool.m4 m4/ltoptions.m4 \
+	m4/ltsugar.m4 m4/ltversion.m4 m4/lt~obsolete.m4
 
 # Separate target for a human to request building everything with as many
 # compiler warnings enabled as possible.
