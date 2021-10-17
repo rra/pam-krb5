@@ -10,7 +10,7 @@ dnl
 dnl SPDX-License-Identifier: BSD-3-clause or GPL-1+
 
 AC_PREREQ([2.64])
-AC_INIT([pam-krb5], [4.10], [eagle@eyrie.org])
+AC_INIT([pam-krb5], [4.11], [eagle@eyrie.org])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_LIBOBJ_DIR([portable])
 AC_CONFIG_MACRO_DIR([m4])

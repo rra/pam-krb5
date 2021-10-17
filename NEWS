@@ -1,6 +1,6 @@
                       User-Visible pam-krb5 Changes
 
-pam-krb5 4.11 (unreleased)
+pam-krb5 4.11 (2021-10-17)
 
     Properly support calling pam_end with PAM_DATA_SILENT by not deleting
     the underlying ticket cache.  This flag is used when the application
