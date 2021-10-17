@@ -44,7 +44,8 @@ struct script_config;
 typedef int (*pam_call)(pam_handle_t *, int, int, const char **);
 
 /* The possible PAM groups as element numbers in an array of options. */
-enum group_type {
+enum group_type
+{
     GROUP_ACCOUNT = 0,
     GROUP_AUTH = 1,
     GROUP_PASSWORD = 2,
