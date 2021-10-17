@@ -1,5 +1,9 @@
-libpam-krb5 (4.10-2) UNRELEASED; urgency=medium
+libpam-krb5 (4.11-1) UNRELEASED; urgency=medium
 
+  * Upload to unstable.
+  * New upstream release.
+    - Do not destroy the ticket cache if pam_end was called with the
+      PAM_DATA_SILENT flag set.
   * Set Upstream-Name in debian/copyright.
 
  -- Russ Allbery <rra@debian.org>  Sat, 20 Mar 2021 13:45:55 -0700
