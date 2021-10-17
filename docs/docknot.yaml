@@ -15,20 +15,20 @@ format: v1
 
 name: pam-krb5
 maintainer: Russ Allbery <eagle@eyrie.org>
-version: '4.10'
+version: '4.11'
 synopsis: PAM module for Kerberos authentication
 
 license:
   name: BSD-3-clause-or-GPL-1+
 copyrights:
-- holder: Russ Allbery <eagle@eyrie.org>
-  years: 2005-2010, 2014-2015, 2017, 2020-2021
-- holder: The Board of Trustees of the Leland Stanford Junior University
-  years: 2009-2011
-- holder: Andres Salomon <dilinger@debian.org>
-  years: '2005'
-- holder: Frank Cusack <fcusack@fcusack.com>
-  years: 1999-2000
+  - holder: Russ Allbery <eagle@eyrie.org>
+    years: 2005-2010, 2014-2015, 2017, 2020-2021
+  - holder: The Board of Trustees of the Leland Stanford Junior University
+    years: 2009-2011
+  - holder: Andres Salomon <dilinger@debian.org>
+    years: '2005'
+  - holder: Frank Cusack <fcusack@fcusack.com>
+    years: 1999-2000
 
 build:
   autoconf: '2.64'
@@ -37,14 +37,14 @@ build:
   kerberos: true
   manpages: true
   middle: |
-    The module will be installed in `/usr/local/lib/security` by default,
-    except on 64-bit versions of Linux which will use
-    `/usr/local/lib64/security` to match the default PAM configuration.  You
-    can change the installation locations with the `--prefix`, `--mandir`, and
-    `--libdir` options to configure.  The module will always be installed in a
-    subdirectory named `security` under the specified libdir.  On Linux, use
-    `--prefix=/usr` to install the man page into `/usr/share/man` and the PAM
-    module in `/lib/security` or `/lib64/security`.
+    The module will be installed in `/usr/local/lib/security` by default, but
+    expect to have to override this using `--libdir`.  The correct
+    installation path for PAM modules varies considerably between systems.
+    The module will always be installed in a subdirectory named `security`
+    under the specified value of `--libdir`.  On Red Hat Linux, for example,
+    `--libdir=/usr/lib64` is appropriate to install the module into the system
+    PAM directory.  On Debian's amd64 architecture,
+    `--libdir=/usr/lib/x86_64-linux-gnu` would be correct.
   reduced_depends: true
   type: Autoconf
   valgrind: true
@@ -190,7 +190,7 @@ test:
     library-mediated password change of an expired password.  This is fixed in
     later releases of Heimdal.
 
-    To run the full test suite, Perl 5.8 or later is required.  The following
+    To run the full test suite, Perl 5.10 or later is required.  The following
     additional Perl modules will be used if present:
 
     * Test::Pod

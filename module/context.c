@@ -4,7 +4,7 @@
  * The context structure is the internal state maintained by the pam-krb5
  * module between calls to the various public interfaces.
  *
- * Copyright 2005-2009, 2014, 2020 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2005-2009, 2014, 2020-2021 Russ Allbery <eagle@eyrie.org>
  * Copyright 2011
  *     The Board of Trustees of the Leland Stanford Junior University
  * Copyright 2005 Andres Salomon <dilinger@debian.org>
@@ -156,14 +156,22 @@ pamk5_context_free(struct pam_args *args)
 
 /*
  * The PAM callback to destroy the context stored in the PAM data structures.
- * Just does the necessary conversion of arguments and calls context_free.
  */
 void
 pamk5_context_destroy(pam_handle_t *pamh UNUSED, void *data,
-                      int pam_end_status UNUSED)
+                      int pam_end_status)
 {
     struct context *ctx = (struct context *) data;
 
+    /*
+     * Do not destroy the cache if the status contains PAM_DATA_SILENT, since
+     * in that case we may be in a child and the parent will still rely on
+     * underlying resources such as the ticket cache to exist.
+     */
+    if (PAM_DATA_SILENT != 0 && (pam_end_status & PAM_DATA_SILENT))
+        ctx->dont_destroy_cache = true;
+
+    /* The rest of the work is in context_free. */
     if (ctx != NULL)
         context_free(ctx, true);
 }

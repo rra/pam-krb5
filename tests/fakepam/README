@@ -200,6 +200,19 @@ Scripted PAM Testing
     DELETE_CRED, ESTABLISH_CRED, REFRESH_CRED, or REINITIALIZE_CRED for
     the "setcred" call.
 
+    As a special case, <call> may be "end" to specify flags to pass to the
+    pam_end call (such as PAM_DATA_SILENT).
+
+  The [end] Section
+
+    The [end] section defines how to call pam_end.  It currently takes
+    only one setting, flags, the syntax of which is:
+
+        flags = <flag>|<flag>
+
+    This allows PAM_DATA_SILENT or other flags to be passed to pam_end
+    when running the test script.
+
   The [output] Section
 
     The [output] section defines the logging output expected from the
@@ -255,7 +268,7 @@ License
     This file is part of the documentation of rra-c-util, which can be
     found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
 
-    Copyright 2011-2012, 2020 Russ Allbery <eagle@eyrie.org>
+    Copyright 2011-2012, 2020-2021 Russ Allbery <eagle@eyrie.org>
 
     Copying and distribution of this file, with or without modification,
     are permitted in any medium without royalty provided the copyright

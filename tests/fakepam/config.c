@@ -76,8 +76,8 @@ static const struct {
 } FLAGS[] = {
     /* clang-format off */
     {"CHANGE_EXPIRED_AUTHTOK", PAM_CHANGE_EXPIRED_AUTHTOK},
-    {"DISALLOW_NULL_AUTHTOK",  PAM_DISALLOW_NULL_AUTHTOK },
     {"DELETE_CRED",            PAM_DELETE_CRED           },
+    {"DISALLOW_NULL_AUTHTOK",  PAM_DISALLOW_NULL_AUTHTOK },
     {"ESTABLISH_CRED",         PAM_ESTABLISH_CRED        },
     {"PRELIM_CHECK",           PAM_PRELIM_CHECK          },
     {"REFRESH_CRED",           PAM_REFRESH_CRED          },
@@ -109,6 +109,7 @@ static const struct {
     {"PAM_AUTH_ERR",         PAM_AUTH_ERR        },
     {"PAM_AUTHINFO_UNAVAIL", PAM_AUTHINFO_UNAVAIL},
     {"PAM_AUTHTOK_ERR",      PAM_AUTHTOK_ERR     },
+    {"PAM_DATA_SILENT",      PAM_DATA_SILENT     },
     {"PAM_IGNORE",           PAM_IGNORE          },
     {"PAM_NEW_AUTHTOK_REQD", PAM_NEW_AUTHTOK_REQD},
     {"PAM_SESSION_ERR",      PAM_SESSION_ERR     },
@@ -577,6 +578,49 @@ parse_run(FILE *script)
 
 
 /*
+ * Parse the end section of a PAM script.  There is one supported line in the
+ * format:
+ *
+ *     flags = <flag>|<flag>
+ *
+ * where <flag> is a flag to pass to pam_end.  Returns the flags.
+ */
+static int
+parse_end(FILE *script)
+{
+    char *line, *token, *flag;
+    size_t length = 0;
+    int flags = PAM_SUCCESS;
+
+    for (line = readline(script); line != NULL; line = readline(script)) {
+        length = strlen(line);
+        token = strtok(line, " ");
+        if (token[0] == '[')
+            break;
+        if (strcmp(token, "flags") != 0)
+            bail("unknown end setting %s", token);
+        token = strtok(NULL, " ");
+        if (token == NULL)
+            bail("malformed end line");
+        if (strcmp(token, "=") != 0)
+            bail("malformed end line near %s", token);
+        token = strtok(NULL, " ");
+        flag = strtok(token, "|");
+        while (flag != NULL) {
+            flags |= string_to_status(flag);
+            flag = strtok(NULL, "|");
+        }
+        free(line);
+    }
+    if (line != NULL) {
+        free(line);
+        rewind_section(script, length);
+    }
+    return flags;
+}
+
+
+/*
  * Parse the output section of a PAM script.  This consists of zero or more
  * lines in the format:
  *
@@ -697,7 +741,7 @@ parse_script(FILE *script, const struct script_config *config)
 
     work = bmalloc(sizeof(struct work));
     memset(work, 0, sizeof(struct work));
-    work->actions = NULL;
+    work->end_flags = PAM_SUCCESS;
     for (line = readline(script); line != NULL; line = readline(script)) {
         token = strtok(line, " ");
         if (token[0] != '[')
@@ -706,6 +750,8 @@ parse_script(FILE *script, const struct script_config *config)
             parse_options(script, work, config);
         else if (strcmp(token, "[run]") == 0)
             work->actions = parse_run(script);
+        else if (strcmp(token, "[end]") == 0)
+            work->end_flags = parse_end(script);
         else if (strcmp(token, "[output]") == 0)
             work->output = parse_output(script, config);
         else if (strcmp(token, "[prompts]") == 0)

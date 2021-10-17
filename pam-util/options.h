@@ -57,7 +57,8 @@ struct vector;
  * on comma, space, and tab.  (This is the same as would be done with the
  * value of a PAM setting when the target variable type is a list.)
  */
-enum type {
+enum type
+{
     TYPE_BOOLEAN,
     TYPE_NUMBER,
     TYPE_TIME,
