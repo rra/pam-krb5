@@ -36,7 +36,7 @@ License: all-permissive
  warranty.
 
 Files: Makefile.in
-Copyright: 1994-2020 Free Software Foundation, Inc.
+Copyright: 1994-2021 Free Software Foundation, Inc.
   1999-2000 Frank Cusack <fcusack@fcusack.com>
   2005 Andres Salomon <dilinger@debian.org>
   2005-2007, 2014, 2017, 2020-2021 Russ Allbery <eagle@eyrie.org>
@@ -46,12 +46,12 @@ License: FSF-unlimited, and BSD-3-clause-or-GPL-1+
 
 Files: aclocal.m4 m4/ltoptions.m4 m4/ltsugar.m4 m4/ltversion.m4
  m4/lt~obsolete.m4
-Copyright: 1996-2020 Free Software Foundation, Inc.
+Copyright: 1996-2021 Free Software Foundation, Inc.
 License: FSF-unlimited
 
 Files: build-aux/ar-lib build-aux/compile build-aux/depcomp
  build-aux/missing
-Copyright: 1996-2020 Free Software Foundation, Inc.
+Copyright: 1996-2021 Free Software Foundation, Inc.
 License: GPL-2+ with Autoconf exception or BSD-3-clause-or-GPL-1+
 
 Files: build-aux/config.guess build-aux/config.sub
@@ -128,7 +128,7 @@ License: Expat
  THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 Files: configure
-Copyright: 1992-1996, 1998-2012, 2014 Free Software Foundation, Inc.
+Copyright: 1992-1996, 1998-2017, 2020-2021 Free Software Foundation, Inc.
 License: FSF-configure, and GPL-2+ with Libtool exception or BSD-3-clause-or-GPL-1+
 
 Files: m4/cc-flags.m4
