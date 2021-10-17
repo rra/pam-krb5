@@ -92,6 +92,9 @@ docs:
   user:
     - name: pam-krb5
       title: Manual page
+  developer:
+    - name: todo
+      title: To-do list
 
 blurb: |
   pam-krb5 is a Kerberos PAM module for either MIT Kerberos or Heimdal.  It
