@@ -144,10 +144,11 @@ parse_name(struct pam_args *args)
  * service.  If so, we don't try to get forwardable, renewable, or proxiable
  * tickets.
  */
-static void
+static krb5_error_code
 set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
                        int service)
 {
+    krb5_error_code retval;
     struct pam_config *config = args->config;
     krb5_context c = config->ctx->context;
 
@@ -168,7 +169,9 @@ set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
         krb5_get_init_creds_opt_set_proxiable(opts, 0);
         krb5_get_init_creds_opt_set_renew_life(opts, 0);
     }
-    pamk5_fast_setup(args, opts);
+    retval = pamk5_fast_setup(args, opts);
+    if (retval != 0)
+        return retval;
 
     /*
      * Set options for PKINIT.  Only used with MIT Kerberos; Heimdal's
@@ -206,6 +209,8 @@ set_credential_options(struct pam_args *args, krb5_get_init_creds_opt *opts,
         }
     }
 #endif /* HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PA */
+
+    return 0;
 }
 
 
@@ -369,7 +374,11 @@ password_auth(struct pam_args *args, krb5_creds *creds,
 
         retval = krb5_get_init_creds_opt_alloc(ctx->context, &heimdal_opts);
         if (retval == 0) {
-            set_credential_options(args, opts, 1);
+            retval = set_credential_options(args, opts, 1);
+            if (retval != 0) {
+                krb5_get_init_creds_opt_free(ctx->context, heimdal_opts);
+                return retval;
+            }
             retval = krb5_get_init_creds_password(
                 ctx->context, creds, ctx->princ, (char *) pass,
                 pamk5_prompter_krb5, args, 0, (char *) "kadmin/changepw",
@@ -565,7 +574,11 @@ pkinit_auth(struct pam_args *args, const char *service, krb5_creds **creds)
     retval = krb5_get_init_creds_opt_alloc(ctx->context, &opts);
     if (retval != 0)
         return retval;
-    set_credential_options(args, opts, service != NULL);
+    retval = set_credential_options(args, opts, service != NULL);
+    if (retval != 0) {
+        krb5_get_init_creds_opt_free(ctx->context, opts);
+        return retval;
+    }
 
     /* Finally, do the actual work and return the results. */
 #    ifdef HAVE_KRB5_HEIMDAL
@@ -832,7 +845,11 @@ pamk5_password_auth(struct pam_args *args, const char *service,
         putil_crit_krb5(args, retval, "cannot allocate credential options");
         goto done;
     }
-    set_credential_options(args, opts, service != NULL);
+    retval = set_credential_options(args, opts, service != NULL);
+    if (retval != 0) {
+        krb5_get_init_creds_opt_free(ctx->context, opts);
+        return retval;
+    }
 
     /*
      * Obtain the saved password, if appropriate and available, and determine

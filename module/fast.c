@@ -262,7 +262,7 @@ pamk5_fast_setup(struct pam_args *args UNUSED,
 
 #else /* HAVE_KRB5_GET_INIT_CREDS_OPT_SET_FAST_CCACHE_NAME */
 
-void
+krb5_error_code
 pamk5_fast_setup(struct pam_args *args, krb5_get_init_creds_opt *opts)
 {
     krb5_context c = args->config->ctx->context;
@@ -273,8 +273,15 @@ pamk5_fast_setup(struct pam_args *args, krb5_get_init_creds_opt *opts)
     cache = fast_setup_cache(args);
     if (cache == NULL)
         cache = fast_setup_anon(args);
-    if (cache == NULL)
-        return;
+    if (cache == NULL) {
+        if (args->config->require_fast) {
+            /* FAST is required, but neither fast_ccache nor anon_fast worked */
+            putil_err(args, "FAST is required but not available");
+            return KRB5KRB_ERR_GENERIC;
+        } else {
+            return 0;
+        }
+    }
 
     /* We have a valid FAST ticket cache.  Set the option. */
     retval = krb5_get_init_creds_opt_set_fast_ccache_name(c, opts, cache);
@@ -283,6 +290,10 @@ pamk5_fast_setup(struct pam_args *args, krb5_get_init_creds_opt *opts)
     else
         putil_debug(args, "setting FAST credential cache to %s", cache);
     free(cache);
+
+    if (!args->config->require_fast)
+        retval = 0;
+    return retval;
 }
 
 #endif /* HAVE_KRB5_GET_INIT_CREDS_OPT_SET_FAST_CCACHE_NAME */

@@ -408,6 +408,12 @@ back on attempting anonymous PKINIT if that cache could not be used.
 This option can be set in C<[appdefaults]> in F<krb5.conf> and is only
 applicable to the auth and password groups.
 
+=item require_fast
+
+[4.12] Require use of FAST. If FAST is not available, this will cause the
+authentication to fail. This requires either anon_fast or fast_ccache (or
+both) to be set, otherwise the authentication will always fail.
+
 =item forwardable
 
 [1.0] Obtain forwardable tickets.  If set (to either true or false,

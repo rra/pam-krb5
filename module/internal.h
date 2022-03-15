@@ -66,6 +66,7 @@ struct pam_config {
     /* Kerberos behavior. */
     char *fast_ccache;           /* Cache containing armor ticket. */
     bool anon_fast;              /* sets up an anonymous fast armor cache */
+    bool require_fast;           /* Fail authentication without FAST */
     bool forwardable;            /* Obtain forwardable tickets. */
     char *keytab;                /* Keytab for credential validation. */
     char *realm;                 /* Default realm for Kerberos. */
@@ -216,7 +217,7 @@ krb5_error_code pamk5_alt_auth(struct pam_args *, const char *service,
 int pamk5_alt_auth_verify(struct pam_args *);
 
 /* FAST support.  Set up FAST protection of authentication. */
-void pamk5_fast_setup(struct pam_args *, krb5_get_init_creds_opt *);
+krb5_error_code pamk5_fast_setup(struct pam_args *, krb5_get_init_creds_opt *);
 
 /* Context management. */
 int pamk5_context_new(struct pam_args *);
