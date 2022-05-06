@@ -25,6 +25,37 @@
 #include <pam-util/args.h>
 #include <pam-util/logging.h>
 
+#ifdef HAVE_GETGROUPLIST
+#include <grp.h>
+static int checkgrouplist(const char *user, gid_t primary, gid_t target)
+{
+    gid_t *grouplist = NULL;
+    int agroups, ngroups, i;
+    ngroups = agroups = 3;
+    do {
+        grouplist = malloc(sizeof(gid_t) * agroups);
+        if (grouplist == NULL) {
+            return 0;
+        }
+        ngroups = agroups;
+        i = getgrouplist(user, primary, grouplist, &ngroups);
+        if ((i < 0) || (ngroups < 1)) {
+            agroups *= 2;
+            free(grouplist);
+        } else {
+            for (i = 0; i < ngroups; i++) {
+                if (grouplist[i] == target) {
+                    free(grouplist);
+                    return 1;
+                }
+            }
+            free(grouplist);
+        }
+    } while (((i < 0) || (ngroups < 1)) && (agroups < 10000));
+    return 0;
+}
+#endif
+
 
 /*
  * Given the PAM arguments and the user we're authenticating, see if we should
@@ -36,6 +67,11 @@ int
 pamk5_should_ignore(struct pam_args *args, PAM_CONST char *username)
 {
     struct passwd *pwd;
+#ifdef HAVE_GETGROUPLIST
+	char* group;
+    struct group *grp;
+    char* rest;
+#endif
 
     if (args->config->ignore_root && strcmp("root", username) == 0) {
         putil_debug(args, "ignoring root user");
@@ -50,6 +86,24 @@ pamk5_should_ignore(struct pam_args *args, PAM_CONST char *username)
             return 1;
         }
     }
+#ifdef HAVE_GETGROUPLIST
+	if (args->config->ignore_groups) {
+    		rest = args->config->ignore_groups;
+        	pwd = pam_modutil_getpwnam(args->pamh, username);
+			if (pwd != NULL ) { 
+    			while ((group = strtok_r(rest, ",", &rest))) {
+			    	grp = pam_modutil_getgrnam(args->pamh, group);
+					if (grp != NULL 
+						&& checkgrouplist(pwd->pw_name,
+							   pwd->pw_gid, grp->gr_gid)) {
+            			putil_debug(args, "ignoring user in ignored group (%s)",
+                        		group);
+							return 1;
+					}
+				}
+			}
+    }
+#endif
     return 0;
 }
 
@@ -139,3 +193,4 @@ pamk5_authorized(struct pam_args *args)
 
     return PAM_SUCCESS;
 }
+

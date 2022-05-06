@@ -113,6 +113,10 @@ BEGIN_DECLS
 #    define pam_modutil_getpwnam(h, u) getpwnam(u)
 #endif
 
+#if !HAVE_PAM_MODUTIL_GETGRNAM
+#    define pam_modutil_getgrnam(h, u) getgrnam(u)
+#endif
+
 /* Prototype missing optional PAM functions. */
 #if !HAVE_PAM_SYSLOG
 void pam_syslog(const pam_handle_t *, int, const char *, ...);
