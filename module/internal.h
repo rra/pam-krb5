@@ -59,6 +59,7 @@ struct pam_config {
     bool force_alt_auth; /* Alt principal must be used if it exists. */
     bool ignore_k5login; /* Don't check .k5login files. */
     bool ignore_root;    /* Skip authentication for root. */
+    char *ignore_groups; /* Comma delineated list of groups of users to skip */
     long minimum_uid;    /* Ignore users below this UID. */
     bool only_alt_auth;  /* Alt principal must be used. */
     bool search_k5login; /* Try password with each line of .k5login. */

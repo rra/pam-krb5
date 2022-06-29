@@ -46,6 +46,7 @@ dnl Probe for the functionality of the PAM libraries and their include file
 dnl naming.  Mac OS X puts them in pam/* instead of security/*.
 AC_SEARCH_LIBS([pam_set_data], [pam])
 AC_CHECK_FUNCS([pam_getenv pam_getenvlist pam_modutil_getpwnam])
+AC_CHECK_FUNCS([pam_modutil_getgrnam getgrouplist])
 AC_REPLACE_FUNCS([pam_syslog pam_vsyslog])
 AC_CHECK_HEADERS([security/pam_modutil.h], [],
     [AC_CHECK_HEADERS([pam/pam_modutil.h])])

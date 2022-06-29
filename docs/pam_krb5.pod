@@ -293,6 +293,14 @@ want to use I<minimum_uid> instead.
 
 This option can be set in C<[appdefaults]> in F<krb5.conf>.
 
+=item ignore_groups
+
+[1.1] Do not do anything if the username is in any of the groups supplied
+in the comma delineated list.  This is mainly for cases where you have 
+users that need to be skipped that cannot be ignored by I<minimum_uid>.
+
+This option can be set in C<[appdefaults]> in F<krb5.conf>.
+
 =item minimum_uid=<uid>
 
 [2.0] Do not do anything if the authenticated account name corresponds to

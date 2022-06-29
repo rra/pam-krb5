@@ -46,6 +46,7 @@ static const struct option options[] = {
     { K(force_pwchange),     true,  BOOL   (false) },
     { K(forwardable),        true,  BOOL   (false) },
     { K(ignore_k5login),     true,  BOOL   (false) },
+    { K(ignore_groups),      true,  STRING (NULL)  },
     { K(ignore_root),        true,  BOOL   (false) },
     { K(keytab),             true,  STRING (NULL)  },
     { K(minimum_uid),        true,  NUMBER (0)     },
