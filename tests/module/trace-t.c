@@ -5,7 +5,7 @@
  * simple and just checks that the file is created.
  *
  * Written by Russ Allbery <eagle@eyrie.org>
- * Copyright 2020 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2020, 2022 Russ Allbery <eagle@eyrie.org>
  * Copyright 2012
  *     The Board of Trustees of the Leland Stanford Junior University
  *
@@ -17,6 +17,7 @@
 
 #include <tests/fakepam/script.h>
 #include <tests/tap/basic.h>
+#include <tests/tap/kerberos.h>
 #include <tests/tap/string.h>
 
 
@@ -27,6 +28,12 @@ main(void)
     char *tmpdir, *trace;
 
     plan_lazy();
+
+    /*
+     * Generate a testing krb5.conf file with a nonexistent default realm so
+     * that this test will run on any system.
+     */
+    kerberos_generate_conf("bogus.example.com");
 
     memset(&config, 0, sizeof(config));
     config.user = "testuser";

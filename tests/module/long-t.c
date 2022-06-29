@@ -5,7 +5,7 @@
  * be done without having Kerberos configured and a username and password
  * available.
  *
- * Copyright 2020 Russ Allbery <eagle@eyrie.org>
+ * Copyright 2020, 2022 Russ Allbery <eagle@eyrie.org>
  *
  * SPDX-License-Identifier: BSD-3-clause or GPL-1+
  */
@@ -15,6 +15,7 @@
 
 #include <tests/fakepam/script.h>
 #include <tests/tap/basic.h>
+#include <tests/tap/kerberos.h>
 
 
 int
@@ -24,6 +25,12 @@ main(void)
     char *password;
 
     plan_lazy();
+
+    /*
+     * Generate a testing krb5.conf file with a nonexistent default realm so
+     * that this test will run on any system.
+     */
+    kerberos_generate_conf("bogus.example.com");
 
     memset(&config, 0, sizeof(config));
     config.user = "test";
