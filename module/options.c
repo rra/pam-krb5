@@ -61,6 +61,7 @@ static const struct option options[] = {
     { K(realm),              false, STRING (NULL)  },
     { K(renew_lifetime),     true,  TIME   (0)     },
     { K(retain_after_close), true,  BOOL   (false) },
+    { K(require_fast),       true,  BOOL   (false) },
     { K(search_k5login),     true,  BOOL   (false) },
     { K(silent),             false, BOOL   (false) },
     { K(ticket_lifetime),    true,  TIME   (0)     },
