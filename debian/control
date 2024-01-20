@@ -7,6 +7,7 @@ Uploaders:
 Standards-Version: 4.6.0
 Build-Depends:
  debhelper-compat (= 13),
+ dh-sequence-debputy (>= 0.1.17~),
  heimdal-multidev,
  krb5-config,
  krb5-multidev,
