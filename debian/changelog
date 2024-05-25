@@ -1,3 +1,12 @@
+libpam-krb5 (4.11-1.1) unstable; urgency=medium
+
+  * Non-maintainer upload.
+
+  [ Michael Biebl ]
+  * Install PAM modules into /usr. (Closes: #1061352)
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Sat, 25 May 2024 23:38:28 +0200
+
 libpam-krb5 (4.11-1) unstable; urgency=medium
 
   * Upload to unstable.

@@ -17,13 +17,13 @@ override_dh_auto_clean:
 override_dh_auto_configure:
 	mkdir build-mit build-heimdal
 	dh_auto_configure -Bbuild-mit --				   \
-	    --enable-reduced-depends --libdir=/lib/$(DEB_HOST_MULTIARCH)   \
+	    --enable-reduced-depends --libdir=/usr/lib/$(DEB_HOST_MULTIARCH)   \
 	    --with-krb5-include=/usr/include/mit-krb5			   \
 	    --with-krb5-lib=/usr/lib/$(DEB_HOST_MULTIARCH)/mit-krb5	   \
 	    --with-kadm-client-include=/usr/include/mit-krb5		   \
 	    --with-kadm-client-lib=/usr/lib/$(DEB_HOST_MULTIARCH)/mit-krb5
 	dh_auto_configure -Bbuild-heimdal --				  \
-	    --enable-reduced-depends --libdir=/lib/$(DEB_HOST_MULTIARCH)  \
+	    --enable-reduced-depends --libdir=/usr/lib/$(DEB_HOST_MULTIARCH)  \
 	    --with-krb5-include=/usr/include/heimdal			  \
 	    --with-krb5-lib=/usr/lib/$(DEB_HOST_MULTIARCH)/heimdal	  \
 	    --with-kadm-client-include=/usr/include/heimdal		  \
@@ -40,8 +40,8 @@ override_dh_auto_test:
 override_dh_auto_install:
 	dh_auto_install -Bbuild-mit --destdir=debian/libpam-krb5
 	dh_auto_install -Bbuild-heimdal --destdir=debian/libpam-heimdal
-	rm debian/libpam-*/lib/*/security/*.la
-	chmod 644 debian/libpam-*/lib/*/security/*.so
+	rm debian/libpam-*/usr/lib/*/security/*.la
+	chmod 644 debian/libpam-*/usr/lib/*/security/*.so
 	install -d debian/libpam-krb5/usr/share/pam-configs
 	install -d debian/libpam-heimdal/usr/share/pam-configs
 	install -m 644 debian/pam-auth-update \
