@@ -1,3 +1,13 @@
+libpam-krb5 (4.11-2) UNRELEASED; urgency=medium
+
+  [ Niels Thykier ]
+  * Migrate to debputy.
+    - Fix PAM registration behavior when multiple architectures of the PAM
+      module are installed.  The configuration is now removed only if the
+      last libpam-krb5 architecture is removed.
+
+ -- Russ Allbery <rra@debian.org>  Sat, 06 Jul 2024 20:38:41 -0700
+
 libpam-krb5 (4.11-1) unstable; urgency=medium
 
   * Upload to unstable.
