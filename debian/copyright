@@ -4,7 +4,7 @@ Upstream-Name: pam-krb5
 Source: https://www.eyrie.org/~eagle/software/pam-krb5/
 Copyright: 1999-2000 Frank Cusack <fcusack@fcusack.com>
   2005 Andres Salomon <dilinger@debian.org>
-  2005-2010, 2014-2015, 2017, 2020-2021 Russ Allbery <eagle@eyrie.org>
+  2005-2010, 2014-2015, 2017, 2020-2021, 2024 Russ Allbery <eagle@eyrie.org>
   2008-2014
     The Board of Trustees of the Leland Stanford Junior University
 License: BSD-3-clause-or-GPL-1+
@@ -12,7 +12,7 @@ License: BSD-3-clause-or-GPL-1+
 Files: *
 Copyright: 1999-2000 Frank Cusack <fcusack@fcusack.com>
   2005 Andres Salomon <dilinger@debian.org>
-  2005-2010, 2014-2015, 2017, 2020-2021 Russ Allbery <eagle@eyrie.org>
+  2005-2010, 2014-2015, 2017, 2020-2021, 2024 Russ Allbery <eagle@eyrie.org>
   2008-2014 The Board of Trustees of the Leland Stanford Junior University
 License: BSD-3-clause-or-GPL-1+
 Comment: You can find the GPL version 1 in /usr/share/common-licenses/GPL-1
