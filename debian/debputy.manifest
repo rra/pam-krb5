@@ -1,0 +1,10 @@
+manifest-version: '0.1'
+installations:
+- install-docs:
+    sources:
+    - NEWS
+    - README
+    - TODO
+    into:
+    - libpam-krb5
+    - libpam-heimdal
