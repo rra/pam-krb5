@@ -8,6 +8,7 @@ libpam-krb5 (4.11-2) UNRELEASED; urgency=medium
 
   [ Russ Allbery ]
   * Convert the dh_install overrides to debputy manifest directives.
+  * Add README.source explaining the maintainer workflow for libpam-krb5.
   * Update standards version to 4.7.0 (no changes required).
   * Refresh upstream signing key.
 
