@@ -1,10 +1,18 @@
 manifest-version: '0.1'
 installations:
-- install-docs:
-    sources:
-    - NEWS
-    - README
-    - TODO
-    into:
-    - libpam-krb5
-    - libpam-heimdal
+  - discard:
+      path: usr/lib/*/security/*.la
+  - install:
+      source: debian/pam-auth-update
+      as: usr/share/pam-configs/krb5
+      into:
+        - libpam-krb5
+        - libpam-heimdal
+  - install-docs:
+      sources:
+        - NEWS
+        - README
+        - TODO
+      into:
+        - libpam-krb5
+        - libpam-heimdal
