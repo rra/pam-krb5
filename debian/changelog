@@ -8,6 +8,7 @@ libpam-krb5 (4.11-2) UNRELEASED; urgency=medium
 
   [ Russ Allbery ]
   * Convert the dh_install overrides to debputy manifest directives.
+  * Update standards version to 4.7.0 (no changes required).
 
  -- Russ Allbery <rra@debian.org>  Sat, 06 Jul 2024 20:38:41 -0700
 
